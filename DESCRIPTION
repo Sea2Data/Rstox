@@ -20,7 +20,7 @@ Description: This package contains most of the functionality of the StoX
     on biotic and acoustic survey and landings data, among other uses. Rstox is
     intended for further analyses of such data, facilitating iterations over an
     arbitrary number of parameter values and data sets.
-BugReports: https://github.com/Rstox/Rstox/issues
+BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
 LazyData: true
 RoxygenNote: 5.0.1

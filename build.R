@@ -44,6 +44,10 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		# Write the Rstox install command:
 		write(paste0("install.packages(\"", tarFile, "\", repos=NULL)"), READMEfile, append=TRUE)
 		write("", READMEfile, append=TRUE)
+		write(paste0("# Alternatively, install the latest development version from GitHub. Note that this does not garantee a stable version. For official versions of Rstox, refer to the ftp server ", ftpDir, " as described above. Install from github using the devtools package:"), READMEfile, append=TRUE)
+		write("# library(devtools)", READMEfile, append=TRUE)
+		write("# install_github(\"Sea2Data/Rstox\")", READMEfile, append=TRUE)
+		write("", READMEfile, append=TRUE)
 		write("# Note that 64 bit Java is required to run Rstox", READMEfile, append=TRUE)
 		write("# On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp, or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/", READMEfile, append=TRUE)
 		write("# On Mac, getting Java and Rstox to communicate can be challenging. If you run into problems such as \"Unsupported major.minor version ...\", try the following:", READMEfile, append=TRUE)
@@ -61,7 +65,6 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		write("# Open R (close and then open if already open) and install rJava:", READMEfile, append=TRUE)
 		write("# \tinstall.packages('rJava', type='source')", READMEfile, append=TRUE)
 		write("# Then the installed Rstox should work.", READMEfile, append=TRUE)
-	
 	
 		# Write release notes:
 		write("", READMEfile, append=TRUE)
@@ -201,7 +204,7 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		"Maintainer: Arne Johannes Holmin <arnejh@imr.no>",
 		paste0("Depends: R (>= ", Rversion, ")"), 
 		"Description: This package contains most of the functionality of the StoX software, which is used for assessment of fish and other marine resources based on biotic and acoustic survey and landings data, among other uses. Rstox is intended for further analyses of such data, facilitating iterations over an arbitrary number of parameter values and data sets.",
-		"BugReports: https://github.com/Rstox/Rstox/issues", 
+		"BugReports: https://github.com/Sea2Data/Rstox/issues", 
 		"License: LGPL-3",
 		"LazyData: true", sep="\n")
 	write(DESCRIPTIONtext, DESCRIPTIONfile)
