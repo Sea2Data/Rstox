@@ -4,7 +4,7 @@
 library("devtools")
 ##########
 
-buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1", official=FALSE, check=FALSE) {
+buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1", official=FALSE, check=FALSE, exportDir=NULL) {
 	
 	########## Functions ##########
 	# Function used for writing the README file automatically, including package dependencies, R and Rstox version and release notes:
@@ -132,7 +132,13 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	# Clear the installed package:
 	try(lapply(.libPaths(), function(xx) remove.packages(pkgName, xx)), silent=TRUE)
 	
-	exportDir <- file.path(buildDir, "bundle")
+	if(length(exportDir)==0){
+		exportDir <- file.path(dirname(buildDir), "builds")
+	}
+	if(length(grep(exportDir, buildDir))>0){
+		stop("The 'exportDir' cannot be contained in the 'buildDir', since the exports are build from the 'buildDir'")
+	}
+	#exportDir <- file.path(buildDir, "bundle")
 	manDir <- file.path(buildDir, "man")
 	DESCRIPTIONfile <- file.path(buildDir, "DESCRIPTION")
 	NAMESPACEfile <- file.path(buildDir, "NAMESPACE")
@@ -247,7 +253,7 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 
 # Define the directory of the working copy:
 #arnejh
-dir <- "~/Documents/Produktivt/Prosjekt/R-packages/Rstox"
+dir <- "~/Documents/Produktivt/Prosjekt/R-packages/Rstox/Rstox"
 # aasmunds
 #dir <- "C:/Projects/Sea2Data/NewBeam/trunk/beam/StoX/StoX-Main/src/main/resources/stox/system/r"
 
