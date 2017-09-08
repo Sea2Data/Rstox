@@ -52,6 +52,8 @@ readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 
 \item{out}{One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.}
 
+\item{msg}{Logical: If TRUE print messages to the console.}
+
 \item{nchars}{The number of characters to read when determining the types of the files in readXMLfiles().}
 }
 \value{
