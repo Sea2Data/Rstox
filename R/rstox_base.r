@@ -1011,6 +1011,15 @@ readBaselineParameters <- function(projectName, rver="1"){
 	doc <- xmlParse(projectPaths$projectXML)
 	#doc <- xmlParse(projectXML)
 
+	# Extract all available namespace(s)
+	nsDefs <- xmlNamespaceDefinitions(doc)
+	ns <- structure(sapply(nsDefs, function(x) x$uri), names = names(nsDefs))
+
+	# If selectedNS is not available, fallback to the first default namespace
+	if(!length(grep(paste0("^",selectedNS,"$"), ns))){
+	  selectedNS <- ns[[1]]
+	}
+
 	# Get the the baseline model's process nodes
 	baselineProcess <- getNodeSet(doc, "//ns:model[@name='baseline']//ns:process", namespaces = c(ns=selectedNS))
 	
