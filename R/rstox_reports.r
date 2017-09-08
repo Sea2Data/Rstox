@@ -17,6 +17,8 @@
 #'
 #' @return Abundance matrix with imputed biological information 
 #'
+#' @importFrom stats density
+#'
 #' @export
 #' @keywords internal
 #' 
@@ -174,6 +176,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #' system.time(bootstrap_Acoustic_imputed <- imputeByAge(projectName))
 #'
 #' @importFrom parallel detectCores makeCluster parLapplyLB stopCluster
+#' @importFrom utils tail
 #'
 #' @export
 #' 
@@ -533,6 +536,7 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 	if("numberscale" %in% names(lll)){
 		warning("The argument numberscale is deprecated. Use the new argument 'unit' instead.")
 		unit <- lll$numberscale
+		lll$numberscale <- NULL
 	}
 	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
 	
@@ -645,6 +649,7 @@ plotAbundance_old <- function(projectName, var="Abundance", unit=NULL, baseunit=
 	if("numberscale" %in% names(lll)){
 		warning("The argument numberscale is deprecated. Use the new argument 'unit' instead.")
 		unit <- lll$numberscale
+		lll$numberscale <- NULL
 	}
 	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
 	

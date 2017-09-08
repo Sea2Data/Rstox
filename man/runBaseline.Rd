@@ -23,7 +23,7 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 
 \item{reset}{Logical; if TRUE rerun the baseline model even if it has been run previously.}
 
-\item{save}{Logical; if TRUE changes to the project specified in parlist and "..." are saved to the object currentParameters in the project list in the RstoxEnv environment.}
+\item{save}{Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.}
 
 \item{out}{The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object).}
 

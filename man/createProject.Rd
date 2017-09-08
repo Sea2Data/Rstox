@@ -16,11 +16,12 @@ createProject(projectName = NULL, files = list(), dir = NULL,
   model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
   ignore.processXML = FALSE, parlist = list(), ...)
 
-openProject(projectName = NULL, out = c("project", "baseline", "name"))
+openProject(projectName = NULL, out = c("project", "baseline", "name"),
+  msg = FALSE)
 
 reopenProject(projectName, out = c("project", "baseline", "name"))
 
-getProject(projectName)
+getProject(projectName, msg = FALSE)
 
 updateProject(projectName)
 
