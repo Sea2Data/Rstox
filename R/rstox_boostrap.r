@@ -139,6 +139,9 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	
 	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
 	availableCores = detectCores()
+	# If memory runs out, a system call to determine number of cores might fail, thus detectCores() could return NA
+	# defaulting to single core if this is the case
+	if(is.na(availableCores)) availableCores <- 1
 	if(cores>availableCores){
 		warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
 	}
