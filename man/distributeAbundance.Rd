@@ -27,4 +27,3 @@ impLevel = 3: imputation at survey level; no information available at lower leve
 impLevel = 99: no imputation, no biological information exists for this length group
 }
 \keyword{internal}
-

@@ -42,4 +42,3 @@ eca$resources
 str(eca)
 
 }
-

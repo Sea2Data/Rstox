@@ -10,4 +10,3 @@ Rstox.init()
 This funcion initializes the connection to Java.
 }
 \keyword{internal}
-

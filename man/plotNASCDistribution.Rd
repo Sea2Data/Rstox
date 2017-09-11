@@ -32,4 +32,3 @@ boot <- runBootstrap(projectName, nboot=10, seed=1,
 plotNASCDistribution(projectName)
 
 }
-

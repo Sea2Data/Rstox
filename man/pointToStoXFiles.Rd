@@ -18,4 +18,3 @@ A project object
 Updates a project with the files located in the "input" directory. Used in updateProject().
 }
 \keyword{internal}
-

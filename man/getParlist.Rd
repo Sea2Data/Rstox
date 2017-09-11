@@ -18,4 +18,3 @@ Merged list of parameters, duplicates not removed.
 Merges a list and the following list elements given as "...".
 }
 \keyword{internal}
-

@@ -20,4 +20,3 @@ searchNMDCruise(cruisenrANDshipname, datatype, ver = 1,
 The NMD API enables searching for a cruise identifyer given the cruise number and ship name.
 }
 \keyword{internal}
-

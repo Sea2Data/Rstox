@@ -13,4 +13,3 @@ as.matrix_full(x)
 Convert a list of vectors with variable length to a matrix with all possible variables in the columns, and with missing values
 }
 \keyword{internal}
-

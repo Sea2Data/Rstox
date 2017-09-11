@@ -945,6 +945,7 @@ setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save.pr
 #' @importFrom XML xpathSApply
 #' @importFrom XML xmlGetAttr
 #' @importFrom XML xmlRoot
+#' @importFrom XML xmlNamespaceDefinitions
 #' @export
 #' @rdname setBaselineParameters
 #' 
