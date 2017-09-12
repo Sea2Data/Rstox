@@ -23,4 +23,3 @@ setMeanNASCValues_old(mtrx, tbl)
 \code{setMeanNASCValues_old} Sets NASC or meanNASC values to the baseline data (in memory).
 }
 \keyword{internal}
-

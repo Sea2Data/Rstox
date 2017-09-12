@@ -119,8 +119,6 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
 #'
-#' @importFrom MASS fitdistr
-#'
 #' @export
 #' 
 getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
@@ -149,10 +147,10 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 	## Put in function that tests data before this step!
 	switch(NASCDistr,
 		 observed = distr.fit <- sapply(tmp2,function(yy) {c('mean' = NA, 'sd' = NA)}),
-		 normal = distr.fit <- sapply(tmp2,function(yy) {coef(fitdistr(yy$Value, 'normal'))}),
-		 lognormal = distr.fit <-	sapply(tmp2,function(yy) {coef(fitdistr(yy$Value+1, 'lognormal'))}),
-		 gamma = distr.fit <-	sapply(tmp2,function(yy) {if(length(yy$Value>0)>5) coef(fitdistr(yy$Value+1, 'gamma')) else c(shape=0,rate=1)}),
-		 weibull = distr.fit <-	sapply(tmp2,function(yy) {if(length(yy$Value>0)>5) coef(fitdistr(yy$Value+1, 'weibull',lower=c(0.001,0.001)))	else c(shape=0,scale=1)})
+		 normal = distr.fit <- sapply(tmp2,function(yy) {coef(MASS::fitdistr(yy$Value, 'normal'))}),
+		 lognormal = distr.fit <-	sapply(tmp2,function(yy) {coef(MASS::fitdistr(yy$Value+1, 'lognormal'))}),
+		 gamma = distr.fit <-	sapply(tmp2,function(yy) {if(length(yy$Value>0)>5) coef(MASS::fitdistr(yy$Value+1, 'gamma')) else c(shape=0,rate=1)}),
+		 weibull = distr.fit <-	sapply(tmp2,function(yy) {if(length(yy$Value>0)>5) coef(MASS::fitdistr(yy$Value+1, 'weibull',lower=c(0.001,0.001)))	else c(shape=0,scale=1)})
 	)
 	tmp3 <- as.data.frame(cbind(strata.mean, strata.var, n.by.strata, distr.fit[1,], distr.fit[2,]))
 	names(tmp3)[4:5]<-row.names(distr.fit)

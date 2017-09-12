@@ -10,4 +10,3 @@ getAvailableFunctions(type = "baseline")
 This funcion gets available StoX functions.
 }
 \keyword{internal}
-

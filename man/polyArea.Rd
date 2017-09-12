@@ -33,4 +33,3 @@ plot(readWKT(wkt2MULTIPOLYGON(wkt)), col='black', pbg='white')
 polyArea(wkt)
 
 }
-

@@ -13,4 +13,3 @@ JavaString2vector(x)
 When reading some data from the StoX Java memory using toString(), the resulting string is converted to a string vector by this function.
 }
 \keyword{internal}
-

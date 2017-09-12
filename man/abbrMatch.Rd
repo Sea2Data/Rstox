@@ -17,4 +17,3 @@ abbrMatch(x, table, ignore.case = FALSE)
 These functions are used in the plotting and reporting functions getPlots() and getReports() and dependent functions.
 }
 \keyword{internal}
-

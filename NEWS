@@ -273,3 +273,4 @@ Added the function addProcesses(), which adds processes to a project object give
 
 Simplified how custom models are implemented in createProject(), which now first runs addProcesses() and then setBaselineParameters(). 
 
+Renamed the object currentParameters in the project environment to javaParameters, to stress that these are the current parameter values in the project Java object. The object lastParameters is the parameters used during the last baseline run, which do not have to be identical to the javaParameters, in case the parameter values in Java were reset to the previous parameter values.

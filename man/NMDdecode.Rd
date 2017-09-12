@@ -15,4 +15,3 @@ NMDdecode(URL)
 \code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming).
 }
 \keyword{internal}
-

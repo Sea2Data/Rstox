@@ -13,4 +13,3 @@ moveToTrash(x)
 Move existing files to the trash directory in the directory of the first element (all file should be in the same directory).
 }
 \keyword{internal}
-

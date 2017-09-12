@@ -48,4 +48,3 @@ list with (1) the abundance by length in the orginal model, (2) the abundance by
 Resample (bootstrap) trawl stations based on survey (Cruise) number and station numbers (SerialNo) to estimate uncertainty in estimates.
 }
 \keyword{internal}
-

@@ -22,4 +22,3 @@ getProcess("Test_Rstox", c("SuperIndAbundance", "StratumArea"))
 
 }
 \keyword{internal}
-

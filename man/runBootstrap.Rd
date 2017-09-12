@@ -48,4 +48,3 @@ Resample (bootstrap) trawl stations based on swept area data and possibly also a
 b <- runBootstrap("Test_Rstox", nboot=10, seed=1, cores=1)}
 
 }
-

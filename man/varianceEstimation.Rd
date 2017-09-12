@@ -25,4 +25,3 @@ Calculates mean, variance, coefficient of variation and 90 % confidence bounds b
 b <- varianceEstimation("Test_Rstox")}
 
 }
-

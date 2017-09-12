@@ -15,4 +15,3 @@ addProcesses(project, processes)
 This function extracts the project names and adds function names where these are not given, and adds processes to the project.
 }
 \keyword{internal}
-

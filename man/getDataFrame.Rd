@@ -42,4 +42,3 @@ A dataframe
 \code{getProcessDataTableAsDataFrame} gets a joined table with meanNASC, psu, stratum, and area. Reads transect data, strata and area information from baseline Java object and merges them into one data frame.
 }
 \keyword{internal}
-

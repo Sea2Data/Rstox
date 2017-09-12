@@ -13,4 +13,3 @@ initiateRstoxEnv()
 \code{getRstoxEnv} initiates the RstoxEnv environment if not existing.
 }
 \keyword{internal}
-

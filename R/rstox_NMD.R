@@ -304,7 +304,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		paste(API, "biotic", paste0("v", ver), year[1], serialno[1], serialno[2], tsn[1], "serial", sep="/")
 	}
 	# Function for downloading a stox project in a surveytimeseries:
-	getSurveyTimeSeriesStoXProjects <- function(sts, dir, cleanup=TRUE, downloadtype="?format=zip"){
+	getSurveyTimeSeriesStoXProjects <- function(sts, dir, cleanup=TRUE, downloadtype="?format=zip", ow=NULL){
 		stsMatrix <- sts[[1]]
 		sts <- names(sts)
 		status = nrow(stsMatrix)
@@ -321,15 +321,20 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			# Overwriting or not?:
 			if(file.exists(projectNames[i])){
 				if(length(ow)==0){
-					ans <- readline(paste0("Project \"", projectNames[i], "\" already exists. Overwrite? (y/n)\n"))
-					if(ans!="y"){
-						cat("Not overwriting:", projectNames[i], "\n")
+					ans <- readline(paste0("Project \"", projectNames[i], "\" already exists. Overwrite?\n", paste(c("\"y\": ", "\"n\": ", "\"ya\":", "\"na\":"), c("Yes", "No", "Yes to all remaining", "No to all remaining"), collapse="\n"), "\n"))
+					if(ans=="ya"){
+						ow <- TRUE
+					}
+					else if(ans=="na"){
+						cat("Not overwriting:\n", paste(projectNames[i], collapse="\n"), "\n")
 						return()
+					}
+					else if(ans!="y"){
+						cat("Not overwriting:", projectNames[i], "\n")
 					}
 				}
 				else if(!ow){
 					cat("Not overwriting:", projectNames[i], "\n")
-					return()
 				}
 			}
 			
