@@ -11,7 +11,7 @@ install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.2/Rstox_1.6.2.tar.gz", repos=NULL)
 
 # Alternatively, install the latest development version from GitHub. Note that this does not garantee a stable version. For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.2 as described above. Install from github using the devtools package:
-# devtools::install_github("Sea2Data/Rstox", rep="develop")
+# devtools::install_github("Sea2Data/Rstox", ref="develop")
 
 # Note that 64 bit Java is required to run Rstox
 # On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp, or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/
