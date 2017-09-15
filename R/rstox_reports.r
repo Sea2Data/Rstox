@@ -62,11 +62,13 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	
 	# Stop if no known ages and return if no unknown:
 	if(NatKnownAge == 0){
-		stop("No known ages")
+		# Change made on 2017-09-15: Issuing an error here is deprecated. It should be a warning, but the imputing should continue. See note 2017-09-15 below:
+		# stop("No known ages")
+		warning(paste0("No known ages in bootstrap replicate ", i))
 	}
 	if(NatUnknownAge == 0){
-	warning("No unknown ages")
-		abnd$impLevel <- 0
+		warning(paste0("No unknown ages in bootstrap replicate ", i))
+		abnd$impLevel <- 0L
 		return(list(data=abnd, msg=msg, indMissing=NULL, indReplacement=NULL, seedM=NULL))
 	}
 
@@ -134,6 +136,11 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	# Create the following two data frames: 1) the rows of abnd which contain missing age and where there is age available in other rows, and 2) the rows with age available for imputing:
 	missing <- abnd[atUnknownAge, , drop=FALSE]
 	available <- abnd[imputeRows[atUnknownAge], , drop=FALSE]
+	# 2017-09-15: If all imputeRows are NA (happend when NatKnownAge==0) a vector of only NAs are passed to [], which causes the full data frame to be returned with all values replaced ny NA. This causes a dimension mismatch between 'missing' and 'available', since 'available' gets the full dimension of 'abnd'. To account for this, we simply crop the 'available' to the dimensions of the 'missing'. This is a dirty fix, but sould work and allow for NatKnownAge=0, which previously resulted in an error: 
+	if(nrow(available)>nrow(missing)){
+		available <- available[seq_len(nrow(missing)), , drop=FALSE]
+	}
+	
 	# Get the indices of missing data in 'missing' which are present in 'available':
 	#ind <- which(missing == "-" & available != "-", arr.ind=TRUE)
 	ind <- which(is.na(missing) & !is.na(available), arr.ind=TRUE)

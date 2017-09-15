@@ -630,7 +630,7 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	# Open the project (avoiding generating multiple identical project which demands memory in Java):
 	projectName <- getProjectPaths(projectName)$projectName
 	# If reset==TRUE allow for the warning in getProject():
-	baseline <- openProject(projectName, out="baseline", msg=reset)
+	baseline <- openProject(projectName, out="baseline")
 	baseline$setBreakable(jBoolean(FALSE))
 	baseline$setWarningLevel(jInt(warningLevel))
 	if(!exportCSV){
@@ -656,10 +656,13 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 		currentpar <- getBaselineParameters(baseline, type="current")
 		newpar <- modifyBaselineParameters(currentpar, parlist=parlist, ...)$parameters
 		lastpar <- getBaselineParameters(baseline, type="last")
-		changedProcesses <- which(sapply(seq_along(newpar), function(i) !identical(newpar[[i]], lastpar[[i]])))
+		
+		# Change made on 2017-09-15: If no valid processes are given in parlist or ..., using which() around the following line returned an error. which() is now moved to inside the if(any(changedProcesses)){}:
+		changedProcesses <- sapply(seq_along(newpar), function(i) !identical(newpar[[i]], lastpar[[i]]))
 		
 		# (2) If the requested parameters (either through parlist and ..., or by default those in the baseline model) differ from the parameters of the last run, rerun the baseline model:
-		if(length(changedProcesses)){
+		if(any(changedProcesses)){
+			changedProcesses <- which(changedProcesses)
 			run <- TRUE
 			startProcess <- min(currentEndProcess + 1, changedProcesses)
 			endProcess <- max(changedProcesses, endProcess)
@@ -799,7 +802,7 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 
 #*********************************************
 #*********************************************
-#' Run (or get without running, nostly used internal in Rstox) a StoX baseline model
+#' Get process indices.
 #' 
 #' Gets the indices of processes in the baseline model, where both process name and function name are accepted. The process WriteProcessData is ignored.
 #' 
@@ -809,6 +812,7 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 #' @return Index number of the process.
 #'
 #' @examples
+#' openProject("Test_Rstox")
 #' getProcess("Test_Rstox", c("SuperIndAbundance", "StratumArea"))
 #'
 #' @export
@@ -1113,7 +1117,7 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 		# Issue a warning if there are non-existent processes, and remove these:
 		nonExistent <- is.na(changeProcessesIdx)
 		if(any(nonExistent)){
-			warning(paste0("The following processes are present in parlist or ... but not in the project, and were thus removed):\n", paste(processNames[nonExistent], collapse=", ")))
+			warning(paste0("The following processes are present in parlist or ... but not in the project, and were thus removed):\n", paste(changeProcesses[nonExistent], collapse=", ")))
 			if(all(nonExistent)){
 				return(list())
 			}

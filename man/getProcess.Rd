@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstox_base.r
 \name{getProcess}
 \alias{getProcess}
-\title{Run (or get without running, nostly used internal in Rstox) a StoX baseline model}
+\title{Get process indices.}
 \usage{
 getProcess(projectName, proc = "all")
 }
@@ -18,6 +18,7 @@ Index number of the process.
 Gets the indices of processes in the baseline model, where both process name and function name are accepted. The process WriteProcessData is ignored.
 }
 \examples{
+openProject("Test_Rstox")
 getProcess("Test_Rstox", c("SuperIndAbundance", "StratumArea"))
 
 }
