@@ -2,10 +2,16 @@
 % Please edit documentation in R/rstox_boostrap.r
 \name{runBootstrap}
 \alias{runBootstrap}
+\alias{varianceEstimation}
 \title{Run a bootstrap in StoX}
 \usage{
 runBootstrap(projectName, acousticMethod = NULL, bioticMethod = NULL,
-  nboot = 5, seed = 1, cores = 1, msg = TRUE, ...)
+  nboot = 5, startProcess = "TotalLengthDist",
+  endProcess = "SuperIndAbundance", outProcess = "SuperIndAbundance",
+  seed = 1, cores = 1, msg = TRUE, ...)
+
+varianceEstimation(projectName, proc = "SweptAreaDensity",
+  out = c("Stratum", "Total"), na.rm = TRUE, ignore.case = TRUE)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -30,16 +36,25 @@ runBootstrap(projectName, acousticMethod = NULL, bioticMethod = NULL,
 \item{msg}{Logical: if TRUE print messages from runBaseline().}
 
 \item{...}{Used for backwards compatibility.}
+
+\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 }
 \value{
 list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
+
+A list with names "Stratum" and "Total" containing dataframes for each species with the following columns: Stratum, Mean, SD (standard deviation), Variance, CV (coefficient of variation), and lower and upper 90% confidence bounds.
 }
 \description{
 Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates.
+
+Calculates mean, variance, coefficient of variation and 90 % confidence bounds based on Jolly, G. M., & Hampton, I. (1990). A stratified random transect design for acoustic surveys of fish stocks. Canadian Journal of Fisheries and Aquatic Sciences, 47(7), 1282-1291.
 }
 \examples{
 \dontrun{
 b <- runBootstrap("Test_Rstox", nboot=10, seed=1, cores=1)}
+
+\dontrun{
+b <- varianceEstimation("Test_Rstox")}
 
 }
 

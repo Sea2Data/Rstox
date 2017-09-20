@@ -2,11 +2,17 @@
 % Please edit documentation in R/rstox_reports.r
 \name{plotAbundance}
 \alias{plotAbundance}
+\alias{plotAbundance_new}
 \title{Plot abundance results to file (generic)}
 \usage{
 plotAbundance(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlabtxt = NULL,
   ylabtxt = NULL, maintitle = "", numberscale = NULL, format = "png",
+  maxcv = 1, ...)
+
+plotAbundance_new(projectName, var = "Abundance", unit = NULL,
+  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
+  ylab = NULL, main = "", numberscale = NULL, format = "png",
   maxcv = 1, ...)
 }
 \arguments{
@@ -22,12 +28,6 @@ plotAbundance(projectName, var = "Abundance", unit = NULL,
 
 \item{grp2}{An optional second grouping variable}
 
-\item{xlabtxt}{The label to user for the x axis, with default depending on data plotted,}
-
-\item{ylabtxt}{The label to user for the y axis, with default depending on data plotted.}
-
-\item{maintitle}{Main title for plot (text)}
-
 \item{numberscale}{Kept for compability with older versions. Use 'unit' instead. (Scale results with e.g. 1000 or 1000000).}
 
 \item{format}{The file format of the saved plot (one of "png" and "tiff").}
@@ -35,6 +35,12 @@ plotAbundance(projectName, var = "Abundance", unit = NULL,
 \item{maxcv}{The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.}
 
 \item{...}{Parameters passed on from other functions.}
+
+\item{xlab}{The label to user for the x axis, with default depending on data plotted,}
+
+\item{ylab}{The label to user for the y axis, with default depending on data plotted.}
+
+\item{main}{Main title for plot (text)}
 }
 \value{
 Plot saved to file and abundance table printed

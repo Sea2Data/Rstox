@@ -5,8 +5,10 @@
 \title{(Internal) Bootstrap biotic stations and acoustic data}
 \usage{
 bootstrapParallel(projectName, assignments, psuNASC = NULL,
-  stratumNASC = NULL, resampledNASC = NULL, nboot = 5, seed = 1,
-  cores = 1, baseline = NULL, msg = TRUE, parameters = list())
+  stratumNASC = NULL, resampledNASC = NULL, nboot = 5,
+  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
+  outProcess = "SuperIndAbundance", seed = 1, cores = 1,
+  baseline = NULL, msg = TRUE, parameters = list())
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}

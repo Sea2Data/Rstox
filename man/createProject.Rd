@@ -72,16 +72,16 @@ A project object
 \code{pointToStoXFiles} returns the file paths linked to the project. \cr \cr
 }
 \description{
-\code{createProject} creates a new project from xml files or an URL. \cr \cr
+\code{createProject} creates a new StoX project (from xml files). \cr \cr
 \code{openProject} opens a StoX project. \cr \cr
-\code{reopenProject} re-opens a StoX project, which is to close and then open the project. \cr \cr
-\code{getProject} gets the project object, either from the input if being a baseline or project object, or from the project environment. \cr \cr
+\code{reopenProject} re-opens a StoX project, which is equivalent to closeing and then opening the project. \cr \cr
+\code{getProject} gets the project object, either from the input if this is a baseline or project object, or from the project environment. \cr \cr
 \code{updateProject} updates links to xml files in a project. \cr \cr
-\code{saveProject} saves a StoX project, typically after making changes through the "..." input to runBaseline(), in which case changes are only applied to the project in memory. \cr \cr
+\code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
 \code{closeProject} removes the project from memory. \cr \cr
 \code{isProject} checks whether the project exists on file. \cr \cr
 \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
-\code{pointToStoXFiles} updates a project with the files located in the "input" directory. \cr \cr
+\code{pointToStoXFiles} updates a project with the files located in the "input" directory. Used in updateProject(). \cr \cr
 }
 \examples{
 # Show templates:
@@ -92,7 +92,7 @@ createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="
 # Read xml file directly from any location:
 xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")
 list.files(xmlfiles, recursive=TRUE)
-dat <- readXMLfiles(xmlfiles, input=NULL)
+dat <- readXMLfiles(xmlfiles)
 
 }
 

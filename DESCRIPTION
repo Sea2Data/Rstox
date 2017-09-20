@@ -1,6 +1,6 @@
 Package: Rstox
 Title: Running stox functionality independently in R
-Version: 1.6
+Version: 1.6.1
 Authors@R: c(
   person("Arne Johannes", "Holmin", role = c("aut","cre"), email = "arnejh@imr.no"),
   person("Gjert Endre", "Dingsoer", role = "ctb"),
@@ -18,9 +18,10 @@ Description: This package contains most of the functionality of the StoX
     intended for further analyses of such data, facilitating iterations over an
     arbitrary number of parameter values and data sets.
 BugReports: https://github.com/Rstox/Rstox/issues
-License: GPL-2
+License: LGPL-3
 LazyData: true
 RoxygenNote: 5.0.1
-Imports: data.table, MASS, pbapply, rgdal, rgeos, rJava, sp, XML
+Imports: data.table, ggplot2, MASS, pbapply, rgdal, rgeos, rJava, sp,
+        XML
 NeedsCompilation: no
-Packaged: 2017-03-06 10:35:37 UTC; arnejh
+Packaged: 2017-06-28 10:35:17 UTC; arnejh

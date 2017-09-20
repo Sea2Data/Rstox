@@ -5,7 +5,9 @@
 \title{(Internal) Run one bootstrap iteration of biotic stations and acoustic data}
 \usage{
 bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
-  stratumNASC = NULL, resampledNASC = NULL, seedV = NULL)
+  stratumNASC = NULL, resampledNASC = NULL,
+  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
+  outProcess = "SuperIndAbundance", seedV = NULL)
 }
 \arguments{
 \item{i}{The boostrap iteration number.}

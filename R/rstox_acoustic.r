@@ -22,9 +22,10 @@
 #' @rdname getPSUNASC
 #'
 getPSUNASC <- function(baseline){
-
+	
 	#psuNASC <- getDataFrame1(baseline, 'MeanNASC')
-	psuNASC <- getBaseline(baseline, fun="MeanNASC", input=FALSE, msg=FALSE)
+	### psuNASC <- getBaseline(baseline, fun="MeanNASC", input=FALSE, msg=FALSE)
+	psuNASC <- getBaseline(baseline, proc="MeanNASC", input=FALSE, msg=FALSE)
 	# Test the presence of acoustic data:
 	if(length(psuNASC)==0){
 		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(baseline)$projectName, "\""))
@@ -41,7 +42,8 @@ getPSUNASC <- function(baseline){
 	psuStratum <- psuStratum[psuStratum$Stratum %in% inclStrata,]
 	
 	#stratumArea <- getDataFrame1(baseline, 'StratumArea')
-	stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
+	### stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
+	stratumArea <- getBaseline(baseline, proc="StratumArea", input=FALSE, msg=FALSE)
 	# Added a warning if SampleUnitType is not set to PSU, but rahter EDSU:
 	if(!any(tolower(psuNASC$SampleUnitType) == "psu")){
 		warning("getPSUNASC() requires SampleUnit to be PSU in the baseline.")
@@ -128,7 +130,8 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 	}
 	
 	#stratumArea <- getDataFrame1(baseline, 'StratumArea')
-	stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
+	### stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
+	stratumArea <- getBaseline(baseline, proc="StratumArea", input=FALSE, msg=FALSE)
 	names(stratumArea)[1] <- "Stratum"
 	tmp <- psuNASC
 	if(psuNASC$LayerType[1]!="WaterColumn") {

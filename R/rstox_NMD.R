@@ -560,7 +560,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 #' 
 downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE){
 	URL <- URLencode(URL)
-	#cat(URL, "\n")
+	if(msg){
+		cat(URL, "\n")
+	}
 	failed <- FALSE
 	if(msg){
 		used <- proc.time()[3]

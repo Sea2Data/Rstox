@@ -1,53 +1,45 @@
-# Rstox version: 1.6 (latest beta, 2017-03-06)
+# Rstox version: 1.6.1 (latest alpha, 2017-06-28)
 # R version: 3.3.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
 
 # Install the packages that Rstox depends on. Note that this updates all the specified packages to the latest (binary) version:
-dep.pck <- c("data.table", "MASS", "pbapply", "rgdal", "rgeos", "rJava", "sp", "XML")
+dep.pck <- c("data.table", "ggplot2", "MASS", "pbapply", "rgdal", "rgeos", "rJava", "sp", "XML")
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
-install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.6.tar.gz", repos=NULL)
+install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.1/Rstox_1.6.1.tar.gz", repos=NULL)
 
 # Note that 64 bit Java is required to run Rstox
 # On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp, or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/
 # On Mac, getting Java and Rstox to communicate can be challenging. If you run into problems such as "Unsupported major.minor version ...", try the following:
 # Update java, on
-# http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+# 	http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 # If this does not work install first the JDK and then the JRE:
-# http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
-# http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+# 	http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+# 	http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 # You may want to check that the downloaded version is first in the list by running the following in the Terminal:
-# /usr/libexec/java_home -V
-# java -version
-# Then run this in the Terminal:
-# R CMD javareconf
+# 	/usr/libexec/java_home -V
+# 	java -version
+# Then run this in the Terminal.app:
+# 	sudo ln -s $(/usr/libexec/java_home)/jre/lib/server/libjvm.dylib /usr/local/lib
+# 	sudo R CMD javareconf
 # Open R (close and then open if already open) and install rJava:
-# install.packages('rJava', type='source')
+# 	install.packages('rJava', type='source')
 # Then the installed Rstox should work.
 
 
 # Release notes:
-# 1. Added the function readXMLfiles() for reading XML-files (creating a temporary StoX project).
+# 1. Fixed bug on Mac with rJava: Changed Sys.setenv(JAVA_HOME="") to if(Sys.getenv("JAVA_HOME")!="") Sys.setenv(JAVA_HOME="") in the onload() function.
 
-# 2. Rstox can now create and open projects located elsewhere than the default workspace, using the full path as the input projectName.
+# 2. Changed the output from runBootstrap() to TRUE (invisibly), instead of the bootstrap object, which can be memory consuming.
 
-# 3. Added encoding="UTF-8" in getProcessDataTableAsDataFrame() and getDataFrameAtLevel() (used by getBaseline()) preventing misrepresented nordic characters (Ã¦, Ã¸, Ã¥).
+# 3. Removed the parameter 'par' of getBaseline(), which was used to uniquely select processes using the same function. This method was replaced by the following method: If more than one process use the same function, return data from that which has process name equal to the function name, and if such a process does not exist, return the first process with a warning.
 
-# 4. Added the option 'tsn' in getNMDdata(), specifying a species by the tsn (species) code. Run g <- getNMDinfo("taxa") for a matrix of tsn codes and species names.
+# 4. Removed the parameter 'fun' of getBaseline(). The old method supported both the process name 'proc' and the function name 'fun' when specifying which process to get data from, but the new method only use one parameter 'proc'. The function now searces for a match in process name, and then in function name, picking the first process in the case of multiple matches, with a warning.
 
-# 5. Changed treatment of 'acousticMethod' and 'bioticMethod' in runBootstrap(). The two existing methods are currently (a) one which bootstraps acoustic PSUs and trawl stations within stratum, and (b) one which only bootstraps trawl stations within stratum. Previously the trawl stations were denoted by "EDSU", but a more precice notation is "PSU", which also includes possible grouping of trawl stations into one PSU which should be included in the bootstrapping as a whole (not as single trawl stations). The preferred notation indicating the existing bootstrap methods is now PSU~Stratum, whereas EDSU~Stratum is still accepted, with a deprecation-warning.
+# 5. Removed the old functions bootstrapBioticAcoustic() and bootstrapBioticSweptArea().
 
-# 6. Added the option 'simplify' in getNMDinfo(), which converts the data into matrices that are easier to access. Also added case insentitive support for the reference data type.
+# 6. Added the function wkt_MULTIPOLYGON(), adding support for lists of two column polygon matrices in polyArea().
 
-# 7. Added the function getProject() for use in saveProject() and openProject(). This function searches for the project Java object in R memory. Also added isProject() and reopenProject()
-
-# 8. Removed the paramters startProcess and endProcess in bootstrapOneIteration() and bootstrapParallel().
-
-# 9. Added the function getProjectPaths() to return all useful paths of a project. 
-
-# 10. Added the function getRstoxEnv() using initiateRstoxEnv(), which should be used when retrieving data from the RstoxEnv environment or the environment of a project. When writing to the environment of a project, allways do temp <- getRstoxEnv() first to ensure that the RstoxEnv environment exists.
-
-# 11. Updated baseline2eca(), which now returns the data 'biotic', 'landing', covariate matrices realted to these two, and various reasource objects.
-
+# 7. Fixed bug in baseline2eca().

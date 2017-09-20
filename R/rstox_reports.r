@@ -321,7 +321,7 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 #'
 #' Given a key string such as "milliseconds" (possibly abbreviated) or the abbreviation "ms" (identical matching), the unit (here milliseconds) and scaling factor (here 1e-3) is returned.
 #'
-#' @param unit			A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).
+#' @param unit			A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings), or alternatively a numeric value giving the scaling factor.
 #' @param var			A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).
 #' @param baseunit		The unit used in the data.
 #' @param implemented	An integer vector giving the inplemented variables, which are the first two ("Abundance", "Weight") in the current version of Rstox.
@@ -338,7 +338,7 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 #' 
 getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implemented=c(1,2), def.out=TRUE){
 	# Function used to get the index of the match of unit against the default units:
-	getUnitInd <- function(unit, var){
+	getUnitInd <- function(unit, var, abbrev){
 		# Check abbreviations first:
 		ind <- if(is.numeric(unit)) which(as.numeric(abbrev[[var]]) == unit) else which(abbrev[[var]] == unit)
 		# Then do abbreviated matching:
@@ -397,8 +397,8 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 	}
 	
 	# Get matches:
-	ind <- getUnitInd(unit, var)
-	baseind <- getUnitInd(baseunit, var)
+	ind <- getUnitInd(unit, var, abbrev)
+	baseind <- getUnitInd(baseunit, var, abbrev)
 	unit.out <- units[[var]][ind]
 	# Get the scaling factor between the base unit and requested unit:
 	scale.out <- scale[[var]][ind] / scale[[var]][baseind]
@@ -504,9 +504,9 @@ plotNASCDistribution<-function(projectName, format="png", ...){
 #' @param baseunit		The unit used in the data.
 #' @param grp1			Variable used to group results, e.g. "age", "LenGrp", "sex"
 #' @param grp2			An optional second grouping variable
-#' @param xlabtxt		The label to user for the x axis, with default depending on data plotted,
-#' @param ylabtxt		The label to user for the y axis, with default depending on data plotted.
-#' @param maintitle		Main title for plot (text)
+#' @param xlab			The label to user for the x axis, with default depending on data plotted,
+#' @param ylab			The label to user for the y axis, with default depending on data plotted.
+#' @param main			Main title for plot (text)
 #' @param numberscale	Kept for compability with older versions. Use 'unit' instead. (Scale results with e.g. 1000 or 1000000).
 #' @param format		The file format of the saved plot (one of "png" and "tiff").
 #' @param maxcv			The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.
@@ -592,7 +592,7 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 		xlim <- range(unique_grp1)
 		ylim <- c(0, max(tmp1$Ab.Sum, na.rm=TRUE))
 		cvScalingFactor <- max(ylim) / maxcv
-	
+		
 		tryCatch({
 			par(mfrow=c(1,1), oma=c(2,2,2,2), mar=c(4,4,2,4))
 			form <- as.formula(paste0("Ab.Sum~", grp1))
@@ -648,7 +648,122 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 		outList$data[[level]] <- temp[[i]]
 	}
 }
-
+#' 
+#' @export
+#' @import ggplot2
+#' @rdname plotAbundance
+#' 
+plotAbundance_new <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", numberscale=NULL, format="png", maxcv=1, ...){
+	# numberscale is kept for backwards compatibility:
+	if(length(numberscale)){
+		unit <- numberscale
+	}
+	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
+	
+	# Process the boostrap runs:
+	temp <- reportAbundance(projectName, grp1=grp1, grp2=grp2, numberscale=plottingUnit$scale, plotOutput=TRUE)
+	outList <- list(filename=NULL, data=NULL)
+	
+	for(i in seq_along(temp)){
+		level <- names(temp)[i]
+		out <- temp[[i]]$abnd
+		grp1.unknown <- temp[[i]]$grp1.unknown
+		tmp1 <- temp[[i]]$tmp1
+	
+		# Set the missing values to low value (assuming only postive values are used for age and stratum and other variables):
+		cat("Abundance by age for ", level, "\n", se0="")
+		print(out)
+		xForMissing <- min(tmp1[[grp1]], na.rm=TRUE)-1
+		if(length(grp1)){
+			suppressWarnings(tmp1[[grp1]][is.na(tmp1[[grp1]])] <- xForMissing)
+			suppressWarnings(out[[grp1]][is.na(out[[grp1]])] <- xForMissing)
+			unique_grp1 <- unique(tmp1[[grp1]])
+		}
+		if(length(grp2)){
+			suppressWarnings(tmp1[[grp2]][is.na(tmp1[[grp2]])] <- xForMissing)
+			suppressWarnings(out[[grp2]][is.na(out[[grp2]])] <- xForMissing)
+			unique_grp2 <- unique(tmp1[[grp2]])
+		}
+	
+		# Get ylab and xlab text:
+		if(length(ylab)==0){
+			ylab <- paste0(plottingUnit$var, " (", plottingUnit$unit, ")")
+		}
+		if(is.null(xlab) & !is.null(grp2)){
+			xlab <- paste(grp1,"by", grp2)
+		}
+		if(is.null(xlab)){
+			xlab <- paste(grp1)
+		}
+	
+		# Get file name:
+		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_"))
+		if(startsWith(tolower(format), "tif")){
+			filename <- paste0(filenamebase, ".tif")
+			x11()
+		}
+		else if(startsWith(tolower(format), "png")){
+			filename <- paste0(filenamebase, ".png")
+			#png(filename, width=800, height=600, units = 'in', res = 300)
+			png(filename, width=800, height=600)
+		}
+		else{
+			filename <- NA
+			warning("Invalid format")
+		}
+		moveToTrash(filename)
+	
+		maxcv <- min(maxcv, max(out$Ab.Sum.cv, na.rm=TRUE))
+		if(maxcv==0){
+			maxcv <- 1
+		}
+		cvLabels <- pretty(c(0, maxcv)) 
+		xlim <- range(unique_grp1)
+		ylim <- c(0, max(tmp1$Ab.Sum, na.rm=TRUE))
+		cvScalingFactor <- max(ylim) / maxcv
+		outtmp <- out
+		outtmp$Ab.Sum.cv <- outtmp$Ab.Sum.cv * cvScalingFactor
+		levels <- seq(min(tmp1[[grp1]], na.rm=TRUE), max(tmp1[[grp1]], na.rm=TRUE), by=median(diff(sort(unique(tmp1[[grp1]]))), na.rm=TRUE))
+		
+		tryCatch({
+			if(is.null(grp2)){
+				pl <- ggplot() + 
+					geom_boxplot(data=tmp1, aes_string(x=factor(tmp1[[grp1]], levels=levels), y="Ab.Sum")) + 
+					theme_bw() + 
+					scale_x_discrete(drop=FALSE) + 
+					geom_line(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE) + 
+					geom_point(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE)
+			}	
+			else{
+				pl <- ggplot() + 
+					geom_boxplot(data=tmp1, aes_string(x=factor(tmp1[[grp1]], levels=levels), y="Ab.Sum", fill=as.factor(tmp1[[grp2]]))) + 
+					theme_bw() + 
+					scale_x_discrete(drop=FALSE) + 
+					scale_fill_discrete(name=grp2) + 
+					geom_line(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE) + 
+					geom_point(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE)
+			}
+			pl <- pl + 
+			scale_y_continuous(limits=ylim, sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
+			xlab(xlab) +
+			ylab(ylab) + 
+			ggtitle(main)
+			
+			# Activate the plot:
+			print(pl)
+			
+			if(startsWith(tolower(format), "tif")){
+				dev.copy(tiff, filename=filename, res=600, compression="lzw", height=10, width=15, units="in")
+			}
+			}, finally = {
+			# safe closure of image resource inside finally block
+			dev.off()
+		})
+		#system(paste0("open '" ,filename, "'"))
+		outList$filename[[level]] <- filename
+		outList$data[[level]] <- temp[[i]]
+	}
+}
 
 #*********************************************
 #*********************************************
@@ -738,7 +853,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	
 	# Sum the abundance or the product of abundance and weight (and possibly others in the future):
 	varInd <- abbrMatch(var[1], c("Abundance", "weight"), ignore.case=TRUE)
-	# Declare the variables used in the DT[] expression below:
+	# Declare the variables used in the DT[] expression below (this is done to avoid warnings when building the package):
 	. <- NULL
 	Ab.Sum <- NULL
 	Abundance <- NULL
@@ -801,7 +916,8 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	outlist <- c(list(abnd=out, filename=filename), plottingUnit)
 	
 	if(plotOutput){
-		outlist <- c(outlist, list(grp1.unknown=grp1.unknown, tmp1=tmp1, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=tmp$Ab.Sum, tmp=tmp))
+		#outlist <- c(outlist, list(grp1.unknown=grp1.unknown, tmp1=tmp1, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=tmp$Ab.Sum, tmp=tmp))
+		outlist <- c(outlist, list(grp1.unknown=grp1.unknown, tmp1=tmp1, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=tmp$Ab.Sum))
 	}
 	outlist
 }
@@ -837,6 +953,8 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 #' @return A vector of file names of the plots or reports.
 #'
 #' @examples
+#' # View all parameters of plotting functions:
+#' sapply(getFunsRstox("plot"), function(x) names(formals(x)))
 #' # Create the test project:
 #' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 #' projectName <- "Test_Rstox"
@@ -864,17 +982,7 @@ getReports <- function(projectName, out="all", options="", ...){
 #' @export
 #' @rdname getPlots
 #' 
-runFunsRstox <- function(projectName, string, out="all", options="", all.out=FALSE, ...){
-	# Get the parameters
-	dotlist <- list(...)
-	if(nchar(options)>0){
-		# Merge with '...', where 'options' overrides '...':
-		dotlist <- c(getOptionsText(options), dotlist)
-	}
-	
-	# Remove duplicates:
-	dotlist <- dotlist[!duplicated(names(dotlist))]
-	
+getFunsRstox <- function(string, out="all"){
 	# Get available plotting functions:
 	funs <- ls("package:Rstox")
 	funs <- funs[tolower(substr(funs, 1, nchar(string)))==string]
@@ -890,6 +998,26 @@ runFunsRstox <- function(projectName, string, out="all", options="", all.out=FAL
 	}
 	# Intersect the requested and available functions:
 	funs <- intersect(out, funs)
+	
+	return(funs)
+}
+#'
+#' @export
+#' @rdname getPlots
+#' 
+runFunsRstox <- function(projectName, string, out="all", options="", all.out=FALSE, ...){
+	# Get the available functions:
+	funs <- getFunsRstox(string=string, out=out)
+	
+	# Get the parameters
+	dotlist <- list(...)
+	if(nchar(options)>0){
+		# Merge with '...', where 'options' overrides '...':
+		dotlist <- c(getOptionsText(options), dotlist)
+	}
+	
+	# Remove duplicates:
+	dotlist <- dotlist[!duplicated(names(dotlist))]
 	
 	# Run functions and return outputs:
 	if(all.out){

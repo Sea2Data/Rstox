@@ -7,7 +7,7 @@
 getVar(x, var)
 }
 \arguments{
-\item{x}{The name of a variable.}
+\item{x}{The names of variables.}
 
 \item{var}{A list or data frame of data from a project.}
 }
