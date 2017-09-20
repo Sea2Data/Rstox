@@ -21,7 +21,7 @@ Calculates mean and variance of NASC, based on Jolly & Hampton 1990 http://www.n
 }
 \examples{
 # Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 projectName <- "Test_Rstox"
 psuNASC <- getPSUNASC(projectName)
 stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")

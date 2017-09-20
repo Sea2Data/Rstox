@@ -38,6 +38,7 @@
 #' @param list.out				Logical: If TRUE, convert the XML data to a list (time consuming).
 #' @param file					The path to a the file to which the data are saved.
 #' @param quiet					Used in download.file().
+#' @param cruisenrANDshipname	A vector of two elements, the first being the cruise number and the second the ship name.
 #'
 #' @details
 #' If non-standard characters are not shown as expected, it might be an issue of locale encoding. 
@@ -52,8 +53,7 @@
 #' g2 <- getNMDinfo("cs")
 #' # List of survey time series:
 #' g3 <- getNMDinfo("sts")
-#' # List of vessels (the first vessel per platform) and the more complicated list of platforms,
-#' # (where there can be several vessels per platform). These requestes may take tens of seconds:
+#' # List of vessels (the first vessel per plarform) and the slightly more complicated list of platforms (where there can be several vessels per platform). These requestes may take tens of seconds:
 #' g4 <- getNMDinfo("v")
 #' g5 <- getNMDinfo("platform")
 #' # Get other types of information:
@@ -66,8 +66,7 @@
 #' # And all names containing "torsk":
 #' g9[grep("torsk", g9$synonym.name, ignore.case=TRUE),]
 #' 
-#' # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
-#' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.6.R.
+#' # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.6.R.
 #' 
 #' @export
 #' @rdname getNMDinfo
@@ -561,9 +560,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 #' 
 downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE){
 	URL <- URLencode(URL)
-	if(msg){
-		cat(URL, "\n")
-	}
+	#cat(URL, "\n")
 	failed <- FALSE
 	if(msg){
 		used <- proc.time()[3]
@@ -604,22 +601,9 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE){
 		file
 	}
 }
-
-
-#*********************************************
-#*********************************************
-#' Search for a cruise given the cruise number and ship name.
 #'
-#' The NMD API enables searching for a cruise identifyer given the cruise number and ship name.
-#'
-#' @param cruisenrANDshipname	A vector of two elements, the first being the cruise number and the second the ship name.
-#' @param datatype				The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datatype=NULL (default) returns all possible data.
-#' @param ver					The version of the API. As of 2015-05 only version 1 is available. Version 2 will include the possibility to return a list of all cruises.
-#' @param API					The path to the API.
-#'
-#' 
 #' @export
-#' @keywords internal
+#' @rdname getNMDinfo
 #' 
 searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi"){
 	searchURL <- paste(API, datatype, paste0("v", ver), paste0("find?cruisenr=", cruisenrANDshipname[1], "&shipname=", cruisenrANDshipname[2]), sep="/")
@@ -645,7 +629,7 @@ searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=1, API="http://to
 #' @param URL	An URL.
 #' 
 #' @export
-#' @keywords internal
+#' @rdname NMDencode
 #' 
 NMDdecode <- function(URL){
 	URL <- URLdecode(URL)

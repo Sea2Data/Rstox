@@ -1,6 +1,6 @@
 .onLoad <- function(libname, pkgname){
 	
-	if(Sys.getenv("JAVA_HOME")!="") Sys.setenv(JAVA_HOME="")
+	Sys.setenv(JAVA_HOME="")
 	options(java.parameters="-Xmx2g")
 # Create a Rstox environment in which the baseline objects of the various projects are placed. This allows for a check for previously run baseline models and avoids memory leakage:
 	assign("RstoxEnv", new.env(), envir=.GlobalEnv)

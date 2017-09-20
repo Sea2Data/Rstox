@@ -25,12 +25,11 @@ Generates resampled NASC distribution.
 }
 \examples{
 # Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 projectName <- "Test_Rstox"
 psuNASC <- getPSUNASC(projectName)
 stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
-resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, 
-    parameters=list(seed=1, nboot=5))
+resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(seed=1, nboot=5))
 
 }
 

@@ -17,5 +17,4 @@ list with mean and variance by stratum
 \description{
 Calculates mean by stratum (Jolly & Hampton 1990 Eq(2)) and variance by stratum (Eq3b).
 }
-\keyword{internal}
 

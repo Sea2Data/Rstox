@@ -3,7 +3,7 @@
 \name{getProjectPaths}
 \alias{getProjectDataEnv}
 \alias{getProjectPaths}
-\title{Functions to return various paths and file names.}
+\title{(Internal) Functions to return various paths and file names.}
 \usage{
 getProjectPaths(projectName = NULL, dir = NULL)
 

@@ -2,12 +2,10 @@
 % Please edit documentation in R/rstox_boostrap.r
 \name{bootstrapOneIteration}
 \alias{bootstrapOneIteration}
-\title{Run one bootstrap iteration of biotic stations and acoustic data}
+\title{(Internal) Run one bootstrap iteration of biotic stations and acoustic data}
 \usage{
 bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
-  stratumNASC = NULL, resampledNASC = NULL,
-  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seedV = NULL)
+  stratumNASC = NULL, resampledNASC = NULL, seedV = NULL)
 }
 \arguments{
 \item{i}{The boostrap iteration number.}
@@ -24,10 +22,6 @@ bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
 
 \item{resampledNASC}{Resampled NASC distribution.}
 
-\item{startProcess}{The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.}
-
-\item{endProcess}{The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".}
-
 \item{seedV}{A vector of seeds. seedV[i] is used.}
 }
 \value{
@@ -36,5 +30,4 @@ list with (1) the abundance by length in the bootstrap run, (2) the abundance by
 \description{
 This function is used in bootstrapParallel().
 }
-\keyword{internal}
 

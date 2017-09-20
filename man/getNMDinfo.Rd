@@ -4,6 +4,7 @@
 \alias{downloadXML}
 \alias{getNMDdata}
 \alias{getNMDinfo}
+\alias{searchNMDCruise}
 \title{Get NMD API data and reference information}
 \usage{
 getNMDinfo(type = NULL, ver = 1,
@@ -19,6 +20,9 @@ getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
   quiet = TRUE)
+
+searchNMDCruise(cruisenrANDshipname, datatype, ver = 1,
+  API = "http://tomcat7.imr.no:8080/apis/nmdapi")
 }
 \arguments{
 \item{type}{A character string naming the type of information to return for the specifications given in 'spec'. Possible values are shown in the list below. Any reference data can be requested, and the names of the possible reference data are returned by running getNMDinfo():
@@ -77,6 +81,8 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{file}{The path to a the file to which the data are saved.}
 
 \item{quiet}{Used in download.file().}
+
+\item{cruisenrANDshipname}{A vector of two elements, the first being the cruise number and the second the ship name.}
 }
 \description{
 \code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr 
@@ -94,8 +100,7 @@ g1 <- getNMDinfo()
 g2 <- getNMDinfo("cs")
 # List of survey time series:
 g3 <- getNMDinfo("sts")
-# List of vessels (the first vessel per platform) and the more complicated list of platforms,
-# (where there can be several vessels per platform). These requestes may take tens of seconds:
+# List of vessels (the first vessel per plarform) and the slightly more complicated list of platforms (where there can be several vessels per platform). These requestes may take tens of seconds:
 g4 <- getNMDinfo("v")
 g5 <- getNMDinfo("platform")
 # Get other types of information:
@@ -108,8 +113,7 @@ g9[tolower(g9$synonym.name) == "torsk", ]
 # And all names containing "torsk":
 g9[grep("torsk", g9$synonym.name, ignore.case=TRUE),]
 
-# For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
-# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.6.R.
+# For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.6.R.
 
 }
 \keyword{NMD-API}

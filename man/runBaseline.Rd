@@ -3,7 +3,7 @@
 \name{runBaseline}
 \alias{getBaseline}
 \alias{runBaseline}
-\title{Run a StoX baseline model}
+\title{Run (or get without running, nostly used internal in Rstox) a StoX baseline model}
 \usage{
 runBaseline(projectName, startProcess = 1, endProcess = Inf,
   reset = FALSE, save = FALSE, out = c("name", "baseline", "project"),
@@ -11,8 +11,9 @@ runBaseline(projectName, startProcess = 1, endProcess = Inf,
   ...)
 
 getBaseline(projectName, input = c("par", "proc"), proc = "all",
-  drop = TRUE, msg = TRUE, startProcess = 1, endProcess = Inf,
-  reset = FALSE, save = FALSE, parlist = list(), ...)
+  fun = FALSE, par = list(), drop = TRUE, msg = TRUE,
+  startProcess = 1, endProcess = Inf, reset = FALSE, save = FALSE,
+  parlist = list(), ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -33,7 +34,7 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 
 \item{warningLevel}{The warning level used in the baseline run, where 0 stops the baseline for Java warnings, and 1 continues with a warning.}
 
-\item{parlist}{List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE.}
+\item{parlist}{List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE.}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
@@ -41,12 +42,14 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 
 \item{proc}{A string vector naming processes from which data should be returned.}
 
-\item{drop}{Logical: if TRUE drop empty list elements (default).}
+\item{fun}{A string vector naming process functions from which data should be returned. In the case that one or more functions are used several times, parameter values that in combination with the function name uniquely identify the processes should be given by the parameter \code{par}.}
 
 \item{par}{A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.}
+
+\item{drop}{Logical: if TRUE drop empty list elements (default).}
 }
 \value{
-For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "output", "processData", where empty elements can be dropped.
+For \code{runBaseline} theproject name, and for \code{getBaseline} a list of three elements named "parameters", "output", "processData", where empty elements can be dropped.
 }
 \description{
 \code{runBaseline} runs a StoX baseline model possibily overriding parameters. \cr \cr
@@ -54,21 +57,15 @@ For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}}
 }
 \examples{
 # Create the test project:
-projectName <- "Test_Rstox"
-createProject(projectName, files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
-
-# Get output from the baseline:
-system.time(baselineData <- getBaseline(projectName))
-# Check the structure of the output from getBaseline():
-ls.str(baselineData)
-
+createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=NULL)
+system.time(baseline <- runBaseline("Test_Rstox"))
+system.time(baselineData <- getBaseline(baseline, input="par", proc="AcousticDensity"))
+names(baselineData$parameters)
+str(baselineData$output)
 # Override parameters in the baseline:
-system.time(baselineDataMod <- getBaseline(projectName, 
-    AcousticDensity = list(a = -70, m = 10),
-    BioStationWeighting = list(WeightingMethod = "NASC", Radius=100, a = -70, m = 10)))
-
-# Check differences in parameters and data saved by the baseline model:
-all.equal(baselineData, baselineDataMod)
+system.time(baseline <- runBaseline("Test_Rstox", AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", Radius=100, a = -70, m = 10)))
+system.time(baselineDataModified <- getBaseline(baseline, input="par", proc="AcousticDensity"))
+str(baselineDataModified$output)
 
 }
 

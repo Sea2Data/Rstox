@@ -6,6 +6,7 @@
 \alias{getProject}
 \alias{isProject}
 \alias{openProject}
+\alias{pointToStoXFiles}
 \alias{readXMLfiles}
 \alias{reopenProject}
 \alias{saveProject}
@@ -30,7 +31,9 @@ closeProject(projectName)
 
 isProject(projectName)
 
-readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
+readXMLfiles(files, dir = tempdir(), nchars = 500)
+
+pointToStoXFiles(projectName, files = NULL)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -39,7 +42,7 @@ readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 
 \item{dir}{The directory in which to put the project. The project is a directory holding three sub directories named "input", "output" and "process", where input, output and process files are stored.}
 
-\item{model}{The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (see \code{parlist}). Show available templates with createProject().}
+\item{model}{The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (not yet implemented). Show available templates with createProject().}
 
 \item{ow}{Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.}
 
@@ -47,7 +50,9 @@ readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 
 \item{ignore.processXML}{Logical: if TRUE do not copy any project.XML file given in \code{files} to the project.}
 
-\item{parlist, ...}{See \code{\link{runBaseline}}.}
+\item{parlist}{List of parameters values overriding existing parameter values. These are specified as processNames = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE.}
+
+\item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
 \item{out}{One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.}
 
@@ -64,28 +69,30 @@ A project object
 \code{closeProject} returns TRUE if the project was open and FALSE if not. \cr \cr
 \code{isProject} returns TRUE if the project exists on file and FALSE if not. \cr \cr
 \code{readXMLfiles} returns the XML data. \cr \cr
+\code{pointToStoXFiles} returns the file paths linked to the project. \cr \cr
 }
 \description{
-\code{createProject} creates a new StoX project (from xml files). \cr \cr
-\code{openProject} opens a StoX project. If the project has already been opened, \code{openProject} will only retrieve the project object from the RstoxEnv enviromnent. To force open the project use \code{reopenProject}. \cr \cr
-\code{reopenProject} re-opens a StoX project, which is equivalent to closeing and then opening the project. \cr \cr
-\code{getProject} gets the project object, either from the input if this is a baseline or project object, or from the project environment. \cr \cr
+\code{createProject} creates a new project from xml files or an URL. \cr \cr
+\code{openProject} opens a StoX project. \cr \cr
+\code{reopenProject} re-opens a StoX project, which is to close and then open the project. \cr \cr
+\code{getProject} gets the project object, either from the input if being a baseline or project object, or from the project environment. \cr \cr
 \code{updateProject} updates links to xml files in a project. \cr \cr
-\code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
+\code{saveProject} saves a StoX project, typically after making changes through the "..." input to runBaseline(), in which case changes are only applied to the project in memory. \cr \cr
 \code{closeProject} removes the project from memory. \cr \cr
 \code{isProject} checks whether the project exists on file. \cr \cr
 \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
+\code{pointToStoXFiles} updates a project with the files located in the "input" directory. \cr \cr
 }
 \examples{
 # Show templates:
 createProject()
 # Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 
 # Read xml file directly from any location:
 xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")
 list.files(xmlfiles, recursive=TRUE)
-dat <- readXMLfiles(xmlfiles)
+dat <- readXMLfiles(xmlfiles, input=NULL)
 
 }
 

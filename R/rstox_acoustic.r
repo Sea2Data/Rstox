@@ -14,7 +14,7 @@
 #'
 #' @examples
 #' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 #' psuNASC <- getPSUNASC("Test_Rstox")
 #' psuNASC_agg <- aggPSUNASC(psuNASC=psuNASC)
 #'
@@ -22,10 +22,9 @@
 #' @rdname getPSUNASC
 #'
 getPSUNASC <- function(baseline){
-	
+
 	#psuNASC <- getDataFrame1(baseline, 'MeanNASC')
-	### psuNASC <- getBaseline(baseline, fun="MeanNASC", input=FALSE, msg=FALSE)
-	psuNASC <- getBaseline(baseline, proc="MeanNASC", input=FALSE, msg=FALSE)
+	psuNASC <- getBaseline(baseline, fun="MeanNASC", input=FALSE, msg=FALSE)
 	# Test the presence of acoustic data:
 	if(length(psuNASC)==0){
 		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(baseline)$projectName, "\""))
@@ -42,8 +41,7 @@ getPSUNASC <- function(baseline){
 	psuStratum <- psuStratum[psuStratum$Stratum %in% inclStrata,]
 	
 	#stratumArea <- getDataFrame1(baseline, 'StratumArea')
-	### stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
-	stratumArea <- getBaseline(baseline, proc="StratumArea", input=FALSE, msg=FALSE)
+	stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
 	# Added a warning if SampleUnitType is not set to PSU, but rahter EDSU:
 	if(!any(tolower(psuNASC$SampleUnitType) == "psu")){
 		warning("getPSUNASC() requires SampleUnit to be PSU in the baseline.")
@@ -64,7 +62,7 @@ getPSUNASC <- function(baseline){
 #'
 aggPSUNASC <- function(psuNASC){
 	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	Rstox.init()
+	.Rstox.init()
 	Functions <- J("no.imr.stox.functions.utils.Functions")
 	# psuNASC contains the column PSU (AJ 2016-08-31):
 	if(length(psuNASC$PSU)){
@@ -87,7 +85,6 @@ aggPSUNASC <- function(psuNASC){
 #' @return list with mean and variance by stratum
 #'
 #' @export
-#' @keywords internal
 #' 
 wtd.strata.est <- function(tr.value, tr.dist){
 	mean.strata <- sum(tr.value * tr.dist) / sum(tr.dist)
@@ -114,7 +111,7 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #'
 #' @examples
 #' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 #' projectName <- "Test_Rstox"
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
@@ -131,8 +128,7 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 	}
 	
 	#stratumArea <- getDataFrame1(baseline, 'StratumArea')
-	### stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
-	stratumArea <- getBaseline(baseline, proc="StratumArea", input=FALSE, msg=FALSE)
+	stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
 	names(stratumArea)[1] <- "Stratum"
 	tmp <- psuNASC
 	if(psuNASC$LayerType[1]!="WaterColumn") {
@@ -192,12 +188,11 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #'
 #' @examples
 #' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 #' projectName <- "Test_Rstox"
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
-#' resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, 
-#'     parameters=list(seed=1, nboot=5))
+#' resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(seed=1, nboot=5))
 #'
 #' @export
 #' 

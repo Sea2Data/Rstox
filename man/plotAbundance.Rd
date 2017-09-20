@@ -2,16 +2,12 @@
 % Please edit documentation in R/rstox_reports.r
 \name{plotAbundance}
 \alias{plotAbundance}
-\alias{plotAbundance_old}
 \title{Plot abundance results to file (generic)}
 \usage{
 plotAbundance(projectName, var = "Abundance", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
-
-plotAbundance_old(projectName, var = "Abundance", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
+  baseunit = NULL, grp1 = "age", grp2 = NULL, xlabtxt = NULL,
+  ylabtxt = NULL, maintitle = "", numberscale = NULL, format = "png",
+  maxcv = 1, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -26,17 +22,19 @@ plotAbundance_old(projectName, var = "Abundance", unit = NULL,
 
 \item{grp2}{An optional second grouping variable}
 
-\item{xlab}{The label to user for the x axis, with default depending on data plotted,}
+\item{xlabtxt}{The label to user for the x axis, with default depending on data plotted,}
 
-\item{ylab}{The label to user for the y axis, with default depending on data plotted.}
+\item{ylabtxt}{The label to user for the y axis, with default depending on data plotted.}
 
-\item{main}{Main title for plot (text)}
+\item{maintitle}{Main title for plot (text)}
 
-\item{format}{The file format of the saved plot, either given as a function such as bmp, jpeg, png, tiff, with \code{filename} as its first argument, or as a string naming the function. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=800, height=600.}
+\item{numberscale}{Kept for compability with older versions. Use 'unit' instead. (Scale results with e.g. 1000 or 1000000).}
+
+\item{format}{The file format of the saved plot (one of "png" and "tiff").}
 
 \item{maxcv}{The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.}
 
-\item{...}{Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).}
+\item{...}{Parameters passed on from other functions.}
 }
 \value{
 Plot saved to file and abundance table printed
@@ -47,7 +45,7 @@ Prints summary table and plot is exported to a tif- or png-file.
 }
 \examples{
 # Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 projectName <- "Test_Rstox"
 plotAbundance(projectName, grp1="age")
 plotAbundance(projectName, grp1="age", unit=1)

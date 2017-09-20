@@ -4,16 +4,14 @@
 \alias{runBootstrap}
 \title{Run a bootstrap in StoX}
 \usage{
-runBootstrap(projectName, acousticMethod = PSU ~ Stratum, bioticMethod = PSU
-  ~ Stratum, nboot = 5, startProcess = "TotalLengthDist",
-  endProcess = "SuperIndAbundance", seed = 1, cores = 1, msg = TRUE,
-  ...)
+runBootstrap(projectName, acousticMethod = NULL, bioticMethod = NULL,
+  nboot = 5, seed = 1, cores = 1, msg = TRUE, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 
-\item{acousticMethod, bioticMethod}{Specification of the method to use for bootstrapping the acoustic and biotic data. Currently only one method is available for acoustic and one for biotic data: acousticMethod = PSU~Stratum, bioticMethod = PSU~Stratum. Other methods are planned in later versions, involving the levels of the data given in the below table.
-\tabular{rrr}{
+\item{acousticMethod, bioticMethod}{Specification of the method to use for bootstrapping the acoustic and biotic data. These can be formulas or characters which can be converted to formulas, given as 'variable to bootstrap ~ level to bootstrap within'. Multiple bootstraps can be specified, such as bioticMethod=c(EDSU~Stratum, Sample~EDSU), instructing to bootstrap the EDSUs (stations) within each stratum, and also bootstrapping the individual catch samples within each EDSU. Only certain strings can be used in the formulas, as shown in the table below. The methods can also be given as functions of at least two arguments, 'projectName' and 'process', which makes modifications to the output from getBaseline(projectName, proc=process, input=NULL) and sends the modified data back to the baseline in Java memory and runs the baseline with the modified data. Using funcitons is not yet implemented. 
+\tabular{ccc}{
   Level \tab Acoustic \tab Biotic\cr
   Survey \tab Survey \tab Survey\cr
   Stratum \tab Stratum \tab Stratum\cr
@@ -24,10 +22,6 @@ runBootstrap(projectName, acousticMethod = PSU ~ Stratum, bioticMethod = PSU
 }}
 
 \item{nboot}{Number of bootstrap replicates.}
-
-\item{startProcess}{The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.}
-
-\item{endProcess}{The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".}
 
 \item{seed}{The seed for the random number generator (used for reproducibility).}
 
