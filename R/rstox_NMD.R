@@ -303,7 +303,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		paste(API, "biotic", paste0("v", ver), year[1], serialno[1], serialno[2], tsn[1], "serial", sep="/")
 	}
 	# Function for downloading a stox project in a surveytimeseries:
-	getSurveyTimeSeriesStoXProjects <- function(sts, dir, cleanup=TRUE, downloadtype="?format=zip"){
+	getSurveyTimeSeriesStoXProjects <- function(sts, dir, cleanup=TRUE, downloadtype="?format=zip", ow=NULL){
 		stsMatrix <- sts[[1]]
 		sts <- names(sts)
 		status = nrow(stsMatrix)
@@ -320,15 +320,42 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			# Overwriting or not?:
 			if(file.exists(projectNames[i])){
 				if(length(ow)==0){
-					ans <- readline(paste0("Project \"", projectNames[i], "\" already exists. Overwrite? (y/n)\n"))
-					if(ans!="y"){
+					ans <- readline(paste0("Project \"", projectNames[i], "\" already exists. Overwrite?\n", paste(c("\"y\": ", "\"n\": ", "\"ya\":", "\"na\":"), c("Yes", "No", "Yes to all remaining", "No to all remaining"), collapse="\n"), "\n"))
+					if(ans=="ya"){
+						cat("Overwriting:", projectNames[i], "\n")
+						ow <- TRUE
+					}
+					else if(ans=="na"){
 						cat("Not overwriting:", projectNames[i], "\n")
-						return()
+						ow <- FALSE
+						if(cleanup){
+                                                   unlink(zipPath)
+                                                }
+                                                next
+					}
+					else if(ans=="y"){
+						cat("Overwriting:", projectNames[i], "\n")
+					}
+					else if(ans=="n"){
+                                                cat("Not overwriting:", projectNames[i], "\n")
+						if(cleanup){
+                                                   unlink(zipPath)
+                                                }
+						next
+                                        }
+					else{
+						cat("Overwriting:", projectNames[i], "\n")
 					}
 				}
 				else if(!ow){
 					cat("Not overwriting:", projectNames[i], "\n")
-					return()
+					if(cleanup){
+                                           unlink(zipPath)
+                                        }
+					next
+				}
+				else if(ow){
+                                        cat("Overwriting:", projectNames[i], "\n")
 				}
 			}
 			
@@ -385,7 +412,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		sts <- intersect(sts, cruise)
 		sts <- getNMDinfo(c("sts", sts))
 		# Download and unzip all StoX projects of the survey time series:
-		status <- getSurveyTimeSeriesStoXProjects(sts=sts, dir=dir, cleanup=cleanup, downloadtype="?format=zip")
+		status <- getSurveyTimeSeriesStoXProjects(sts=sts, dir=dir, cleanup=cleanup, ow=ow, downloadtype="?format=zip")
 		###lapply(stsMatrix[,"sampleTime"], getSurveyTimeSeriesStoXProject, sts=sts, dir=dir, cleanup=cleanup, downloadtype="?format=zip")
 		return(status)
 	}

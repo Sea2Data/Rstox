@@ -22,4 +22,3 @@ baseline <- openProject("Test_Rstox", out="baseline")
 assignments <- getBioticAssignments(baseline)
 
 }
-

@@ -57,4 +57,3 @@ b <- runBootstrap("Test_Rstox", nboot=10, seed=1, cores=1)}
 b <- varianceEstimation("Test_Rstox")}
 
 }
-

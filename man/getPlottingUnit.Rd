@@ -30,4 +30,4 @@ getPlottingUnit(unit="milli", var="weight", baseunit="stox", def.out=FALSE)
 getPlottingUnit(unit="hecto", var="weight", baseunit="stox")
 
 }
-
+\keyword{internal}

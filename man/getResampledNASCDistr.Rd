@@ -32,4 +32,3 @@ stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
 resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(seed=1, nboot=5))
 
 }
-

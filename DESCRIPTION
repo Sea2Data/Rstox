@@ -7,21 +7,23 @@ Authors@R: c(
   person("Aasmund", "Skaalevik", role = "ctb"),
   person("Espen", "Johnsen", role = "ctb"))
 Author: Arne Johannes Holmin [aut, cre],
-    Gjert Endre Dingsoer [ctr],
-    Aasmund Skaalevik [ctr],
-    Espen Johnsen [ctr]
+  Edvin Fuglebakk [ctr],
+  Gjert Endre Dingsoer [ctr],
+  Aasmund Skaalevik [ctr],
+  Espen Johnsen [ctr]
 Maintainer: Arne Johannes Holmin <arnejh@imr.no>
-Depends: R (>= 3.3.2)
-Description: This package contains most of the functionality of the StoX
-    software, which is used for assessment of fish and other marine resources based
-    on biotic and acoustic survey and landings data, among other uses. Rstox is
-    intended for further analyses of such data, facilitating iterations over an
-    arbitrary number of parameter values and data sets.
-BugReports: https://github.com/Rstox/Rstox/issues
+Depends: R (>= 3.3.3)
+Description: This package contains most of the functionality of the StoX software, which is used for assessment of fish and other marine resources based on biotic and acoustic survey and landings data, among other uses. Rstox is intended for further analyses of such data, facilitating iterations over an arbitrary number of parameter values and data sets.
+BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
 LazyData: true
-RoxygenNote: 5.0.1
-Imports: data.table, ggplot2, MASS, pbapply, rgdal, rgeos, rJava, sp,
-        XML
-NeedsCompilation: no
-Packaged: 2017-06-28 10:35:17 UTC; arnejh
+RoxygenNote: 6.0.1
+Imports:
+		data.table,
+		ggplot2,
+		pbapply,
+		rgdal,
+		rgeos,
+		rJava,
+		sp,
+		XML

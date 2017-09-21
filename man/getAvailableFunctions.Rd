@@ -9,4 +9,4 @@ getAvailableFunctions()
 \description{
 This funcion gets available StoX functions.
 }
-
+\keyword{internal}

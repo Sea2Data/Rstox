@@ -27,4 +27,3 @@ psuNASC <- getPSUNASC(projectName)
 stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
 
 }
-

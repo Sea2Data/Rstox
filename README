@@ -1,5 +1,5 @@
-# Rstox version: 1.6.1 (latest alpha, 2017-06-28)
-# R version: 3.3.2
+# Rstox version: 1.6.2 (latest alpha, 2017-09-21)
+# R version: 3.3.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
 
@@ -8,7 +8,10 @@ dep.pck <- c("data.table", "ggplot2", "MASS", "pbapply", "rgdal", "rgeos", "rJav
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
-install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.1/Rstox_1.6.1.tar.gz", repos=NULL)
+install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.2/Rstox_1.6.2.tar.gz", repos=NULL)
+
+# Alternatively, install the latest development version from GitHub. Note that this does not garantee a stable version. For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.2 as described above. Install from github using the devtools package:
+# devtools::install_github("Sea2Data/Rstox", ref="develop")
 
 # Note that 64 bit Java is required to run Rstox
 # On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp, or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/
@@ -42,4 +45,4 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 
 # 6. Added the function wkt_MULTIPOLYGON(), adding support for lists of two column polygon matrices in polyArea().
 
-# 7. Fixed bug in baseline2eca().
+# 8. Renamed the object currentParameters in the project environment to javaParameters, to stress that these are the current parameter values in the project Java object. The object lastParameters is the parameters used during the last baseline run, which do not have to be identical to the javaParameters, in case the parameter values in Java were reset to the previous parameter values.

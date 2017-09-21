@@ -14,4 +14,4 @@ NMDdecode(URL)
 \code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr 
 \code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming).
 }
-
+\keyword{internal}

@@ -32,4 +32,4 @@ list with (1) the abundance by length in the bootstrap run, (2) the abundance by
 \description{
 This function is used in bootstrapParallel().
 }
-
+\keyword{internal}

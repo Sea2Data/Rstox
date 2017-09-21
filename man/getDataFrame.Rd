@@ -41,4 +41,4 @@ A dataframe
 \code{getDataFrame} converts a StoX storage object into a dataframe, and is used by the more user friendly \code{getDataFrame1} to convert a baseline object to dataframe. \cr \cr
 \code{getProcessDataTableAsDataFrame} gets a joined table with meanNASC, psu, stratum, and area. Reads transect data, strata and area information from baseline Java object and merges them into one data frame.
 }
-
+\keyword{internal}

@@ -17,6 +17,8 @@
 #'
 #' @return Abundance matrix with imputed biological information 
 #'
+#' @importFrom stats density
+#'
 #' @export
 #' 
 #distributeAbundance <- function(i=NULL, abnd, seedV=NULL, dotfile=NULL) {
@@ -59,11 +61,13 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	
 	# Stop if no known ages and return if no unknown:
 	if(NatKnownAge == 0){
-		stop("No known ages")
+		# Change made on 2017-09-15: Issuing an error here is deprecated. It should be a warning, but the imputing should continue. See note 2017-09-15 below:
+		# stop("No known ages")
+		warning(paste0("No known ages in bootstrap replicate ", i))
 	}
 	if(NatUnknownAge == 0){
-	warning("No unknown ages")
-		abnd$impLevel <- 0
+		warning(paste0("No unknown ages in bootstrap replicate ", i))
+		abnd$impLevel <- 0L
 		return(list(data=abnd, msg=msg, indMissing=NULL, indReplacement=NULL, seedM=NULL))
 	}
 
@@ -131,6 +135,11 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	# Create the following two data frames: 1) the rows of abnd which contain missing age and where there is age available in other rows, and 2) the rows with age available for imputing:
 	missing <- abnd[atUnknownAge, , drop=FALSE]
 	available <- abnd[imputeRows[atUnknownAge], , drop=FALSE]
+	# 2017-09-15: If all imputeRows are NA (happend when NatKnownAge==0) a vector of only NAs are passed to [], which causes the full data frame to be returned with all values replaced ny NA. This causes a dimension mismatch between 'missing' and 'available', since 'available' gets the full dimension of 'abnd'. To account for this, we simply crop the 'available' to the dimensions of the 'missing'. This is a dirty fix, but sould work and allow for NatKnownAge=0, which previously resulted in an error: 
+	if(nrow(available)>nrow(missing)){
+		available <- available[seq_len(nrow(missing)), , drop=FALSE]
+	}
+	
 	# Get the indices of missing data in 'missing' which are present in 'available':
 	#ind <- which(missing == "-" & available != "-", arr.ind=TRUE)
 	ind <- which(is.na(missing) & !is.na(available), arr.ind=TRUE)
@@ -173,6 +182,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #' system.time(bootstrap_Acoustic_imputed <- imputeByAge(projectName))
 #'
 #' @importFrom parallel detectCores makeCluster parLapplyLB stopCluster
+#' @importFrom utils tail
 #'
 #' @export
 #' 
@@ -211,6 +221,9 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	
 	# Check available cores:	
 	availableCores = detectCores()
+	# If memory runs out, a system call to determine number of cores might fail, thus detectCores() could return NA
+	# defaulting to single core if this is the case
+	if(is.na(availableCores)) availableCores <- 1
 	if(cores>availableCores){
 		warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
 	}
@@ -526,8 +539,11 @@ plotNASCDistribution<-function(projectName, format="png", ...){
 #' 
 plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlabtxt=NULL, ylabtxt=NULL, maintitle="", numberscale=NULL, format="png", maxcv=1, ...){
 	# numberscale is kept for backwards compatibility:
-	if(length(numberscale)){
-		unit <- numberscale
+	lll <- list(...)
+	if("numberscale" %in% names(lll)){
+		warning("The argument numberscale is deprecated. Use the new argument 'unit' instead.")
+		unit <- lll$numberscale
+		lll$numberscale <- NULL
 	}
 	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
 	
@@ -655,8 +671,11 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 #' 
 plotAbundance_new <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", numberscale=NULL, format="png", maxcv=1, ...){
 	# numberscale is kept for backwards compatibility:
-	if(length(numberscale)){
-		unit <- numberscale
+	lll <- list(...)
+	if("numberscale" %in% names(lll)){
+		warning("The argument numberscale is deprecated. Use the new argument 'unit' instead.")
+		unit <- lll$numberscale
+		lll$numberscale <- NULL
 	}
 	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
 	

@@ -22,4 +22,4 @@ setMeanNASCValues_old(mtrx, tbl)
 \code{setAssignments_old} Sets assignments to the assignment table in the process data (in memory).
 \code{setMeanNASCValues_old} Sets NASC or meanNASC values to the baseline data (in memory).
 }
-
+\keyword{internal}

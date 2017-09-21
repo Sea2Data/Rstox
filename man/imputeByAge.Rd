@@ -30,4 +30,3 @@ bootstrap <- runBootstrap(projectName, nboot=10, acousticMethod=PSU~Stratum, bio
 system.time(bootstrap_Acoustic_imputed <- imputeByAge(projectName))
 
 }
-

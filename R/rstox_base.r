@@ -24,6 +24,7 @@
 #' @param ...   			Same as parlist, but can be specified separately (not in a list but as separate inputs).
 #' @param out   			One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.
 #' @param nchars			The number of characters to read when determining the types of the files in readXMLfiles().
+#' @param msg				Logical: If TRUE print messages to the console.
 #'
 #' @examples
 #' # Show templates:
@@ -263,7 +264,7 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 #' @export
 #' @rdname createProject
 #' 
-openProject <- function(projectName=NULL, out=c("project", "baseline", "name")){
+openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), msg=FALSE){
 	# If nothing is given return a list of the projects in the StoX project directory:
 	if(length(projectName)==0){
 		.Rstox.init()
@@ -271,7 +272,7 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "name")){
 	}
 	
 	# Get the project Java object, possibly retrieved from the project environment (getProject() uses getProjectPaths() if a character is given):
-	project <- getProject(projectName)
+	project <- getProject(projectName, msg=msg)
 	
 
 #	
@@ -304,11 +305,12 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "name")){
 			parameters <- readBaselineParameters(projectPath)
 			# This is needed to assure that the RstoxEnv environment is loaded:
 			temp <- getRstoxEnv()
-			RstoxEnv[[projectName]] <- list(originalParameters=parameters, currentParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env())
-			#assign(projectName, list(originalParameters=parameters, currentParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()), envir=getRstoxEnv())
-			##assign(getRstoxEnv()[[projectName]], list(originalParameters=parameters, currentParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()))
-			###getRstoxEnv()[[projectName]] <- list(originalParameters=parameters, currentParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env())
-			# Also add the last used parameters to the projectData, in order to save this to file:
+			RstoxEnv[[projectName]] <- list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env())
+			#assign(projectName, list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()), envir=getRstoxEnv())
+			##assign(getRstoxEnv()[[projectName]], list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()))
+			###getRstoxEnv()[[projectName]] <- list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env())
+			# Also add the last used parameters to the projectData, in order to save this to file. 
+			##### NOTE (2017-08-28): This is different from the 'lastParameters' object in the project environment (rstoxEnv[[projectName]]), and is only used when writing project data such as bootstrap results to file: #####
 			setProjectData(projectName=projectName, var=parameters, name="lastParameters")
 	
 			# As of version 1.4.2, create the new folder structure:
@@ -348,7 +350,7 @@ reopenProject <- function(projectName, out=c("project", "baseline", "name")){
 #' @export
 #' @rdname createProject
 #' 
-getProject <- function(projectName){
+getProject <- function(projectName, msg=FALSE){
 	# Return immediately if a project or baseline object is given:
 	if(class(projectName) == "jobjRef"){
 		if(projectName@jclass=="no/imr/stox/model/Project"){
@@ -363,6 +365,9 @@ getProject <- function(projectName){
 	else if(is.character(projectName) && nchar(projectName)>0){
 		projectName <- getProjectPaths(projectName)$projectName
 		if(length(getRstoxEnv()[[projectName]]$projectObject)){
+			if(msg){
+				warning(paste0("Project retrieved from the RstoxEnv$", projectName, " enviroment. To reopen the project use reopenProject(", projectName, ")"))
+			}
 			return(getRstoxEnv()[[projectName]]$projectObject)
 		}
 		else{
@@ -592,7 +597,7 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' @param startProcess	The name or number of the start process in the list of processes in the model (use info=TRUE to return a list of the processes). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
 #' @param endProcess	The name or number of the end process in the list of processes in the model (use info=TRUE to return a list of the processes).
 #' @param reset			Logical; if TRUE rerun the baseline model even if it has been run previously.
-#' @param save			Logical; if TRUE changes to the project specified in parlist and "..." are saved to the object currentParameters in the project list in the RstoxEnv environment.
+#' @param save			Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.
 #' @param out			The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object).
 #' @param msg			Logical: if TRUE print information about the progress of reading the data.
 #' @param exportCSV		Logical: if TRUE turn on exporting csv files from the baseline run.
@@ -743,6 +748,7 @@ runBaseline_temp <- function(projectName, startProcess=1, endProcess=Inf, reset=
 runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("name", "baseline", "project"), msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
 	# Open the project (avoiding generating multiple identical project which demands memory in Java):
 	projectName <- getProjectPaths(projectName)$projectName
+	# If reset==TRUE allow for the warning in getProject():
 	baseline <- openProject(projectName, out="baseline")
 	baseline$setBreakable(.jBoolean(FALSE))
 	baseline$setWarningLevel(.jInt(warningLevel))
@@ -769,10 +775,13 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 		currentpar <- getBaselineParameters(baseline, type="current")
 		newpar <- modifyBaselineParameters(currentpar, parlist=parlist, ...)$parameters
 		lastpar <- getBaselineParameters(baseline, type="last")
-		changedProcesses <- which(sapply(seq_along(newpar), function(i) !identical(newpar[[i]], lastpar[[i]])))
+		
+		# Change made on 2017-09-15: If no valid processes are given in parlist or ..., using which() around the following line returned an error. which() is now moved to inside the if(any(changedProcesses)){}:
+		changedProcesses <- sapply(seq_along(newpar), function(i) !identical(newpar[[i]], lastpar[[i]]))
 		
 		# (2) If the requested parameters (either through parlist and ..., or by default those in the baseline model) differ from the parameters of the last run, rerun the baseline model:
-		if(length(changedProcesses)){
+		if(any(changedProcesses)){
+			changedProcesses <- which(changedProcesses)
 			run <- TRUE
 			startProcess <- min(currentEndProcess + 1, changedProcesses)
 			endProcess <- max(changedProcesses, endProcess)
@@ -813,14 +822,14 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 			# Run the baseline:
 			baseline$run(.jInt(startProcess), .jInt(endProcess), .jBoolean(FALSE))
 
-			# Change the 'currentParameters' object and keep the last used parameters in Java memory (do nothing compared to using setBaselineParameters() below):
+			# Change the 'javaParameters' object and keep the last used parameters in Java memory (do nothing compared to using setBaselineParameters() below):
 			if(save){
 				# This is needed to assure that the RstoxEnv environment is loaded:
 				temp <- getRstoxEnv()
-				RstoxEnv[[projectName]]$currentParameters <- newpar
-				#assign("currentParameters", newpar, envir=getRstoxEnv()[[projectName]])
-				##assign(getRstoxEnv()[[projectName]]$currentParameters, newpar)
-				###getRstoxEnv()[[projectName]]$currentParameters <- newpar
+				RstoxEnv[[projectName]]$javaParameters <- newpar
+				#assign("javaParameters", newpar, envir=getRstoxEnv()[[projectName]])
+				##assign(getRstoxEnv()[[projectName]]$javaParameters, newpar)
+				###getRstoxEnv()[[projectName]]$javaParameters <- newpar
 			}
 			# Else return to original parameter values:
 			else{
@@ -1075,63 +1084,20 @@ findProcess <- function(projectName, proc="all", fun=FALSE){
 	functionNames <- sapply(processes, "[[", "functionName")
 
 
-	##### (2) Get output from processes, possibly specified by function names using 'fun', in which case the name of the process does not matter, and if there are more than one process using the same funciton, the first is chosen: #####
-	matchedProcesses <- NULL
-	if(!any(identical(fun, FALSE), length(fun)==0, nchar(fun)==0)){
-		# Discard process names if any funciton names are given!:
-		proc <- FALSE
-		# Find the functions by function name:
-		if(isTRUE(fun) || identical(fun, "all")){
-			matchedProcesses <- processNames
-		}
-		else{
-			# Use for loop for clarity, and loop through the elements of 'fun' and find matches in the function names:
-			matchedProcessInd <- NULL
-			warn <- NULL
-			for(thisfun in fun){
-				matched <- which(functionNames==thisfun)
-				# If no match, collect to a warning message:
-				if(length(matched)){
-					warn <- c(warn, paste0("The function ", thisfun, " not present in the baseline model"))
-				}
-				# If only one process is matched by function, pick this process:
-				else if(length(matched)==1){
-					matchedProcessInd <- c(matchedProcessInd, matched)
-				}
-				# If more than one process has the same function:
-				else if(length(matched)>1){
-					identicalFunAndProcNames <- processNames[matched] == functionNames[matched]
-					# Pick the process which has identical process and function name:
-					if(any(identicalFunAndProcNames)){
-						matchedProcessInd <- c(matchedProcessInd, matched[identicalFunAndProcNames])
-					}
-					else{
-						warn <- c(warn, paste0("The function ", thisfun, " used by multiple processes (",  paste(processNames[matched], collapse=", "), ") but none of the processes are named by the funciton name (indicating prioritized process). The first process selected (", processNames[matched[1]], ")."))
-					}
-				}
-			}
-			
-			if(length(warn)){
-				lapply(warn, warning)
-			}
-			
-			# Get the process names to return data from:
-			matchedProcesses <- processNames[matchedProcessInd]
-		}
-	}
-	# Get data by process name:
-	if(!any(identical(proc, FALSE), length(proc)==0, nchar(proc)==0)){
-		if(isTRUE(proc) || identical(proc, "all")){
-			matchedProcesses <- processNames
-		}
-		else{
-			matchedProcesses <- intersect(proc, processNames)
-		}
-	}
-
-	# Return the data:
-	matchedProcesses
-}
+#*********************************************
+#*********************************************
+#' Get process indices.
+#' 
+#' Gets the indices of processes in the baseline model, where both process name and function name are accepted. The process WriteProcessData is ignored.
+#' 
+#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param proc			A string vector naming processes/function to find.
+#'
+#' @return Index number of the process.
+#'
+#' @examples
+#' openProject("Test_Rstox")
+#' getProcess("Test_Rstox", c("SuperIndAbundance", "StratumArea"))
 #'
 #' @export
 #' @rdname runBaseline
@@ -1221,9 +1187,9 @@ getProcess <- function(projectName, proc="all"){
 #' @export
 #' @rdname setBaselineParameters
 #'
-setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save=FALSE, ...){
-	# get the baseline object:
-	baseline <- openProject(projectName, out="baseline")
+setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save.project=FALSE, ...){
+	# Get the baseline object, asuming the project is already open, thus the suppressWarnings():
+	suppressWarnings(baseline <- openProject(projectName, out="baseline"))
 	# Include both parameters specified in 'parlist' and parameters specified freely in '...':
 	parlist <- .getParlist(parlist=parlist, ...)
 
@@ -1260,6 +1226,13 @@ setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save=FA
 	}
 }
 #'
+#' @importFrom XML xmlDoc
+#' @importFrom XML getNodeSet
+#' @importFrom XML xmlValue
+#' @importFrom XML xpathSApply
+#' @importFrom XML xmlGetAttr
+#' @importFrom XML xmlRoot
+#' @importFrom XML xmlNamespaceDefinitions
 #' @export
 #' @rdname setBaselineParameters
 #' 
@@ -1294,8 +1267,32 @@ readBaselineParameters <- function(projectName){
 	# Discard the process "WriteProcessData":
 	out <- out[sapply(out, "[[", "functionName")!="WriteProcessData"]
 
-	# Return the parameter list:
-	out
+	# Parse the XML
+	doc <- xmlParse(projectPaths$projectXML)
+	#doc <- xmlParse(projectXML)
+
+	# Extract all available namespace(s)
+	nsDefs <- xmlNamespaceDefinitions(doc)
+	ns <- structure(sapply(nsDefs, function(x) x$uri), names = names(nsDefs))
+
+	# If selectedNS is not available, fallback to the first default namespace
+	if(!length(grep(paste0("^",selectedNS,"$"), ns))){
+	  selectedNS <- ns[[1]]
+	}
+
+	# Get the the baseline model's process nodes
+	baselineProcess <- getNodeSet(doc, "//ns:model[@name='baseline']//ns:process", namespaces = c(ns=selectedNS))
+	
+	# Process the baseline nodes and extract name and parameters
+	baselineProcessFunctions <- sapply(baselineProcess, getbaselineProcess, selectedNS)
+
+	# Filter out write process data
+	baselineProcessFunctions[["WriteProcessData"]] <- NULL
+
+	# Remove all disabled process
+	baselineProcessFunctions <- baselineProcessFunctions[!is.na(baselineProcessFunctions)]
+
+	return(baselineProcessFunctions)
 }
 #'
 #' @export
@@ -1333,7 +1330,7 @@ getBaselineParameters <- function(projectName, type=c("original", "current", "la
 		type <- "originalParameters"
 	}
 	else if(tolower(substr(type[1], 1, 1)) == "c"){
-		type <- "currentParameters"
+		type <- "javaParameters"
 	}
 	else{
 		type <- "lastParameters"
@@ -1376,7 +1373,7 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 		# Issue a warning if there are non-existent processes, and remove these:
 		nonExistent <- is.na(changeProcessesIdx)
 		if(any(nonExistent)){
-			warning("parlist or ... contains non-existent processes, which were removed. Use names(getBaseline(input=\"par\", proc=FALSE)) to get a list of processes.")
+			warning(paste0("The following processes are present in parlist or ... but not in the project, and were thus removed):\n", paste(changeProcesses[nonExistent], collapse=", ")))
 			if(all(nonExistent)){
 				return(list())
 			}
@@ -1543,6 +1540,7 @@ getProjectPaths <- function(projectName=NULL, dir=NULL){
 #' 
 getProjectDataEnv <- function(projectName){
 	projectName <- getProjectPaths(projectName)$projectName
+	# Do not issue a warning if the project is already open, since getProjectDataEnv() is intended to get data from the project enviroment, assuming it is already open. 
 	openProject(projectName)
 	getRstoxEnv()[[projectName]]$projectData
 }

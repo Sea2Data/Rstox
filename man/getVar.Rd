@@ -17,4 +17,4 @@ The requested variable as returned using "$".
 \description{
 This funciton is used to ensure that the requested variable has positive length. If not and error is issued, which may happen it there is a naming discrepancy between Rstox and StoX.
 }
-
+\keyword{internal}
