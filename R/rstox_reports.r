@@ -64,6 +64,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	if(NatKnownAge == 0){
 		# Change made on 2017-09-15: Issuing an error here is deprecated. It should be a warning, but the imputing should continue. See note 2017-09-15 below:
 		# stop("No known ages")
+		# 2017-09-21: Ibrahim experienced a strange error " one node produced an error: replacement has 1 row, data has 0" when running impute on 4 cores over 50 bootstrap replicated. He will test with 5 replicates to see if the error is memory related.
 		warning(paste0("No known ages in bootstrap replicate ", i))
 	}
 	if(NatUnknownAge == 0){
