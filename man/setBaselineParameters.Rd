@@ -9,17 +9,15 @@
 \title{Set, read, get or modify baseline parameters.}
 \usage{
 setBaselineParameters(projectName, msg = TRUE, parlist = list(),
-  save = FALSE, ...)
+  save.project = FALSE, ...)
 
-readBaselineParameters(projectName)
+readBaselineParameters(projectName, rver = "1")
 
 readBaselineParametersJava(projectName)
 
 getBaselineParameters(projectName, type = c("original", "current", "last"))
 
 modifyBaselineParameters(parameters, parlist = list(), ...)
-
-.getParlist(parlist = list(), ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -28,9 +26,11 @@ modifyBaselineParameters(parameters, parlist = list(), ...)
 
 \item{parlist}{List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE. New parameters can be set by setBaselineParameters() but not removed in the current version.}
 
-\item{save}{Logical: if TRUE save the changes to the project.xml file.}
+\item{save.project}{Logical: if TRUE save the changes to the project.xml file.}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
+
+\item{rver}{The version of the stox library.}
 
 \item{type}{The type of baseline parameter list, one of  "original", "current" and "last".}
 
@@ -41,8 +41,7 @@ The original parameters
 }
 \description{
 \code{setBaselineParameters} Sets baseline parameters in memory to new values specified in \code{parlist} or \code{...}. \cr \cr
-\code{.getParlist} Merges the inputs parlist and ... \cr \cr
 \code{readBaselineParameters} Reads the baseline parameters from the project.xml file \cr \cr
 \code{getBaselineParameters} Gets either original, current or last used baseline parameters \cr \cr
-\code{modifyBaselineParameters} Modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...} \cr \cr
+\code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment or in the project file). \cr \cr
 }

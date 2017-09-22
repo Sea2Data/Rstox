@@ -31,9 +31,7 @@ closeProject(projectName)
 
 isProject(projectName)
 
-readXMLfiles(files, dir = tempdir(), nchars = 500)
-
-pointToStoXFiles(projectName, files = NULL)
+readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -42,7 +40,7 @@ pointToStoXFiles(projectName, files = NULL)
 
 \item{dir}{The directory in which to put the project. The project is a directory holding three sub directories named "input", "output" and "process", where input, output and process files are stored.}
 
-\item{model}{The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (not yet implemented). Show available templates with createProject().}
+\item{model}{The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (see \code{parlist}). Show available templates with createProject().}
 
 \item{ow}{Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.}
 
@@ -50,9 +48,7 @@ pointToStoXFiles(projectName, files = NULL)
 
 \item{ignore.processXML}{Logical: if TRUE do not copy any project.XML file given in \code{files} to the project.}
 
-\item{parlist}{List of parameters values overriding existing parameter values. These are specified as processNames = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE.}
-
-\item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
+\item{parlist, ...}{See \code{\link{runBaseline}}.}
 
 \item{out}{One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.}
 
@@ -71,11 +67,10 @@ A project object
 \code{closeProject} returns TRUE if the project was open and FALSE if not. \cr \cr
 \code{isProject} returns TRUE if the project exists on file and FALSE if not. \cr \cr
 \code{readXMLfiles} returns the XML data. \cr \cr
-\code{pointToStoXFiles} returns the file paths linked to the project. \cr \cr
 }
 \description{
 \code{createProject} creates a new StoX project (from xml files). \cr \cr
-\code{openProject} opens a StoX project. \cr \cr
+\code{openProject} opens a StoX project. If the project has already been opened, \code{openProject} will only retrieve the project object from the RstoxEnv enviromnent. To force open the project use \code{reopenProject}. \cr \cr
 \code{reopenProject} re-opens a StoX project, which is equivalent to closeing and then opening the project. \cr \cr
 \code{getProject} gets the project object, either from the input if this is a baseline or project object, or from the project environment. \cr \cr
 \code{updateProject} updates links to xml files in a project. \cr \cr
@@ -83,13 +78,12 @@ A project object
 \code{closeProject} removes the project from memory. \cr \cr
 \code{isProject} checks whether the project exists on file. \cr \cr
 \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
-\code{pointToStoXFiles} updates a project with the files located in the "input" directory. Used in updateProject(). \cr \cr
 }
 \examples{
 # Show templates:
 createProject()
 # Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
+createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 
 # Read xml file directly from any location:
 xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")

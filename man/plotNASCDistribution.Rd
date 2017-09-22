@@ -24,10 +24,11 @@ Plot is exported to a tif- or png-file
 }
 \examples{
 # Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
+createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 projectName <- "Test_Rstox"
 # Run bootstrap before plotting:
-bootstrap <- runBootstrap(projectName, nboot=10, seed=1, acousticMethod=PSU~Stratum, bioticMethod=EDSU~Stratum)
+boot <- runBootstrap(projectName, nboot=10, seed=1, 
+    acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum)
 plotNASCDistribution(projectName)
 
 }

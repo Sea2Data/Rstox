@@ -5,7 +5,7 @@
 \alias{getDataFrame1}
 \alias{getDataFrameAtLevel}
 \alias{getProcessDataTableAsDataFrame}
-\title{(Internal) Convert a storage object into a dataframe representation}
+\title{Convert a storage object into a dataframe representation}
 \usage{
 getDataFrame(baseline, processName = NULL, functionName = NULL,
   level = NULL, drop = TRUE)

@@ -4,7 +4,7 @@
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
 
 # Install the packages that Rstox depends on. Note that this updates all the specified packages to the latest (binary) version:
-dep.pck <- c("data.table", "ggplot2", "MASS", "pbapply", "rgdal", "rgeos", "rJava", "sp", "XML")
+dep.pck <- c("data.table", "ggplot2", "pbapply", "rgdal", "rgeos", "rJava", "sp", "XML")
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
@@ -33,16 +33,19 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 
 
 # Release notes:
-# 1. Fixed bug on Mac with rJava: Changed Sys.setenv(JAVA_HOME="") to if(Sys.getenv("JAVA_HOME")!="") Sys.setenv(JAVA_HOME="") in the onload() function.
 
-# 2. Changed the output from runBootstrap() to TRUE (invisibly), instead of the bootstrap object, which can be memory consuming.
+# 1. Fixed bug with AreaMethod="accurate" in the process StratumArea, which had no effect when run from Rstox.
 
-# 3. Removed the parameter 'par' of getBaseline(), which was used to uniquely select processes using the same function. This method was replaced by the following method: If more than one process use the same function, return data from that which has process name equal to the function name, and if such a process does not exist, return the first process with a warning.
+# 2. Added the function varianceEstimation(), which implements the variance estimation of Jolly, G. M., & Hampton, I. (1990). A stratified random transect design for acoustic surveys of fish stocks. Canadian Journal of Fisheries and Aquatic Sciences, 47(7), 1282-1291.
 
-# 4. Removed the parameter 'fun' of getBaseline(). The old method supported both the process name 'proc' and the function name 'fun' when specifying which process to get data from, but the new method only use one parameter 'proc'. The function now searces for a match in process name, and then in function name, picking the first process in the case of multiple matches, with a warning.
+# 3. Re-introduced the defaults acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum in runBootstrap().
 
-# 5. Removed the old functions bootstrapBioticAcoustic() and bootstrapBioticSweptArea().
+# 4. Changed the function readBaselineParameters() to parse the project.XML file.
 
-# 6. Added the function wkt_MULTIPOLYGON(), adding support for lists of two column polygon matrices in polyArea().
+# 5. Added the parameter 'model' in readXMLfiles(), allowing for specifying additional processing of the data read from XML files. A simple example is readXMLfiles(AcousticXMLfiles, model=list(NASC=list(AcousticData="Process(ReadAcousticXML)"))), which for acoustic XML files also calculates the NASC values.
+
+# 6. Added the function addProcesses(), which adds processes to a project object given a list of parameter specifications as returned by getParlist().
+
+# 7. Simplified how custom models are implemented in createProject(), which now first runs addProcesses() and then setBaselineParameters(). 
 
 # 8. Renamed the object currentParameters in the project environment to javaParameters, to stress that these are the current parameter values in the project Java object. The object lastParameters is the parameters used during the last baseline run, which do not have to be identical to the javaParameters, in case the parameter values in Java were reset to the previous parameter values.

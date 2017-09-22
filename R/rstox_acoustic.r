@@ -14,7 +14,7 @@
 #'
 #' @examples
 #' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
+#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' psuNASC <- getPSUNASC("Test_Rstox")
 #' psuNASC_agg <- aggPSUNASC(psuNASC=psuNASC)
 #'
@@ -64,7 +64,7 @@ getPSUNASC <- function(baseline){
 #'
 aggPSUNASC <- function(psuNASC){
 	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	.Rstox.init()
+	Rstox.init()
 	Functions <- J("no.imr.stox.functions.utils.Functions")
 	# psuNASC contains the column PSU (AJ 2016-08-31):
 	if(length(psuNASC$PSU)){
@@ -87,6 +87,7 @@ aggPSUNASC <- function(psuNASC){
 #' @return list with mean and variance by stratum
 #'
 #' @export
+#' @keywords internal
 #' 
 wtd.strata.est <- function(tr.value, tr.dist){
 	mean.strata <- sum(tr.value * tr.dist) / sum(tr.dist)
@@ -113,7 +114,7 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #'
 #' @examples
 #' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
+#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
@@ -189,11 +190,12 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #'
 #' @examples
 #' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
+#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
-#' resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(seed=1, nboot=5))
+#' resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, 
+#'     parameters=list(seed=1, nboot=5))
 #'
 #' @export
 #' 

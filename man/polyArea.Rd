@@ -2,21 +2,21 @@
 % Please edit documentation in R/rstox_spatial.r
 \name{polyArea}
 \alias{polyArea}
-\alias{wkt_MULTIPOLYGON}
+\alias{wkt2MULTIPOLYGON}
 \title{Polygon area}
 \usage{
 polyArea(wkt)
 
-wkt_MULTIPOLYGON(wkt)
+wkt2MULTIPOLYGON(wkt)
 }
 \arguments{
 \item{wkt}{Either one two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, tne first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".}
 }
 \value{
-\code{polyArea} returns area in nmi squared, and \code{wkt_MULTIPOLYGON} returns a MULTIPOLYGON wkt.
+\code{polyArea} returns area in nmi squared, and \code{wkt2MULTIPOLYGON} returns a MULTIPOLYGON wkt.
 }
 \description{
-Calculate area of wkt polygon with az.eq.are projection / adapted origo. The helper function wkt_MULTIPOLYGON() converts a two column matrix or a list of two column matrices to a wkt string.
+Calculate area of wkt polygon with az.eq.are projection / adapted origo. The helper function \code{wkt2MULTIPOLYGON} converts a two column matrix or a list of two column matrices to a wkt string.
 }
 \examples{
 library(rgeos)
@@ -28,8 +28,8 @@ s2 <- cbind(20 + c(7, 12, 12, 7, 7), c(56, 56, 58, 58, 56))
 wkt <- list(
 	list(p1, s11, s12),
 	list(p2, s2))
-wkt_MULTIPOLYGON(wkt)
-plot(readWKT(wkt_MULTIPOLYGON(wkt)), col='black', pbg='white')
+wkt2MULTIPOLYGON(wkt)
+plot(readWKT(wkt2MULTIPOLYGON(wkt)), col='black', pbg='white')
 polyArea(wkt)
 
 }

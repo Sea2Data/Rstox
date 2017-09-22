@@ -1,8 +1,9 @@
 Package: Rstox
-Title: Running stox functionality independently in R
-Version: 1.6.1
+Title: Running Stox functionality independently in R
+Version: 1.6.2
 Authors@R: c(
   person("Arne Johannes", "Holmin", role = c("aut","cre"), email = "arnejh@imr.no"),
+  person("Edvin", "Fuglebakk", role = "ctb"),
   person("Gjert Endre", "Dingsoer", role = "ctb"),
   person("Aasmund", "Skaalevik", role = "ctb"),
   person("Espen", "Johnsen", role = "ctb"))

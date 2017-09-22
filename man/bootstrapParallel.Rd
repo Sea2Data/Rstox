@@ -2,13 +2,13 @@
 % Please edit documentation in R/rstox_boostrap.r
 \name{bootstrapParallel}
 \alias{bootstrapParallel}
-\title{(Internal) Bootstrap biotic stations and acoustic data}
+\title{Bootstrap biotic stations and acoustic data}
 \usage{
 bootstrapParallel(projectName, assignments, psuNASC = NULL,
   stratumNASC = NULL, resampledNASC = NULL, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  outProcess = "SuperIndAbundance", seed = 1, cores = 1,
-  baseline = NULL, msg = TRUE, parameters = list())
+  seed = 1, cores = 1, baseline = NULL, msg = TRUE,
+  parameters = list())
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -22,6 +22,10 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
 \item{resampledNASC}{Resampled NASC distribution.}
 
 \item{nboot}{Number of bootstrap replicates.}
+
+\item{startProcess}{The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.}
+
+\item{endProcess}{The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".}
 
 \item{seed}{The seed for the random number generator (used for reproducibility).}
 

@@ -3,7 +3,7 @@
 \name{setAssignments_old}
 \alias{setAssignments_old}
 \alias{setMeanNASCValues_old}
-\title{(Internal) Set and remove assignments}
+\title{Set and remove assignments}
 \usage{
 setAssignments_old(ta_table, assignments)
 

@@ -2,11 +2,11 @@
 #*********************************************
 #' Polygon area
 #'
-#' Calculate area of wkt polygon with az.eq.are projection / adapted origo. The helper function wkt_MULTIPOLYGON() converts a two column matrix or a list of two column matrices to a wkt string.
+#' Calculate area of wkt polygon with az.eq.are projection / adapted origo. The helper function \code{wkt2MULTIPOLYGON} converts a two column matrix or a list of two column matrices to a wkt string.
 #' 
 #' @param wkt	Either one two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, tne first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".
 #' 
-#' @return \code{polyArea} returns area in nmi squared, and \code{wkt_MULTIPOLYGON} returns a MULTIPOLYGON wkt.
+#' @return \code{polyArea} returns area in nmi squared, and \code{wkt2MULTIPOLYGON} returns a MULTIPOLYGON wkt.
 #'
 #' @examples
 #' library(rgeos)
@@ -18,8 +18,8 @@
 #' wkt <- list(
 #' 	list(p1, s11, s12),
 #' 	list(p2, s2))
-#' wkt_MULTIPOLYGON(wkt)
-#' plot(readWKT(wkt_MULTIPOLYGON(wkt)), col='black', pbg='white')
+#' wkt2MULTIPOLYGON(wkt)
+#' plot(readWKT(wkt2MULTIPOLYGON(wkt)), col='black', pbg='white')
 #' polyArea(wkt)
 #'
 #' @export
@@ -33,7 +33,7 @@ polyArea <- function(wkt) {
 	###if(is.numeric(wkt)){
 	###	wkt <- paste0("MULTIPOLYGON(((", paste(apply(wkt, 1, paste, collapse=" "), collapse=", "), ")))")
 	###}
-	wkt <- wkt_MULTIPOLYGON(wkt)
+	wkt <- wkt2MULTIPOLYGON(wkt)
 	p <- rgeos::readWKT(wkt)
 	# Define projection for the wkt
 	sp::proj4string(p) <- sp::CRS("+proj=longlat +ellps=WGS84")	
@@ -50,7 +50,7 @@ polyArea <- function(wkt) {
 #' @export
 #' @rdname polyArea
 #' 
-wkt_MULTIPOLYGON <- function(wkt){
+wkt2MULTIPOLYGON <- function(wkt){
 	# Merge to pairs of x, y:
 	mergeToPairs <- function(x){
 		x <- apply(x, 1, paste, collapse=" ")

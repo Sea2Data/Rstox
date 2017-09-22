@@ -3,7 +3,7 @@
 \name{setAssignments}
 \alias{setAssignments}
 \alias{setNASC}
-\title{(Internal) Set NASC data and assignments to memory}
+\title{Set NASC data and assignments to memory}
 \usage{
 setAssignments(projectName, assignments)
 
