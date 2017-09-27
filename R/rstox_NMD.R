@@ -31,9 +31,9 @@
 #' @param filebase				The prefix to use in the names of the StoX projects to which the data are downloaded.
 #' @param cleanup				Logical: if FALSE, zip files containing cruise series or survey time series are not deleted.
 #' @param model					The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (not yet implemented). Show available templates with createProject().
-#' @param ow   					Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.
+#' @param ow 					Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.
 #' @param return.URL			Logical: If TRUE, return the URL of the files to download.
-#' @param ...   			Same as parlist, but can be specified separately (not in a list but as separate inputs).
+#' @param ...		 			Same as parlist, but can be specified separately (not in a list but as separate inputs).
 #' @param URL					The URL(s) to the xml data.
 #' @param list.out				Logical: If TRUE, convert the XML data to a list (time consuming).
 #' @param file					The path to a the file to which the data are saved.
@@ -330,20 +330,20 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 						cat("Not overwriting:", projectNames[i], "\n")
 						ow <- FALSE
 						if(cleanup){
-                                                   unlink(zipPath)
-                                                }
-                                                next
+							unlink(zipPath)
+						}
+						next
 					}
 					else if(ans=="y"){
 						cat("Overwriting:", projectNames[i], "\n")
 					}
 					else if(ans=="n"){
-                                                cat("Not overwriting:", projectNames[i], "\n")
+						cat("Not overwriting:", projectNames[i], "\n")
 						if(cleanup){
-                                                   unlink(zipPath)
-                                                }
+							unlink(zipPath)
+						}
 						next
-                                        }
+						}
 					else{
 						cat("Overwriting:", projectNames[i], "\n")
 					}
@@ -351,12 +351,12 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 				else if(!ow){
 					cat("Not overwriting:", projectNames[i], "\n")
 					if(cleanup){
-                                           unlink(zipPath)
-                                        }
+						unlink(zipPath)
+					}
 					next
 				}
 				else if(ow){
-                                        cat("Overwriting:", projectNames[i], "\n")
+					cat("Overwriting:", projectNames[i], "\n")
 				}
 			}
 			

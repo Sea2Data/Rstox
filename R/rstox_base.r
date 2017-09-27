@@ -588,8 +588,8 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' \code{getBaseline} returns input and output data from the StoX baseline model. \cr \cr
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
-#' @param startProcess	The name or number of the start process in the list of processes in the model (use info=TRUE to return a list of the processes). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
-#' @param endProcess	The name or number of the end process in the list of processes in the model (use info=TRUE to return a list of the processes).
+#' @param startProcess	The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
+#' @param endProcess	The name or number of the end process in the list of processes in the model.
 #' @param reset			Logical; if TRUE rerun the baseline model even if it has been run previously.
 #' @param save			Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.
 #' @param out			The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object).
@@ -1134,6 +1134,12 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 			changeProcessesIdx <- changeProcessesIdx[valid]
 			changeParameters <- changeParameters[valid]
 			changeValues <- changeValues[valid]
+		}
+		
+		# If any parameter values are strings with the name of a process, convert to Process(processName)
+		atProcess <- changeValues %in% processNames
+		if(any(atProcess)){
+			changeValues[atProcess] <- paste0("Process(", changeValues[atProcess], ")")
 		}
 		
 		changed <- logical(length(changeValues))
