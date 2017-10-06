@@ -90,6 +90,7 @@ aggPSUNASC <- function(psuNASC){
 #' @keywords internal
 #' 
 wtd.strata.est <- function(tr.value, tr.dist){
+	# Average of transect values weighted by transect distance:
 	mean.strata <- sum(tr.value * tr.dist) / sum(tr.dist)
 	#var.strata <- (sum((tr.dist^2) * ((tr.value - mean.strata)^2))) /
 	#	(((mean(tr.dist))^2) * length(tr.value) * (length(tr.value) -1) )
@@ -212,7 +213,7 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
 			tmpNASC <- aggPSUNASC(psuNASC)
 		}
 		set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
-		SeedV <- sample(c(1:10000000), parameters$nboot, replace = FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+		SeedV <- sample(c(1:10000000), parameters$nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
 		tmp2NASC <- split(tmpNASC,list(tmpNASC$Stratum))
 		res.NASC.dist <- matrix(NA,nrow=parameters$nboot,ncol=length(unique(tmpNASC$Stratum)))
 		for(i in 1:parameters$nboot){
@@ -225,7 +226,7 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
 					#	yy2 <- yy[match(tID,yy$PSU), ]
 					#}
 					#else{
-				tID <- sample(yy$SampleUnit, length(yy$SampleUnit), replace = TRUE) # Resample NASC
+				tID <- sample(yy$SampleUnit, length(yy$SampleUnit), replace=TRUE) # Resample NASC
 				yy2 <- yy[match(tID,yy$SampleUnit), ]
 				#}
 				resmean <- wtd.strata.est(yy2$Value,yy2$dist)$strata.mean

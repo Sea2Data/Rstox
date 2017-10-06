@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project rstoxversion="1.4" xmlns="http://www.imr.no/formats/stox/v1" rversion="3.3.1" stoxversion="2.2" resourceversion="1.7">
+<project template="" rstoxversion="1.6" xmlns="http://www.imr.no/formats/stox/v1" lastmodified="03/10/17 10:34" rversion="3.4.1" stoxversion="2.4.8" resourceversion="1.72">
   <model name="baseline">
     <process name="ReadProcessData">
       <function>ReadProcessData</function>
@@ -14,11 +14,11 @@
       <respondingui>false</respondingui>
       <breakingui>false</breakingui>
       <fileoutput>false</fileoutput>
-      <parameter name="FileName1">input/acoustic/Echosounder-1618.xml</parameter>
-      <parameter name="FileName2">input/acoustic/Echosounder-201605.xml</parameter>
-      <parameter name="FileName3">input/acoustic/Echosounder-2016205.xml</parameter>
-      <parameter name="FileName4">input/acoustic/Echosounder-2016857.xml</parameter>
-      <parameter name="FileName5">input/acoustic/Echosounder-A6-2016.xml</parameter>
+      <parameter name="FileName1">/input/acoustic/Echosounder-1618.xml</parameter>
+      <parameter name="FileName2">/input/acoustic/Echosounder-201605.xml</parameter>
+      <parameter name="FileName3">/input/acoustic/Echosounder-2016205.xml</parameter>
+      <parameter name="FileName4">/input/acoustic/Echosounder-2016857.xml</parameter>
+      <parameter name="FileName5">/input/acoustic/Echosounder-A6-2016.xml</parameter>
       <output>AcousticData</output>
     </process>
     <process name="FilterAcoustic">
@@ -48,11 +48,11 @@
       <respondingui>false</respondingui>
       <breakingui>false</breakingui>
       <fileoutput>false</fileoutput>
-      <parameter name="FileName1">input/biotic/Biotic-1618.xml</parameter>
-      <parameter name="FileName2">input/biotic/Biotic-201605.xml</parameter>
-      <parameter name="FileName3">input/biotic/Biotic-2016205.xml</parameter>
-      <parameter name="FileName4">input/biotic/Biotic-2016857.xml</parameter>
-      <parameter name="FileName5">input/biotic/Biotic-A6-2016.xml</parameter>
+      <parameter name="FileName1">/input/biotic/Biotic-1618.xml</parameter>
+      <parameter name="FileName2">/input/biotic/Biotic-201605.xml</parameter>
+      <parameter name="FileName3">/input/biotic/Biotic-2016205.xml</parameter>
+      <parameter name="FileName4">/input/biotic/Biotic-2016857.xml</parameter>
+      <parameter name="FileName5">/input/biotic/Biotic-A6-2016.xml</parameter>
       <output>BioticData</output>
     </process>
     <process name="FilterBiotic">
@@ -203,7 +203,7 @@
       <output>Density</output>
     </process>
     <process name="AbundanceByLength">
-      <function>AbundanceByLength</function>
+      <function>Abundance</function>
       <enabled>true</enabled>
       <respondingui>false</respondingui>
       <breakingui>false</breakingui>
@@ -254,29 +254,32 @@
       <output>ProcessData</output>
     </process>
   </model>
-  <model name="rmodel">
+  <model name="r">
     <process name="runBootstrap">
       <function>runBootstrap</function>
       <enabled>true</enabled>
       <respondingui>false</respondingui>
       <breakingui>false</breakingui>
-      <parameter name="type">Acoustic</parameter>
-      <parameter name="startProcess">TotalLengthDist</parameter>
-      <parameter name="endProcess">SuperIndAbundance</parameter>
-      <parameter name="numIterations">50</parameter>
+      <parameter name="acousticMethod">PSU~Stratum</parameter>
+      <parameter name="bioticMethod">PSU~Stratum</parameter>
+      <parameter name="nboot">50</parameter>
       <parameter name="seed">1234</parameter>
       <parameter name="cores">1</parameter>
-      <parameter name="NASCDistr">observed</parameter>
       <output>RObject</output>
     </process>
-    <process name="saveRImage">
-      <function>saveRImage</function>
+    <process name="imputeByAge">
+      <function>imputeByAge</function>
       <enabled>true</enabled>
       <respondingui>false</respondingui>
       <breakingui>false</breakingui>
-      <parameter name="outputFolder">rmodel</parameter>
-      <parameter name="fileBaseName">rmodel.RData</parameter>
-      <parameter name="ev"></parameter>
+      <parameter name="seed">1234</parameter>
+      <parameter name="cores">1</parameter>
+    </process>
+    <process name="saveProjectData">
+      <function>saveProjectData</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
     </process>
   </model>
   <model name="baseline-report">
@@ -309,33 +312,13 @@
       <output>Reports</output>
     </process>
   </model>
-  <model name="rmodel-report">
-    <process name="imputeByAge">
-      <function>imputeByAge</function>
-      <enabled>true</enabled>
-      <respondingui>false</respondingui>
-      <breakingui>false</breakingui>
-      <parameter name="reportEnv"></parameter>
-      <parameter name="type">Acoustic</parameter>
-      <parameter name="seed">1234</parameter>
-      <parameter name="cores">1</parameter>
-    </process>
-    <process name="saveRImage">
-      <function>saveRImage</function>
-      <enabled>true</enabled>
-      <respondingui>false</respondingui>
-      <breakingui>false</breakingui>
-      <parameter name="outputFolder">report</parameter>
-      <parameter name="fileBaseName">impute.RData</parameter>
-      <parameter name="ev"></parameter>
-    </process>
+  <model name="r-report">
     <process name="getReports">
       <function>getReports</function>
       <enabled>true</enabled>
       <respondingui>false</respondingui>
       <breakingui>false</breakingui>
       <parameter name="out">all</parameter>
-      <parameter name="level">impute</parameter>
     </process>
     <process name="getPlots">
       <function>getPlots</function>
@@ -343,7 +326,6 @@
       <respondingui>false</respondingui>
       <breakingui>false</breakingui>
       <parameter name="out">all</parameter>
-      <parameter name="level">impute</parameter>
     </process>
   </model>
   <processdata>

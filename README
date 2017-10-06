@@ -1,4 +1,4 @@
-# Rstox version: 1.6.2 (latest alpha, 2017-09-24)
+# Rstox version: 1.6.3 (latest alpha, 2017-10-06)
 # R version: 3.3.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -8,9 +8,9 @@ dep.pck <- c("data.table", "ggplot2", "pbapply", "rgdal", "rgeos", "rJava", "sp"
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
-install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.2/Rstox_1.6.2.tar.gz", repos=NULL)
+install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.3/Rstox_1.6.3.tar.gz", repos=NULL)
 
-# Alternatively, install the latest development version from GitHub. Note that this does not garantee a stable version. For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.2 as described above. Install from github using the devtools package:
+# Alternatively, install the latest development version from GitHub. Note that this does not garantee a stable version. For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.3 as described above. Install from github using the devtools package:
 # devtools::install_github("Sea2Data/Rstox", ref="develop")
 
 # Note that 64 bit Java is required to run Rstox
@@ -34,18 +34,14 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 
 # Release notes:
 
-# 1. Fixed bug with AreaMethod="accurate" in the process StratumArea, which had no effect when run from Rstox.
+# 1. Added support in modifyBaselineParameters() used by runBaseline() for specifying StoX processes by their name only, and not Process(name_of_the_processs).
 
-# 2. Added the function varianceEstimation(), which implements the variance estimation of Jolly, G. M., & Hampton, I. (1990). A stratified random transect design for acoustic surveys of fish stocks. Canadian Journal of Fisheries and Aquatic Sciences, 47(7), 1282-1291.
+# 2. Modified the function getNMDinfo() to return data frames instead of matrices.
 
-# 3. Re-introduced the defaults acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum in runBootstrap().
+# 3. Restructured the function getNMDdata(). Added the parameters subdir, which creates a directory inside the StoX projects directory in which to put multiple StoX projects (typically survey time series and cruise series), and abbrev, which abbreviates the StoX project names by the function abbrevWords() (using sub=-1 on years, ship names and other suffixes).
 
-# 4. Changed the function readBaselineParameters() to parse the project.XML file.
+# 4. Added the function abbrevWords(), used when abbreviting survey time series and cruise series downloaded from NMD using getNMDdata(, abbrev=TRUE). 
 
-# 5. Added the parameter 'model' in readXMLfiles(), allowing for specifying additional processing of the data read from XML files. A simple example is readXMLfiles(AcousticXMLfiles, model=list(NASC=list(AcousticData="Process(ReadAcousticXML)"))), which for acoustic XML files also calculates the NASC values.
+# 5. Updated the Test_Rstox project to the new R and R report structure (bootstrap and imputeByAge in R, and plots and reports in R report).
 
-# 6. Added the function addProcesses(), which adds processes to a project object given a list of parameter specifications as returned by getParlist().
-
-# 7. Simplified how custom models are implemented in createProject(), which now first runs addProcesses() and then setBaselineParameters(). 
-
-# 8. Renamed the object currentParameters in the project environment to javaParameters, to stress that these are the current parameter values in the project Java object. The object lastParameters is the parameters used during the last baseline run, which do not have to be identical to the javaParameters, in case the parameter values in Java were reset to the previous parameter values.
+# 6. Changed the output from createProject(NULL) to return full paths of StoX projects located in the default workspace and sub directories.

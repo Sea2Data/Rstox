@@ -280,3 +280,16 @@ Renamed the object currentParameters in the project environment to javaParameter
 
 Added support in modifyBaselineParameters() used by runBaseline() for specifying StoX processes by their name only, and not Process(name_of_the_processs).
 
+Modified the function getNMDinfo() to return data frames instead of matrices.
+
+Added the function abbrevWords(), used when abbreviting survey time series and cruise series downloaded from NMD using getNMDdata(, abbrev=TRUE). 
+
+Restructured the function getNMDdata(). Added the parameters subdir, which creates a directory inside the StoX projects directory in which to put multiple StoX projects (typically survey time series and cruise series), and abbrev, which abbreviates the StoX project names by the function abbrevWords() (using sub=-1 on years, ship names and other suffixes).
+
+Updated the Test_Rstox project to the new R and R report structure (bootstrap and imputeByAge in R, and plots and reports in R report).
+
+Changed the output from createProject(NULL) to return full paths of StoX projects located in the default workspace and sub directories.
+
+Added the parameter 'msg' to createProject().
+
+Changed the way Rstox recognizes StoX projects. From this version on StoX project names can be given either (i) by their full path, (ii) their name, in which case Rstox searches first in the default workspace and then in subdirectories, (iii) the path relative to the default workspace. This build support for organizing projects in the workspace in subdirectories.

@@ -12,7 +12,7 @@
 #' \code{isProject} checks whether the project exists on file. \cr \cr
 #' \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
 #'
-#' @param projectName   	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   	The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.
 #' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in StoX_data_types in the environment "RstoxEnv". Get these by get("StoX_data_types", envir=get("RstoxEnv"))). These could be given as directories, in which case all files in those directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If files has length 0 (default), the files present in the project directory are used, if already existing (requires to answer "y" when asked to overwrite the project if ow=NULL, or alternatively to set ow=TRUE).
 #' @param dir				The directory in which to put the project. The project is a directory holding three sub directories named "input", "output" and "process", where input, output and process files are stored.
 #' @param model   			The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (see \code{parlist}). Show available templates with createProject().
@@ -29,6 +29,10 @@
 #' createProject()
 #' # Create the test project:
 #' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+#'
+#' # See avilable projects, either as full paths or as a list:
+#' openProject()
+#' openProject(list())
 #'
 #' # Read xml file directly from any location:
 #' xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")
@@ -50,7 +54,7 @@
 #' @export
 #' @rdname createProject
 #' 
-createProject <- function(projectName=NULL, files=list(), dir=NULL, model="StationLengthDistTemplate", ow=NULL, open=TRUE, ignore.processXML=FALSE, parlist=list(), ...){
+createProject <- function(projectName=NULL, files=list(), dir=NULL, model="StationLengthDistTemplate", ow=NULL, open=TRUE, ignore.processXML=FALSE, parlist=list(), msg=TRUE, ...){
 	##### Functions: #####
 	# Return available templates as default:
 	getTemplates <- function(){
@@ -102,135 +106,166 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		return(availableTemplates)
 	}
 	
-	# Set the project name and the root directory of the project:
-	projectPaths <- getProjectPaths(projectName, dir=dir)
-	projectName <- projectPaths$projectName
-	dir <- projectPaths$projectRoot
-	projectPath <- projectPaths$projectPath
-	##############################################################################################
-	##############################################################################################
+	nprojects <- length(projectName)
+	projectPath <- rep(NA, nprojects)
 	
-	
-	
-	#################################
-	##### 2. Treat overwriting: #####
-	#################################
-	if(file.exists(projectPath)){
-		if(length(ow)==0){
-			ans <- readline(paste0("Project \"", projectPath, "\" already exists. Overwrite? (y/n)\n"))
-			if(ans!="y"){
-				cat("Not overwriting:", projectPath, "\n")
-				return()
+	for(i in seq_len(nprojects)){
+		# Set the project name and the root directory of the project:
+		projectPaths <- getProjectPaths(projectName[i], projectRoot=dir)
+		thisProjectName <- projectPaths$projectName
+		dir <- projectPaths$projectRoot
+		thisProjectPath <- projectPaths$projectPath
+		##############################################################################################
+		##############################################################################################
+		
+		
+		#################################
+		##### 2. Treat overwriting: #####
+		#################################
+		if(file.exists(thisProjectPath)){
+			if(length(ow)==0){
+				if(nprojects==1){
+					ans <- readline(paste0("Project \"", thisProjectPath, "\" already exists. Overwrite? (y/n)\n"))
+					if(ans!="y"){
+						if(msg) cat("Not overwriting:", thisProjectPath, "\n")
+						return()
+					}
+				}
+				else if(nprojects>1){
+					ans <- readline(paste0("Project \"", thisProjectPath, "\" already exists. Overwrite?\n", paste(c("\"y\": ", "\"n\": ", "\"ya\":", "\"na\":"), c("Yes", "No", "Yes to all remaining", "No to all remaining"), collapse="\n"), "\n"))
+					# This workflow sets ow to TRUE if "ya", to FALSE if "na" (jumps to next in the for loop), does nothing if "y", and jumps to next in the for loop if "n"
+					if(ans=="ya"){
+						if(msg) cat("Overwriting:", thisProjectPath, "\n")
+						ow <- TRUE
+					}
+					else if(ans=="na"){
+						if(msg) cat("Not overwriting:", thisProjectPath, "\n")
+						ow <- FALSE
+						next
+					}
+					else if(ans=="y"){
+						if(msg) cat("Overwriting:", thisProjectPath, "\n")
+					}
+					else{
+						if(msg) cat("Not overwriting:", thisProjectPath, "\n")
+						next
+					}
+				}
 			}
+			else if(!ow){
+				if(msg) cat("Not overwriting:", thisProjectPath, "\n")
+				next
+			}
+			else if(ow){
+				if(msg) cat("Overwriting:", thisProjectPath, "\n")
+			}
+			
+			# Delete the existing project if the function did not exit:
+			unlink(thisProjectPath, recursive=TRUE, force=TRUE)
+			# Also remove the projet from R memory, that is delete the project environment:
+			closeProject(thisProjectName)
 		}
-		else if(!ow){
-			cat("Not overwriting:", projectPath, "\n")
-			return()
-		}
-		# Delete the existing project if the function did not exit:
-		unlink(projectPath, recursive=TRUE, force=TRUE)
-		# Also remove the projet from R memory, that is delete the project environment:
-		closeProject(projectName)
-	}
-	#################################
-	#################################
+		#################################
+		#################################
 	
 		
-	############################################
-	##### 3. Apply the specified template: #####
-	############################################
-	userDefined <- is.list(model) || (length(model)>0 && !model[1] %in% availableTemplates[,1])
-	# Select the template given the user input:
-	if(userDefined){
-		template <- matchTemplates("UserDefined", availableTemplates[,1])
-	}
-	else if(length(model)){
-		# Find the templates that match the available tempaltes case insensitively and using abbreviation:
-		template <- matchTemplates(model[1], availableTemplates[,1])
-		if(length(template)>1){
-			template <- template[1]
-			warning(paste0("Multiple templates matched. The first used (", template, ")"))
+		############################################
+		##### 3. Apply the specified template: #####
+		############################################
+		userDefined <- is.list(model) || (length(model)>0 && !model[1] %in% availableTemplates[,1])
+		# Select the template given the user input:
+		if(userDefined){
+			template <- matchTemplates("UserDefined", availableTemplates[,1])
 		}
-		 else if(length(template)==0){
-			warning(paste0("'template' matches no templates. Run createProject() to get a list of available tempaltes. Default used (", "StationLengthDist", ")"))
-			template <- matchTemplates("StationLengthDist", availableTemplates[,1])
-		}
-	}
-	else{
-		template <- matchTemplates("StationLengthDist", availableTemplates[,1])
-	}
-	############################################
-	############################################
-	
-	
-	########################################################
-	##### 4. Generate folder structure and copy files: #####
-	########################################################
-	# Create the project, that is create in memory and set ut the folder structure. This writes folders to the directory 'dir'!:
-	project <- J("no.imr.stox.factory.FactoryUtil")$createProject(dir, projectName, template)
-	
-	# Copy files to the project directory:
-	StoX_data_types <- getRstoxEnv()$StoX_data_types
-	StoXdirs <- file.path(projectPath, "input", StoX_data_types)
-	# Add the process directory to allow for the project.xml file to be given in the input 'files':
-	StoX_data_types <- c(StoX_data_types, "process")	 
-	StoXdirs <- c(StoXdirs, file.path(projectPath, "process"))	 
-
-	# Get the files:
-	files <- getFiles(files, StoX_data_types)
-	if(ignore.processXML){
-		files$process <- NULL
-		}
-	# Copy the files 
-	if(length(files) && is.list(files)){
-		copyFilesToStoX(StoX_data_types, files, dirs=StoXdirs)
-	}
-	
-	# Save the project if no project.xml file was given. This is done in order to open the project in the next step using openProject(), which is needed to create the project environment. Here we need to the project object, since that is what we wish to save. If we used the project name, getProject() used in saveProject() would look for the project object in the project environment, which we have not created yet:
-	if(length(files$process)==0){
-		saveProject(project)
-	}
-	
-	# Open the project with the project.xml file copied to the prodect directory or generated from the template given in 'model':
-	project <- openProject(projectPath, out="project")
-	# Update the xml files containg the data. This is done to make sure the files are pointed to in the project even after moving files (for example if the full path was used in the project.xml file copied to the project). This is only effectice if the model includes StoX reading function such as readBioticXML:
-	updateProject(projectPath)
-	########################################################
-	########################################################
-	
-	
-	#####################################################
-	##### 5. Add the processes specified in 'model' #####
-	#####################################################
-	# Specify the model if a valid template was not given:
-	if(userDefined){
-		if(length(files$process)){
-			warning(paste0("a project.xml file was copied to the project ", projectPath, ", and any model specification given in 'model' is ignored (ignore.processXML = TRUE can be used to discard the project.xml file)"))
+		else if(length(model)){
+			# Find the templates that match the available tempaltes case insensitively and using abbreviation:
+			template <- matchTemplates(model[1], availableTemplates[,1])
+			if(length(template)>1){
+				template <- template[1]
+				warning(paste0("Multiple templates matched. The first used (", template, ")"))
+			}
+			 else if(length(template)==0){
+				warning(paste0("'template' matches no templates. Run createProject() to get a list of available tempaltes. Default used (", "StationLengthDist", ")"))
+				template <- matchTemplates("StationLengthDist", availableTemplates[,1])
+			}
 		}
 		else{
-			# Get the list of parameters specified either in 'model', or in 'parlist' or '...' in addition (usually only used then a template is used so that userDefined=FALSE, but kept here for robustness):
-			parlist <- getParlist(parlist=c(model, parlist), ...)
-			# Add the processes. Set the parameter values below:
-			addProcesses(project, parlist)
+			template <- matchTemplates("StationLengthDist", availableTemplates[,1])
 		}
-	}
-	else{
-		parlist <- getParlist(parlist=parlist, ...)
-	}
+		############################################
+		############################################
 	
-	# Override parameters in the project:
-	if(length(parlist)){
-		# Re-open the project in order to sucessfully set the parameters in the 'parlist':
-		saveProject(projectPath)
-		reopenProject(projectPath)
-		setBaselineParameters(projectPath, parlist=parlist, msg=FALSE, save.project=TRUE)
+	
+		########################################################
+		##### 4. Generate folder structure and copy files: #####
+		########################################################
+		# Create the project, that is create in memory and set ut the folder structure. This writes folders to the directory 'dir'!:
+		project <- J("no.imr.stox.factory.FactoryUtil")$createProject(dir, thisProjectName, template)
+	
+		# Copy files to the project directory:
+		StoX_data_types <- getRstoxEnv()$StoX_data_types
+		StoXdirs <- file.path(thisProjectPath, "input", StoX_data_types)
+		# Add the process directory to allow for the project.xml file to be given in the input 'files':
+		StoX_data_types <- c(StoX_data_types, "process")	 
+		StoXdirs <- c(StoXdirs, file.path(thisProjectPath, "process"))	 
+
+		# Get the files:
+		files <- getFiles(files, StoX_data_types)
+		if(ignore.processXML){
+			files$process <- NULL
+			}
+		# Copy the files 
+		if(length(files) && is.list(files)){
+			copyFilesToStoX(StoX_data_types, files, dirs=StoXdirs)
+		}
+	
+		# Save the project if no project.xml file was given. This is done in order to open the project in the next step using openProject(), which is needed to create the project environment. Here we need to the project object, since that is what we wish to save. If we used the project name, getProject() used in saveProject() would look for the project object in the project environment, which we have not created yet:
+		if(length(files$process)==0){
+			saveProject(project)
+		}
+	
+		# Open the project with the project.xml file copied to the prodect directory or generated from the template given in 'model':
+		project <- openProject(thisProjectPath, out="project")
+		# Update the xml files containg the data. This is done to make sure the files are pointed to in the project even after moving files (for example if the full path was used in the project.xml file copied to the project). This is only effectice if the model includes StoX reading function such as readBioticXML:
+		updateProject(thisProjectPath)
+		########################################################
+		########################################################
+	
+	
+		#####################################################
+		##### 5. Add the processes specified in 'model' #####
+		#####################################################
+		# Specify the model if a valid template was not given:
+		if(userDefined){
+			if(length(files$process)){
+				warning(paste0("a project.xml file was copied to the project ", thisProjectPath, ", and any model specification given in 'model' is ignored (ignore.processXML = TRUE can be used to discard the project.xml file)"))
+			}
+			else{
+				# Get the list of parameters specified either in 'model', or in 'parlist' or '...' in addition (usually only used then a template is used so that userDefined=FALSE, but kept here for robustness):
+				parlist <- getParlist(parlist=c(model, parlist), ...)
+				# Add the processes. Set the parameter values below:
+				addProcesses(project, parlist)
+			}
+		}
+		else{
+			parlist <- getParlist(parlist=parlist, ...)
+		}
+	
+		# Override parameters in the project:
+		if(length(parlist)){
+			# Re-open the project in order to sucessfully set the parameters in the 'parlist':
+			saveProject(thisProjectPath)
+			reopenProject(thisProjectPath)
+			setBaselineParameters(thisProjectPath, parlist=parlist, msg=FALSE, save.project=TRUE)
+		}
+	
+		# Finally, save all changes to the project.xml file:
+		saveProject(thisProjectPath)
+		
+		projectPath[i] <- thisProjectPath
+		#####################################################
+		#####################################################
 	}
-	
-	# Finally, save all changes to the project.xml file:
-	saveProject(projectPath)
-	#####################################################
-	#####################################################
-	
 	
 	# Return the project directory:
 	projectPath
@@ -241,10 +276,73 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 #' @rdname createProject
 #' 
 openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), msg=FALSE){
+	# Old version, listing everything in the default workspace:
+	#return(list.files(J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()))
+	
+	# 2017-09-03 (Arne Johannes Holmin): Change made to list projects located in sub folders in the default workspace. These are returned with thir full path:
+	Rstox.init()
+	# Get all files and folders in the default workspace:
+	workspace <- J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()
+	
+	# List the valied StoX project folders and the other folders:
+	listProjectsAndFolders <- function(x){
+		paths <- list.dirs(x, recursive=FALSE)
+		if(length(paths)==0){
+			return(list())
+		}
+		# Get projects at the top level:
+		arePr <- isProject(paths)
+		paths_notPr <- paths[!arePr]
+		paths <- paths[arePr]
+		return(list(pr=paths, notPr=paths_notPr, dir=x))
+	}
+	
+	# Iterate through the workspace and find StoX projects:
+	availableProjectsList <- list()
+	while(TRUE){
+		# Get the projects and non-StoX-project directories
+		this <- lapply(workspace, listProjectsAndFolders)
+		dir <- unlist(lapply(this, "[[", "dir"))
+		# Update the workspace:
+		workspace <- unlist(lapply(this, "[[", "notPr"))
+		this <- lapply(this, "[[", "pr")
+		names(this) <- dir
+		# Append the projects to the list:
+		availableProjectsList <- c(availableProjectsList, this)
+		if(length(workspace)==0){
+			break
+		}
+	}
+	# Clean the list:
+	availableProjectsList <- availableProjectsList[sapply(availableProjectsList, length)>0]
+	availableProjects <- unname(unlist(availableProjectsList))
+	
+	### Rstox.init()
+	### # Get all files and folders in the default workspace:
+	### workspace <- J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()
+	### paths1 <- list.dirs(workspace, recursive=FALSE)
+	### # Get projects at the top level:
+	### arePr1 <- isProject(paths1)
+	### paths_notPr1 <- paths1[!arePr1]
+	### paths1 <- list(paths1[arePr1])
+	### names(paths1) <- workspace
+	### # Sub folders:
+	### paths2 <- lapply(paths_notPr1, list.dirs, recursive=FALSE, full.names=TRUE)
+	### names(paths2) <- paths_notPr1
+	### paths2 <- lapply(paths2, isProject, subset.out=TRUE)
+	### paths2 <- paths2[sapply(paths2, length)>0]
+	### # Merge to a list and Unlist
+	### availableProjectsList <- c(paths1, paths2)
+	### availableProjects <- unname(unlist(availableProjectsList))
+	
 	# If nothing is given return a list of the projects in the StoX project directory:
 	if(length(projectName)==0){
-		Rstox.init()
-		return(list.files(J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()))
+		if(is.list(projectName)){
+			temp <- names(availableProjectsList)
+			availableProjects <- lapply(seq_along(availableProjectsList), function(i) substring(sub(names(availableProjectsList)[i], "", availableProjectsList[[i]], fixed=TRUE), 2))
+			names(availableProjects) <- temp
+		}
+		return(availableProjects)
 	}
 	
 	# Get the project Java object, possibly retrieved from the project environment (getProject() uses getProjectPaths() if a character is given):
@@ -262,11 +360,26 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), 
 	# Otherwise, open the project, generate the project object, and save it to the RstoxEnv evnironment:
 	if(length(project)==0){
 		# If the project exists on file, open in Java and R memory:
-		if(!isProject(projectName)){
-			warning(paste0("The StoX project ", projectName, " does not exist"))
-			return(NULL)
-		}
-		else{
+		#if(!isProject(projectName)){
+		#	warning(paste0("The StoX project ", projectName, " does not exist"))
+		#	return(NULL)
+		#}
+		#else{
+			# Search for the project:
+			if(!isProject(projectName)){
+				availableProjectNames <- basename(availableProjects)
+				matches <- which(availableProjectNames %in% getProjectPaths(projectName)$projectName)
+				if(length(matches)==0){
+					warning(paste0("The StoX project ", projectName, " does not exist"))
+					return(NULL)
+				}
+				else if(length(matches)>1){
+					warning(paste0("Multiple StoX projects matching ", projectName, ". The first selected (use the full path or path relative to the default workspace to get the exact project):\n", availableProjects[matches[1]]))
+				}
+				projectName <- availableProjects[matches[1]]
+			}
+			
+			
 			projectPaths <- getProjectPaths(projectName)
 			projectName <- projectPaths$projectName
 			projectRoot <- projectPaths$projectRoot
@@ -298,7 +411,7 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), 
 			suppressWarnings(dir.create(projectPaths$RDataDir, recursive=TRUE))
 			suppressWarnings(dir.create(projectPaths$RReportDir, recursive=TRUE))
 			###################################################
-		}
+			#}
 	}
 	
 	# Return a baseline object:
@@ -409,12 +522,13 @@ closeProject <- function(projectName){
 #' @export
 #' @rdname createProject
 #' 
-isProject <- function(projectName){
+isProject <- function(projectName, subset.out=FALSE){
+	# The following is done in getProjectPaths():
 	#	1. Look for the project if given by the full path
-	#	2. Look for the project in the default root
-	#	3. Return if not
+	#	2. Look for the project in the default root and sub directories
 	# Function for checking whether all the folders given in getRstoxEnv()$StoX_data_types are present in the directory:
-	hasStoX_data_types <- function(projectName){
+	hasStoX_data_typesOne <- function(projectName){
+		projectName <- getProjectPaths(projectName)$projectPath
 		projectInfo <- file.info(projectName)
 		if(isTRUE(projectInfo$isdir)){
 			dirs <- list.dirs(projectName, full.names=FALSE, recursive=FALSE)
@@ -422,7 +536,7 @@ isProject <- function(projectName){
 				return(TRUE)
 			}
 			else{
-				warning(paste0("The path ", projectName, " does not contain the required folders (", paste(getRstoxEnv()$StoX_data_types, collapse=", "), ")"))
+				#warning(paste0("The path ", projectName, " does not contain the required folders (", paste(getRstoxEnv()$StoX_data_types, collapse=", "), ")"))
 				return(FALSE)
 			}
 		}
@@ -430,6 +544,16 @@ isProject <- function(projectName){
 			return(FALSE)
 		}
 	}	
+	
+	hasStoX_data_types <- function(x, subset.out=FALSE){
+		out <- unlist(lapply(x, hasStoX_data_typesOne))
+		if(subset.out){
+			x[out]
+		}
+		else{
+			out
+		}
+	}
 	
 	### # Check first the 'projectName' directly (which needs to be a full path, indicated by the !dirname(projectName) %in% c(".", "", "/")):
 	### out <- FALSE
@@ -442,7 +566,7 @@ isProject <- function(projectName){
 	### }
 	### out
 	
-	hasStoX_data_types(getProjectPaths(projectName)$projectPath)
+	hasStoX_data_types(projectName, subset.out=subset.out)
 }
 #'
 #' @export
@@ -507,7 +631,7 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 	model <- c(readmodel, model)
 	
 	# Create a temporary project:
-	project <- createProject("tempProject", dir=path.expand(dir), model=model, ow=TRUE)
+	project <- createProject("tempProject", dir=path.expand(dir), model=model, msg=FALSE, ow=TRUE)
 	
 	out <- getBaseline(project, input=NULL, msg=FALSE)
 	unlink(project)
@@ -1234,7 +1358,7 @@ getBioticAssignments <- function(baseline) {
 #' \code{getProjectDataEnv} gets the project environment. \cr \cr
 #'
 #' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
-#' @param dir			The directory holding the project(s).
+#' @param projectRoot	The directory holding the project(s).
 #'
 #' @return Various names and directories
 #' 
@@ -1243,7 +1367,7 @@ getBioticAssignments <- function(baseline) {
 #' @export
 #' @rdname getProjectPaths
 #' 
-getProjectPaths <- function(projectName=NULL, dir=NULL){
+getProjectPaths <- function(projectName=NULL, projectRoot=NULL){
 	# Return the default workspace immediately if nothing is given:
 	if(length(projectName)==0){
 		return(.jnew("no/imr/stox/model/Project")$getRootFolder())
@@ -1269,20 +1393,34 @@ getProjectPaths <- function(projectName=NULL, dir=NULL){
 		warning("Invalid projectName (must be a character sting or a baseline or project object)")
 		projectName <- NA
 	}
-	# Use the basename:
-	if(length(dir)==0){
+	
+	# If the projectName exists as a directory, extract the dirname and basename:
+	if(isTRUE(file.info(projectName)$isdir)){
 		projectRoot <- dirname(projectName)
+		projectName <- basename(projectName)
+	}
+	else if(length(projectRoot)){
+		projectRoot <- path.expand(projectRoot)
 	}
 	else{
-		projectRoot <- path.expand(dir)
+		projectRoot <- NULL
 	}
-	projectName <- basename(projectName)
+	
+	## Use the basename:
+	#if(length(dir)==0){
+	#	projectRoot <- dirname(projectName)
+	#}
+	#else{
+	#	projectRoot <- path.expand(dir)
+	#}
+	#projectName <- basename(projectName)
 	##################################################
 	
 	##################################################
 	##### 2. Get the project root: #####
 	##################################################
-	if(projectRoot %in% c(".", "", "/") && length(dir)==0){
+	#if(projectRoot %in% c(".", "", "/") && length(dir)==0){
+	if(length(projectRoot)==0){
 		# The functions J and .jnew and other functions in the rJava library needs initialization:
 		Rstox.init()
 		projectRoot <- .jnew("no/imr/stox/model/Project")$getRootFolder()
@@ -1292,6 +1430,11 @@ getProjectPaths <- function(projectName=NULL, dir=NULL){
 	##### 3. Get the project path: #####
 	##################################################
 	projectPath <- file.path(projectRoot, projectName)
+	# Regenerate the root and name in case the name was given as a relative path (the nchar(projectName)>0 is needed to avoid messing up the projectRoot when projectName==""):
+	if(nchar(projectName)>0){
+		projectRoot <- dirname(projectPath)
+		projectName <- basename(projectPath)
+	}
 	
 	##################################################
 	##### 4. Get the project R data directory: #####

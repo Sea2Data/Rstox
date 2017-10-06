@@ -50,9 +50,10 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		
 		# Find NASC scaling factor. This is not directly related to the sampling of biotic stations above. The NASC values have actually been resampled outside of this function, in the resampledNASC <- getResampledNASCDistr() command in runBootstrap():
 		if(length(psuNASC)>0){
+			# Pick out the NASC value of the current stratum j of the current bootstrap replicate i:
 			sm <- stratumNASC$NASC.by.strata$strata.mean[stratumNASC$NASC.by.strata$Stratum==strata[j]]
-			# Scaling factor:
-			meanNASC$NASC.scale.f[meanNASC$Stratum==strata[j]] <- ifelse(sm>0,resampledNASC[i,j]/sm,0)
+			# Scaling factor. This is a factor to multiply all NASC vaules inside the current stratum/bootstrap replicate with:
+			meanNASC$NASC.scale.f[meanNASC$Stratum==strata[j]] <- ifelse(sm>0, resampledNASC[i,j]/sm, 0)
 		}
 	}
 	# Update biostation weighting
@@ -181,7 +182,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #*********************************************
 #' Run a bootstrap in StoX
 #'
-#' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates.
+#' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 #'
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
 #' @param acousticMethod,bioticMethod   Specification of the method to use for bootstrapping the acoustic and biotic data. Currently only one method is available for acoustic and one for biotic data: acousticMethod = PSU~Stratum, bioticMethod = PSU~Stratum. Other methods are planned in later versions, involving the levels of the data given in the below table.

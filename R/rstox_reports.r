@@ -935,6 +935,10 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 		filename <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_")), ".txt")
 		moveToTrash(filename)
 		writeLines(paste(names(plottingUnit), unlist(plottingUnit), sep=": "), con=filename)
+		# Set temporary grp1 to NULL:
+		if(grp1=="temp"){
+			grp1 <- NULL
+		}
 		suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
 	}
 	else{

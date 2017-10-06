@@ -17,9 +17,9 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 
-\item{startProcess}{The name or number of the start process in the list of processes in the model (use info=TRUE to return a list of the processes). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.}
+\item{startProcess}{The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.}
 
-\item{endProcess}{The name or number of the end process in the list of processes in the model (use info=TRUE to return a list of the processes).}
+\item{endProcess}{The name or number of the end process in the list of processes in the model.}
 
 \item{reset}{Logical; if TRUE rerun the baseline model even if it has been run previously.}
 

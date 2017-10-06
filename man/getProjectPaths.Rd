@@ -5,14 +5,14 @@
 \alias{getProjectDataEnv}
 \title{Functions to return various paths and file names.}
 \usage{
-getProjectPaths(projectName = NULL, dir = NULL)
+getProjectPaths(projectName = NULL, projectRoot = NULL)
 
 getProjectDataEnv(projectName)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 
-\item{dir}{The directory holding the project(s).}
+\item{projectRoot}{The directory holding the project(s).}
 }
 \value{
 Various names and directories

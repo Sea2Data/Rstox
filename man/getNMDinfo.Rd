@@ -11,9 +11,9 @@ getNMDinfo(type = NULL, ver = 1,
   msg = FALSE, simplify = TRUE)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
-  tsn = NULL, datatype = NULL, dir = NULL, group = "default",
-  subset = NULL, filebase = "NMD", ver = 1,
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  tsn = NULL, datatype = NULL, dir = NULL, subdir = FALSE,
+  group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
+  ver = 1, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
   return.URL = FALSE, ...)
 
@@ -52,7 +52,9 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{datatype}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datatype=NULL (default) returns all possible data.}
 
-\item{dir}{The path to the directory in which to place the StoX project holding the downloaded data.}
+\item{dir}{The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects}
+
+\item{subdir}{Either a name of the sub directory in which to put the StoX projects of downloaded data, or TRUE which puts all projects in a sub folder named after the cruise series or survey time series.}
 
 \item{group}{Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is NULL, all data are saved in one StoX project. The default "default" groups by years if several cruises are requested and by cruise otherwise.}
 

@@ -14,7 +14,7 @@
 \usage{
 createProject(projectName = NULL, files = list(), dir = NULL,
   model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
-  ignore.processXML = FALSE, parlist = list(), ...)
+  ignore.processXML = FALSE, parlist = list(), msg = TRUE, ...)
 
 openProject(projectName = NULL, out = c("project", "baseline", "name"),
   msg = FALSE)
@@ -29,12 +29,12 @@ saveProject(projectName)
 
 closeProject(projectName)
 
-isProject(projectName)
+isProject(projectName, subset.out = FALSE)
 
 readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.}
 
 \item{files}{A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in StoX_data_types in the environment "RstoxEnv". Get these by get("StoX_data_types", envir=get("RstoxEnv"))). These could be given as directories, in which case all files in those directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If files has length 0 (default), the files present in the project directory are used, if already existing (requires to answer "y" when asked to overwrite the project if ow=NULL, or alternatively to set ow=TRUE).}
 
@@ -50,9 +50,9 @@ readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 
 \item{parlist, ...}{See \code{\link{runBaseline}}.}
 
-\item{out}{One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.}
-
 \item{msg}{Logical: If TRUE print messages to the console.}
+
+\item{out}{One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.}
 
 \item{nchars}{The number of characters to read when determining the types of the files in readXMLfiles().}
 }
@@ -84,6 +84,10 @@ A project object
 createProject()
 # Create the test project:
 createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+
+# See avilable projects, either as full paths or as a list:
+openProject()
+openProject(list())
 
 # Read xml file directly from any location:
 xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")
