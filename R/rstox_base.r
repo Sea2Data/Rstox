@@ -60,7 +60,8 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	getTemplates <- function(){
 		templates <- J("no.imr.stox.factory.Factory")$getAvailableTemplates()$toArray()
 		descriptions <- sapply(templates, J("no.imr.stox.factory.Factory")$getTemplateDescription)
-		cbind(Template=templates, Description=unname(descriptions))
+		templateProcesses <- sapply(templates, J("no.imr.stox.factory.FactoryUtils")$getTemplateProcessNamesByModel, "baseline")
+		data.frame(Template=templates, Description=unname(descriptions), processNames=sapply(templateProcesses, paste, collapse=", "))
 	}
 	matchTemplates <- function(template, availableTemplates){
 		availableTemplates[ which(tolower(substr(availableTemplates, 1, nchar(template))) == tolower(template)) ]
@@ -727,7 +728,7 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' @param par			A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.
 #' @param drop			Logical: if TRUE drop empty list elements (default).
 #'
-#' @return For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "output", "processData", where empty elements can be dropped.
+#' @return For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "outputData", "processData", where empty elements can be dropped.
 #'
 #' @examples
 #' # Create the test project:
