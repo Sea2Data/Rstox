@@ -1,4 +1,4 @@
-# Rstox version: 1.6.3 (latest alpha, 2017-10-06)
+# Rstox version: 1.6.3 (latest alpha, 2017-10-27)
 # R version: 3.3.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -38,10 +38,30 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 
 # 2. Modified the function getNMDinfo() to return data frames instead of matrices.
 
-# 3. Restructured the function getNMDdata(). Added the parameters subdir, which creates a directory inside the StoX projects directory in which to put multiple StoX projects (typically survey time series and cruise series), and abbrev, which abbreviates the StoX project names by the function abbrevWords() (using sub=-1 on years, ship names and other suffixes).
+# 3. Added the function abbrevWords(), used when abbreviting survey time series and cruise series downloaded from NMD using getNMDdata(, abbrev=TRUE). 
 
-# 4. Added the function abbrevWords(), used when abbreviting survey time series and cruise series downloaded from NMD using getNMDdata(, abbrev=TRUE). 
+# 4. Restructured the function getNMDdata(). Added the parameters subdir, which creates a directory inside the StoX projects directory in which to put multiple StoX projects (typically survey time series and cruise series), and abbrev, which abbreviates the StoX project names by the function abbrevWords() (using sub=-1 on years, ship names and other suffixes).
 
 # 5. Updated the Test_Rstox project to the new R and R report structure (bootstrap and imputeByAge in R, and plots and reports in R report).
 
 # 6. Changed the output from createProject(NULL) to return full paths of StoX projects located in the default workspace and sub directories.
+
+# 7. Added the parameter 'msg' to createProject().
+
+# 8. Changed the way Rstox recognizes StoX projects. From this version on StoX project names can be given either (i) by their full path, (ii) their name, in which case Rstox searches first in the default workspace and then in subdirectories, (iii) the path relative to the default workspace. This build support for organizing projects in the workspace in subdirectories.
+
+# 9. Changed the output from createProject() to return a list of processes for the available templates.
+
+# 10. Changed createProject("Test_Rstox") to autumatically use the example files for this particular project name. Also changed openProject("Test_Rstox") to create the project if missing. Thus there is no need to pre-create the test project. It is created when needed. Use createProject("Test_Rstox", ow=TRUE) to re-create the test project. This simplified the examples. 
+
+# 11. Added support for creating a project directly from an URL of a zipped StoX project, either given as 'files' in createProject() (where the projectName can be specified), or as 'projectName', in which case the project name of the zipped project is used.
+
+# 12. Added the function getRstoxVersion(), which returns the version of Rstox and the StoX Java library used by Rstox (and StoX).
+
+# 13. Added the function downloadProjectZip(), which downloads a zipped project from an URL, used by createProject() and getNMDdata().
+
+# 14. Added the function data.frame2ParTable(), which converts from a data.frame to a string as used by the StoX functions Catchability and *****
+
+# 15. Added the function isProjectZipURL(), which returns TRUE for URLs containing "http" or "ftp" AND "zip".
+
+

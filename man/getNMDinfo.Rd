@@ -58,6 +58,8 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{group}{Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is NULL, all data are saved in one StoX project. The default "default" groups by years if several cruises are requested and by cruise otherwise.}
 
+\item{abbrev}{Logical: If TRUE, abbreviate the project names. PArticularly useful when downloading survey time series, which can have long names.}
+
 \item{subset}{An integer vector giving the subset of the cruises to download in a cruise series (1 meaning the first cruise and c(2,5) cruise nr 2 and 5).}
 
 \item{filebase}{The prefix to use in the names of the StoX projects to which the data are downloaded.}

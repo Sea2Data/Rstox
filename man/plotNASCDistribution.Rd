@@ -23,8 +23,6 @@ Probability densities, component density, are plotted (so that the histogram has
 Plot is exported to a tif- or png-file
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 projectName <- "Test_Rstox"
 # Run bootstrap before plotting:
 boot <- runBootstrap(projectName, nboot=10, seed=1, 

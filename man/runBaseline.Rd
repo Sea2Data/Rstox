@@ -46,18 +46,15 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 \item{par}{A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.}
 }
 \value{
-For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "output", "processData", where empty elements can be dropped.
+For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "outputData", "processData", where empty elements can be dropped.
 }
 \description{
 \code{runBaseline} runs a StoX baseline model possibily overriding parameters. \cr \cr
 \code{getBaseline} returns input and output data from the StoX baseline model. \cr \cr
 }
 \examples{
-# Create the test project:
-projectName <- "Test_Rstox"
-createProject(projectName, files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
-
 # Get output from the baseline:
+projectName <- "Test_Rstox"
 system.time(baselineData <- getBaseline(projectName))
 # Check the structure of the output from getBaseline():
 ls.str(baselineData)

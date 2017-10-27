@@ -46,8 +46,6 @@ Plots boxplot of bootstrap results together with Coefficient of Variation (CV).
 Prints summary table and plot is exported to a tif- or png-file.
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 projectName <- "Test_Rstox"
 plotAbundance(projectName, grp1="age")
 plotAbundance(projectName, grp1="age", unit=1)

@@ -40,8 +40,6 @@ A vector of file names of the plots or reports.
 \examples{
 # View all parameters of plotting functions:
 sapply(getFunsRstox("plot"), function(x) names(formals(x)))
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 projectName <- "Test_Rstox"
 # Get all plots:
 getPlots(projectName)

@@ -41,8 +41,6 @@ A data frame of the abundance in sumary per grp2 and grp1 if plotOutput=FALSE, a
 This function is used in the plotting function plotAbundance().
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 projectName <- "Test_Rstox"
 reportAbundance(projectName, grp1=NULL, grp2=NULL)
 reportAbundance(projectName, grp1="age", grp2=NULL)

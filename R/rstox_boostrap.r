@@ -366,9 +366,11 @@ runBootstrap <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=P
 #'
 #' @examples
 #' \dontrun{
-#' b <- varianceEstimation("Test_Rstox")}
+#' # Download an example swept area project:
+#' # pr <- createProject("ftp://ftp.imr.no/StoX/Example%20projects/Example_sweptarea_BarentsSea_cod_1999.zip")
+#' # v <- varianceEstimation(pr)
 #'
-#' @importFrom stats terms as.formula
+#' @importFrom utils head
 #'
 #' @export
 #' @rdname varianceEstimation
@@ -508,19 +510,26 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 	byPSUPos <- lapply(byPSU, function(x) x[x$SampleSizePos>0, , drop=FALSE])
 	
 	# Pick out stratum:
-	select <- c("SpecCat", "Stratum", "StratumArea", "SampleSize", "SampleSizePos", "MeanDensityStratum", "VarDensityStratum", "SDDensityStratum", "CVDensityStratum", "MeanDensity", "VarDensity", "SDDensity", "CVDensity") # 
+	select <- c("SpecCat", "Stratum", "StratumArea", "SampleSize", "SampleSizePos", "MeanDensityStratum", "VarDensityStratum", "SDDensityStratum", "CVDensityStratum", "MeanDensity", "VarDensity", "SDDensity", "CVDensity")
 	byStratum <- lapply(byPSU, function(y) unique(y[select]))
 	byStratum <- lapply(byStratum, function(y) cbind(y, AbundanceStratum = y$StratumArea * y$MeanDensityStratum))
 	
 	total <- lapply(byStratum, function(y) cbind(
 		SpecCat = y$SpecCat[1], 
 		t(colSums(y[c("StratumArea", "SampleSize", "SampleSizePos")])), 
-		head(y[c("MeanDensity", "CVDensity")], 1), 
+		#head(y[c("MeanDensity", "CVDensity")], 1), 
+		head(y[c("MeanDensity", "VarDensity", "SDDensity", "CVDensity")], 1), 
 		Abundance=sum(y$AbundanceStratum)
 		))
 	
-		par(mfrow=rep(ceiling(sqrt(length(total))), 2))
-		lapply(byStratum, function(y) hist(y$MeanDensityStratum))
+	#par(mfrow=rep(ceiling(sqrt(length(total))), 2))
+	#lapply(byStratum, function(y) hist(y$MeanDensityStratum))
+
+	# Remove the total variables from byStratum and byPSU:
+	deselectPSU <- c("MeanDensityStratum", "VarDensityStratum", "SDDensityStratum", "CVDensityStratum", "MeanDensity", "VarDensity", "SDDensity", "CVDensity")
+	byPSU <- lapply(byPSU, function(x) x[!names(x) %in% deselectPSU])
+	deselect_stratum <- c("MeanDensity", "VarDensity", "SDDensity", "CVDensity")
+	byStratum <- lapply(byStratum, function(x) x[!names(x) %in% deselect_stratum])
 	
 	return(list(total=total, byStratum=byStratum, byPSU=byPSU))
 	#return(list(byStratum=byStratum, total=total))

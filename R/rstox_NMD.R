@@ -28,6 +28,7 @@
 #' @param dir					The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects
 #' @param subdir				Either a name of the sub directory in which to put the StoX projects of downloaded data, or TRUE which puts all projects in a sub folder named after the cruise series or survey time series. 
 #' @param group					Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is NULL, all data are saved in one StoX project. The default "default" groups by years if several cruises are requested and by cruise otherwise.
+#' @param abbrev				Logical: If TRUE, abbreviate the project names. PArticularly useful when downloading survey time series, which can have long names.
 #' @param subset				An integer vector giving the subset of the cruises to download in a cruise series (1 meaning the first cruise and c(2,5) cruise nr 2 and 5).
 #' @param filebase				The prefix to use in the names of the StoX projects to which the data are downloaded.
 #' @param cleanup				Logical: if FALSE, zip files containing cruise series or survey time series are not deleted.
@@ -345,9 +346,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			# Add download type:
 			URL = paste0(URL, downloadtype)
 			#projectPaths[i] <- file.path(dir, paste0(abbrevWords(sts), "_", stsInfo[i,"sampleTime"]))
-			zipPath <- paste0(projectPaths[i], ".zip")
-			# Added mode="wb" to make the zip openable on Windows:
-			status[i] <- download.file(URL, zipPath, mode="wb")
 			
 			# Overwriting or not?:
 			if(file.exists(projectPaths[i])){
@@ -360,9 +358,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 					else if(ans=="na"){
 						cat("Not overwriting:", projectPaths[i], "\n")
 						ow <- FALSE
-						if(cleanup){
-							unlink(zipPath)
-						}
+						#if(cleanup){
+						#	unlink(zipPath)
+						#}
 						next
 					}
 					else if(ans=="y"){
@@ -371,9 +369,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 					# else if(ans=="n"){
 					else{
 						cat("Not overwriting:", projectPaths[i], "\n")
-						if(cleanup){
-							unlink(zipPath)
-						}
+						#if(cleanup){
+						#	unlink(zipPath)
+						#}
 						next
 						}
 					# else{
@@ -382,9 +380,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 				}
 				else if(!ow){
 					cat("Not overwriting:", projectPaths[i], "\n")
-					if(cleanup){
-						unlink(zipPath)
-					}
+					#if(cleanup){
+					#	unlink(zipPath)
+					#}
 					next
 				}
 				else if(ow){
@@ -392,15 +390,25 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 				}
 			}
 			
-			# Delete the existing project if the conditional expression above did not exit the function:
-			unzipFile <- file.path(dirname(zipPath), dirname(unzip(zipPath, list=TRUE)[1,1]))
-			unzipped <- unzip(zipPath, exdir=dirname(zipPath))
-			# Change name to projectPaths[i]:
-			unlink(projectPaths[i], recursive=TRUE)
-			file.rename(unzipFile, projectPaths[i]) 
-			if(cleanup){
-				unlink(zipPath)
-			}
+			
+			status[i] <- downloadProjectZip(URL=URL, projectName=projectPaths[i], cleanup=cleanup, msg=msg, ow=ow)$status
+				
+			
+			
+			### # Define the path to the downloaded zip file:
+			### zipPath <- paste0(projectPaths[i], ".zip")
+			### # Added mode="wb" to make the zip openable on Windows:
+			### status[i] <- download.file(URL, zipPath, mode="wb")
+			### 
+			### # Delete the existing project if the conditional expression above did not exit the function:
+			### unzipFile <- file.path(dirname(zipPath), dirname(unzip(zipPath, list=TRUE)[1,1]))
+			### unzipped <- unzip(zipPath, exdir=dirname(zipPath))
+			### # Change name to projectPaths[i]:
+			### unlink(projectPaths[i], recursive=TRUE)
+			### file.rename(unzipFile, projectPaths[i]) 
+			### if(cleanup){
+			### 	unlink(zipPath)
+			### }
 		}
 		
 		# Warning if any downloads failed:

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project template="" rstoxversion="1.6" xmlns="http://www.imr.no/formats/stox/v1" lastmodified="03/10/17 10:34" rversion="3.4.1" stoxversion="2.4.8" resourceversion="1.72">
+<project template="" rstoxversion="1.6.3" xmlns="http://www.imr.no/formats/stox/v1" lastmodified="25/10/17 08:42" rversion="3.4.1" stoxversion="2.4.8" resourceversion="1.72">
   <model name="baseline">
     <process name="ReadProcessData">
       <function>ReadProcessData</function>
@@ -167,6 +167,25 @@
       <parameter name="LengthDist">Process(RegroupLengthDist)</parameter>
       <output>LengthDist</output>
     </process>
+    <process name="SweptAreaDensity">
+      <function>SweptAreaDensity</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <fileoutput>true</fileoutput>
+      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
+      <parameter name="SweptAreaMethod">LengthDependent</parameter>
+      <parameter name="BioticData">Process(FilterBiotic)</parameter>
+      <parameter name="CatchVariable">Weight</parameter>
+      <parameter name="LengthDist">Process(TotalLengthDist)</parameter>
+      <parameter name="SweepWidthMethod">Constant</parameter>
+      <parameter name="SweepWidth">25</parameter>
+      <parameter name="Alpha"></parameter>
+      <parameter name="Beta"></parameter>
+      <parameter name="LMin"></parameter>
+      <parameter name="LMax"></parameter>
+      <output>Density</output>
+    </process>
     <process name="AcousticDensity">
       <function>AcousticDensity</function>
       <enabled>true</enabled>
@@ -319,6 +338,22 @@
       <respondingui>false</respondingui>
       <breakingui>false</breakingui>
       <parameter name="out">all</parameter>
+    </process>
+    <process name="getReportsTSN">
+      <function>getReports</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <parameter name="out">all</parameter>
+      <parameter name="options">grp1=NULL</parameter>
+    </process>
+    <process name="getReportsTSB">
+      <function>getReports</function>
+      <enabled>true</enabled>
+      <respondingui>false</respondingui>
+      <breakingui>false</breakingui>
+      <parameter name="out">all</parameter>
+      <parameter name="options">grp1=NULL; var="weight"</parameter>
     </process>
     <process name="getPlots">
       <function>getPlots</function>

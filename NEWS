@@ -293,3 +293,19 @@ Changed the output from createProject(NULL) to return full paths of StoX project
 Added the parameter 'msg' to createProject().
 
 Changed the way Rstox recognizes StoX projects. From this version on StoX project names can be given either (i) by their full path, (ii) their name, in which case Rstox searches first in the default workspace and then in subdirectories, (iii) the path relative to the default workspace. This build support for organizing projects in the workspace in subdirectories.
+
+Changed the output from createProject() to return a list of processes for the available templates.
+
+Changed createProject("Test_Rstox") to autumatically use the example files for this particular project name. Also changed openProject("Test_Rstox") to create the project if missing. Thus there is no need to pre-create the test project. It is created when needed. Use createProject("Test_Rstox", ow=TRUE) to re-create the test project. This simplified the examples. 
+
+Added support for creating a project directly from an URL of a zipped StoX project, either given as 'files' in createProject() (where the projectName can be specified), or as 'projectName', in which case the project name of the zipped project is used.
+
+Added the function getRstoxVersion(), which returns the version of Rstox and the StoX Java library used by Rstox (and StoX).
+
+Added the function downloadProjectZip(), which downloads a zipped project from an URL, used by createProject() and getNMDdata().
+
+Added the function data.frame2ParTable(), which converts from a data.frame to a string as used by the StoX functions Catchability and *****
+
+Added the function isProjectZipURL(), which returns TRUE for URLs containing "http" or "ftp" AND "zip".
+
+

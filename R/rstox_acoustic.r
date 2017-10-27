@@ -13,8 +13,6 @@
 #' \code{aggPSUNASC} returns psuNASC_agg Data frame with mean NASC (Value) per transect (PSU)
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' psuNASC <- getPSUNASC("Test_Rstox")
 #' psuNASC_agg <- aggPSUNASC(psuNASC=psuNASC)
 #'
@@ -114,8 +112,6 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #' @return list with mean(NASC) and var(NASC) per strata, global (stratified) mean, SE and RSE (Relative standard error) of NASC
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
@@ -190,8 +186,6 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #' @return Matrix of resampled strata NASC means 
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")

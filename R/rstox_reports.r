@@ -177,8 +177,6 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #' @return Updated list with imputed bootstrap results 
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' boot <- runBootstrap(projectName, nboot=10, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum)
 #' # imputeByAge() fills in empty cells:
@@ -444,8 +442,6 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' @return Plot saved to file 
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' # Run bootstrap before plotting:
 #' boot <- runBootstrap(projectName, nboot=10, seed=1, 
@@ -532,8 +528,6 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 #' @return Plot saved to file and abundance table printed
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' plotAbundance(projectName, grp1="age")
 #' plotAbundance(projectName, grp1="age", unit=1)
@@ -813,8 +807,6 @@ plotAbundance_old <- function(projectName, var="Abundance", unit=NULL, baseunit=
 #' @return A data frame of the abundance in sumary per grp2 and grp1 if plotOutput=FALSE, and a list holding this object (keeping "-" for missing values and not ordering) and other objects needed by plotAbundance().
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' reportAbundance(projectName, grp1=NULL, grp2=NULL)
 #' reportAbundance(projectName, grp1="age", grp2=NULL)
@@ -841,6 +833,7 @@ reportAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NU
 reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE){
 	# Read the saved data from the R model. In older versions the user loaded the file "rmodel.RData" separately, but in the current code the environment "RstoxEnv" is declared on load of Rstox, and all relevant outputs are assigned to this environment:
 	projectEnv <- loadProjectData(projectName=projectName, var=level)
+	varInd <- abbrMatch(var[1], c("Abundance", "weight"), ignore.case=TRUE)
 	
 	# Combine all the bootstrap runs in one data table:
 	DT <- rbindlist(projectEnv[[level]]$SuperIndAbundance, idcol=TRUE)
@@ -850,7 +843,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 
 	# If grp1 is missing, replace it with all zeros:
 	if(length(grp1)==0 || length(DT[[grp1]])==0){
-		grp1 <- "temp"
+		grp1 <- c("TSN", "TSB")[varInd$ind]
 		DT[[grp1]] <- integer(nrow(DT))
 	}
 
@@ -880,7 +873,6 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	var <- plottingUnit$var
 	
 	# Sum the abundance or the product of abundance and weight (and possibly others in the future):
-	varInd <- abbrMatch(var[1], c("Abundance", "weight"), ignore.case=TRUE)
 	# Declare the variables used in the DT[] expression below (this is done to avoid warnings when building the package):
 	. <- NULL
 	Ab.Sum <- NULL
@@ -932,13 +924,13 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	
 	# Write the data to a tab-separated file:
 	if(write){
+		# Set temporary grp1 to NULL:
+		#if(grp1=="temp"){
+		#	grp1 <- NULL
+		#}
 		filename <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_")), ".txt")
 		moveToTrash(filename)
 		writeLines(paste(names(plottingUnit), unlist(plottingUnit), sep=": "), con=filename)
-		# Set temporary grp1 to NULL:
-		if(grp1=="temp"){
-			grp1 <- NULL
-		}
 		suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
 	}
 	else{
@@ -984,8 +976,6 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 #' @examples
 #' # View all parameters of plotting functions:
 #' sapply(getFunsRstox("plot"), function(x) names(formals(x)))
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' projectName <- "Test_Rstox"
 #' # Get all plots:
 #' getPlots(projectName)
