@@ -16,7 +16,12 @@ parString2data.frame(x)
 Get the Rstox version and the version of the Java library used by Rstox, on which StoX is built.
 }
 \examples{
-df1 <- data.frame(SpecCat=c("Torsk", "Hyse", ""), Alpha=c(5,9,2), beta=c(2,2,3), LMin=c(1,2,3), LMax=c(5,7,9))
+df1 <- data.frame(
+SpecCat=c("Torsk", "Hyse", ""), 
+Alpha=c(5,9,2), 
+Beta=c(2,2,3), 
+LMin=c(1,2,3), 
+LMax=c(5,7,9))
 string <- data.frame2parString(df1)
 df2 <- parString2data.frame(string)
 df1

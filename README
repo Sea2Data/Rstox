@@ -1,4 +1,4 @@
-# Rstox version: 1.6.3 (latest alpha, 2017-10-27)
+# Rstox version: 1.6.3 (latest alpha, 2017-10-30)
 # R version: 3.3.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -60,8 +60,10 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 
 # 13. Added the function downloadProjectZip(), which downloads a zipped project from an URL, used by createProject() and getNMDdata().
 
-# 14. Added the function data.frame2parString() and parString2data.frame(), converting from a data.frame to a string as used by the StoX functions Catchability and SplitNASC, and the the oposite.
+# 14. Added the function data.frame2parString() and parString2data.frame(), converting from a data.frame to a string as used by the StoX functions Catchability and SplitNASC, and the the opposite.
 
 # 15. Added the function isProjectZipURL(), which returns TRUE for URLs containing "http" or "ftp" AND "zip".
 
+# 16. Included a requirement on the data.table package  (>= 1.10.4-3) in this version, due to issues with parallel processing on Mac in the version preceding the required one.
 
+# 17. Removed the integers leading the name of sub lists in the element "outputData" in the list returned from getBaseline().

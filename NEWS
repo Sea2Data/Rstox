@@ -308,4 +308,6 @@ Added the function data.frame2parString() and parString2data.frame(), converting
 
 Added the function isProjectZipURL(), which returns TRUE for URLs containing "http" or "ftp" AND "zip".
 
+Included a requirement on the data.table package  (>= 1.10.4-3) in this version, due to issues with parallel processing on Mac in the version preceding the required one.
 
+Removed the integers leading the name of sub lists in the element "outputData" in the list returned from getBaseline().

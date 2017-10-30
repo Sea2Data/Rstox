@@ -209,7 +209,10 @@ getDataFrame <- function(baseline, processName=NULL, functionName=NULL, level=NU
 	
 	# Output a list of the data of each requested level:
 	out <- lapply(level, getDataFrameAtLevel, storage=storage, data=data)
-	names(out) <- sapply(seq_along(out), function(xx) basename(storage$getStorageFileName(jInt(xx))))
+	outnames <- sapply(seq_along(out), function(xx) basename(storage$getStorageFileName(jInt(xx))))
+	# Remove leading integers in sublists of the output from processes:
+	outnames <- sub("[0-9]+_", "", outnames)
+	names(out) <- outnames
 	if(drop && length(out)==1){
 		out[[1]]
 	}

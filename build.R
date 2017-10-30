@@ -4,7 +4,7 @@
 library("devtools")
 ##########
 
-buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1", official=FALSE, check=FALSE, exportDir=NULL) {
+buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1", pckversion=list(), official=FALSE, check=FALSE, exportDir=NULL) {
 	
 	########## Functions ##########
 	# Function used for writing the README file automatically, including package dependencies, R and Rstox version and release notes:
@@ -109,7 +109,7 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	#
 	#	return(imports)
 	#}
-	getImports <- function(buildDir){
+	getImports <- function(buildDir, version=list()){
 		# Read the NAMESPACE file and get the package dependencies:
 		buildDirList <- list.files(buildDir, recursive=TRUE, full.names=TRUE)
 		imports <- NULL
@@ -127,7 +127,21 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 			#notBase <- inst[, "Package"][!(inst[,"Priority"]) %in% "base"]
 			#imports <- sort(imports[!imports %in% notBase])
 		}
-		imports
+		
+		# Add required version for packages:
+		if(length(version)){
+			# Remove version information for packages that are not present in the imports:
+			if(!all(names(version) %in% imports)){
+				warning("Not all package versions specified in 'version' are present as imports.")
+			}
+			version <- version[names(version) %in% imports]
+			atversion <- match(names(version), imports)
+			for(i in seq_along(version)){
+				imports[atversion[i]] <- paste0(imports[atversion[i]], " (>= ", version[i], ")")
+			}
+		}
+		
+		return(imports)
 	}
 	########## End of functions ##########
 	
@@ -215,8 +229,8 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	document(buildDir)
 	
 	# Alter the DESCRIPTION file to contain the imports listed in the NAMESPACE file:
-	imports <- getImports(buildDir)
-	DESCRIPTIONtext <- readLines(DESCRIPTIONfile)
+	imports <- getImports(buildDir, version=pckversion)
+	#DESCRIPTIONtext <- readLines(DESCRIPTIONfile)
 	if(length(imports)){
 		cat("Imports:\n		", file=DESCRIPTIONfile, append=TRUE)
 		cat(paste(imports, collapse=",\n		"), file=DESCRIPTIONfile, append=TRUE)
@@ -266,7 +280,7 @@ dir <- "~/Documents/Produktivt/Prosjekt/R-packages/Rstox/Rstox"
 
 
 # Build 1.6.3:
-buildRstox(dir, version="1.6.3", Rversion="3.3.3", official=FALSE, check=FALSE)
+buildRstox(dir, version="1.6.3", Rversion="3.3.3", official=FALSE, check=FALSE, pckversion=list(data.table="1.10.4-3"))
 # buildRstox(dir, version="1.6.3", Rversion="3.3.3", official=FALSE, check=TRUE)
 
 

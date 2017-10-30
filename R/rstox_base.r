@@ -1841,7 +1841,12 @@ getRstoxVersion <- function(){
 #' @param x	A data.frame with the parameters as columns, such as data.frame(SpecCat=c("Torsk", "Sild", ""), Alpha=runif(3), Beta=runif(3), LMin=runif(3), LMax=runif(3)).
 #'
 #' @examples
-#' df1 <- data.frame(SpecCat=c("Torsk", "Hyse", ""), Alpha=c(5,9,2), beta=c(2,2,3), LMin=c(1,2,3), LMax=c(5,7,9))
+#' df1 <- data.frame(
+#'	SpecCat=c("Torsk", "Hyse", ""), 
+#'	Alpha=c(5,9,2), 
+#'	Beta=c(2,2,3), 
+#'	LMin=c(1,2,3), 
+#'	LMax=c(5,7,9))
 #' string <- data.frame2parString(df1)
 #' df2 <- parString2data.frame(string)
 #' df1

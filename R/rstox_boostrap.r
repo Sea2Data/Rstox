@@ -531,6 +531,13 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 	deselect_stratum <- c("MeanDensity", "VarDensity", "SDDensity", "CVDensity")
 	byStratum <- lapply(byStratum, function(x) x[!names(x) %in% deselect_stratum])
 	
+	# Order by the first two columns:
+	orderFirstTwo <- function(x){
+		x[order(x[,1], x[,2]), ]
+	}
+	byStratum <- lapply(byStratum, orderFirstTwo)
+	byPSU <- lapply(byPSU, orderFirstTwo)
+	
 	return(list(total=total, byStratum=byStratum, byPSU=byPSU))
 	#return(list(byStratum=byStratum, total=total))
 }
