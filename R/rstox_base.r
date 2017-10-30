@@ -1260,9 +1260,15 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 
 		# Unlist using recursive=FAKSE since it can hold different types (logical, string), and collapse to a vector after converting to logical strings as used in StoX: 
 		changeValues <- unlist(parlist, recursive=FALSE)
+		
 		# Set logical values to "true"/"false":
 		logicalValues <- sapply(changeValues, is.logical)
 		changeValues[logicalValues] <- lapply(changeValues[logicalValues], function(xx) if(xx) "true" else "false")
+		
+		# Convert parameter values given as a data frame to a string:
+		data.frameValues <- sapply(changeValues, is.data.frame)
+		changeValues[data.frameValues] <- lapply(changeValues[data.frameValues], data.frame2parString)
+		
 		# Collapse to a vector as the other three change vectors:
 		changeValues <- as.character(unlist(changeValues, use.names=FALSE))
 
@@ -1834,12 +1840,40 @@ getRstoxVersion <- function(){
 #'
 #' @param x	A data.frame with the parameters as columns, such as data.frame(SpecCat=c("Torsk", "Sild", ""), Alpha=runif(3), Beta=runif(3), LMin=runif(3), LMax=runif(3)).
 #'
+#' @examples
+#' df1 <- data.frame(SpecCat=c("Torsk", "Hyse", ""), Alpha=c(5,9,2), beta=c(2,2,3), LMin=c(1,2,3), LMax=c(5,7,9))
+#' string <- data.frame2parString(df1)
+#' df2 <- parString2data.frame(string)
+#' df1
+#' df2
+#' identical(df1, df2)
+#'
 #' @export
 #' @keywords internal
+#' @rdname data.frame2parString
 #'
-data.frame2ParTable <- function(x){
-	out <- apply(x, 1, function(y) paste(names(d), y, sep=" = "))
+data.frame2parString <- function(x){
+	out <- apply(x, 1, function(y) paste(names(x), y, sep=" = "))
 	paste(apply(out, 2, paste, collapse="; "), collapse=" / ")
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname data.frame2parString
+#'
+parString2data.frame <- function(x){
+	out <- lapply(strsplit(x, "/")[[1]], strsplit, ";")
+	out <- strsplit(unlist(out), "=")
+	# get column names and strip off leading and trailing whitespace:
+	colnames <- sapply(out, "[", 1)
+	colnames <- gsub("^\\s+|\\s+$", "", colnames)
+	ucolnames <- unique(colnames)
+	table <- sapply(out, "[", 2)
+	table <- gsub("^\\s+|\\s+$", "", table)
+	table <- split(table, colnames)
+	suppressWarnings(table <- lapply(table, function(y) if(!any(is.na(as.numeric(y)))) as.numeric(y) else y))
+	table <- as.data.frame(table)
+	table[,match(ucolnames, colnames(table))]
 }
 
 

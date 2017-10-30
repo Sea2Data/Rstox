@@ -60,7 +60,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 
 # 13. Added the function downloadProjectZip(), which downloads a zipped project from an URL, used by createProject() and getNMDdata().
 
-# 14. Added the function data.frame2ParTable(), which converts from a data.frame to a string as used by the StoX functions Catchability and *****
+# 14. Added the function data.frame2parString() and parString2data.frame(), converting from a data.frame to a string as used by the StoX functions Catchability and SplitNASC, and the the oposite.
 
 # 15. Added the function isProjectZipURL(), which returns TRUE for URLs containing "http" or "ftp" AND "zip".
 

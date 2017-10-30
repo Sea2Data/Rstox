@@ -304,7 +304,7 @@ Added the function getRstoxVersion(), which returns the version of Rstox and the
 
 Added the function downloadProjectZip(), which downloads a zipped project from an URL, used by createProject() and getNMDdata().
 
-Added the function data.frame2ParTable(), which converts from a data.frame to a string as used by the StoX functions Catchability and *****
+Added the function data.frame2parString() and parString2data.frame(), converting from a data.frame to a string as used by the StoX functions Catchability and SplitNASC, and the the opposite.
 
 Added the function isProjectZipURL(), which returns TRUE for URLs containing "http" or "ftp" AND "zip".
 
