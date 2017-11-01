@@ -234,6 +234,7 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	if(length(imports)){
 		cat("Imports:\n		", file=DESCRIPTIONfile, append=TRUE)
 		cat(paste(imports, collapse=",\n		"), file=DESCRIPTIONfile, append=TRUE)
+		cat("", file=DESCRIPTIONfile, append=TRUE)
 	}
 	##########
 	
@@ -276,17 +277,13 @@ dir <- "~/Documents/Produktivt/Prosjekt/R-packages/Rstox/Rstox"
 
 # Build 1.6.2:
 # buildRstox(dir, version="1.6.2", Rversion="3.3.3", official=FALSE, check=FALSE)
-# buildRstox(dir, version="1.6.2", Rversion="3.3.3", official=FALSE, check=TRUE)
 
 
 # # Build 1.6.3:
 # buildRstox(dir, version="1.6.3", Rversion="3.3.3", official=FALSE, check=FALSE, pckversion=list(data.table="1.10.4-3"))
-# # buildRstox(dir, version="1.6.3", Rversion="3.3.3", official=FALSE, check=TRUE)
-
 
 
 # Build 1.6.4:
-buildRstox(dir, version="1.6.4", Rversion="3.3.3", official=FALSE, check=FALSE, pckversion=list(data.table="1.10.4-3"))
-# buildRstox(dir, version="1.6.3", Rversion="3.3.3", official=FALSE, check=TRUE)
+buildRstox(dir, version="1.6.4", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
 
 
