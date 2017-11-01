@@ -436,7 +436,7 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' Plot is exported to a tif- or png-file
 #'
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
-#' @param format		The file format of the saved plot (one of "png" and "tiff").
+#' @param format		The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.
 #' @param ...			Parameters passed on from other functions.
 #' 
 #' @return Plot saved to file 
@@ -451,6 +451,7 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' @export
 #' 
 plotNASCDistribution <- function(projectName, format="png", ...){
+	lll <- list(...)
 	# Read the saved data from the R model. In older versions the user loaded the file "rmodel.RData" separately, but in the current code the environment "RstoxEnv" is declared on load of Rstox, and all relevant outputs are assigned to this environment:
 	var <- c("psuNASC", "resampledNASC")
 	projectEnv <- loadProjectData(projectName=projectName, var=var)
@@ -473,30 +474,48 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 	
 	# Define the file name and initiate the plot file:
 	filenamebase <- getProjectPaths(projectName)$RReportDir
-	if(startsWith(tolower(format), "tif")){
-		filename <- file.path(filenamebase, "NASC_Distribution.tif")
-		tiff(filename, res=600, compression = "lzw", height=5, width=5, units="in")
+	filename <- paste(filenamebase, format, sep=".")
+	
+	### if(startsWith(tolower(format), "tif")){
+	### 	filename <- file.path(filenamebase, "NASC_Distribution.tif")
+	### 	tiff(filename, res=600, compression = "lzw", height=5, width=5, units="in")
+	### }
+	### else if(startsWith(tolower(format), "png")){
+	### 	filename <- file.path(filenamebase, "NASC_Distribution.png")
+	### 	png(filename, width=800, height=600)
+	### }
+	### else{
+	### 	filename <- NA
+	### 	warning("Invalid format")
+	### }
+	### moveToTrash(filename)
+	# If width and height is not given, default to width=5000, height=3000:
+	if(!all(c("width", "height") %in% names(lll))){
+		lll$width <- 5000
+		lll$height <- 3000
+		lll$res <- 500
 	}
-	else if(startsWith(tolower(format), "png")){
-		filename <- file.path(filenamebase, "NASC_Distribution.png")
-		png(filename, width=800, height=600)
+	
+	if(length(format)){
+		do.call(format, c(list(filename=filename), lll))
+		moveToTrash(filename)
 	}
-	else{
-		filename <- NA
-		warning("Invalid format")
-	}
-	moveToTrash(filename)
 	
 	# Run the plot
 	out <- list()
-	tryCatch({
-		out <- hist(getVar(agg, "Value"), breaks=20, freq=FALSE, xlab="NASC transect means", ylab="Relative frequency", main=projectName)
-		d <- density(projectEnv$resampledNASC)
-		lines(d)
-		}, finally = {
-		# safe closure of image resource inside finally block
-		dev.off()
-	})
+	tryCatch(
+		{
+			out <- hist(getVar(agg, "Value"), breaks=20, freq=FALSE, xlab="NASC transect means", ylab="Relative frequency", main=projectName)
+			d <- density(projectEnv$resampledNASC)
+			lines(d)
+		}, 
+		finally = {
+			# safe closure of image resource inside finally block
+			if(length(format)){
+				dev.off()
+			}
+		}
+	)
 	
 	out$filename <- filename
 	out <- c(out, d)
@@ -521,7 +540,7 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 #' @param xlab			The label to user for the x axis, with default depending on data plotted,
 #' @param ylab			The label to user for the y axis, with default depending on data plotted.
 #' @param main			Main title for plot (text)
-#' @param format		The file format of the saved plot, either given as a function such as bmp, jpeg, png, tiff, with \code{filename} as its first argument, or as a string naming the function. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=800, height=600.
+#' @param format		The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, , resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.
 #' @param maxcv			The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.
 #' @param ...			Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).
 #' 
@@ -558,7 +577,6 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 	
 		# Set the missing values to low value (assuming only postive values are used for age and stratum and other variables):
 		cat("Abundance by age for ", level, "\n", se0="")
-		print(out)
 		xForMissing <- min(tmp1[[grp1]], na.rm=TRUE)-1
 		if(length(grp1)){
 			suppressWarnings(tmp1[[grp1]][is.na(tmp1[[grp1]])] <- xForMissing)
@@ -584,15 +602,20 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 	
 		# Get file name:
 		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_"))
-		filename <- paste(filenamebase, if(!is.character(format)) deparse(substitute(format)) else format, sep=".")
+		filename <- paste(filenamebase, format, sep=".")
 		
-		# If width and height is not given, default to width=800, height=600:
+		# If width and height is not given, default to width=5000, height=3000:
 		if(!all(c("width", "height") %in% names(lll))){
-			lll$width=800
-			lll$height=600
+			lll$width <- 5000
+			lll$height <- 3000
+			lll$res <- 500
 		}
-		do.call(format, c(list(filename=filename), lll))
-		moveToTrash(filename)
+		
+		if(length(format)){
+			do.call(format, c(list(filename=filename), lll))
+			moveToTrash(filename)
+		}
+		
 	
 		maxcv <- min(maxcv, max(out$Ab.Sum.cv, na.rm=TRUE))
 		if(maxcv==0){
@@ -606,180 +629,45 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 		outtmp$Ab.Sum.cv <- outtmp$Ab.Sum.cv * cvScalingFactor
 		levels <- seq(min(tmp1[[grp1]], na.rm=TRUE), max(tmp1[[grp1]], na.rm=TRUE), by=median(diff(sort(unique(tmp1[[grp1]]))), na.rm=TRUE))
 		
-		tryCatch({
-			if(is.null(grp2)){
-				pl <- ggplot() + 
-					geom_boxplot(data=tmp1, aes_string(x=factor(tmp1[[grp1]], levels=levels), y="Ab.Sum")) + 
-					theme_bw() + 
-					scale_x_discrete(drop=FALSE) + 
-					geom_line(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE) + 
-					geom_point(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE)
-			}	
-			else{
-				pl <- ggplot() + 
-					geom_boxplot(data=tmp1, aes_string(x=factor(tmp1[[grp1]], levels=levels), y="Ab.Sum", fill=as.factor(tmp1[[grp2]]))) + 
-					theme_bw() + 
-					scale_x_discrete(drop=FALSE) + 
-					scale_fill_discrete(name=grp2) + 
-					geom_line(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE) + 
-					geom_point(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE)
-			}
-			pl <- pl + 
-			scale_y_continuous(limits=ylim, sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
-			xlab(xlab) +
-			ylab(ylab) + 
-			ggtitle(main)
-			
-			# Activate the plot:
-			print(pl)
-			
-			if(startsWith(tolower(format), "tif")){
-				dev.copy(tiff, filename=filename, res=600, compression="lzw", height=10, width=15, units="in")
-			}
-			}, finally = {
-			# safe closure of image resource inside finally block
-			dev.off()
-		})
-		#system(paste0("open '" ,filename, "'"))
-		outList$filename[[level]] <- filename
-		outList$data[[level]] <- temp[[i]]
-	}
-}
-#' 
-#' @export
-#' @rdname plotAbundance
-#' 
-plotAbundance_old <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, ...){
-	# numberscale is kept for backwards compatibility:
-	lll <- list(...)
-	if("numberscale" %in% names(lll)){
-		warning("The argument numberscale is deprecated. Use the new argument 'unit' instead.")
-		unit <- lll$numberscale
-		lll$numberscale <- NULL
-	}
-	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
-	
-	# Process the boostrap runs:
-	temp <- reportAbundance(projectName, grp1=grp1, grp2=grp2, numberscale=plottingUnit$scale, plotOutput=TRUE)
-	outList <- list(filename=NULL, data=NULL)
-	
-	for(i in seq_along(temp)){
-		level <- names(temp)[i]
-		out <- temp[[i]]$abnd
-		grp1.unknown <- temp[[i]]$grp1.unknown
-		tmp1 <- temp[[i]]$tmp1
-	
-		# Set the missing values to low value (assuming only postive values are used for age and stratum and other variables):
-		cat("Abundance by age for ", level, "\n", se0="")
-		print(out)
-		xForMissing <- min(tmp1[[grp1]], na.rm=TRUE)-1
-		if(length(grp1)){
-			suppressWarnings(tmp1[[grp1]][is.na(tmp1[[grp1]])] <- xForMissing)
-			suppressWarnings(out[[grp1]][is.na(out[[grp1]])] <- xForMissing)
-			unique_grp1 <- unique(tmp1[[grp1]])
-		}
-		if(length(grp2)){
-			suppressWarnings(tmp1[[grp2]][is.na(tmp1[[grp2]])] <- xForMissing)
-			suppressWarnings(out[[grp2]][is.na(out[[grp2]])] <- xForMissing)
-			unique_grp2 <- unique(tmp1[[grp2]])
-		}
-	
-		# Get ylab and xlab text:
-		if(length(ylab)==0){
-			ylab <- paste0(plottingUnit$var, " (", plottingUnit$unit, ")")
-		}
-		if(is.null(xlab) & !is.null(grp2)){
-			xlab <- paste(grp1,"by", grp2)
-		}
-		if(is.null(xlab)){
-			xlab <- paste(grp1)
-		}
-	
-		# Get file name:
-		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_"))
-		filename <- paste(filenamebase, if(!is.character(format)) deparse(substitute(format)) else format, sep=".")
-		
-		# If width and height is not given, default to width=800, height=600:
-		if(!all(c("width", "height") %in% names(lll))){
-			lll$width=800
-			lll$height=600
-		}
-		do.call(format, c(list(filename=filename), lll))
-		
-		#if(startsWith(tolower(format), "tif")){
-		#	filename <- paste0(filenamebase, ".tif")
-		#	x11()
-		#}
-		#else if(startsWith(tolower(format), "png")){
-		#	filename <- paste0(filenamebase, ".png")
-		#	#png(filename, width=800, height=600, units = 'in', res = 300)
-		#	png(filename, width=800, height=600)
-		#}
-		#else{
-		#	filename <- NA
-		#	warning("Invalid format")
-		#}
-		moveToTrash(filename)
-	
-		maxcv <- min(maxcv, max(out$Ab.Sum.cv, na.rm=TRUE))
-		if(maxcv==0){
-			maxcv <- 1
-		}
-		cvLabels <- pretty(c(0, maxcv)) 
-		xlim <- range(unique_grp1)
-		ylim <- c(0, max(tmp1$Ab.Sum, na.rm=TRUE))
-		cvScalingFactor <- max(ylim) / maxcv
-		
-		tryCatch({
-			par(mfrow=c(1,1), oma=c(2,2,2,2), mar=c(4,4,2,4))
-			form <- as.formula(paste0("Ab.Sum~", grp1))
-			plot(0, type="n", xlim=range(unique_grp1, na.rm=TRUE), ylim=c(0, max(tmp1$Ab.Sum, na.rm=TRUE)), xlab=xlab, ylab=ylab, axes=FALSE)
-	
-			if(is.null(grp2)){
-				atx <- sort(unique_grp1)
-				xTickLabels <- atx
-				xTickLabels[xTickLabels==xForMissing] <- "-"
-				boxplot(form, at=atx,	data=tmp1, xlim=xlim, ylim=ylim, xlab=xlab, ylab=ylab, axes=FALSE, outline=FALSE, show.names=FALSE)
-				axis(1, at=atx, labels=xTickLabels)
-				axis(2)
-			
-				cv <- out$Ab.Sum.cv * cvScalingFactor
-				lines(atx, cv, type='b')
-			}	
-			else{
-				addToAtx <- 0.6 / length(unique_grp2)
-			
-				for(j in seq_along(unique_grp2)){
-					thisdata <- tmp1[tmp1[,grp2] == unique_grp2[j],]
-					thisout <- out[out[,grp2] == unique_grp2[j],]
-					thisout <- thisout[!is.na(thisout$Ab.Sum.cv), , drop=FALSE]
-					# Update unique_grp1 to the current grp2:
-					unique_grp1 <- unique(thisdata[[grp1]])
-					atx <- sort(unique_grp1) + addToAtx*(j-1)
-					xTickLabels <- atx
-					xTickLabels[xTickLabels==xForMissing] <- "-"
-					boxplot(form,	at=atx, data=thisdata, xlim=xlim, ylim=ylim, xlab=xlab, ylab=ylab, axes=FALSE, add=j>1, boxcol=j, boxwex=addToAtx, outline=FALSE, show.names=FALSE)
-					if(i==1 && j==1){
-						axis(1, at=atx, labels=xTickLabels)
-						axis(2)
-					}
-					# Scale the cvs to fit the ylim of the current plot:
-					cv <- thisout$Ab.Sum.cv * cvScalingFactor
-					lines(atx, cv, type='b', col=j)
+		tryCatch(
+			{
+				if(is.null(grp2)){
+					pl <- ggplot() + 
+						geom_boxplot(data=tmp1, aes_string(x=factor(tmp1[[grp1]], levels=levels), y="Ab.Sum")) + 
+						theme_bw() + 
+						scale_x_discrete(drop=FALSE) + 
+						geom_line(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE) + 
+						geom_point(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE)
+				}	
+				else{
+					pl <- ggplot() + 
+						geom_boxplot(data=tmp1, aes_string(x=factor(tmp1[[grp1]], levels=levels), y="Ab.Sum", fill=as.factor(tmp1[[grp2]]))) + 
+						theme_bw() + 
+						scale_x_discrete(drop=FALSE) + 
+						scale_fill_discrete(name=grp2) + 
+						geom_line(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE) + 
+						geom_point(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE)
 				}
-				legend(x="top", lty=1, legend=paste0(grp2, ": ", unique_grp2), col=seq_along(unique_grp2), xpd=TRUE, inset=c(3.1,0), horiz=TRUE, bty="n")
+				pl <- pl + 
+				scale_y_continuous(limits=ylim, sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
+				xlab(xlab) +
+				ylab(ylab) + 
+				ggtitle(main)
+			
+				# Activate the plot:
+				print(pl)
+			
+				#if(startsWith(tolower(format), "tif")){
+				#	dev.copy(tiff, filename=filename, res=600, compression="lzw", height=10, width=15, units="in")
+				#}
+			}, 
+			finally = {
+				# safe closure of image resource inside finally block
+				if(length(format)){
+					dev.off()
+				}
 			}
-			mtext("CV", side=4, line=3, cex=1)
-			axis(4, at=cvLabels * cvScalingFactor, labels=cvLabels)
-			title(main)
-	
-			if(startsWith(tolower(format), "tif")){
-				dev.copy(tiff, filename=filename, res=600, compression="lzw", height=10, width=15, units="in")
-			}
-			}, finally = {
-			# safe closure of image resource inside finally block
-			dev.off()
-		})
+		)
 		#system(paste0("open '" ,filename, "'"))
 		outList$filename[[level]] <- filename
 		outList$data[[level]] <- temp[[i]]

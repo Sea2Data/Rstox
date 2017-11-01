@@ -311,3 +311,9 @@ Added the function isProjectZipURL(), which returns TRUE for URLs containing "ht
 Included a requirement on the data.table package  (>= 1.10.4-3) in this version, due to issues with parallel processing on Mac in the version preceding the required one.
 
 Removed the integers leading the name of sub lists in the element "outputData" in the list returned from getBaseline().
+
+########## Version 1.6.3 (2017-10-01) ##########
+
+Removed plotAbundance_old(), which is no longer used. The new plotAbundance() uses ggplot2 for nicer plotting.
+
+Changed default width, height, dpi to 5000, 3000, 500. Also added the option format=NULL, causing plots to only show in the graphics window.

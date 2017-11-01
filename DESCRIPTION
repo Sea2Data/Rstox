@@ -1,6 +1,6 @@
 Package: Rstox
 Title: Running Stox functionality independently in R
-Version: 1.6.3
+Version: 1.6.4
 Authors@R: c(
   person("Arne Johannes", "Holmin", role = c("aut","cre"), email = "arnejh@imr.no"),
   person("Edvin", "Fuglebakk", role = "ctb"),
@@ -20,7 +20,7 @@ License: LGPL-3
 LazyData: true
 RoxygenNote: 6.0.1
 Imports:
-		data.table,
+		data.table (>= 1.10.4-3),
 		ggplot2,
 		pbapply,
 		rgdal,

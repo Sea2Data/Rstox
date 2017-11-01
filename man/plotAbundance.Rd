@@ -2,14 +2,9 @@
 % Please edit documentation in R/rstox_reports.r
 \name{plotAbundance}
 \alias{plotAbundance}
-\alias{plotAbundance_old}
 \title{Plot abundance results to file (generic)}
 \usage{
 plotAbundance(projectName, var = "Abundance", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
-
-plotAbundance_old(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
   ylab = NULL, main = "", format = "png", maxcv = 1, ...)
 }
@@ -32,7 +27,7 @@ plotAbundance_old(projectName, var = "Abundance", unit = NULL,
 
 \item{main}{Main title for plot (text)}
 
-\item{format}{The file format of the saved plot, either given as a function such as bmp, jpeg, png, tiff, with \code{filename} as its first argument, or as a string naming the function. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=800, height=600.}
+\item{format}{The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=800, height=600.}
 
 \item{maxcv}{The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.}
 

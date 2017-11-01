@@ -1583,8 +1583,11 @@ getVar <- function(x, var){
 		if(var %in% names(x)){
 			x[[var]]
 		}
+		else if(length(x)==0){
+			warning("Empty data frame \"x\"")
+		}
 		else{
-			stop(paste0("Variable ", var, " not present in the data frame \"", deparse(substitute(x)), "\""))
+			stop(paste0("Variable ", var, " not present in the data frame \"x\""))
 		}
 	}
 	if(length(var)==1){
@@ -1701,7 +1704,7 @@ saveRImage <- saveProjectData
 #' 
 loadProjectData <- function(projectName, var="all", ow=FALSE, ...){
 	# Simple function for loading Rstox data into R, treating overwriting.
-	.loadToRstox <- function(file, envir, ow=FALSE){
+	loadToRstox <- function(file, envir, ow=FALSE){
 		# Check for existance of the data in memory:
 		if(!ow){
 			var <- basename(file_path_sans_ext(file))
@@ -1742,7 +1745,7 @@ loadProjectData <- function(projectName, var="all", ow=FALSE, ...){
 			#warning(paste0("None of the requested data (", paste(var, collapse=", "), ") are present in the directory output/r/data"))
 			return()
 		}
-		lapply(filelist, .loadToRstox, envir=projectDataEnv, ow=ow)
+		lapply(filelist, loadToRstox, envir=projectDataEnv, ow=ow)
 		return(projectDataEnv)
 	}
 	else{
