@@ -52,6 +52,10 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		if(length(psuNASC)>0){
 			# Pick out the NASC value of the current stratum j of the current bootstrap replicate i:
 			sm <- stratumNASC$NASC.by.strata$strata.mean[stratumNASC$NASC.by.strata$Stratum==strata[j]]
+			# Change introduced in the output from getResampledNASCDistr(), which form 2017-11-03 returns a list of elements NASC and seed:
+			if(is.list(resampledNASC)){
+				resampledNASC <- resampledNASC$NASC
+			}
 			# Scaling factor. This is a factor to multiply all NASC vaules inside the current stratum/bootstrap replicate with:
 			meanNASC$NASC.scale.f[meanNASC$Stratum==strata[j]] <- ifelse(sm>0, resampledNASC[i,j]/sm, 0)
 		}
@@ -184,7 +188,14 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #'
 #' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 #'
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName  					The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param bootstrapMethod				The method to use for the bootstrap. Currently implemented are given in the following table:
+#' \tabular{rrr}{
+#'   bootstrapMethod \tab Description
+#'   acousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
+#'   sweptArea_length \tab Bootstrap only biotic data with length information\cr
+#'   sweptArea_total \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
+#' }
 #' @param acousticMethod,bioticMethod   Specification of the method to use for bootstrapping the acoustic and biotic data. Currently only one method is available for acoustic and one for biotic data: acousticMethod = PSU~Stratum, bioticMethod = PSU~Stratum. Other methods are planned in later versions, involving the levels of the data given in the below table.
 #' \tabular{rrr}{
 #'   Level \tab Acoustic \tab Biotic\cr
@@ -195,13 +206,13 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #'   EDSU \tab Acoustic data averaged over e.g. one nmi \tab Biotic station\cr
 #'   Sample \tab Ping \tab Individal catch sample
 #' }
-#' @param nboot			Number of bootstrap replicates.
-#' @param startProcess	The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.
-#' @param endProcess	The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".
-#' @param seed			The seed for the random number generator (used for reproducibility).
-#' @param cores			An integer giving the number of cores to run the bootstrapping over.
-#' @param msg			Logical: if TRUE print messages from runBaseline().
-#' @param ...			Used for backwards compatibility.
+#' @param nboot							Number of bootstrap replicates.
+#' @param startProcess					The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.
+#' @param endProcess					The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".
+#' @param seed							The seed for the random number generator (used for reproducibility).
+#' @param cores							An integer giving the number of cores to run the bootstrapping over.
+#' @param msg							Logical: if TRUE print messages from runBaseline().
+#' @param ...							Used for backwards compatibility.
 #'
 #' @return list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
 #'
@@ -214,7 +225,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' @export
 #' @rdname runBootstrap
 #'
-runBootstrap <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, ...){
+runBootstrap <- function(projectName, bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, ...){
 	
 	# Documentation removed on 2017-08-25, since it has not been implemented:
 	# acousticMethod,bioticMethod   Specification of the method to use for bootstrapping the acoustic and biotic data. These can be formulas or characters which can be converted to formulas, given as 'variable to bootstrap ~ level to bootstrap within'. Multiple bootstraps can be specified, such as bioticMethod=c(EDSU~Stratum, Sample~EDSU), instructing to bootstrap the EDSUs (stations) within each stratum, and also bootstrapping the individual catch samples within each EDSU. Only certain strings can be used in the formulas, as shown in the table below. The methods can also be given as functions of at least two arguments, 'projectName' and 'process', which makes modifications to the output from getBaseline(projectName, proc=process, input=NULL) and sends the modified data back to the baseline in Java memory and runs the baseline with the modified data. Using funcitons is not yet implemented. 
@@ -354,6 +365,133 @@ runBootstrap <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=P
 
 #*********************************************
 #*********************************************
+#' Run a simple bootstrap of biotic PSUs within strata.
+#'
+#' @param projectName  					The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param bootstrapMethod				The method to use for the bootstrap. Currently implemented are given in the following table:
+#' \tabular{rrr}{
+#'   bootstrapMethod \tab Description
+#'   acousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
+#'   sweptArea_length \tab Bootstrap only biotic data with length information\cr
+#'   sweptArea_total \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
+#' }
+#' @param acousticMethod,bioticMethod   Specification of the method to use for bootstrapping the acoustic and biotic data. Currently only one method is available for acoustic and one for biotic data: acousticMethod = PSU~Stratum, bioticMethod = PSU~Stratum. Other methods are planned in later versions, involving the levels of the data given in the below table.
+#' \tabular{rrr}{
+#'   Level \tab Acoustic \tab Biotic\cr
+#'   Survey \tab Survey \tab Survey\cr
+#'   Stratum \tab Stratum \tab Stratum\cr
+#'   Assignment \tab Not relevant \tab Assignment of biotic station groups to acoustic PSUs\cr
+#'   PSU \tab Acoustic data averaged over e.g. one tansect \tab Biotic station group \cr
+#'   EDSU \tab Acoustic data averaged over e.g. one nmi \tab Biotic station\cr
+#'   Sample \tab Ping \tab Individal catch sample
+#' }
+#' @param nboot							Number of bootstrap replicates.
+#' @param startProcess					The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.
+#' @param endProcess					The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".
+#' @param seed							The seed for the random number generator (used for reproducibility).
+#' @param cores							An integer giving the number of cores to run the bootstrapping over.
+#' @param msg							Logical: if TRUE print messages from runBaseline().
+#' @param ...							Used for backwards compatibility.
+#'
+#' @return list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
+#'
+#' @examples
+#' \dontrun{
+#' b <- runBootstrap("Test_Rstox", nboot=10, seed=1, cores=1)}
+#'
+#' @importFrom stats terms as.formula
+#'
+#' @export
+#' @rdname runBootstrap
+#'
+bootstrapSweptArea_Total <- function(projectName, proc="SweptAreaDensity", nboot=5, seed=1, cores=1, ignore.case=TRUE){
+	# Define seeds, and save these later:
+	if(length(seed)==1){
+		set.seed(seed)
+		seed <- round(runif(nboot, 1, 1e6))
+	}
+	else{
+		seed <- rep(seed, length.out=nboot)
+	}
+	
+	DensityMatrix <- getBaseline(projectName, proc=proc, input=NULL)
+	# Add stratum:
+	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=TRUE)
+	
+	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
+	availableCores = detectCores()
+	if(cores>availableCores){
+		warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
+	}
+	cores = min(cores, nboot, availableCores)
+	
+	# Generate the clusters of time steps:
+	if(cores>1){
+		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
+		cl<-makeCluster(cores)
+		# Bootstrap:
+		bootstrap <- pblapply(seed, boot1, data=DensityMatrix, list.out=TRUE, cl=cl)
+		# End the parallel bootstrapping:
+		stopCluster(cl)
+	}
+	else{
+		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
+		bootstrap <- pblapply(seed, boot1, data=DensityMatrix, list.out=TRUE)
+	}
+	
+	setProjectData(projectName=projectName, var=bootstrap)
+
+	boot <- rbindlist(bootstrap)
+	Variance <- apply(boot, 2, var)
+	SD <- sqrt(Variance)
+	Mean <- apply(boot, 2, mean)
+	CV <- SD / Mean
+
+	cbind(Variance, SD, Mean, CV)
+}
+#'
+#' @importFrom data.table rbindlist
+#'
+#' @export
+#' @keywords internal
+#' @rdname runBootstrap
+#'
+boot1 <- function(seed=1, data, list.out=TRUE){
+	
+	# Function for calculating the mean density and keep the first row of a matrix:
+	MeanDensity1 <- function(y){
+		out <- y[1, , drop=FALSE]
+		out$Density <- mean(y$Density)
+		out
+	}
+	# Function for sampling the rows of a matrix:
+	sample1 <- function(y){
+		set.seed(seed)
+		ind <- sample(nrow(y), replace=TRUE)
+		y[ind, , drop=FALSE]
+	}
+	
+	# Sample the rows of each stratum of each species:
+	#b <- lapply(data$byPSU, function(y) by(y, y$Stratum, sample1))
+	b <- lapply(data, function(y) by(y, y$Stratum, sample1))
+	# Calculate the mean density of each stratum of each species, and combine to a data.frame:
+	m <- lapply(b, function(y) lapply(y, MeanDensity1))
+	m <- lapply(m, data.table::rbindlist)
+	m <- lapply(m, as.data.frame)
+	# Calculate the total abundance:
+	tot <- lapply(m, function(y) sum(y$Area * y$Density))
+	# Output:
+	if(list.out){
+		list(tot=tot, mean=m, boot=b)
+	}
+	else{
+		tot
+	}
+}
+
+
+#*********************************************
+#*********************************************
 #' Parametric variance estimation
 #'
 #' Calculates mean, variance, coefficient of variation and 90 % confidence bounds based on Jolly, G. M., & Hampton, I. (1990). A stratified random transect design for acoustic surveys of fish stocks. Canadian Journal of Fisheries and Aquatic Sciences, 47(7), 1282-1291.
@@ -361,6 +499,8 @@ runBootstrap <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=P
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
 #' @param proc			The process which returns the acoustic density on which the variance should be estimated.
 #' @param ignore.case	Logical: If TRUE ignore case in species category SpecCat.
+#' @param na.rm			Logical: If FALSE return NA for all variance and mean statistics in the presence of NA in at lesat one stratum.
+#' @param out			A string specifying the format of the output (first element used). (1) If out = "bySpecCat", return a list with one element per species category SpecCat, with sublists for the total survey and for each stratum. (2) If out = "byLevel", return a list with elements 'Total' and 'Stratum', where all species categories are merged in one data frame. (3) If out = "listByLevel", return a list with elements 'Total' and 'Stratum', with sublists for all species categories.
 #'
 #' @return A list with names "Stratum" and "Total" containing dataframes for each species with the following columns: Stratum, Mean, SD (standard deviation), Variance, CV (coefficient of variation), and lower and upper 90% confidence bounds.
 #'
@@ -371,16 +511,122 @@ runBootstrap <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=P
 #' # v <- varianceEstimation(pr)
 #'
 #' @importFrom utils head
+#' @importFrom data.table rbindlist
 #'
 #' @export
 #' @rdname varianceEstimation
 #'
-varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case=TRUE){
+varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case=TRUE, na.rm=TRUE, out=c("bySpecCat", "byLevel", "listByLevel")){
+	
+	# Function used for adding statistics:
+	JollyHampton <- function(x, na.rm=TRUE){
+		# Eq (3) in Jolly and Hampton (1990), but replacing the weights w by 1:
+		VarDensityStratumFun <- function(x, varName, meanName, na.rm=TRUE){
+			n = nrow(x)
+			if(n < 2){
+				return(Inf)
+			}
+			out <- sum( (x[[varName]] - x[[meanName]])^2, na.rm=na.rm ) / (n * (n - 1))
+			return(out)
+		}
+		
+		# Get indices at first occurence of the strata, ordered by Stratum ID:
+		atStratumFirst <- which(!duplicated(x$Stratum))
+		atStratumFirst <- atStratumFirst[order(x$Stratum[atStratumFirst])]
+		SampleSizeStratum <- x$SampleSizeStratum[atStratumFirst]
+		PosSampleSizeStratum <- x$PosSampleSizeStratum[atStratumFirst]
+		
+		# Add stratum areas:
+		AreaStratum <- tapply(x$Area, x[c("Stratum")], head, 1)
+		
+		# Add the MeanDensityStratum:
+		MeanDensityStratum <- tapply(x$Density, x[c("Stratum")], mean, na.rm=na.rm)
+		# Add the VarDensityStratum, SDDensityStratum and CVDensityStratum:
+		VarDensityStratum <- c(by(x, x[c("Stratum")], VarDensityStratumFun, varName="Density", meanName="MeanDensityStratum", na.rm=na.rm))
+		SDDensityStratum <- sqrt(VarDensityStratum)
+		CVDensityStratum <- SDDensityStratum / MeanDensityStratum
+		AbundanceStratum <- AreaStratum * MeanDensityStratum
+		
+		# Overall statistics, Eq (2) and (3) in Jolly and Hampton (1990):
+		MeanDensity <- sum(MeanDensityStratum * AreaStratum, na.rm=na.rm) / sum(AreaStratum, na.rm=na.rm)
+		VarDensity <- sum(VarDensityStratum * AreaStratum^2, na.rm=na.rm) / sum(AreaStratum, na.rm=na.rm)^2
+		SDDensity <- sqrt(VarDensity)
+		CVDensity <- SDDensity / MeanDensity
+		
+		# Create output for stratum:
+		xStratum <- data.frame(
+			SpecCat = x$SpecCat[1], # 1
+			SampleUnitType = "Stratum", # 2
+			SampleUnit = x$Stratum[atStratumFirst], # 3
+			Area = AreaStratum, # 4
+			SampleSize = SampleSizeStratum, # 5
+			PosSampleSize = PosSampleSizeStratum, # 6
+			MeanDensity = MeanDensityStratum, # 7
+			VarDensity = VarDensityStratum, # 8
+			SDDensity = SDDensityStratum, # 9
+			CVDensity = CVDensityStratum, # 10
+			Abundance = AbundanceStratum # 11
+		)
+		
+		# Create output for the whole project:
+		xTotal <- data.frame(
+			SpecCat = x$SpecCat[1], # 1
+			Area = sum(AreaStratum), # 2
+			SampleSize = sum(SampleSizeStratum), # 3
+			PosSampleSize = sum(PosSampleSizeStratum), # 4
+			MeanDensity = MeanDensity, # 5
+			VarDensity = VarDensity, # 6
+			SDDensity = SDDensity, # 7
+			CVDensity = CVDensity, # 8
+			Abundance = sum(AbundanceStratum) # 9
+		)
+		
+		return(list(Total=xTotal, Stratum=xStratum))
+	}
 	
 	# Read the required baseline and process data:
 	StratumArea <- getBaseline(projectName, proc="StratumArea", input=NULL)
+	psustratum <- getBaseline(projectName, proc=NULL, input="psustratum")
+	# Check for the number of SampleUnits:
+	numSampleUnit <- checkNumPSUsInStratum(psustratum=psustratum)
+	# Get the density matrix:
+	output <- getBaseline(projectName, proc=proc, input=NULL)
+	
+	# Test for the required data:
+	if(length(output)==0){
+		stop(paste0("The process specified by 'proc' (", proc, ") is not present in the model. This must be a process with output containing the columns SpecCat, SampleUnitType, SampleUnit and Density. Also the SampleUnitType must be \"PSU\"."))
+	}
+	else if(!all(c("SpecCat", "SampleUnitType", "SampleUnit", "Density") %in% names(output)) && head(output$SampleUnitType, 1)!="PSU"){
+		stop(paste0("The output from the process specified by 'proc' (", proc, ") does not contain the columns SpecCat, SampleUnitType, SampleUnit and Density, or the SampleUnitType is not \"PSU\"."))
+	}
+	
+	# Add stratum information:
+	output <- linkPSU2Stratum(output, projectName=projectName, psustratum=psustratum, StratumArea=StratumArea, ignore.case=ignore.case)
+	
+	# Apply the variance estimation:
+	output <- lapply(output, JollyHampton, na.rm=na.rm)
+	
+	if(tolower(out[1]) %in% c("bylevel", "listbylevel")){
+		output <- list(Total=lapply(output, "[[", "Total"), Stratum=lapply(output, "[[", "Stratum"))
+	}
+	if(tolower(out[1]) == "bylevel"){
+		output <- lapply(output, data.table::rbindlist)
+		output <- lapply(output, as.data.frame)
+	}
+	return(output)
+}
+#'
+#' @importFrom utils head
+#'
+#' @export
+#' @rdname varianceEstimation
+#'
+varianceEstimation_old <- function(projectName, proc="SweptAreaDensity", ignore.case=TRUE){
+	
+	# Read the required baseline and process data:
+	StratumArea <- getBaseline(projectName, proc="StratumArea", input=NULL)
+	psustratum <- getBaseline(projectName, proc=NULL, input="psustratum")
 	DensityMatrix <- getBaseline(projectName, proc=proc, input=NULL)
-	psustratum <- getBaseline(projectName, proc=NULL, input="proc")$psustratum
 	if(length(DensityMatrix)==0){
 		stop(paste0("The process specified by 'proc' (", proc, ") is not present in the model. This must be a process with output containing the columns SpecCat, SampleUnitType, SampleUnit and Density. Also the SampleUnitType must be \"PSU\"."))
 	}
@@ -494,7 +740,7 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 	# Check for the number of SampleUnits:
 	numSampleUnit <- table(psustratum$Stratum)
 	if(any(numSampleUnit < 2)){
-		warning(paste0("The following strata have less than 2 SampleUnits, which disallows variance estimation: ", names(numSampleUnit)[which(numSampleUnit < 2)]))
+		warning(paste0("The following strata have less than 2 SampleUnits, which disallows variance estimation: ", paste(names(numSampleUnit)[which(numSampleUnit < 2)], collapse=", ")))
 	}
 	
 	# Split into species:
@@ -540,4 +786,117 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 	
 	return(list(total=total, byStratum=byStratum, byPSU=byPSU))
 	#return(list(byStratum=byStratum, total=total))
+}
+
+
+
+
+#*********************************************
+#*********************************************
+#' Bootstrap utils.
+#'
+#' \code{linkPSU2Stratum} Adds stratum information to a data frame with one row per PSU. Stratum ID, Area, number of PSUs and positive PSUs are added, and rows are generated for strata with non-positive density.
+#' \code{checkNumPSUsInStratum} Checks for numner of PSUs >= 2 in each stratum, which is a requirement for variance estimation, and should possibly be a requirement for the bootstrapping when one of the methods is PSU~Stratum.
+#'
+#' @param x				A data frame with with one row per PSU, to which Stratum information should be added.
+#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param psustratum	A data frame linking PSUs to stratum IDs. Should have the columns 'Stratum' and 'PSU' or 'SampleUnit'. Read from the project if missing.
+#' @param StratumArea	A data frame providing the area of each stratum. Should have the columns 'Area' and 'PolygonKey' or 'Stratum'. Read from the project if missing.
+#' @param list.out		Logical: If TRUE, split the data frame into a list per species category SpecCat.
+#' @param ignore.case	Logical: If TRUE, ingore case when splitting by species category SpecCat.
+#'
+#' @return A list with names "Stratum" and "Total" containing dataframes for each species with the following columns: Stratum, Mean, SD (standard deviation), Variance, CV (coefficient of variation), and lower and upper 90% confidence bounds.
+#'
+#' @importFrom utils head
+#'
+#' @export
+#' @keywords internal
+#' @rdname linkPSU2Stratum
+#'
+linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, list.out=TRUE, ignore.case=TRUE){
+	# Funciton for expanding the matrix by zero density for missing PSUs in the matrix:
+	fillZeros <- function(y, psustratum){
+		n <- nrow(psustratum)
+		# This is crude. We repeat the first line, and don't care that many of the colunms become invalid, as long as, SampleUnit, Stratum, Density, SpecCat and SampleUnitType are correct:
+		out <- y[rep(1, n),]
+		# Set all densities to 0:
+		out$Density <- 0
+		# Insert the positive densities:
+		validNames <- !names(out) %in% c("SampleUnit", "Stratum")
+		positive <- match(y$SampleUnit, psustratum$SampleUnit)
+		out[positive, validNames] <- y[, validNames]
+		# Add SampleUnit and Stratum:
+		out$SampleUnit <- psustratum$SampleUnit
+		out$Stratum <- psustratum$Stratum
+		# Remove rownames:
+		rownames(out) <- NULL
+		return(out)
+	}
+	# Function for adding sample size of the strata:
+	addSampleSize <- function(y){
+		# Get samole size:
+		y$PosSampleSize <- as.numeric(y$Density>0)
+		
+		# Aggregate over Stratum:
+		SampleSize <- by(y$SampleSize, y$Stratum, sum)
+		PosSampleSize <- by(y$PosSampleSize, y$Stratum, sum)
+		y$SampleSizeStratum <- SampleSize[y$Stratum]
+		y$PosSampleSizeStratum <- PosSampleSize[y$Stratum]
+		return(y)
+	}
+	# Function for adding stratum area:
+	addstratumArea <- function(x, StratumArea){
+		if(!"PolygonKey" %in% names(StratumArea) && "Stratum" %in% names(StratumArea)){
+			StratumArea$PolygonKey <- StratumArea$Stratum
+		}
+		x$Area <- StratumArea$Area[match(x$Stratum, StratumArea$PolygonKey)]
+		return(x)
+	}
+	
+	# Get the strata definitions to add to the data:
+	if(length(psustratum)==0){
+		psustratum <- getBaseline(projectName, proc=NULL, input="psustratum")
+	}
+	if(length(StratumArea)==0){
+		StratumArea <- getBaseline(projectName, proc="StratumArea", input=NULL)
+	}
+	
+	# Check for consistency in SampleUnit:
+	if(!x$SampleUnitType[1] %in% names(psustratum)){
+		stop("Mismatch between psustratum and SampleUnitType in the data")
+	}
+	names(psustratum)[names(psustratum)==x$SampleUnitType[1]] <- "SampleUnit"
+	
+	# First add Stratum to x:
+	#x <- cbind(x, Stratum=psustratum$Stratum[match(x$SampleUnit, psustratum$SampleUnit)])
+	x$Stratum <- psustratum$Stratum[match(x$SampleUnit, psustratum$SampleUnit)]
+	
+	# Split into species categories:
+	x <- split(x, if(ignore.case) tolower(x$SpecCat) else x$SpecCat)
+	x <- lapply(x, fillZeros, psustratum=psustratum)
+	x <- lapply(x, addSampleSize)
+	x <- lapply(x, addstratumArea, StratumArea=StratumArea)
+	
+	# Return either a list or combined into a matrix:
+	if(!list.out){
+		x <- as.data.frame(data.table::rbindlist(x))
+	}
+	return(x)
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname linkPSU2Stratum
+#'
+checkNumPSUsInStratum <- function(psustratum=NULL, projectName){
+	# Get the strata definitions to add to the data:
+	if(length(psustratum)==0){
+		psustratum <- getBaseline(projectName, proc=NULL, input="psustratum")
+	}
+	# Check for the number of SampleUnits:
+	numSampleUnit <- table(psustratum$Stratum)
+	if(any(numSampleUnit < 2)){
+		warning(paste0("The following strata have less than 2 SampleUnits, which disallows variance estimation: ", paste(names(numSampleUnit)[which(numSampleUnit < 2)], collapse=", ")))
+	}
+	numSampleUnit
 }

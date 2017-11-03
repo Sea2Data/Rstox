@@ -317,3 +317,5 @@ Removed the integers leading the name of sub lists in the element "outputData" i
 Removed plotAbundance_old(), which is no longer used. The new plotAbundance() uses ggplot2 for nicer plotting.
 
 Changed default width, height, dpi to 5000, 3000, 500. Also added the option format=NULL, causing plots to only show in the graphics window.
+
+Fixed a bug in readBaselineParameters(), where processes with 'enabled' set to "false" were removed. This caused problems when matching process names, and from now 'enabled' is returned in the parameter list instead.

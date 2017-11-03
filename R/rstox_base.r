@@ -1137,10 +1137,10 @@ readBaselineParameters <- function(projectName, rver="1"){
 		r <- getNodeSet(subDoc, "//ns:enabled", namespaces = c(ns=namespace))
 		isEnabled <- xmlValue(r[[1]])
 
-		# If a process is marked as disabled, stop and return NA instead
-		if(toupper(isEnabled)!="TRUE"){
-			return(c(DISABLED=NA))
-		}
+		### # If a process is marked as disabled, stop and return NA instead
+		### if(toupper(isEnabled)!="TRUE"){
+		### 	return(c(DISABLED=NA))
+		### }
 		
 		# Extract the attribute 'name' from the process node
 		processName<- xmlGetAttr(xmlRoot(subDoc), 'name')
@@ -1151,10 +1151,10 @@ readBaselineParameters <- function(projectName, rver="1"){
 
 		# Extract parameters name and value
 		r <- xpathSApply(subDoc, "//ns:parameter", getParamPV , namespaces = c(ns=namespace))
-
+		
 		# Append function name and parameters
-		ret[[processName]] <- c(list(functionName=functionName), r)
-
+		ret[[processName]] <- c(list(functionName=functionName, enabled=toupper(isEnabled)=="TRUE"), r)
+		
 		return(ret)
 	}
 	
@@ -1991,3 +1991,101 @@ isProjectZipURL <- function(URL){
 	# Detect hhtp or ftp AND zip:
 	sapply(gregexpr("http|ftp", URL), function(x) any(x>0)) & sapply(gregexpr("zip", URL), function(x) any(x>0))
 }
+
+
+#*********************************************
+#*********************************************
+#' Sample a vector after sorting the vector and applying the seed
+#'
+#' @param x			A vector or a single integer.
+#' @param size		A non-negative integer giving the number of items to choose.
+#' @param lx		The (optional) length of\code{x}.
+#' @param seed		The seed to apply before sampling.
+#' @param replace	Should sampling be with replacement?
+#' @param sorted	Should \code{x} be sorted prior to sampling?
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+sampleSorted <- function(x, size, lx=NULL, seed=0, replace=TRUE, sorted=TRUE){
+	if(length(lx)==0){
+		lx <- length(x)
+	}
+	if(sorted){
+		x <- sort(x)
+	}
+	set.seed(seed)
+	x[sample.int(lx, size=size, replace=replace)]
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+getSeeds <- function(){
+	
+	#From imputeByAge:
+	
+	# Set the seed of the runs, either as a vector of 1234s, to comply with old code, where the seeed was allways 1234 (from before 2016), or as a vector of seeds sampled with the given seed, or as NULL, in which case the seed matrix 'seedM' of distributeAbundance() is set by sampling seq_len(10000000) without seed:
+	if(isTRUE(seed)){
+		seedV = rep(TRUE, nboot+1) # seed==TRUE giving 1234 for compatibility with older versions
+	}
+	else if(is.numeric(seed)){
+		set.seed(seed)
+		seedV = sample(seq_len(10000000), nboot+1, replace = FALSE)
+	}
+	else{
+		seedV = NULL
+	}
+	
+	#From dsitribute abundance:
+	
+	# Set the seed matrix:
+	if(isTRUE(seedV[i])){
+		seedM <- matrix(c(1231234, 1234, 1234), nrow=NatUnknownAge, ncol=3, byrow=TRUE)
+	}
+	else{
+		set.seed(seedV[i])
+		# Create a seed matrix with 3 columns representing the replacement by station, stratum and survey:
+		seedM <- matrix(sample(seq_len(10000000), 3*NatUnknownAge, replace = FALSE), ncol=3)
+	}
+
+
+
+
+
+	
+	# From acoustic
+	
+	set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+	SeedV <- sample(c(1:10000000), parameters$nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+
+	set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL)
+
+
+	# from bootstrap_parallel
+	
+	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+	# Makes seed vector for fixed seeds (for reproducibility):
+	seedV <- sample(c(1:10000000), nboot, replace = FALSE)
+	
+	
+				getSeed(seed, type="vector", n=nboot)
+	
+	
+	
+	
+	
+	# From runBootstrap:
+	
+	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+	# Makes seed vector for fixed seeds (for reproducibility):
+	seedV <- sample(c(1:10000000), nboot, replace = FALSE)
+	
+	
+				getSeed(seed, type="vector", n=nboot)
+	
+	
+}
+

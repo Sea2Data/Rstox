@@ -201,6 +201,10 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
 		return(NULL)
 	}
 	
+	# Declare the seed vector, as this is returned from the function:
+	SeedV <- NULL
+	
+	# Run the reampling of acoustic data:
 	if(stratumNASC$NASCDistr=="observed"){
 		tmpNASC <- psuNASC
 		if(psuNASC$LayerType[1]!="WaterColumn"){
@@ -220,8 +224,13 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
 					#	yy2 <- yy[match(tID,yy$PSU), ]
 					#}
 					#else{
-				tID <- sample(yy$SampleUnit, length(yy$SampleUnit), replace=TRUE) # Resample NASC
-				yy2 <- yy[match(tID,yy$SampleUnit), ]
+				# Change added on 2017-11-02 by Arne Johannes Holmin:
+				# sample(yy$SampleUnit, length(yy$SampleUnit), replace=TRUE)
+				# changed to 
+				# sample(sort(yy$SampleUnit), length(yy$SampleUnit), replace=TRUE)
+				# (added sort() in order to obtain identical bootstrap results for when LayerType is "WaterColumn" and when it is not): 
+				tID <- sample(sort(yy$SampleUnit), length(yy$SampleUnit), replace=TRUE) # Resample NASC
+				yy2 <- yy[match(tID, yy$SampleUnit), ]
 				#}
 				resmean <- wtd.strata.est(yy2$Value,yy2$dist)$strata.mean
 			}
@@ -245,5 +254,5 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
 		 weibull = res.NASC.dist <- sapply(tmp, function(yy) {rweibull(parameters$nboot, shape=yy$shape, scale=yy$scale)-1})
 	)
 	res.NASC.dist <- ifelse(res.NASC.dist<0, 0, res.NASC.dist) # Note this assumption! Negative values are set to zero
-	out <- res.NASC.dist
+	return(list(NASC=res.NASC.dist, seed=SeedV))
 }

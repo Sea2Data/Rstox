@@ -2,9 +2,14 @@
 % Please edit documentation in R/rstox_boostrap.r
 \name{varianceEstimation}
 \alias{varianceEstimation}
+\alias{varianceEstimation_old}
 \title{Parametric variance estimation}
 \usage{
 varianceEstimation(projectName, proc = "SweptAreaDensity",
+  ignore.case = TRUE, na.rm = TRUE, out = c("bySpecCat", "byLevel",
+  "listByLevel"))
+
+varianceEstimation_old(projectName, proc = "SweptAreaDensity",
   ignore.case = TRUE)
 }
 \arguments{
@@ -13,6 +18,10 @@ varianceEstimation(projectName, proc = "SweptAreaDensity",
 \item{proc}{The process which returns the acoustic density on which the variance should be estimated.}
 
 \item{ignore.case}{Logical: If TRUE ignore case in species category SpecCat.}
+
+\item{na.rm}{Logical: If FALSE return NA for all variance and mean statistics in the presence of NA in at lesat one stratum.}
+
+\item{out}{A string specifying the format of the output (first element used). (1) If out = "bySpecCat", return a list with one element per species category SpecCat, with sublists for the total survey and for each stratum. (2) If out = "byLevel", return a list with elements 'Total' and 'Stratum', where all species categories are merged in one data frame. (3) If out = "listByLevel", return a list with elements 'Total' and 'Stratum', with sublists for all species categories.}
 }
 \value{
 A list with names "Stratum" and "Total" containing dataframes for each species with the following columns: Stratum, Mean, SD (standard deviation), Variance, CV (coefficient of variation), and lower and upper 90% confidence bounds.

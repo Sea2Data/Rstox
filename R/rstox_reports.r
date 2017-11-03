@@ -208,7 +208,7 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	}
 	else if(is.numeric(seed)){
 		set.seed(seed)
-		seedV = sample(seq_len(10000000), nboot+1, replace = FALSE)
+		seedV = sample(seq_len(10000000), nboot+1, replace=FALSE)
 	}
 	else{
 		seedV = NULL
@@ -259,53 +259,6 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	indReplacement.out <- lapply(out, "[[", "indReplacement")
 	seedM.out <- lapply(out, "[[", "seedM")	
 		
-		
-		
-	
-	
-	
-	 
-#	if(cores==1){
-#		for(i in seq_len(nboot)){ # Loop to all bootstrap results
-#			#thisiteration <- distributeAbundance(i, abnd=imputeVariable$SuperIndAbundance, seedV=seedV, dotfile=dotfile)
-#			thisiteration <- distributeAbundance(i, abnd=imputeVariable$SuperIndAbundance, seedV=seedV)
-#			
-#			# Store the data from the current iteration:
-#			imputeVariable$SuperIndAbundance[[i]] <- thisiteration$data
-#			msg.out[[i]] <- thisiteration$msg
-#			indMissing.out[[i]] <- thisiteration$indMissing
-#			indReplacement.out[[i]] <- thisiteration$indReplacement
-#			seedM.out[[i]] <- thisiteration$seedM
-#			#cat(paste0("This is iteration ", i, "/", nboot, "\n"))
-#		}
-#	}
-#	else{
-#		# Do not run on more cores than physically available:
-#		availableCores = detectCores()
-#		if(cores>availableCores){
-#			warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
-#			cores = availableCores
-#		}
-#		#memoryOneCore <- J("java.lang.Runtime")$getRuntime()$totalMemory()*2^-20
-#		cat("Parallel imputing on", cores, "cores:\n")
-#		# Generate the cluster of time steps:
-#		cl <- makeCluster(cores)
-#		#out <- parLapplyLB(cl, seq_len(nboot), distributeAbundance, abnd=imputeVariable$SuperIndAbundance, seedV=seedV, dotfile=dotfile)
-#		out <- parLapplyLB(cl, seq_len(nboot), distributeAbundance, abnd=imputeVariable$SuperIndAbundance, seedV=seedV)
-#		
-#		# End the parallel bootstrapping:
-#		stopCluster(cl)
-#		imputeVariable$SuperIndAbundance <- lapply(out, "[[", "data")
-#		# Add names ot the iterations:
-#		names(imputeVariable$SuperIndAbundance) <- namesOfIterations
-#		msg.out <- lapply(out, "[[", "msg")
-#		indMissing.out <- lapply(out, "[[", "indMissing")
-#		indReplacement.out <- lapply(out, "[[", "indReplacement")
-#		seedM.out <- lapply(out, "[[", "seedM")
-#	}
-
-
-
 	msg.out <- t(as.data.frame(msg.out))
 	colnames(msg.out) <- c("Aged", "NotAged", "ImputedAtStation", "ImputedAtStrata", "ImputedAtSurvey", "NotImputed")
 	rownames(msg.out) <- paste0("Iter", seq_len(nboot))
@@ -506,7 +459,9 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 	tryCatch(
 		{
 			out <- hist(getVar(agg, "Value"), breaks=20, freq=FALSE, xlab="NASC transect means", ylab="Relative frequency", main=projectName)
-			d <- density(projectEnv$resampledNASC)
+			# Change introduced in the output from getResampledNASCDistr(), which form 2017-11-03 returns a list of elements NASC and seed:
+			#d <- density(projectEnv$resampledNASC)
+			d <- density(if(is.list(projectEnv$resampledNASC)) projectEnv$resampledNASC$NASC else projectEnv$resampledNASC)
 			lines(d)
 		}, 
 		finally = {

@@ -258,7 +258,7 @@ getDataFrameAtLevel <- function(level, storage, data) {
 getProcessDataTableAsDataFrame <- function(baseline, tableName) {
 	s <- baseline$getProject()$getProcessData()$asTable(tableName)
 	if(nchar(s)>0){
-	out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=F, na.strings="-", encoding="UTF-8")
+		out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=F, na.strings="-", encoding="UTF-8")
 		# Interpret true/false as TRUE/FALSE:
 		for(i in seq_along(out)){
 			if(length(out[[i]])>0 && head(out[[i]], 1) %in% c("true", "false")){
