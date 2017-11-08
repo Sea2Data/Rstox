@@ -2,19 +2,45 @@
 % Please edit documentation in R/rstox_boostrap.r
 \name{runBootstrap}
 \alias{runBootstrap}
-\alias{bootstrapSimple}
-\alias{boot1}
+\alias{runBootstrap_1.6}
+\alias{runBootstrap_temp}
+\alias{runBootstrap_acousticTrawl}
+\alias{runBootstrap_sweptArea_length}
+\alias{runBootstrap_sweptArea_total}
+\alias{getBootstrapMethod}
 \title{Run a bootstrap in StoX}
 \usage{
 runBootstrap(projectName, bootstrapMethod = "acousticTrawl",
   acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
+  seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
+
+runBootstrap_1.6(projectName, bootstrapMethod = "acousticTrawl",
+  acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
+  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, ...)
 
-bootstrapSimple(projectName, proc = "SweptAreaDensity", nboot = 5,
-  seed = 1, cores = 1, ignore.case = TRUE)
+runBootstrap_temp(projectName, bootstrapMethod = "acousticTrawl",
+  acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
+  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
+  seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
 
-boot1(seed = 1, data, list.out = TRUE)
+runBootstrap_acousticTrawl(projectName, acousticMethod = PSU ~ Stratum,
+  bioticMethod = PSU ~ Stratum, nboot = 5,
+  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
+  seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
+
+runBootstrap_sweptArea_length(projectName, acousticMethod = PSU ~ Stratum,
+  bioticMethod = PSU ~ Stratum, nboot = 5,
+  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
+  seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
+
+runBootstrap_sweptArea_total(projectName, endProcess = "SweptAreaDensity",
+  nboot = 5, seed = 1, cores = 1, ignore.case = TRUE, sorted = TRUE,
+  ...)
+
+getBootstrapMethod(bootstrapMethod = "acousticTrawl", acousticMethod = PSU ~
+  Stratum, bioticMethod = PSU ~ Stratum, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -50,59 +76,26 @@ boot1(seed = 1, data, list.out = TRUE)
 
 \item{msg}{Logical: if TRUE print messages from runBaseline().}
 
-\item{...}{Used for backwards compatibility.}
-
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
-
-\item{bootstrapMethod}{The method to use for the bootstrap. Currently implemented are given in the following table:
-\tabular{rrr}{
-  bootstrapMethod \tab Description
-  acousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
-  sweptArea_length \tab Bootstrap only biotic data with length information\cr
-  sweptArea_total \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
-}}
-
-\item{acousticMethod, bioticMethod}{Specification of the method to use for bootstrapping the acoustic and biotic data. Currently only one method is available for acoustic and one for biotic data: acousticMethod = PSU~Stratum, bioticMethod = PSU~Stratum. Other methods are planned in later versions, involving the levels of the data given in the below table.
-\tabular{rrr}{
-  Level \tab Acoustic \tab Biotic\cr
-  Survey \tab Survey \tab Survey\cr
-  Stratum \tab Stratum \tab Stratum\cr
-  Assignment \tab Not relevant \tab Assignment of biotic station groups to acoustic PSUs\cr
-  PSU \tab Acoustic data averaged over e.g. one tansect \tab Biotic station group \cr
-  EDSU \tab Acoustic data averaged over e.g. one nmi \tab Biotic station\cr
-  Sample \tab Ping \tab Individal catch sample
-}}
-
-\item{nboot}{Number of bootstrap replicates.}
-
-\item{startProcess}{The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.}
-
-\item{endProcess}{The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".}
-
-\item{seed}{The seed for the random number generator (used for reproducibility).}
-
-\item{cores}{An integer giving the number of cores to run the bootstrapping over.}
-
-\item{msg}{Logical: if TRUE print messages from runBaseline().}
+\item{sorted}{Should the data be sorted prior to sampling?}
 
 \item{...}{Used for backwards compatibility.}
+
+\item{ignore.case}{Logical: If TRUE, ingore case when splitting by species category SpecCat.}
 }
 \value{
 list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
-
-list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
 }
 \description{
+\code{runBootstrap} is a wrapper function for the bootstrap functions below.
+\code{runBootstrap_acousticTrawl} Run a simple bootstrap of biotic PSUs within strata.
+\code{runBootstrap_sweptArea_length} Run a simple bootstrap of biotic PSUs within strata.
+\code{runBootstrap_sweptArea_total} Run a simple bootstrap of biotic PSUs within strata.
+}
+\details{
 Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
-
-Run a simple bootstrap of biotic PSUs within strata.
 }
 \examples{
 \dontrun{
 b <- runBootstrap("Test_Rstox", nboot=10, seed=1, cores=1)}
 
-\dontrun{
-b <- runBootstrap("Test_Rstox", nboot=10, seed=1, cores=1)}
-
 }
-\keyword{internal}

@@ -5,8 +5,8 @@
 \alias{getSeeds}
 \title{Sample a vector after sorting the vector and applying the seed}
 \usage{
-sampleSorted(x, size, lx = NULL, seed = 0, replace = TRUE,
-  sorted = TRUE)
+sampleSorted(x, size, seed = 0, by = NULL, replace = TRUE,
+  sorted = TRUE, drop = FALSE)
 
 getSeeds()
 }
@@ -15,13 +15,15 @@ getSeeds()
 
 \item{size}{A non-negative integer giving the number of items to choose.}
 
-\item{lx}{The (optional) length of\code{x}.}
-
 \item{seed}{The seed to apply before sampling.}
+
+\item{by}{The name of the column to sample by when sampling rows of a data frame.}
 
 \item{replace}{Should sampling be with replacement?}
 
-\item{sorted}{Should \code{x} be sorted prior to sampling?}
+\item{sorted}{Should the data be sorted prior to sampling?}
+
+\item{drop}{Should data frames be dropped when sampling?}
 }
 \description{
 Sample a vector after sorting the vector and applying the seed

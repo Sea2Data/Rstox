@@ -15,7 +15,7 @@ readBaselineParameters(projectName, rver = "1")
 
 readBaselineParametersJava(projectName)
 
-getBaselineParameters(projectName, type = c("original", "current", "last"))
+getBaselineParameters(projectName, type = c("original", "java", "last"))
 
 modifyBaselineParameters(parameters, parlist = list(), ...)
 }
@@ -32,7 +32,7 @@ modifyBaselineParameters(parameters, parlist = list(), ...)
 
 \item{rver}{The version of the stox library.}
 
-\item{type}{The type of baseline parameter list, one of  "original", "current" and "last".}
+\item{type}{The type of baseline parameter list, one of  "original", "java" and "last".}
 
 \item{parameters}{A list of the baseline parameters to modify using \code{parlist} or \code{...}.}
 }
@@ -42,6 +42,6 @@ The original parameters
 \description{
 \code{setBaselineParameters} Sets baseline parameters in memory to new values specified in \code{parlist} or \code{...}. \cr \cr
 \code{readBaselineParameters} Reads the baseline parameters from the project.xml file \cr \cr
-\code{getBaselineParameters} Gets either original, current or last used baseline parameters \cr \cr
-\code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment or in the project file). \cr \cr
+\code{getBaselineParameters} Gets either original, java or last used baseline parameters \cr \cr
+\code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment nor in the project file). \cr \cr
 }

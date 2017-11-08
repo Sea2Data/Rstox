@@ -1,6 +1,6 @@
 #*********************************************
 #*********************************************
-#' Get and aggregate PSUNASC
+#' Get and aggregate PSUNASC. Rows are reordered.
 #' 
 #' \code{getPSUNASC} gets a joined table with meanNASC, psu, stratum, and area. I.e., reads transect data, strata and area information from baseline Java object and merges them into one data frame. \cr \cr
 #' \code{aggPSUNASC} aggregates psuNASC Layer to PELBOT. Used within functions when resampling and rescaling NASC values if Layer!=PELBOT.
@@ -182,6 +182,7 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #' @param parameters	Parameters set by user in Stox;
 #'			parameters$nboot: Number of bootstrap replicates
 #'			parameters$seed: The seed for the random number generator (used for reproducibility)
+#' @param sorted	Should the data be sorted prior to sampling?
 #'
 #' @return Matrix of resampled strata NASC means 
 #'
@@ -194,7 +195,7 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #'
 #' @export
 #' 
-getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
+getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters, sorted=TRUE){
 	# Test the presence of acoustic data:
 	if(length(psuNASC)==0){
 		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(baseline)$projectName, "\""))
@@ -217,19 +218,18 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
 		for(i in 1:parameters$nboot){
 			# Function used for sampling the PSUs:
 			reest <- function(yy){
-				set.seed(SeedV[i])
 				# Change made by Holmin 2016-08-26: Initiated after warnings from Are Salthaug that the variance in the boostrap estimates were unexpectedly low. An error was found in this function, where the variable formerly named "PSU" has been renamed to "SampleUnit" in the Java code, but this has not been updated here. 
 				#if(length(yy$PSU)){
 					#	tID <- sample(yy$PSU, length(yy$PSU), replace = TRUE) # Resample NASC
 					#	yy2 <- yy[match(tID,yy$PSU), ]
 					#}
 					#else{
-				# Change added on 2017-11-02 by Arne Johannes Holmin:
-				# sample(yy$SampleUnit, length(yy$SampleUnit), replace=TRUE)
-				# changed to 
-				# sample(sort(yy$SampleUnit), length(yy$SampleUnit), replace=TRUE)
-				# (added sort() in order to obtain identical bootstrap results for when LayerType is "WaterColumn" and when it is not): 
-				tID <- sample(sort(yy$SampleUnit), length(yy$SampleUnit), replace=TRUE) # Resample NASC
+				
+				# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
+				#set.seed(SeedV[i])
+				#tID <- sample(yy$SampleUnit, length(yy$SampleUnit), replace=TRUE) # Resample NASC
+				tID <- sampleSorted(yy$SampleUnit, size=length(yy$SampleUnit), seed=SeedV[i], replace=TRUE, sorted=sorted)
+		
 				yy2 <- yy[match(tID, yy$SampleUnit), ]
 				#}
 				resmean <- wtd.strata.est(yy2$Value,yy2$dist)$strata.mean

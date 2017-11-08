@@ -3,7 +3,7 @@
 \name{getPSUNASC}
 \alias{getPSUNASC}
 \alias{aggPSUNASC}
-\title{Get and aggregate PSUNASC}
+\title{Get and aggregate PSUNASC. Rows are reordered.}
 \usage{
 getPSUNASC(baseline)
 

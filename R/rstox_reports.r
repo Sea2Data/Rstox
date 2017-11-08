@@ -41,19 +41,19 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	}
 	N <- nrow(abnd)
 	
+	# 2017-11-03: The sampling procedure throughout Rstox was changed to use the function sampleSorted(). In that function the vector to be sampled can be sorted before sampling. This requires a unique ID to sort:
+	# Add a unique super individual ID:
+	#superindID <- paste("cruise", b$cruise, "serialno", b$serialno, "aphia", b$aphia, "samplenumber", b$samplenumber, "no", b$no, sep="_")
+	# Check the order of the Row information in 'abnd':
+	if(!all(abnd$Row == seq_len(nrow(abnd)))){
+		warning("The superindividual table is not ordered according to the Row information. Imputing may have different results from when the table i sorted.")
+	}
+	
 	# Get the indices of known (with includeintotal==TRUE) and unknown ages:
-	#atKnownAge <- which(getVar(abnd, "age") != "-" & getVar(abnd, "includeintotal")=="true")
-	#atUnknownAge <- which(getVar(abnd, "age") == "-")
-	
-	#knownAge_old <- getVar(abnd, "age") != "-" & getVar(abnd, "includeintotal")=="true"
-	knownAge <- !is.na(getVar(abnd, "age")) & getVar(abnd, "includeintotal") %in% TRUE
-	#unknownAge_old <- getVar(abnd, "age") == "-"
-	unknownAge <- is.na(getVar(abnd, "age"))
-	#atKnownAge <- which(knownAge_old | knownAge)
-	#atUnknownAge <- which(unknownAge_old | unknownAge)
-	atKnownAge <- which(knownAge)
-	atUnknownAge <- which(unknownAge)
-	
+	#knownAge <- !is.na(getVar(abnd, "age")) & getVar(abnd, "includeintotal") %in% TRUE
+	#unknownAge <- is.na(getVar(abnd, "age"))
+	atKnownAge <- which(!is.na(getVar(abnd, "age")) & getVar(abnd, "includeintotal") %in% TRUE)
+	atUnknownAge <- which(is.na(getVar(abnd, "age")))
 	NatKnownAge <- length(atKnownAge)
 	NatUnknownAge <- length(atUnknownAge)
 	msg <- double(6)
@@ -95,9 +95,15 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 		matchcruise <- getVar(abnd, "cruise")[indUnkn] == getVar(abnd, "cruise")[atKnownAge]
 		matchserialno <- getVar(abnd, "serialno")[indUnkn] == getVar(abnd, "serialno")[atKnownAge]
 		matchLenGrp <- getVar(abnd, "LenGrp")[indUnkn] == getVar(abnd, "LenGrp")[atKnownAge]
-		id.known.sta <- atKnownAge[ which(matchStratum & matchcruise & matchserialno & matchLenGrp) ]
-		id.known.stratum <- atKnownAge[ which(matchStratum & matchLenGrp) ]
-		id.known.survey <- atKnownAge[ which(matchLenGrp) ]
+		#id.known.sta <- atKnownAge[ which(matchStratum & matchcruise & matchserialno & matchLenGrp) ]
+		#id.known.stratum <- atKnownAge[ which(matchStratum & matchLenGrp) ]
+		#id.known.survey <- atKnownAge[ which(matchLenGrp) ]
+		# Get the indices of known individuals in the current station:
+		id.known.sta <- atKnownAge[matchStratum & matchcruise & matchserialno & matchLenGrp]
+		# Get the indices of known individuals in the current stratum:
+		id.known.stratum <- atKnownAge[matchStratum & matchLenGrp]
+		# Get the indices of known individuals in the wnrite survey:
+		id.known.survey <- atKnownAge[matchLenGrp]
 		Nid.known.stratum <- length(id.known.stratum)
 		Nid.known.sta <- length(id.known.sta)
 		Nid.known.survey <- length(id.known.survey)
@@ -105,21 +111,36 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 		## Replace by station:
 	 	if(any(id.known.sta)){
 			set.seed(seedM[atUnkn,1])
-			imputeRows[indUnkn] <- id.known.sta[sample.int(Nid.known.sta, size=1)]
+			
+			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
+			#imputeRows[indUnkn] <- id.known.sta[sample.int(Nid.known.sta, size=1)]
+			#imputeRows[indUnkn] <- sampleSorted(id.known.sta, size=1, lx=Nid.known.sta, seed=seedM[atUnkn,1], sorted=FALSE)
+			imputeRows[indUnkn] <- sampleSorted(id.known.sta, size=1, seed=seedM[atUnkn,1], sorted=FALSE)
+			
 			#imputeRows[indUnkn] <- id.known.sta[.Internal(sample(Nid.known.sta, 1L, FALSE, NULL))]
 			imputeLevels[indUnkn] <- 1L
 		}
 		## Replace by stratum:
 		else if(any(id.known.stratum)){
 			set.seed(seedM[atUnkn,2])
-			imputeRows[indUnkn] <- id.known.stratum[sample.int(Nid.known.stratum, size=1)]
+			
+			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
+			#imputeRows[indUnkn] <- id.known.stratum[sample.int(Nid.known.stratum, size=1)]
+			#imputeRows[indUnkn] <- sampleSorted(id.known.stratum, size=1, lx=Nid.known.stratum, seed=seedM[atUnkn,2], sorted=FALSE)
+			imputeRows[indUnkn] <- sampleSorted(id.known.stratum, size=1, seed=seedM[atUnkn,2], sorted=FALSE)
+			
 			#imputeRows[indUnkn] <- id.known.stratum[.Internal(sample(Nid.known.stratum, 1L, FALSE, NULL))]
 			imputeLevels[indUnkn] <- 2L
 		}
 		## Replace by survey:
 		else if(any(id.known.survey)) {
 			set.seed(seedM[atUnkn,3])
-			imputeRows[indUnkn] <- id.known.survey[sample.int(Nid.known.survey, size=1)]
+			
+			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
+			#imputeRows[indUnkn] <- id.known.survey[sample.int(Nid.known.survey, size=1)]
+			#imputeRows[indUnkn] <- sampleSorted(id.known.survey, size=1, lx=Nid.known.survey, seed=seedM[atUnkn,3], sorted=FALSE)
+			imputeRows[indUnkn] <- sampleSorted(id.known.survey, size=1, seed=seedM[atUnkn,3], sorted=FALSE)
+			
 			#imputeRows[indUnkn] <- id.known.survey[.Internal(sample(Nid.known.survey, 1L, FALSE, NULL))]
 			imputeLevels[indUnkn] <- 3L
 		}
@@ -251,13 +272,13 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	indMissing.out <- lapply(out, "[[", "indMissing")
 	indReplacement.out <- lapply(out, "[[", "indReplacement")
 	seedM.out <- lapply(out, "[[", "seedM")
-	
-	
-	names(imputeVariable$SuperIndAbundance) <- namesOfIterations
-	msg.out <- lapply(out, "[[", "msg")
-	indMissing.out <- lapply(out, "[[", "indMissing")
-	indReplacement.out <- lapply(out, "[[", "indReplacement")
-	seedM.out <- lapply(out, "[[", "seedM")	
+	#
+	#
+	#names(imputeVariable$SuperIndAbundance) <- namesOfIterations
+	#msg.out <- lapply(out, "[[", "msg")
+	#indMissing.out <- lapply(out, "[[", "indMissing")
+	#indReplacement.out <- lapply(out, "[[", "indReplacement")
+	#seedM.out <- lapply(out, "[[", "seedM")	
 		
 	msg.out <- t(as.data.frame(msg.out))
 	colnames(msg.out) <- c("Aged", "NotAged", "ImputedAtStation", "ImputedAtStrata", "ImputedAtSurvey", "NotImputed")

@@ -33,6 +33,8 @@ Rstox.init <- function() {
 #' @keywords internal
 #' 
 getAvailableFunctions <- function(type="baseline"){
+	# The functions J and .jnew and other functions in the rJava library needs initialization:
+	Rstox.init()
 	projectName <- .jnew("no/imr/stox/model/Project")
 	functions <- projectName$getLibrary()$getMetaFunctions()$toString()
 	functions <- JavaString2vector(functions)

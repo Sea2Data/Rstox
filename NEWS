@@ -319,3 +319,5 @@ Removed plotAbundance_old(), which is no longer used. The new plotAbundance() us
 Changed default width, height, dpi to 5000, 3000, 500. Also added the option format=NULL, causing plots to only show in the graphics window.
 
 Fixed a bug in readBaselineParameters(), where processes with 'enabled' set to "false" were removed. This caused problems when matching process names, and from now 'enabled' is returned in the parameter list instead.
+
+Changed names of bootstrap runs to heve constant number of characters, by padding run number by zeros.

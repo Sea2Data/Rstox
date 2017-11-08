@@ -296,7 +296,7 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	projectPath
 }
 #' 
-#' @importFrom rJava J .jnew
+#' @importFrom rJava J
 #' @export
 #' @rdname createProject
 #' 
@@ -471,7 +471,6 @@ reopenProject <- function(projectName, out=c("project", "baseline", "name")){
 	openProject(projectName,  out=out)
 }
 #' 
-#' @importFrom rJava J .jnew
 #' @export
 #' @rdname createProject
 #' 
@@ -805,8 +804,8 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	}
 	else{
 		# Detect changes to the baseline parameters compared to the last used parameters. This is done only to determin whether the baseline should be rerun:
-		currentpar <- getBaselineParameters(baseline, type="current")
-		newpar <- modifyBaselineParameters(currentpar, parlist=parlist, ...)$parameters
+		javapar <- getBaselineParameters(baseline, type="java")
+		newpar <- modifyBaselineParameters(javapar, parlist=parlist, ...)$parameters
 		lastpar <- getBaselineParameters(baseline, type="last")
 		
 		# Change made on 2017-09-15: If no valid processes are given in parlist or ..., using which() around the following line returned an error. which() is now moved to inside the if(any(changedProcesses)){}:
@@ -838,12 +837,12 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 		if(msg)	{cat("Running baseline process ", startProcess, " to ", endProcess, " (out of ", numProcesses, " processes)\n", sep="")}
 		parlist <- getParlist(parlist=parlist, ...)
 
-		# If parameters are given, override the current parameters in memory, and store the current (if save=TRUE) and last used parameters:
+		# If parameters are given, override the java parameters in memory, and store the java (if save=TRUE) and last used parameters:
 		if(length(parlist)){
-			# Get the current and the new parameters:
-			currentpar <- getBaselineParameters(baseline, type="current")
+			# Get the java and the new parameters:
+			javapar <- getBaselineParameters(baseline, type="java")
 			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE)
-			# The first line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
+			# The following line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
 			temp <- getRstoxEnv()
 			# Set the 'lastParameters' object in the poject list and in the processData environment:
 			RstoxEnv[[projectName]]$lastParameters <- newpar
@@ -858,8 +857,6 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 
 			# Change the 'javaParameters' object and keep the last used parameters in Java memory (do nothing compared to using setBaselineParameters() below):
 			if(save){
-				# The first line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
-				temp <- getRstoxEnv()
 				RstoxEnv[[projectName]]$javaParameters <- newpar
 				#assign("javaParameters", newpar, envir=getRstoxEnv()[[projectName]])
 				##assign(getRstoxEnv()[[projectName]]$javaParameters, newpar)
@@ -867,7 +864,7 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 			}
 			# Else return to original parameter values:
 			else{
-				setBaselineParameters(baseline, parlist=currentpar, msg=FALSE)
+				setBaselineParameters(baseline, parlist=javapar, msg=FALSE)
 			}
 		}
 		else{
@@ -1038,8 +1035,8 @@ getProcess <- function(projectName, proc="all"){
 #' 
 #' \code{setBaselineParameters} Sets baseline parameters in memory to new values specified in \code{parlist} or \code{...}. \cr \cr
 #' \code{readBaselineParameters} Reads the baseline parameters from the project.xml file \cr \cr
-#' \code{getBaselineParameters} Gets either original, current or last used baseline parameters \cr \cr
-#' \code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment or in the project file). \cr \cr
+#' \code{getBaselineParameters} Gets either original, java or last used baseline parameters \cr \cr
+#' \code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment nor in the project file). \cr \cr
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
 #' @param msg			Logical; if TRUE print old and new parameters.
@@ -1047,7 +1044,7 @@ getProcess <- function(projectName, proc="all"){
 #' @param save.project	Logical: if TRUE save the changes to the project.xml file.
 #' @param ...			Same as parlist, but can be specified separately (not in a list but as separate inputs).
 #' @param rver			The version of the stox library.
-#' @param type			The type of baseline parameter list, one of  "original", "current" and "last".
+#' @param type			The type of baseline parameter list, one of  "original", "java" and "last".
 #' @param parameters	A list of the baseline parameters to modify using \code{parlist} or \code{...}.
 #'
 #' @return The original parameters
@@ -1061,14 +1058,14 @@ setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save.pr
 	# Include both parameters specified in 'parlist' and parameters specified freely in '...':
 	parlist <- getParlist(parlist=parlist, ...)
 
-	# Get current parameters:
-	currentpar <- getBaselineParameters(baseline, type="current")
+	# Get java parameters:
+	javapar <- getBaselineParameters(baseline, type="java")
 	
 	# Override parameters in the baseline:
 	if(length(parlist)>0){
 
 		# Get changed parameters, and discard ..., since it has been accounted for in getParlist(). This function simpy returns a list of the new parameters and indices for which parameters have been changed, and does not actually alter the parameters in Java memory:
-		newpar <- modifyBaselineParameters(currentpar, parlist=parlist)
+		newpar <- modifyBaselineParameters(javapar, parlist=parlist)
 	
 		# Change the parameter values in Java memory and return the original values:
 		for(i in seq_along(newpar$changeProcessesIdx)){
@@ -1081,7 +1078,7 @@ setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save.pr
 			# Change the parameter value in Java:
 			baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$setParameterValue(newpar$changeParameters[i], newpar$changeValues[i])
 		}
-		if(msg){ print(list(old=currentpar[newpar$changeProcesses], new=newpar$parameters[newpar$changeProcesses]))}
+		if(msg){ print(list(old=javapar[newpar$changeProcesses], new=newpar$parameters[newpar$changeProcesses]))}
 		# Save only if specified. Otherwise the changes are only made in memory:
 		if(save.project){
 			saveProject(projectName)
@@ -1090,8 +1087,8 @@ setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save.pr
 		return(newpar$parameters)
 	}
 	else{
-		# Return the current parameters, that is the parameters stored in Java memory:
-		return(currentpar)
+		# Return the java parameters, that is the parameters stored in Java memory:
+		return(javapar)
 	}
 }
 #'
@@ -1221,7 +1218,7 @@ readBaselineParametersJava <- function(projectName){
 #' @export
 #' @rdname setBaselineParameters
 #'
-getBaselineParameters <- function(projectName, type=c("original", "current", "last")){
+getBaselineParameters <- function(projectName, type=c("original", "java", "last")){
 	projectName <- getProjectPaths(projectName)$projectName
 	if(tolower(substr(type[1], 1, 1)) == "o"){
 		type <- "originalParameters"
@@ -1402,6 +1399,8 @@ getBioticAssignments <- function(baseline) {
 getProjectPaths <- function(projectName=NULL, projectRoot=NULL){
 	# Return the default workspace immediately if nothing is given:
 	if(length(projectName)==0){
+		# The functions J and .jnew and other functions in the rJava library needs initialization:
+		Rstox.init()
 		return(.jnew("no/imr/stox/model/Project")$getRootFolder())
 	}
 	##################################################
@@ -1819,7 +1818,7 @@ initiateRstoxEnv <- function(){
 	assign("NMD_data_types", c("echosounder", "biotic", "landing"), envir=get("RstoxEnv"))
 	assign("StoX_data_types", c("acoustic", "biotic", "landing"), envir=get("RstoxEnv"))
 	assign("StoX_data_type_keys", c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel"), envir=get("RstoxEnv"))
-	assign("bootstrapTypes", c("Acoustic", "SweptArea"), envir=get("RstoxEnv"))
+	assign("model_types", c("acousticTrawl", "sweptArea_length", "sweptArea_total"), envir=get("RstoxEnv"))
 	assign("processLevels", c("bootstrap", "bootstrapImpute"), envir=get("RstoxEnv"))
 }
 
@@ -1999,24 +1998,47 @@ isProjectZipURL <- function(URL){
 #'
 #' @param x			A vector or a single integer.
 #' @param size		A non-negative integer giving the number of items to choose.
-#' @param lx		The (optional) length of\code{x}.
 #' @param seed		The seed to apply before sampling.
+#' @param by		The name of the column to sample by when sampling rows of a data frame.
 #' @param replace	Should sampling be with replacement?
-#' @param sorted	Should \code{x} be sorted prior to sampling?
+#' @param sorted	Should the data be sorted prior to sampling?
+#' @param drop		Should data frames be dropped when sampling?
 #'
 #' @export
 #' @keywords internal
 #' @rdname sampleSorted
 #'
-sampleSorted <- function(x, size, lx=NULL, seed=0, replace=TRUE, sorted=TRUE){
-	if(length(lx)==0){
+sampleSorted <- function(x, size, seed=0, by=NULL, replace=TRUE, sorted=TRUE, drop=FALSE){
+	# Function for sampling a vector after sorting:
+	sampleVectorSorted <- function(x, size, seed=0, replace=TRUE, sorted=TRUE){
 		lx <- length(x)
+		if(missing(size)){
+			size <- lx
+		}
+		if(sorted){
+			x <- sort(x)
+		}
+		set.seed(seed)
+		x[sample.int(lx, size=size, replace=replace)]
 	}
-	if(sorted){
-		x <- sort(x)
+	# If rows of a data frame should be sampled:
+	if(length(dim(x))==2 && length(by)){
+		s <- sampleVectorSorted(x=x[[by]], size=size, seed=seed, replace=replace, sorted=sorted)
+		x[match(s, x[[by]]), , drop=drop]
 	}
-	set.seed(seed)
-	x[sample.int(lx, size=size, replace=replace)]
+	# Sample a vector:
+	else{
+		sampleVectorSorted(x=x, size=size, seed=seed, replace=replace, sorted=sorted)
+	}
+	#lx <- length(x)
+	#if(missing(size)){
+	#	size <- lx
+	#}
+	#if(sorted){
+	#	x <- sort(x)
+	#}
+	#set.seed(seed)
+	#x[sample.int(lx, size=size, replace=replace)]
 }
 #'
 #' @export

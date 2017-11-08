@@ -182,7 +182,7 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		"	assign(\"NMD_data_types\", c(\"echosounder\", \"biotic\", \"landing\"), envir=get(\"RstoxEnv\"))",
 		"	assign(\"StoX_data_types\", c(\"acoustic\", \"biotic\", \"landing\"), envir=get(\"RstoxEnv\"))",
 		"	assign(\"StoX_data_type_keys\", c(acoustic=\"echosounder_dataset\", biotic=\"missions xmlns\", landing=\"Sluttseddel\"), envir=get(\"RstoxEnv\"))",
-		"	assign(\"bootstrapTypes\", c(\"Acoustic\", \"SweptArea\"), envir=get(\"RstoxEnv\"))",
+		"	assign(\"model_types\", c(\"acousticTrawl\", \"sweptArea_length\", \"sweptArea_total\"), envir=get(\"RstoxEnv\"))",
 		"	assign(\"processLevels\", c(\"bootstrap\", \"bootstrapImpute\"), envir=get(\"RstoxEnv\"))",
 	"}", sep="\n")
 	write(onLoadText, onLoadFile)
