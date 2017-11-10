@@ -2,13 +2,10 @@
 % Please edit documentation in R/rstox_base.r
 \name{sampleSorted}
 \alias{sampleSorted}
-\alias{getSeeds}
 \title{Sample a vector after sorting the vector and applying the seed}
 \usage{
 sampleSorted(x, size, seed = 0, by = NULL, replace = TRUE,
   sorted = TRUE, drop = FALSE)
-
-getSeeds()
 }
 \arguments{
 \item{x}{A vector or a single integer.}

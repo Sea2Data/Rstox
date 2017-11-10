@@ -281,7 +281,7 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 			# Re-open the project in order to sucessfully set the parameters in the 'parlist':
 			saveProject(thisProjectPath)
 			reopenProject(thisProjectPath)
-			setBaselineParameters(thisProjectPath, parlist=parlist, msg=FALSE, save.project=TRUE)
+			setBaselineParameters(thisProjectPath, parlist=parlist, msg=FALSE, save=c("last", "java"))
 		}
 	
 		# Finally, save all changes to the project.xml file:
@@ -804,9 +804,9 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	}
 	else{
 		# Detect changes to the baseline parameters compared to the last used parameters. This is done only to determin whether the baseline should be rerun:
-		javapar <- getBaselineParameters(baseline, type="java")
+		javapar <- getBaselineParameters(baseline)$java
 		newpar <- modifyBaselineParameters(javapar, parlist=parlist, ...)$parameters
-		lastpar <- getBaselineParameters(baseline, type="last")
+		lastpar <- getBaselineParameters(baseline)$last
 		
 		# Change made on 2017-09-15: If no valid processes are given in parlist or ..., using which() around the following line returned an error. which() is now moved to inside the if(any(changedProcesses)){}:
 		changedProcesses <- sapply(seq_along(newpar), function(i) !identical(newpar[[i]], lastpar[[i]]))
@@ -839,32 +839,19 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 
 		# If parameters are given, override the java parameters in memory, and store the java (if save=TRUE) and last used parameters:
 		if(length(parlist)){
-			# Get the java and the new parameters:
-			javapar <- getBaselineParameters(baseline, type="java")
-			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE)
-			# The following line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
-			temp <- getRstoxEnv()
-			# Set the 'lastParameters' object in the poject list and in the processData environment:
-			RstoxEnv[[projectName]]$lastParameters <- newpar
-			#assign("lastParameters", newpar, envir=getRstoxEnv()[[projectName]])
-			##assign(getRstoxEnv()[[projectName]]$lastParameters, newpar)
-			###getRstoxEnv()[[projectName]]$lastParameters <- newpar
-			##### NOTE (2017-08-28): This is different from the 'lastParameters' object in the project environment (rstoxEnv[[projectName]]), and is only used when writing project data such as bootstrap results to file: #####
-			setProjectData(projectName=projectName, var=newpar, name="lastParameters")
-	
+			# Get the java parameters for use later if save==FALSE:
+			if(!save){
+				javapar <- getBaselineParameters(baseline)$java
+			}
+			# Set the new parameters :
+			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE, save=c("last", "java"))
+			
 			# Run the baseline:
 			baseline$run(jInt(startProcess), jInt(endProcess), jBoolean(FALSE))
 
-			# Change the 'javaParameters' object and keep the last used parameters in Java memory (do nothing compared to using setBaselineParameters() below):
-			if(save){
-				RstoxEnv[[projectName]]$javaParameters <- newpar
-				#assign("javaParameters", newpar, envir=getRstoxEnv()[[projectName]])
-				##assign(getRstoxEnv()[[projectName]]$javaParameters, newpar)
-				###getRstoxEnv()[[projectName]]$javaParameters <- newpar
-			}
-			# Else return to original parameter values:
-			else{
-				setBaselineParameters(baseline, parlist=javapar, msg=FALSE)
+			# Set the 'javaParameters' object and the parameters in Java memory back to the original:
+			if(!save){
+				setBaselineParameters(baseline, parlist=javapar, msg=FALSE, save="java")
 			}
 		}
 		else{
@@ -895,7 +882,7 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 	baseline <- runBaseline(projectName, startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, out="baseline", msg=msg, parlist=parlist, ...)
 
 	if(msg){ cat("Reading:\n")}
-	processes <- getBaselineParameters(baseline, type="last")
+	processes <- getBaselineParameters(baseline)$last
 	processNames <- names(processes)
 	### functionNames <- sapply(processes, "[[", "functionName")
 	matchedProcesses <- processNames[getProcess(baseline, proc=proc)]
@@ -998,7 +985,7 @@ getProcess <- function(projectName, proc="all"){
 	}
 	
 	# Locate/run the baseline object. If rerun=TRUE or if parameters are given different from the parameters used in the last baseline run, rerun the baseline, and if the :
-	processes <- getBaselineParameters(projectName, type="last")
+	processes <- getBaselineParameters(projectName)$last
 	procNames <- names(processes)
 	funNames <- sapply(processes, "[[", "functionName")
 	
@@ -1041,10 +1028,9 @@ getProcess <- function(projectName, proc="all"){
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
 #' @param msg			Logical; if TRUE print old and new parameters.
 #' @param parlist		List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE. New parameters can be set by setBaselineParameters() but not removed in the current version.
-#' @param save.project	Logical: if TRUE save the changes to the project.xml file.
+#' @param save			A string naming the types of parameter to save ("java" implies saving the parameters to Java memory and to RstoxEnv[[projectName]]$javaParameters, whereas "last" implies saving the parameters to RstoxEnv[[projectName]]$javaParameters and to the projectData which are saved along with bootstrap and impute data). If save=TRUE, save is set to c("java", "last").
 #' @param ...			Same as parlist, but can be specified separately (not in a list but as separate inputs).
 #' @param rver			The version of the stox library.
-#' @param type			The type of baseline parameter list, one of  "original", "java" and "last".
 #' @param parameters	A list of the baseline parameters to modify using \code{parlist} or \code{...}.
 #'
 #' @return The original parameters
@@ -1052,37 +1038,57 @@ getProcess <- function(projectName, proc="all"){
 #' @export
 #' @rdname setBaselineParameters
 #'
-setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save.project=FALSE, ...){
+setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save=c("last", "java"), ...){
 	# Get the baseline object, asuming the project is already open, thus the suppressWarnings():
 	suppressWarnings(baseline <- openProject(projectName, out="baseline"))
+	# Get the project name:
+	projectName <- getProjectPaths(projectName)$projectName
 	# Include both parameters specified in 'parlist' and parameters specified freely in '...':
 	parlist <- getParlist(parlist=parlist, ...)
 
+	
 	# Get java parameters:
-	javapar <- getBaselineParameters(baseline, type="java")
+	javapar <- getBaselineParameters(baseline)$java
 	
 	# Override parameters in the baseline:
 	if(length(parlist)>0){
+		
+		if(isTRUE(save)){
+			save <- c("last", "java")
+		}
 
 		# Get changed parameters, and discard ..., since it has been accounted for in getParlist(). This function simpy returns a list of the new parameters and indices for which parameters have been changed, and does not actually alter the parameters in Java memory:
 		newpar <- modifyBaselineParameters(javapar, parlist=parlist)
+		# The following line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
+		temp <- getRstoxEnv()
+		
+		if("java" %in% tolower(save)){
+			# Change the parameter values in Java memory and return the original values:
+			for(i in seq_along(newpar$changeProcessesIdx)){
+				# get the parameter value from Java:
+				temp <- baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$getParameterValue(newpar$changeParameters[i])
+				# Warning if the parameter was previously not set:
+				#if(length(temp)==0){
+					#warning(paste("The parameter", newpar$changeParameters[i], "of process", newpar$changeProcesses[i], "was not defined in the original baseline model, and cannot be changed in the current version of Rstox."))
+					#}
+				# Change the parameter value in Java:
+				baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$setParameterValue(newpar$changeParameters[i], newpar$changeValues[i])
+			}
+			
+			RstoxEnv[[projectName]]$javaParameters <- newpar$parameters
+		}
+		if("last" %in% tolower(save)){
+			# Set the 'lastParameters' object in the poject list and in the processData environment:
+			RstoxEnv[[projectName]]$lastParameters <- newpar$parameters
+			#assign("lastParameters", newpar, envir=getRstoxEnv()[[projectName]])
+			##assign(getRstoxEnv()[[projectName]]$lastParameters, newpar)
+			###getRstoxEnv()[[projectName]]$lastParameters <- newpar
+			##### NOTE (2017-08-28): This is different from the 'lastParameters' object in the project environment (rstoxEnv[[projectName]]), and is only used when writing project data such as bootstrap results to file: #####
+			setProjectData(projectName=projectName, var=newpar, name="lastParameters")
+		}
 	
-		# Change the parameter values in Java memory and return the original values:
-		for(i in seq_along(newpar$changeProcessesIdx)){
-			# get the parameter value from Java:
-			temp <- baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$getParameterValue(newpar$changeParameters[i])
-			# Warning if the parameter was previously not set:
-			#if(length(temp)==0){
-				#warning(paste("The parameter", newpar$changeParameters[i], "of process", newpar$changeProcesses[i], "was not defined in the original baseline model, and cannot be changed in the current version of Rstox."))
-				#}
-			# Change the parameter value in Java:
-			baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$setParameterValue(newpar$changeParameters[i], newpar$changeValues[i])
-		}
 		if(msg){ print(list(old=javapar[newpar$changeProcesses], new=newpar$parameters[newpar$changeProcesses]))}
-		# Save only if specified. Otherwise the changes are only made in memory:
-		if(save.project){
-			saveProject(projectName)
-		}
+		
 		# Return the new parameters:
 		return(newpar$parameters)
 	}
@@ -1218,18 +1224,23 @@ readBaselineParametersJava <- function(projectName){
 #' @export
 #' @rdname setBaselineParameters
 #'
-getBaselineParameters <- function(projectName, type=c("original", "java", "last")){
+getBaselineParameters <- function(projectName){
+	#getBaselineParameters <- function(projectName, type=c("original", "java", "last")){
 	projectName <- getProjectPaths(projectName)$projectName
-	if(tolower(substr(type[1], 1, 1)) == "o"){
-		type <- "originalParameters"
-	}
-	else if(tolower(substr(type[1], 1, 1)) == "c"){
-		type <- "javaParameters"
-	}
-	else{
-		type <- "lastParameters"
-	}
-	getRstoxEnv()[[projectName]][[type]]
+	#if(tolower(substr(type[1], 1, 1)) == "o"){
+	#	type <- "originalParameters"
+	#}
+	#else if(tolower(substr(type[1], 1, 1)) == "c"){
+	#	type <- "javaParameters"
+	#}
+	#else{
+	#	type <- "lastParameters"
+	#}
+	#getRstoxEnv()[[projectName]][[type]]
+	return(list(
+		original = getRstoxEnv()[[projectName]][["originalParameters"]],
+		java = getRstoxEnv()[[projectName]][["javaParameters"]],
+		last = getRstoxEnv()[[projectName]][["lastParameters"]]))
 }
 #'
 #' @export
@@ -2040,74 +2051,3 @@ sampleSorted <- function(x, size, seed=0, by=NULL, replace=TRUE, sorted=TRUE, dr
 	#set.seed(seed)
 	#x[sample.int(lx, size=size, replace=replace)]
 }
-#'
-#' @export
-#' @keywords internal
-#' @rdname sampleSorted
-#'
-getSeeds <- function(){
-	
-	#From imputeByAge:
-	
-	# Set the seed of the runs, either as a vector of 1234s, to comply with old code, where the seeed was allways 1234 (from before 2016), or as a vector of seeds sampled with the given seed, or as NULL, in which case the seed matrix 'seedM' of distributeAbundance() is set by sampling seq_len(10000000) without seed:
-	if(isTRUE(seed)){
-		seedV = rep(TRUE, nboot+1) # seed==TRUE giving 1234 for compatibility with older versions
-	}
-	else if(is.numeric(seed)){
-		set.seed(seed)
-		seedV = sample(seq_len(10000000), nboot+1, replace = FALSE)
-	}
-	else{
-		seedV = NULL
-	}
-	
-	#From dsitribute abundance:
-	
-	# Set the seed matrix:
-	if(isTRUE(seedV[i])){
-		seedM <- matrix(c(1231234, 1234, 1234), nrow=NatUnknownAge, ncol=3, byrow=TRUE)
-	}
-	else{
-		set.seed(seedV[i])
-		# Create a seed matrix with 3 columns representing the replacement by station, stratum and survey:
-		seedM <- matrix(sample(seq_len(10000000), 3*NatUnknownAge, replace = FALSE), ncol=3)
-	}
-
-
-
-
-
-	
-	# From acoustic
-	
-	set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
-	SeedV <- sample(c(1:10000000), parameters$nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
-
-	set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL)
-
-
-	# from bootstrap_parallel
-	
-	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
-	# Makes seed vector for fixed seeds (for reproducibility):
-	seedV <- sample(c(1:10000000), nboot, replace = FALSE)
-	
-	
-				getSeed(seed, type="vector", n=nboot)
-	
-	
-	
-	
-	
-	# From runBootstrap:
-	
-	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
-	# Makes seed vector for fixed seeds (for reproducibility):
-	seedV <- sample(c(1:10000000), nboot, replace = FALSE)
-	
-	
-				getSeed(seed, type="vector", n=nboot)
-	
-	
-}
-

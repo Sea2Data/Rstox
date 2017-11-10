@@ -9,13 +9,13 @@
 \title{Set, read, get or modify baseline parameters.}
 \usage{
 setBaselineParameters(projectName, msg = TRUE, parlist = list(),
-  save.project = FALSE, ...)
+  save = c("last", "java"), ...)
 
 readBaselineParameters(projectName, rver = "1")
 
 readBaselineParametersJava(projectName)
 
-getBaselineParameters(projectName, type = c("original", "java", "last"))
+getBaselineParameters(projectName)
 
 modifyBaselineParameters(parameters, parlist = list(), ...)
 }
@@ -26,13 +26,11 @@ modifyBaselineParameters(parameters, parlist = list(), ...)
 
 \item{parlist}{List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE. New parameters can be set by setBaselineParameters() but not removed in the current version.}
 
-\item{save.project}{Logical: if TRUE save the changes to the project.xml file.}
+\item{save}{A string naming the types of parameter to save ("java" implies saving the parameters to Java memory and to RstoxEnv[[projectName]]$javaParameters, whereas "last" implies saving the parameters to RstoxEnv[[projectName]]$javaParameters and to the projectData which are saved along with bootstrap and impute data). If save=TRUE, save is set to c("java", "last").}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
 \item{rver}{The version of the stox library.}
-
-\item{type}{The type of baseline parameter list, one of  "original", "java" and "last".}
 
 \item{parameters}{A list of the baseline parameters to modify using \code{parlist} or \code{...}.}
 }
