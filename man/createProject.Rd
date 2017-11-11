@@ -2,17 +2,24 @@
 % Please edit documentation in R/rstox_base.r
 \name{createProject}
 \alias{createProject}
+\alias{createProject_old}
 \alias{openProject}
 \alias{reopenProject}
 \alias{getProject}
 \alias{updateProject}
 \alias{saveProject}
+\alias{saveasProject}
+\alias{resetProject}
 \alias{closeProject}
 \alias{isProject}
 \alias{readXMLfiles}
 \title{Create, open or save a StoX project}
 \usage{
 createProject(projectName = NULL, files = list(), dir = NULL,
+  model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
+  ignore.processXML = FALSE, parlist = list(), msg = TRUE, ...)
+
+createProject_old(projectName = NULL, files = list(), dir = NULL,
   model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
   ignore.processXML = FALSE, parlist = list(), msg = TRUE, ...)
 
@@ -25,7 +32,12 @@ getProject(projectName, msg = FALSE)
 
 updateProject(projectName)
 
-saveProject(projectName)
+saveProject(projectName, soft = FALSE)
+
+saveasProject(projectName, newProjectName, dir = NULL, ow = NULL,
+  msg = TRUE)
+
+resetProject(projectName, to = "original")
 
 closeProject(projectName)
 
@@ -54,6 +66,12 @@ readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 
 \item{out}{One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.}
 
+\item{soft}{Logical: If TRUE, do not save the current javaParameters to the savedParameters field in the project environment (used in saveasProject()).}
+
+\item{newProjectName}{The name of the project to save an open project as.}
+
+\item{to}{A string naming the parameters to reset a project to (one of "original" and "saved", where the latter is only used in saveasProject()).}
+
 \item{subset.out}{Logical: Used in \code{is.project}. If TRUE, subset the input project names, and if False, return a logical vector.}
 
 \item{nchars}{The number of characters to read when determining the types of the files in readXMLfiles().}
@@ -77,6 +95,8 @@ A project object
 \code{getProject} gets the project object, either from the input if this is a baseline or project object, or from the project environment. \cr \cr
 \code{updateProject} updates links to xml files in a project. \cr \cr
 \code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
+\code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr
+\code{resetProject} resets a project to the original settings. \cr \cr
 \code{closeProject} removes the project from memory. \cr \cr
 \code{isProject} checks whether the project exists on file. \cr \cr
 \code{readXMLfiles} reads XML data via a temporary project. \cr \cr

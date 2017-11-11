@@ -306,7 +306,7 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="acousticTrawl", acous
 #' @export
 #' @rdname runBootstrap
 #'
-runBootstrap_temp <- function(projectName, bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+runBootstrap_old <- function(projectName, bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
 	
 	# Documentation removed on 2017-08-25, since it has not been implemented:
 	# acousticMethod,bioticMethod   Specification of the method to use for bootstrapping the acoustic and biotic data. These can be formulas or characters which can be converted to formulas, given as 'variable to bootstrap ~ level to bootstrap within'. Multiple bootstraps can be specified, such as bioticMethod=c(EDSU~Stratum, Sample~EDSU), instructing to bootstrap the EDSUs (stations) within each stratum, and also bootstrapping the individual catch samples within each EDSU. Only certain strings can be used in the formulas, as shown in the table below. The methods can also be given as functions of at least two arguments, 'projectName' and 'process', which makes modifications to the output from getBaseline(projectName, proc=process, input=NULL) and sends the modified data back to the baseline in Java memory and runs the baseline with the modified data. Using funcitons is not yet implemented. 

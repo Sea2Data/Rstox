@@ -8,7 +8,7 @@
 \alias{modifyBaselineParameters}
 \title{Set, read, get or modify baseline parameters.}
 \usage{
-setBaselineParameters(projectName, msg = TRUE, parlist = list(),
+setBaselineParameters(projectName, msg = FALSE, parlist = list(),
   save = c("last", "java"), ...)
 
 readBaselineParameters(projectName, rver = "1")

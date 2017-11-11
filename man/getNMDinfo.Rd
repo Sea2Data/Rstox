@@ -2,6 +2,7 @@
 % Please edit documentation in R/rstox_NMD.R
 \name{getNMDinfo}
 \alias{getNMDinfo}
+\alias{getNMDdata_old}
 \alias{getNMDdata}
 \alias{downloadXML}
 \title{Get NMD API data and reference information}
@@ -9,6 +10,14 @@
 getNMDinfo(type = NULL, ver = 1,
   API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
   msg = FALSE, simplify = TRUE)
+
+getNMDdata_old(cruise = NULL, year = NULL, shipname = NULL,
+  serialno = NULL, tsn = NULL, datatype = NULL, dir = NULL,
+  subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
+  filebase = "NMD", ver = 1,
+  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
+  return.URL = FALSE, ...)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
   tsn = NULL, datatype = NULL, dir = NULL, subdir = FALSE,

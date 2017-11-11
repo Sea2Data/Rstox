@@ -1,4 +1,4 @@
-# Rstox version: 1.6.4 (latest alpha, 2017-11-10)
+# Rstox version: 1.6.4 (latest alpha, 2017-11-11)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -53,3 +53,15 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 # 9. Changed the function setBaselineParameters() to set the parameters either in Java memory and in the javaParameters field in the project environment (save="java"), or in the lastParameters field in the project environment and projectData outputed from bootstrap and impute funcitons (save="last"), or both (save=TRUE or c("java", "last")).
 
 # 10. Added the function linkPSU2Stratum(), which adds stratum information to PSU data. This is used in the functions varianceEstimation() and runBootstrap_sweptArea_total().
+
+# 11. Reorganized the function getProjectPaths() to more clearly excecute the following intension given the input 'projectName': If given as a baseline or project Java object, get and return project parts from the object. If given as a full path, check whether the dirname(dirname()) exists. Otherwise paste the projectRoot and projectName, and do the same check on this path. Otherwise paste the default projectRoot and the projectName and to the same check on this path.
+
+# 12. Added the function saveasProject(), which saves the current Java settings of a project to a new project. This function first saves (softly) the current project, copies the saved project, and then resets the current project using the new function resetProject() with to="saved".
+
+# 13. Added the object 'savedParameters' in the project environment, which is changed when saveProject() is run with soft=FALSE.
+
+# 14. Changed default msg to FALSE in setBaselineParameters().
+
+# 15. Fixed bug in plotAbundance() and plotNASCDistribution(), where parameters specified in the ... could result in the function specified by 'format' (such as png and jpeg). 
+
+# 16. Fixed bug in plotAbundance(), where missing valued in the variable specified by 'grp2' were assigned the value min(grp1) - 1. Changed to min(grp2) - 1.

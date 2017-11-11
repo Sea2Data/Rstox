@@ -425,7 +425,10 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' @export
 #' 
 plotNASCDistribution <- function(projectName, format="png", ...){
+	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
+	lll <- lll[intersect(names(lll), names(formals(png)))]
+	
 	# Read the saved data from the R model. In older versions the user loaded the file "rmodel.RData" separately, but in the current code the environment "RstoxEnv" is declared on load of Rstox, and all relevant outputs are assigned to this environment:
 	var <- c("psuNASC", "resampledNASC")
 	projectEnv <- loadProjectData(projectName=projectName, var=var)
@@ -532,8 +535,11 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 #' @rdname plotAbundance
 #' 
 plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, ...){
-	# numberscale is kept for backwards compatibility:
+	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
+	lll <- lll[intersect(names(lll), names(formals(png)))]
+	
+	# The old parameter 'numberscale' is kept for backwards compatibility:
 	if("numberscale" %in% names(lll)){
 		warning("The argument numberscale is deprecated. Use the new argument 'unit' instead.")
 		unit <- lll$numberscale
@@ -553,15 +559,16 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 	
 		# Set the missing values to low value (assuming only postive values are used for age and stratum and other variables):
 		cat("Abundance by age for ", level, "\n", se0="")
-		xForMissing <- min(tmp1[[grp1]], na.rm=TRUE)-1
+		xForMissing1 <- min(tmp1[[grp1]], na.rm=TRUE) - 1
 		if(length(grp1)){
-			suppressWarnings(tmp1[[grp1]][is.na(tmp1[[grp1]])] <- xForMissing)
-			suppressWarnings(out[[grp1]][is.na(out[[grp1]])] <- xForMissing)
+			suppressWarnings(tmp1[[grp1]][is.na(tmp1[[grp1]])] <- xForMissing1)
+			suppressWarnings(out[[grp1]][is.na(out[[grp1]])] <- xForMissing1)
 			unique_grp1 <- unique(tmp1[[grp1]])
 		}
+		xForMissing2 <- min(tmp1[[grp1]], na.rm=TRUE) - 1
 		if(length(grp2)){
-			suppressWarnings(tmp1[[grp2]][is.na(tmp1[[grp2]])] <- xForMissing)
-			suppressWarnings(out[[grp2]][is.na(out[[grp2]])] <- xForMissing)
+			suppressWarnings(tmp1[[grp2]][is.na(tmp1[[grp2]])] <- xForMissing2)
+			suppressWarnings(out[[grp2]][is.na(out[[grp2]])] <- xForMissing2)
 			unique_grp2 <- unique(tmp1[[grp2]])
 		}
 	

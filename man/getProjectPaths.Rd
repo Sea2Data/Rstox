@@ -2,10 +2,13 @@
 % Please edit documentation in R/rstox_base.r
 \name{getProjectPaths}
 \alias{getProjectPaths}
+\alias{getProjectPaths_old}
 \alias{getProjectDataEnv}
 \title{Functions to return various paths and file names.}
 \usage{
-getProjectPaths(projectName = NULL, projectRoot = NULL)
+getProjectPaths(projectName = NULL, projectRoot = NULL, recursive = 2)
+
+getProjectPaths_old(projectName = NULL, projectRoot = NULL)
 
 getProjectDataEnv(projectName)
 }
@@ -13,6 +16,8 @@ getProjectDataEnv(projectName)
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 
 \item{projectRoot}{The directory holding the project(s).}
+
+\item{recursive}{The number of levels above the project path at which the directory should exist, where recursive=1 indicated that the dirname(project path) should exist.}
 }
 \value{
 Various names and directories

@@ -3,7 +3,7 @@
 \name{runBootstrap}
 \alias{runBootstrap}
 \alias{runBootstrap_1.6}
-\alias{runBootstrap_temp}
+\alias{runBootstrap_old}
 \alias{runBootstrap_acousticTrawl}
 \alias{runBootstrap_sweptArea_length}
 \alias{runBootstrap_sweptArea_total}
@@ -20,7 +20,7 @@ runBootstrap_1.6(projectName, bootstrapMethod = "acousticTrawl",
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, ...)
 
-runBootstrap_temp(projectName, bootstrapMethod = "acousticTrawl",
+runBootstrap_old(projectName, bootstrapMethod = "acousticTrawl",
   acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
