@@ -25,8 +25,7 @@ Plot is exported to a tif- or png-file
 \examples{
 projectName <- "Test_Rstox"
 # Run bootstrap before plotting:
-boot <- runBootstrap(projectName, nboot=10, seed=1, 
-    acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum)
+boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")
 plotNASCDistribution(projectName)
 
 }

@@ -1,4 +1,4 @@
-# Rstox version: 1.6.4 (latest alpha, 2017-11-11)
+# Rstox version: 1.6.4 (latest alpha, 2017-11-13)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -65,3 +65,5 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 # 15. Fixed bug in plotAbundance() and plotNASCDistribution(), where parameters specified in the ... could result in the function specified by 'format' (such as png and jpeg). 
 
 # 16. Fixed bug in plotAbundance(), where missing valued in the variable specified by 'grp2' were assigned the value min(grp1) - 1. Changed to min(grp2) - 1.
+
+# 17. Added the option format=NULL in plotAbundance() and plotNASCDistribution(), causing the plot to show in the graphics window only (not saved to file).

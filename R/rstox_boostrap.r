@@ -45,8 +45,6 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		# Resample BioStation:
 		# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
 		#StID <- sample(stations, replace = TRUE)
-		print("sorted")
-		print(sorted)
 		# Sampling with replacement will normally result in fewer rows in the final superIndAbundance tables:
 		StID <- sampleSorted(stations, size=length(stations), seed=seedV[i], replace=TRUE, sorted=sorted)
 		
@@ -241,7 +239,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #'
 #' @examples
 #' \dontrun{
-#' b <- runBootstrap("Test_Rstox", nboot=10, seed=1, cores=1)}
+#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")}
 #'
 #' @importFrom stats terms as.formula
 #'

@@ -359,3 +359,5 @@ Changed default msg to FALSE in setBaselineParameters().
 Fixed bug in plotAbundance() and plotNASCDistribution(), where parameters specified in the ... could result in the function specified by 'format' (such as png and jpeg). 
 
 Fixed bug in plotAbundance(), where missing valued in the variable specified by 'grp2' were assigned the value min(grp1) - 1. Changed to min(grp2) - 1.
+
+Added the option format=NULL in plotAbundance() and plotNASCDistribution(), causing the plot to show in the graphics window only (not saved to file).

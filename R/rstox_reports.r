@@ -199,7 +199,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #'
 #' @examples
 #' projectName <- "Test_Rstox"
-#' boot <- runBootstrap(projectName, nboot=10, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum)
+#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")
 #' # imputeByAge() fills in empty cells:
 #' system.time(bootstrap_Acoustic_imputed <- imputeByAge(projectName))
 #'
@@ -418,8 +418,7 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' @examples
 #' projectName <- "Test_Rstox"
 #' # Run bootstrap before plotting:
-#' boot <- runBootstrap(projectName, nboot=10, seed=1, 
-#'     acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum)
+#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")
 #' plotNASCDistribution(projectName)
 #'
 #' @export
@@ -451,7 +450,7 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 	
 	# Define the file name and initiate the plot file:
 	filenamebase <- getProjectPaths(projectName)$RReportDir
-	filename <- paste(filenamebase, format, sep=".")
+	filename <- file.path(filenamebase, paste("NASC_Distribution", format, sep="."))
 	
 	### if(startsWith(tolower(format), "tif")){
 	### 	filename <- file.path(filenamebase, "NASC_Distribution.tif")
@@ -565,7 +564,7 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 			suppressWarnings(out[[grp1]][is.na(out[[grp1]])] <- xForMissing1)
 			unique_grp1 <- unique(tmp1[[grp1]])
 		}
-		xForMissing2 <- min(tmp1[[grp1]], na.rm=TRUE) - 1
+		xForMissing2 <- min(tmp1[[grp2]], na.rm=TRUE) - 1
 		if(length(grp2)){
 			suppressWarnings(tmp1[[grp2]][is.na(tmp1[[grp2]])] <- xForMissing2)
 			suppressWarnings(out[[grp2]][is.na(out[[grp2]])] <- xForMissing2)

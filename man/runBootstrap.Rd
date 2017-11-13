@@ -96,6 +96,6 @@ Resample (bootstrap) trawl stations based on swept area data and possibly also a
 }
 \examples{
 \dontrun{
-b <- runBootstrap("Test_Rstox", nboot=10, seed=1, cores=1)}
+boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")}
 
 }
