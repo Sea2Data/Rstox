@@ -69,3 +69,5 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 # 17. Added the option format=NULL in plotAbundance() and plotNASCDistribution(), causing the plot to show in the graphics window only (not saved to file).
 
 # 18. Added the parameter 'out' to the function getProject(), with a new possible value "report" for returning the Baseline Report object.
+
+# 19. Changed how seeds are generated throughout Rstox. All seeds are now generated using the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed() and getSequenceToSampleFrom(). This is intended to make the generation of seeds in the package less fragile to changes in the code.
