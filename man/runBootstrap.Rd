@@ -3,11 +3,11 @@
 \name{runBootstrap}
 \alias{runBootstrap}
 \alias{runBootstrap_1.6}
-\alias{runBootstrap_old}
 \alias{runBootstrap_acousticTrawl}
 \alias{runBootstrap_sweptArea_length}
 \alias{runBootstrap_sweptArea_total}
 \alias{getBootstrapMethod}
+\alias{runBootstrap_old}
 \title{Run a bootstrap in StoX}
 \usage{
 runBootstrap(projectName, bootstrapMethod = "acousticTrawl",
@@ -20,27 +20,28 @@ runBootstrap_1.6(projectName, bootstrapMethod = "acousticTrawl",
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, ...)
 
-runBootstrap_old(projectName, bootstrapMethod = "acousticTrawl",
-  acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
-  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
-
 runBootstrap_acousticTrawl(projectName, acousticMethod = PSU ~ Stratum,
   bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
 
-runBootstrap_sweptArea_length(projectName, acousticMethod = PSU ~ Stratum,
+runBootstrap_sweptArea_length(projectName, acousticMethod = NULL,
   bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
 
-runBootstrap_sweptArea_total(projectName, endProcess = "SweptAreaDensity",
+runBootstrap_sweptArea_total(projectName, acousticMethod = NULL,
+  bioticMethod = PSU ~ Stratum, endProcess = "SweptAreaDensity",
   nboot = 5, seed = 1, cores = 1, ignore.case = TRUE, sorted = TRUE,
   ...)
 
 getBootstrapMethod(bootstrapMethod = "acousticTrawl", acousticMethod = PSU ~
   Stratum, bioticMethod = PSU ~ Stratum, ...)
+
+runBootstrap_old(projectName, bootstrapMethod = "acousticTrawl",
+  acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
+  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
+  seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}

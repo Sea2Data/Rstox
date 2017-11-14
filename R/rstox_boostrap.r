@@ -308,6 +308,268 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="acousticTrawl", acous
 #' @export
 #' @rdname runBootstrap
 #'
+runBootstrap_acousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+	
+	# Baseline and biotic assignments:
+	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
+	assignments <- getBioticAssignments(baseline=baseline)
+	
+	# Acoustic data:
+	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keept this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
+	psuNASC <- getPSUNASC(baseline=baseline)
+	stratumNASC <- getNASCDistr(baseline=baseline, psuNASC=psuNASC, NASCDistr="observed")
+	resampledNASC <- getResampledNASCDistr(baseline=baseline, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(nboot=nboot, seed=seed), sorted=sorted)
+	# Assign varialbes to the project environment:
+	setProjectData(projectName=projectName, var=psuNASC)
+	setProjectData(projectName=projectName, var=stratumNASC)
+	setProjectData(projectName=projectName, var=resampledNASC)
+
+	# Run bootstrap:
+	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
+
+	# Add the method specification:
+	bootstrap$bootstrapParameters$acousticMethod <- acousticMethod
+	bootstrap$bootstrapParameters$bioticMethod <- bioticMethod
+	bootstrap$bootstrapParameters$description <- "Original Rstox default 'Acoustic' method up until Rstox 1.5, bootstrapping acousic PSUs within stratum, and scaleing the PSUs to have mean matching that of the bootstrap, and bootstrapping biotic stations within stratum, and assigning station weights equal to the frequency of occurrence of each station"
+	bootstrap$bootstrapParameters$alias <- "acousticTrawl"
+
+	# Assign the bootstrap to the project environment:
+	setProjectData(projectName=projectName, var=bootstrap)
+	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
+	baseline <- runBaseline(projectName, reset=TRUE, msg=FALSE)
+	invisible(TRUE)
+}
+#'
+#' @export
+#' @rdname runBootstrap
+#'
+runBootstrap_sweptArea_length <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+	
+	# Baseline and biotic assignments:
+	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
+	assignments <- getBioticAssignments(baseline=baseline)
+	
+	# Run bootstrap:
+	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
+	
+	# Add the method specification:
+	bootstrap$bootstrapParameters$acousticMethod <- acousticMethod
+	bootstrap$bootstrapParameters$bioticMethod <- bioticMethod
+	description <- "Original Rstox default 'SweptArea' method up until Rstox 1.5, bootstrapping biotic stations within stratum, and assigning station weights equal to the frequency of occurrence of each station"
+	alias <- "sweptArea_length"
+	
+	# Assign varialbes to the global environment for use in plotting functions. This should be changed to a local Rstox environment in the future:
+	setProjectData(projectName=projectName, var=bootstrap)
+	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
+	baseline <- runBaseline(projectName, reset=TRUE, msg=FALSE)
+	invisible(TRUE)
+}
+#'
+#' @importFrom data.table rbindlist
+#' @export
+#' @rdname runBootstrap
+#'
+runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, endProcess="SweptAreaDensity", nboot=5, seed=1, cores=1, ignore.case=TRUE, sorted=TRUE, ...){
+	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE){
+		# Function for calculating the mean density and keep the first row of a matrix:
+		MeanDensity1 <- function(y){
+			out <- y[1, , drop=FALSE]
+			out$Density <- mean(y$Density)
+			out
+		}
+		# Sample the rows of each stratum of each species (the input 'data' is split into a list by species):
+		b <- lapply(data, function(y) by(y, y$Stratum, sampleSorted, seed=seed, by="SampleUnit"))
+		# Calculate the mean density of each stratum of each species, and combine to a data.frame:
+		m <- lapply(b, function(y) lapply(y, MeanDensity1))
+		m <- lapply(m, data.table::rbindlist)
+		m <- lapply(m, as.data.frame)
+		# Calculate the total abundance:
+		tot <- as.data.frame(lapply(m, function(y) sum(y$Area * y$Density)))
+		# Output:
+		if(list.out){
+			list(tot=tot, mean=m, boot=b)
+		}
+		else{
+			tot
+		}
+	}
+	
+	# Define seeds, and save these later:
+	###if(length(seed)==1){
+	###	set.seed(seed)
+	###	seed <- round(runif(nboot, 1, 1e6))
+	###}
+	###else{
+	###	seed <- rep(seed, length.out=nboot)
+	###}
+	
+	seedV <- getSeedV(seed, nboot=nboot)
+	
+	DensityMatrix <- getBaseline(projectName, proc=endProcess, input=NULL)
+	# Add stratum:
+	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=TRUE)
+	
+	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
+	availableCores = detectCores()
+	if(cores>availableCores){
+		warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
+	}
+	cores = min(cores, nboot, availableCores)
+	
+	# Generate the clusters of time steps:
+	if(cores>1){
+		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
+		cl<-makeCluster(cores)
+		# Bootstrap:
+		out <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, cl=cl)
+		# End the parallel bootstrapping:
+		stopCluster(cl)
+	}
+	else{
+		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
+		out <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted)
+	}
+	
+	#boot <- rbindlist(lapply(out, "[[", "tot"))
+	boot <- data.table::rbindlist(out)
+	Variance <- apply(boot, 2, var)
+	SD <- sqrt(Variance)
+	Mean <- apply(boot, 2, mean)
+	CV <- SD / Mean
+	varianceTable <- cbind(Variance, SD, Mean, CV)
+	
+	
+	bootstrapParameters <- list(
+		seed = seed, 
+		seedV = seedV, 
+		nboot = nboot, 
+		cores = cores, 
+		acousticMethod <- acousticMethod, 
+		bioticMethod <- bioticMethod, 
+		description <- "Bootstrap of PSUs within Stratum per species for projects with only total catch reported.", 
+		alias <- "sweptArea_total"
+		)
+		
+	# Return the bootstrap data and parameters:
+	bootstrap <- list(summary=varianceTable, TotalCatch=out, bootstrapParameters=bootstrapParameters) 
+	
+	
+	setProjectData(projectName=projectName, var=bootstrap)
+
+	return(varianceTable)
+}
+#'
+#' @export
+#' @rdname runBootstrap
+#'
+getBootstrapMethod <- function(bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, ...){
+	# Function for comparing strings:
+	strequal <- function(x, y, ignore.case=TRUE){
+		if(ignore.case){
+			identical(tolower(x[1]), tolower(y[1]))
+		}
+		else{
+			identical(x[1], y[1])
+		}
+	}
+	
+	# Function used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user:
+	getBootstrapLevels <- function(x){
+		isNULL <- any(length(x)==0, sum(nchar(x))==0, identical(x, FALSE), is.character(x) && identical(tolower(x), "null"))
+		if(isNULL){
+			return(NULL)
+		}
+		if(is.function(x)){
+			warning("Method as a function not yet implemented")
+			return(NULL)
+		}
+		if(!any(unlist(gregexpr("~", as.character(x), fixed=TRUE))>0)){
+			warning("Invalid formula")
+			return(NULL)
+		}
+		# The c(x) is added to assure that sapply works on each formula and not on the parts of one formula, if only one is given:
+		if(is.character(x) || all(sapply(c(x), function(xx) class(xx)=="formula"))){
+			return(sapply(c(x), function(xx) rownames(attributes(terms(as.formula(xx)))$fact)))
+		}
+		else{
+			warning("Invalid input")
+			return(NULL)
+		}
+	}
+
+	# get the bootstrap levels:
+	acousticMethod <- getBootstrapLevels(acousticMethod)
+	bioticMethod <- getBootstrapLevels(bioticMethod)
+	
+	
+	# Special care for when bootstrapMethod=="acousticTrawl" (the default) and acousticMethod = NULL and bioticMethod = PSU~Stratum or EDSU~Stratum:
+	if(strequal(bootstrapMethod[1], "acousticTrawl")){
+		if(	length(acousticMethod)==0 
+			&& length(bioticMethod)==2 
+			&& (strequal(bioticMethod[1,1], "edsu") || strequal(bioticMethod[1,1], "psu")) 
+			&& strequal(bioticMethod[2,1], "stratum")){
+				bootstrapMethod <- "sweptArea_length"
+				warning("The value of 'bootstrapMethod' changed from \"acousticTrawl\" to \"sweptArea_length\"")
+		}
+	}
+	
+	# Save the dotlist:
+	lll <- list(...)
+	# Backwards compatibility for type="Acoustic", hidden in ... (used prior to Rstox 1.5):
+	if(length(lll$type) && strequal(lll$type, "Acoustic")){
+		bootstrapMethod <- "acousticTrawl"
+	}
+	# Backwards compatibility for type="SweptArea", hidden in ... (used prior to Rstox 1.5):
+	if(length(lll$type) && strequal(lll$type, "SweptArea")){
+		bootstrapMethod <- "sweptArea_length"
+	}
+	
+	list(bootstrapMethod=bootstrapMethod, acousticMethod=acousticMethod, bioticMethod=bioticMethod)
+}
+### #'
+### #' @importFrom data.table rbindlist
+### #'
+### #' @export
+### #' @keywords internal
+### #' @rdname runBootstrap
+### #'
+### boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE){
+### 	
+### 	# Function for calculating the mean density and keep the first row of a matrix:
+### 	MeanDensity1 <- function(y){
+### 		out <- y[1, , drop=FALSE]
+### 		out$Density <- mean(y$Density)
+### 		out
+### 	}
+### 	## Function for sampling the rows of a matrix:
+### 	#sample1 <- function(y){
+### 	#	set.seed(seed)
+### 	#	ind <- sample(nrow(y), replace=TRUE)
+### 	#	y[ind, , drop=FALSE]
+### 	#}
+### 	
+### 	# Sample the rows of each stratum of each species:
+### 	#b <- lapply(data$byPSU, function(y) by(y, y$Stratum, sample1))
+### 	#b <- lapply(data, function(y) by(y, y$Stratum, sample1))
+### 	b <- lapply(data, function(y) by(y, y$Stratum, sampleSorted, by="SampleUnit"))
+### 	# Calculate the mean density of each stratum of each species, and combine to a data.frame:
+### 	m <- lapply(b, function(y) lapply(y, MeanDensity1))
+### 	m <- lapply(m, data.table::rbindlist)
+### 	m <- lapply(m, as.data.frame)
+### 	# Calculate the total abundance:
+### 	tot <- lapply(m, function(y) sum(y$Area * y$Density))
+### 	# Output:
+### 	if(list.out){
+### 		list(tot=tot, mean=m, boot=b)
+### 	}
+### 	else{
+### 		tot
+### 	}
+### }
+#'
+#' @export
+#' @rdname runBootstrap
+#'
 runBootstrap_old <- function(projectName, bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
 	
 	# Documentation removed on 2017-08-25, since it has not been implemented:
@@ -431,8 +693,8 @@ runBootstrap_old <- function(projectName, bootstrapMethod="acousticTrawl", acous
 		# Add the method specification:
 		bootstrap$bootstrapParameters$acousticMethod <- acousticMethod
 		bootstrap$bootstrapParameters$bioticMethod <- bioticMethod
-		description <- "Original Rstox default 'SweptArea' method up until Rstox 1.5, bootstrapping biotic stations within stratum, and assigning station weights equal to the frequency of occurrence of each station"
-		alias <- "SweptArea"
+		bootstrap$bootstrapParameters$bdescription <- "Original Rstox default 'SweptArea' method up until Rstox 1.5, bootstrapping biotic stations within stratum, and assigning station weights equal to the frequency of occurrence of each station"
+		bootstrap$bootstrapParameters$balias <- "SweptArea"
 		
 		# Assign varialbes to the global environment for use in plotting functions. This should be changed to a local Rstox environment in the future:
 		setProjectData(projectName=projectName, var=bootstrap)
@@ -444,266 +706,6 @@ runBootstrap_old <- function(projectName, bootstrapMethod="acousticTrawl", acous
 		warning("Invalid bootstrap method...")
 	}
 }
-#'
-#' @export
-#' @rdname runBootstrap
-#'
-runBootstrap_acousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
-	
-	# Baseline and biotic assignments:
-	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
-	assignments <- getBioticAssignments(baseline=baseline)
-	
-	# Acoustic data:
-	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keept this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
-	psuNASC <- getPSUNASC(baseline=baseline)
-	stratumNASC <- getNASCDistr(baseline=baseline, psuNASC=psuNASC, NASCDistr="observed")
-	resampledNASC <- getResampledNASCDistr(baseline=baseline, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(nboot=nboot, seed=seed), sorted=sorted)
-	# Assign varialbes to the project environment:
-	setProjectData(projectName=projectName, var=psuNASC)
-	setProjectData(projectName=projectName, var=stratumNASC)
-	setProjectData(projectName=projectName, var=resampledNASC)
-
-	# Run bootstrap:
-	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
-
-	# Add the method specification:
-	bootstrap$bootstrapParameters$acousticMethod <- acousticMethod
-	bootstrap$bootstrapParameters$bioticMethod <- bioticMethod
-	bootstrap$bootstrapParameters$description <- "Original Rstox default 'Acoustic' method up until Rstox 1.5, bootstrapping acousic PSUs within stratum, and scaleing the PSUs to have mean matching that of the bootstrap, and bootstrapping biotic stations within stratum, and assigning station weights equal to the frequency of occurrence of each station"
-	bootstrap$bootstrapParameters$alias <- "Acoustic"
-
-	# Assign the bootstrap to the project environment:
-	setProjectData(projectName=projectName, var=bootstrap)
-	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
-	baseline <- runBaseline(projectName, reset=TRUE, msg=FALSE)
-	invisible(TRUE)
-}
-#'
-#' @export
-#' @rdname runBootstrap
-#'
-runBootstrap_sweptArea_length <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
-	
-	# Baseline and biotic assignments:
-	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
-	assignments <- getBioticAssignments(baseline=baseline)
-	
-	# Run bootstrap:
-	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
-	
-	# Add the method specification:
-	bootstrap$bootstrapParameters$acousticMethod <- acousticMethod
-	bootstrap$bootstrapParameters$bioticMethod <- bioticMethod
-	description <- "Original Rstox default 'SweptArea' method up until Rstox 1.5, bootstrapping biotic stations within stratum, and assigning station weights equal to the frequency of occurrence of each station"
-	alias <- "SweptArea"
-	
-	# Assign varialbes to the global environment for use in plotting functions. This should be changed to a local Rstox environment in the future:
-	setProjectData(projectName=projectName, var=bootstrap)
-	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
-	baseline <- runBaseline(projectName, reset=TRUE, msg=FALSE)
-	invisible(TRUE)
-}
-#'
-#' @importFrom data.table rbindlist
-#' @export
-#' @rdname runBootstrap
-#'
-runBootstrap_sweptArea_total <- function(projectName, endProcess="SweptAreaDensity", nboot=5, seed=1, cores=1, ignore.case=TRUE, sorted=TRUE, ...){
-	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE){
-		# Function for calculating the mean density and keep the first row of a matrix:
-		MeanDensity1 <- function(y){
-			out <- y[1, , drop=FALSE]
-			out$Density <- mean(y$Density)
-			out
-		}
-		# Sample the rows of each stratum of each species (the input 'data' is split into a list by species):
-		b <- lapply(data, function(y) by(y, y$Stratum, sampleSorted, seed=seed, by="SampleUnit"))
-		# Calculate the mean density of each stratum of each species, and combine to a data.frame:
-		m <- lapply(b, function(y) lapply(y, MeanDensity1))
-		m <- lapply(m, data.table::rbindlist)
-		m <- lapply(m, as.data.frame)
-		# Calculate the total abundance:
-		tot <- lapply(m, function(y) sum(y$Area * y$Density))
-		# Output:
-		if(list.out){
-			list(tot=tot, mean=m, boot=b)
-		}
-		else{
-			tot
-		}
-	}
-	
-	# Define seeds, and save these later:
-	###if(length(seed)==1){
-	###	set.seed(seed)
-	###	seed <- round(runif(nboot, 1, 1e6))
-	###}
-	###else{
-	###	seed <- rep(seed, length.out=nboot)
-	###}
-	
-	seedV <- getSeedV(seed, nboot=nboot)
-	
-	DensityMatrix <- getBaseline(projectName, proc=endProcess, input=NULL)
-	# Add stratum:
-	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=TRUE)
-	
-	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
-	availableCores = detectCores()
-	if(cores>availableCores){
-		warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
-	}
-	cores = min(cores, nboot, availableCores)
-	
-	# Generate the clusters of time steps:
-	if(cores>1){
-		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
-		cl<-makeCluster(cores)
-		# Bootstrap:
-		out <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, cl=cl)
-		# End the parallel bootstrapping:
-		stopCluster(cl)
-	}
-	else{
-		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		out <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted)
-	}
-	
-	#boot <- rbindlist(lapply(out, "[[", "tot"))
-	boot <- data.table::rbindlist(out)
-	Variance <- apply(boot, 2, var)
-	SD <- sqrt(Variance)
-	Mean <- apply(boot, 2, mean)
-	CV <- SD / Mean
-	varianceTable <- cbind(Variance, SD, Mean, CV)
-	
-	
-	bootstrapParameters <- list(
-		seed = seed, 
-		seedV = seedV, 
-		nboot = nboot, 
-		cores = cores
-		)
-		
-	
-	# Return the bootstrap data and parameters:
-	bootstrap <- list(summary=varianceTable, TotalCatch=out, bootstrapParameters=bootstrapParameters) 
-	
-	
-	setProjectData(projectName=projectName, var=bootstrap)
-
-	return(varianceTable)
-}
-#'
-#' @export
-#' @rdname runBootstrap
-#'
-getBootstrapMethod <- function(bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, ...){
-	# Function for comparing strings:
-	strequal <- function(x, y, ignore.case=TRUE){
-		if(ignore.case){
-			identical(tolower(x[1]), tolower(y[1]))
-		}
-		else{
-			identical(x[1], y[1])
-		}
-	}
-	
-	# Function used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user:
-	getBootstrapLevels <- function(x){
-		isNULL <- any(length(x)==0, sum(nchar(x))==0, identical(x, FALSE), is.character(x) && identical(tolower(x), "null"))
-		if(isNULL){
-			return(NULL)
-		}
-		if(is.function(x)){
-			warning("Method as a function not yet implemented")
-			return(NULL)
-		}
-		if(!any(unlist(gregexpr("~", as.character(x), fixed=TRUE))>0)){
-			warning("Invalid formula")
-			return(NULL)
-		}
-		# The c(x) is added to assure that sapply works on each formula and not on the parts of one formula, if only one is given:
-		if(is.character(x) || all(sapply(c(x), function(xx) class(xx)=="formula"))){
-			return(sapply(c(x), function(xx) rownames(attributes(terms(as.formula(xx)))$fact)))
-		}
-		else{
-			warning("Invalid input")
-			return(NULL)
-		}
-	}
-
-	# get the bootstrap levels:
-	acousticMethod <- getBootstrapLevels(acousticMethod)
-	bioticMethod <- getBootstrapLevels(bioticMethod)
-	
-	
-	# Special care for when bootstrapMethod=="acousticTrawl" (the default) and acousticMethod = NULL and bioticMethod = PSU~Stratum or EDSU~Stratum:
-	if(strequal(bootstrapMethod[1], "acousticTrawl")){
-		if(	length(acousticMethod)==0 
-			&& length(bioticMethod)==2 
-			&& (strequal(bioticMethod[1,1], "edsu") || strequal(bioticMethod[1,1], "psu")) 
-			&& strequal(bioticMethod[2,1], "stratum")){
-				bootstrapMethod <- "sweptArea_length"
-				warning("The value of 'bootstrapMethod' changed from \"acousticTrawl\" to \"sweptArea_length\"")
-		}
-	}
-	
-	# Save the dotlist:
-	lll <- list(...)
-	# Backwards compatibility for type="Acoustic", hidden in ... (used prior to Rstox 1.5):
-	if(length(lll$type) && strequal(lll$type, "Acoustic")){
-		bootstrapMethod <- "acousticTrawl"
-	}
-	# Backwards compatibility for type="SweptArea", hidden in ... (used prior to Rstox 1.5):
-	if(length(lll$type) && strequal(lll$type, "SweptArea")){
-		bootstrapMethod <- "sweptArea_length"
-	}
-	
-	list(bootstrapMethod=bootstrapMethod, acousticMethod=acousticMethod, bioticMethod=bioticMethod)
-}
-### #'
-### #' @importFrom data.table rbindlist
-### #'
-### #' @export
-### #' @keywords internal
-### #' @rdname runBootstrap
-### #'
-### boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE){
-### 	
-### 	# Function for calculating the mean density and keep the first row of a matrix:
-### 	MeanDensity1 <- function(y){
-### 		out <- y[1, , drop=FALSE]
-### 		out$Density <- mean(y$Density)
-### 		out
-### 	}
-### 	## Function for sampling the rows of a matrix:
-### 	#sample1 <- function(y){
-### 	#	set.seed(seed)
-### 	#	ind <- sample(nrow(y), replace=TRUE)
-### 	#	y[ind, , drop=FALSE]
-### 	#}
-### 	
-### 	# Sample the rows of each stratum of each species:
-### 	#b <- lapply(data$byPSU, function(y) by(y, y$Stratum, sample1))
-### 	#b <- lapply(data, function(y) by(y, y$Stratum, sample1))
-### 	b <- lapply(data, function(y) by(y, y$Stratum, sampleSorted, by="SampleUnit"))
-### 	# Calculate the mean density of each stratum of each species, and combine to a data.frame:
-### 	m <- lapply(b, function(y) lapply(y, MeanDensity1))
-### 	m <- lapply(m, data.table::rbindlist)
-### 	m <- lapply(m, as.data.frame)
-### 	# Calculate the total abundance:
-### 	tot <- lapply(m, function(y) sum(y$Area * y$Density))
-### 	# Output:
-### 	if(list.out){
-### 		list(tot=tot, mean=m, boot=b)
-### 	}
-### 	else{
-### 		tot
-### 	}
-### }
-
 
 #*********************************************
 #*********************************************
