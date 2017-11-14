@@ -137,9 +137,13 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	# Unique trawl station ID:
 	assignments$StID <- getVar(assignments, "Station")
 	
-	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
-	# Makes seed vector for fixed seeds (for reproducibility):
-	seedV <- sample(c(1:10000000), nboot, replace = FALSE)
+	# Change introduced on 2017-11-14 by Holmin. To make the code more robust to changes, all generation of seeds has been moved to the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed():
+	#set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+	## Makes seed vector for fixed seeds (for reproducibility):
+	#seedV <- sample(c(1:10000000), nboot, replace = FALSE)
+	seedV <- getSeedV(seed, nboot=nboot)
+	
+	
 	# Define strata, either by acoustic values (if psuNASC is given) or by the trawl assignments:
 	strata <- unique(if(length(psuNASC)>0) getVar(psuNASC, "Stratum") else getVar(assignments, "Stratum"))
 	
@@ -501,6 +505,7 @@ runBootstrap_sweptArea_length <- function(projectName, acousticMethod=PSU~Stratu
 	invisible(TRUE)
 }
 #'
+#' @importFrom data.table rbindlist
 #' @export
 #' @rdname runBootstrap
 #'
@@ -512,7 +517,7 @@ runBootstrap_sweptArea_total <- function(projectName, endProcess="SweptAreaDensi
 			out$Density <- mean(y$Density)
 			out
 		}
-		# Sample the rows of each stratum of each species:
+		# Sample the rows of each stratum of each species (the input 'data' is split into a list by species):
 		b <- lapply(data, function(y) by(y, y$Stratum, sampleSorted, seed=seed, by="SampleUnit"))
 		# Calculate the mean density of each stratum of each species, and combine to a data.frame:
 		m <- lapply(b, function(y) lapply(y, MeanDensity1))
@@ -530,13 +535,15 @@ runBootstrap_sweptArea_total <- function(projectName, endProcess="SweptAreaDensi
 	}
 	
 	# Define seeds, and save these later:
-	if(length(seed)==1){
-		set.seed(seed)
-		seed <- round(runif(nboot, 1, 1e6))
-	}
-	else{
-		seed <- rep(seed, length.out=nboot)
-	}
+	###if(length(seed)==1){
+	###	set.seed(seed)
+	###	seed <- round(runif(nboot, 1, 1e6))
+	###}
+	###else{
+	###	seed <- rep(seed, length.out=nboot)
+	###}
+	
+	seedV <- getSeedV(seed, nboot=nboot)
 	
 	DensityMatrix <- getBaseline(projectName, proc=endProcess, input=NULL)
 	# Add stratum:
@@ -554,24 +561,39 @@ runBootstrap_sweptArea_total <- function(projectName, endProcess="SweptAreaDensi
 		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
 		cl<-makeCluster(cores)
 		# Bootstrap:
-		bootstrap <- pblapply(seed, boot1, data=DensityMatrix, list.out=TRUE, sorted=sorted, cl=cl)
+		out <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, cl=cl)
 		# End the parallel bootstrapping:
 		stopCluster(cl)
 	}
 	else{
 		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		bootstrap <- pblapply(seed, boot1, data=DensityMatrix, list.out=TRUE, sorted=sorted)
+		out <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted)
 	}
 	
-	setProjectData(projectName=projectName, var=bootstrap)
-
-	boot <- rbindlist(lapply(bootstrap, "[[", "tot"))
+	#boot <- rbindlist(lapply(out, "[[", "tot"))
+	boot <- data.table::rbindlist(out)
 	Variance <- apply(boot, 2, var)
 	SD <- sqrt(Variance)
 	Mean <- apply(boot, 2, mean)
 	CV <- SD / Mean
+	varianceTable <- cbind(Variance, SD, Mean, CV)
+	
+	
+	bootstrapParameters <- list(
+		seed = seed, 
+		seedV = seedV, 
+		nboot = nboot, 
+		cores = cores
+		)
+		
+	
+	# Return the bootstrap data and parameters:
+	bootstrap <- list(summary=varianceTable, TotalCatch=out, bootstrapParameters=bootstrapParameters) 
+	
+	
+	setProjectData(projectName=projectName, var=bootstrap)
 
-	cbind(Variance, SD, Mean, CV)
+	return(varianceTable)
 }
 #'
 #' @export

@@ -75,14 +75,16 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	}
 
 	# Set the seed matrix:
-	if(isTRUE(seedV[i])){
-		seedM <- matrix(c(1231234, 1234, 1234), nrow=NatUnknownAge, ncol=3, byrow=TRUE)
-	}
-	else{
-		set.seed(seedV[i])
-		# Create a seed matrix with 3 columns representing the replacement by station, stratum and survey:
-		seedM <- matrix(sample(seq_len(10000000), 3*NatUnknownAge, replace = FALSE), ncol=3)
-	}
+	# Change introduced on 2017-11-14 by Holmin. To make the code more robust to changes, all generation of seeds has been moved to the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed():
+	#if(isTRUE(seedV[i])){
+	#	seedM <- matrix(c(1231234, 1234, 1234), nrow=NatUnknownAge, ncol=3, byrow=TRUE)
+	#}
+	#else{
+	#	set.seed(seedV[i])
+	#	# Create a seed matrix with 3 columns representing the replacement by station, stratum and survey:
+	#	seedM <- matrix(sample(seq_len(10000000), 3*NatUnknownAge, replace = FALSE), ncol=3)
+	#}
+	seedM <- getSeedM(i, seedV=seedV, nrow=NatUnknownAge)
 	
 	# Run through the unknown rows and get indices for rows at which the missing data should be extracetd:
 	#imputeRows <- rep("-", N)
@@ -110,7 +112,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 												
 		## Replace by station:
 	 	if(any(id.known.sta)){
-			set.seed(seedM[atUnkn,1])
+			#set.seed(seedM[atUnkn,1])
 			
 			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
 			#imputeRows[indUnkn] <- id.known.sta[sample.int(Nid.known.sta, size=1)]
@@ -122,7 +124,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 		}
 		## Replace by stratum:
 		else if(any(id.known.stratum)){
-			set.seed(seedM[atUnkn,2])
+			#set.seed(seedM[atUnkn,2])
 			
 			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
 			#imputeRows[indUnkn] <- id.known.stratum[sample.int(Nid.known.stratum, size=1)]
@@ -134,7 +136,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 		}
 		## Replace by survey:
 		else if(any(id.known.survey)) {
-			set.seed(seedM[atUnkn,3])
+			#set.seed(seedM[atUnkn,3])
 			
 			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
 			#imputeRows[indUnkn] <- id.known.survey[sample.int(Nid.known.survey, size=1)]
@@ -224,16 +226,20 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	seedM.out <- vector("list", nboot)
 	
 	# Set the seed of the runs, either as a vector of 1234s, to comply with old code, where the seeed was allways 1234 (from before 2016), or as a vector of seeds sampled with the given seed, or as NULL, in which case the seed matrix 'seedM' of distributeAbundance() is set by sampling seq_len(10000000) without seed:
-	if(isTRUE(seed)){
-		seedV = rep(TRUE, nboot+1) # seed==TRUE giving 1234 for compatibility with older versions
-	}
-	else if(is.numeric(seed)){
-		set.seed(seed)
-		seedV = sample(seq_len(10000000), nboot+1, replace=FALSE)
-	}
-	else{
-		seedV = NULL
-	}
+	# Change introduced on 2017-11-14 by Holmin. To make the code more robust to changes, all generation of seeds has been moved to the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed():
+	#if(isTRUE(seed)){
+	#	seedV = rep(TRUE, nboot+1) # seed==TRUE giving 1234 for compatibility with older versions
+	#}
+	#else if(is.numeric(seed)){
+	#	set.seed(seed)
+	#	seedV = sample(seq_len(10000000), nboot+1, replace=FALSE)
+	#}
+	#else{
+	#	seedV = NULL
+	#}
+	seedV <- expandSeed(seed, nboot)
+	
+	
 	
 	# Store the bootstrap iteration names:
 	namesOfIterations <- names(imputeVariable$SuperIndAbundance)

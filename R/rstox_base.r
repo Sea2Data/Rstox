@@ -5,7 +5,7 @@
 #' \code{createProject} creates a new StoX project (from xml files). \cr \cr
 #' \code{openProject} opens a StoX project. If the project has already been opened, \code{openProject} will only retrieve the project object from the RstoxEnv enviromnent. To force open the project use \code{reopenProject}. \cr \cr
 #' \code{reopenProject} re-opens a StoX project, which is equivalent to closeing and then opening the project. \cr \cr
-#' \code{getProject} gets the project object, either from the input if this is a baseline or project object, or from the project environment. \cr \cr
+#' \code{getProject} gets a project object (one of "project", "baseline", "report", "name"), either from the input if this is a baseline or project object, or from the project environment. \cr \cr
 #' \code{updateProject} updates links to xml files in a project. \cr \cr
 #' \code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
 #' \code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr
@@ -23,7 +23,7 @@
 #' @param open   			Logical: if TRUE (defalut) open the project in memory.
 #' @param ignore.processXML	Logical: if TRUE do not copy any project.XML file given in \code{files} to the project.
 #' @param parlist,...   	See \code{\link{runBaseline}}.
-#' @param out   			One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.
+#' @param out   			One of "project", "baseline" or "name" (project name), specifying the output.
 #' @param nchars			The number of characters to read when determining the types of the files in readXMLfiles().
 #' @param msg				Logical: If TRUE, print messages to the console.
 #' @param soft				Logical: If TRUE, do not save the current javaParameters to the savedParameters field in the project environment (used in saveasProject()).
@@ -522,7 +522,7 @@ createProject_old <- function(projectName=NULL, files=list(), dir=NULL, model="S
 #' @export
 #' @rdname createProject
 #' 
-openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), msg=FALSE){
+openProject <- function(projectName=NULL, out=c("project", "baseline", "report", "name"), msg=FALSE){
 	# Old version, listing everything in the default workspace:
 	#return(list.files(J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()))
 	
@@ -667,16 +667,98 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), 
 		#}
 	}
 	
+	### # Return a baseline object:
+	### if(tolower(substr(out[1], 1, 1)) == "b"){
+	### 	return(project$getBaseline())
+	### }
+	### # Return the project object:
+	### else if(tolower(substr(out[1], 1, 1)) == "p"){
+	### 	return(project)
+	### }
+	### # Return the project name:
+	### else if(tolower(substr(out[1], 1, 1)) == "n"){
+	### 	return(project$getProjectName())
+	### }
+	
+	### # Return a baseline object:
+	### if(startsWith(tolower(out[1]), "baseline"){
+	### 	return(project$getBaseline())
+	### }
+	### # Return the baseline report object:
+	### if(startsWith(tolower(out[1]), "report"){
+	### 	return(project$getBaselineReport())
+	### }
+	### # Return the project object:
+	### else if(startsWith(tolower(out[1]), "project"){
+	### 	return(project)
+	### }
+	### # Return the project name:
+	### else if(startsWith(tolower(out[1]), "name"){
+	### 	return(project$getProjectName())
+	### }
+	### else{
+	### 	warning("Invalid value of 'out'")
+	### 	return(NULL)
+	### }
+	
+	# Return the requested object:
+	getProject(project, out=out)
+}
+#' 
+#' @export
+#' @rdname createProject
+#' 
+reopenProject <- function(projectName, out=c("project", "baseline", "report", "name")){
+	closeProject(projectName)
+	openProject(projectName,  out=out)
+}
+#' 
+#' @export
+#' @rdname createProject
+#' 
+getProject <- function(projectName, out=c("project", "baseline", "report", "name"), msg=FALSE){
+	# Return immediately if a project or baseline object is given:
+	if(class(projectName) == "jobjRef"){
+		if(projectName@jclass=="no/imr/stox/model/Project"){
+			project <- projectName
+		}
+		else if(projectName@jclass=="no/imr/stox/model/Model"){
+			project <- projectName$getProject()
+		}
+	}
+	# Check for the existence of the project object in the RstoxEnv evnironment (getProjectPaths(projectName)$projectName assures that the project name is used and not the full project path if given in 'projectName'):
+	#else if(is.character(projectName) && nchar(projectName)>0 && length(getRstoxEnv()[[getProjectPaths(projectName)$projectName]]$projectObject)>0){
+	else if(is.character(projectName) && nchar(projectName)>0){
+		projectName <- getProjectPaths(projectName)$projectName
+		if(length(getRstoxEnv()[[projectName]]$projectObject)){
+			if(msg){
+				warning(paste0("Project retrieved from the RstoxEnv$", projectName, " enviroment. To reopen the project use reopenProject(", projectName, ")"))
+			}
+			project <- getRstoxEnv()[[projectName]]$projectObject
+		}
+		else{
+			return(NULL)
+		}
+		#return(getRstoxEnv()[[projectName]]$projectObject)
+	}
+	else{
+		return(NULL)
+	}
+	
 	# Return a baseline object:
-	if(tolower(substr(out[1], 1, 1)) == "b"){
+	if(startsWith(tolower(out[1]), "baseline")){
 		return(project$getBaseline())
 	}
+	# Return the baseline report object:
+	if(startsWith(tolower(out[1]), "report")){
+		return(project$getBaselineReport())
+	}
 	# Return the project object:
-	else if(tolower(substr(out[1], 1, 1)) == "p"){
+	else if(startsWith(tolower(out[1]), "project")){
 		return(project)
 	}
 	# Return the project name:
-	else if(tolower(substr(out[1], 1, 1)) == "n"){
+	else if(startsWith(tolower(out[1]), "name")){
 		return(project$getProjectName())
 	}
 	else{
@@ -688,15 +770,7 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), 
 #' @export
 #' @rdname createProject
 #' 
-reopenProject <- function(projectName, out=c("project", "baseline", "name")){
-	closeProject(projectName)
-	openProject(projectName,  out=out)
-}
-#' 
-#' @export
-#' @rdname createProject
-#' 
-getProject <- function(projectName, msg=FALSE){
+getProject_old <- function(projectName, msg=FALSE){
 	# Return immediately if a project or baseline object is given:
 	if(class(projectName) == "jobjRef"){
 		if(projectName@jclass=="no/imr/stox/model/Project"){
@@ -972,7 +1046,7 @@ pointToStoXFiles <- function(projectName, files=NULL){
 	}
 	getFiles <- function(projectPath, StoX_data_types, files=NULL){
 		if(length(files)==0){
-			files <- lapply(StoX_data_types, getFilesOfDataType, projectPath)
+			files <- lapply(StoX_data_types, getFilesOfDataType, projectPath=projectPath)
 			names(files) <- StoX_data_types
 		}
 		if(!all(names(files) %in% StoX_data_types)){
@@ -982,13 +1056,26 @@ pointToStoXFiles <- function(projectName, files=NULL){
 		lapply(files, path.expand)
 	}
 	# Function that points to the files[[data_type]] in the project. Lapply this:
-	pointToStoXFilesSingle <- function(data_type, project, files){
+	#pointToStoXFilesSingle <- function(data_type, project, files){
+	#	# Get the files of the specified type:
+	#	thesefiles <- files[[data_type]]
+	#	# Get the StoX-function name for reading these files:
+	#	fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
+	#	for(i in seq_along(thesefiles)){
+	#		proc <- project$getBaseline()$findProcessByFunction(fun)
+	#		if(length(names(proc))){
+	#			proc$setParameterValue(paste0("FileName",i), thesefiles[i])
+	#		}
+	#	}
+	#	thesefiles
+	#}
+	pointToStoXFilesSingle <- function(data_type, baseline, files){
 		# Get the files of the specified type:
 		thesefiles <- files[[data_type]]
 		# Get the StoX-function name for reading these files:
 		fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
 		for(i in seq_along(thesefiles)){
-			proc <- project$getBaseline()$findProcessByFunction(fun)
+			proc <- baseline$findProcessByFunction(fun)
 			if(length(names(proc))){
 				proc$setParameterValue(paste0("FileName",i), thesefiles[i])
 			}
@@ -999,15 +1086,24 @@ pointToStoXFiles <- function(projectName, files=NULL){
 	#  # Get the project name (possibly interpreted from a project or baseline object):
 	#  projectName <- getProjectPaths(projectName)$projectName
 	# Open the project:
-	project <- openProject(projectName, out="project")
+	#project <- openProject(projectName, out="project")
+	baseline <- openProject(projectName, out="baseline")
+	projectPath <- getProjectPaths(projectName)$projectPath
 	# Get the currently defined StoX data types:
 	StoX_data_types <- getRstoxEnv()$StoX_data_types
 	# Get the files if not specified in the input:
-	files <- getFiles(project$getProjectFolder(), StoX_data_types, files)
+	#files <- getFiles(project$getProjectFolder(), StoX_data_types, files)
+	files <- getFiles(projectPath, StoX_data_types=StoX_data_types, files=files)
 	# Point to the files, save and return:
-	out <- lapply(StoX_data_types, pointToStoXFilesSingle, project, files)
+	#out <- lapply(StoX_data_types, pointToStoXFilesSingle, project, files)
+	out <- lapply(StoX_data_types, pointToStoXFilesSingle, baseline=baseline, files=files)
 	names(out) <- StoX_data_types
-	project$save()
+	
+	# Save the project:
+	#project$save()
+	saveProject(projectName)
+	
+	# Return the file paths:
 	out
 }
 
@@ -1055,7 +1151,7 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' @export
 #' @rdname runBaseline
 #'
-runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("name", "baseline", "project"), msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
+runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("project", "baseline", "report", "name"), msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
 	# Open the project (avoiding generating multiple identical project which demands memory in Java):
 	projectName <- getProjectPaths(projectName)$projectName
 	# If reset==TRUE allow for the warning in getProject():
@@ -1138,18 +1234,20 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 		}
 	}
 
-	# Return a baseline object:
-	if(tolower(substr(out[1], 1, 1)) == "b"){
-		return(baseline)
-	}
-	# Return the project object:
-	if(tolower(substr(out[1], 1, 1)) == "p"){
-		return(baseline$getProject())
-	}
-	# Return the project name:
-	else{
-		return(projectName)
-	}
+	# Return the object specified in 'out':
+	return(getProject(projectName, out=out))
+	## Return a baseline object:
+	#if(tolower(substr(out[1], 1, 1)) == "b"){
+	#	return(baseline)
+	#}
+	## Return the project object:
+	#if(tolower(substr(out[1], 1, 1)) == "p"){
+	#	return(baseline$getProject())
+	#}
+	## Return the project name:
+	#else{
+	#	return(projectName)
+	#}
 }
 #'
 #' @export
@@ -1477,24 +1575,24 @@ readBaselineParameters <- function(projectName, rver="1"){
 #' @rdname setBaselineParameters
 #' 
 readBaselineParametersJava <- function(projectName){
-	getParametersOfProcess <- function(processNr, project){
+	getParametersOfProcess <- function(processNr, baseline){
 		# Number of parameters:
-		L = project$getBaseline()$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$size()
+		L = baseline$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$size()
 		if(L==0){
 			return()
 		}
-		parameterNames = unlist(lapply(seq(0,L-1), function(j) project$getBaseline()$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$get(as.integer(j))$getName()))
-		parameterValues = lapply(seq(1,L), function(j) project$getBaseline()$getProcessList()$get(as.integer(processNr))$getParameterValue(parameterNames[j]))
+		parameterNames = unlist(lapply(seq(0,L-1), function(j) baseline$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$get(as.integer(j))$getName()))
+		parameterValues = lapply(seq(1,L), function(j) baseline$getProcessList()$get(as.integer(processNr))$getParameterValue(parameterNames[j]))
 		empty = sapply(parameterValues, length)==0
 		if(sum(empty)){
 			parameterValues[empty] = rep(list(NA),sum(empty))
 		}
 		cbind(parameterNames, unlist(parameterValues))
 	}
-	project <- getProject(projectName)
-	processList <- project$getBaseline()$getProcessList()$toString()
+	baseline <- getProject(projectName, out="baseline")
+	processList <- baseline$getProcessList()$toString()
 	processList <- JavaString2vector(processList)
-	out <- lapply(seq_along(processList) - 1L, getParametersOfProcess, project)
+	out <- lapply(seq_along(processList) - 1L, getParametersOfProcess, baseline)
 	names(out) <- processList
 	out
 }
@@ -2473,6 +2571,10 @@ isProjectZipURL <- function(URL){
 #' @param replace	Should sampling be with replacement?
 #' @param sorted	Should the data be sorted prior to sampling?
 #' @param drop		Should data frames be dropped when sampling?
+#' @param seed		A single seed.
+#' @param seedV		A vector of seeds.
+#' @param nboot		The number of bootstrap replicates (for the functions used by bootstrapping and imputing).
+#' @param i			The index of the bootstrap replicate to generate seeds for.
 #'
 #' @export
 #' @keywords internal
@@ -2510,6 +2612,132 @@ sampleSorted <- function(x, size, seed=0, by=NULL, replace=TRUE, sorted=TRUE, dr
 	#set.seed(seed)
 	#x[sample.int(lx, size=size, replace=replace)]
 }
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+setSeedSingle <- function(seed){
+	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+getSeedV <- function(seed, nboot){
+	setSeedSingle(seed)
+	SeedV <- sample(getSequenceToSampleFrom(), nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+	SeedV
+}		
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+getSeedM <- function(i, seedV, nrow){
+	if(isTRUE(seedV[i])){
+		seedM <- matrix(c(1231234, 1234, 1234), nrow=nrow, ncol=3, byrow=TRUE)
+	}
+	else{
+		set.seed(seedV[i])
+		# Create a seed matrix with 3 columns representing the replacement by station, stratum and survey:
+		seedM <- matrix(sample(getSequenceToSampleFrom(), 3*nrow, replace=FALSE), ncol=3)
+	}
+	seedM
+}	
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+expandSeed <- function(seed, nboot){
+	if(isTRUE(seed)){
+		seedV = rep(TRUE, nboot+1) # seed==TRUE giving 1234 for compatibility with older versions
+	}
+	else if(is.numeric(seed)){
+		set.seed(seed)
+		seedV = sample(getSequenceToSampleFrom(), nboot+1, replace=FALSE)
+	}
+	else{
+		seedV = NULL
+	}
+	seedV
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+getSequenceToSampleFrom <- function(){
+	size <- 1e7
+	seq_len(size)
+}
+
+
+
+
+
+
+
+###getSeeds <- function(){
+###	#From imputeByAge:
+###	
+###	# Set the seed of the runs, either as a vector of 1234s, to comply with old code, where the seeed was allways 1234 (from before 2016), or as a vector of seeds sampled with the given seed, or as NULL, in which case the seed matrix 'seedM' of distributeAbundance() is set by sampling seq_len(10000000) without seed:
+###	if(isTRUE(seed)){
+###		seedV = rep(TRUE, nboot+1) # seed==TRUE giving 1234 for compatibility with older versions
+###	}
+###	else if(is.numeric(seed)){
+###		set.seed(seed)
+###		seedV = sample(seq_len(10000000), nboot+1, replace = FALSE)
+###	}
+###	else{
+###		seedV = NULL
+###	}
+###	
+###	#From dsitribute abundance:
+###	
+###	# Set the seed matrix:
+###	if(isTRUE(seedV[i])){
+###		seedM <- matrix(c(1231234, 1234, 1234), nrow=NatUnknownAge, ncol=3, byrow=TRUE)
+###	}
+###	else{
+###		set.seed(seedV[i])
+###		# Create a seed matrix with 3 columns representing the replacement by station, stratum and survey:
+###		seedM <- matrix(sample(seq_len(10000000), 3*NatUnknownAge, replace = FALSE), ncol=3)
+###	}
+###	--- getSeedM(i, seedV=seedV, nrow=NatUnknownAge) ---
+###
+###	
+###	# From acoustic
+###	
+###	set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+###	SeedV <- sample(c(1:10000000), parameters$nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+###	--- getSeedV(parameters$seed, nboot=parameters$nboot) ---
+###
+###
+###	set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL)
+###	--- setSeedSingle(parameters$seed) ---
+###
+###	# from bootstrap_parallel
+###	
+###	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+###	# Makes seed vector for fixed seeds (for reproducibility):
+###	seedV <- sample(c(1:10000000), nboot, replace = FALSE)
+###	--- getSeedV(seed, nboot=nboot) ---
+###	
+###				
+###	
+###	# From runBootstrap:
+###	
+###	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+###	# Makes seed vector for fixed seeds (for reproducibility):
+###	seedV <- sample(c(1:10000000), nboot, replace = FALSE)
+###	--- getSeedV(seed, nboot=nboot) ---
+###}
+
+
+
 
 
 #*********************************************

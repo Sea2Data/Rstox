@@ -211,8 +211,12 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters, so
 		if(psuNASC$LayerType[1]!="WaterColumn"){
 			tmpNASC <- aggPSUNASC(psuNASC)
 		}
-		set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
-		SeedV <- sample(c(1:10000000), parameters$nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+		
+		# Change introduced on 2017-11-14 by Holmin. To make the code more robust to changes, all generation of seeds has been moved to the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed():
+		#set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+		#SeedV <- sample(c(1:10000000), parameters$nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+		SeedV <- getSeedV(parameters$seed, nboot=parameters$nboot)
+		
 		tmp2NASC <- split(tmpNASC,list(tmpNASC$Stratum))
 		res.NASC.dist <- matrix(NA,nrow=parameters$nboot,ncol=length(unique(tmpNASC$Stratum)))
 		for(i in 1:parameters$nboot){
@@ -246,7 +250,11 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters, so
 	}
 	
 	tmp <- split(stratumNASC$NASC.by.strata,list(stratumNASC$NASC.by.strata$Stratum))
-	set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+	
+	# Change introduced on 2017-11-14 by Holmin. To make the code more robust to changes, all generation of seeds has been moved to the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed():
+	#set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+	setSeedSingle(parameters$seed)
+	
 	switch(stratumNASC$NASCDistr,
 		 normal = res.NASC.dist <- sapply(tmp, function(yy) {rnorm(parameters$nboot, mean=yy$strata.mean, sd=sqrt(yy$strata.var))}),
 		 lognormal = res.NASC.dist <- sapply(tmp, function(yy) {rlnorm(parameters$nboot, meanlog=yy$meanlog, sdlog=yy$sdlog)-1}),

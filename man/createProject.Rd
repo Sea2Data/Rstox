@@ -6,6 +6,7 @@
 \alias{openProject}
 \alias{reopenProject}
 \alias{getProject}
+\alias{getProject_old}
 \alias{updateProject}
 \alias{saveProject}
 \alias{saveasProject}
@@ -23,12 +24,15 @@ createProject_old(projectName = NULL, files = list(), dir = NULL,
   model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
   ignore.processXML = FALSE, parlist = list(), msg = TRUE, ...)
 
-openProject(projectName = NULL, out = c("project", "baseline", "name"),
+openProject(projectName = NULL, out = c("project", "baseline", "report",
+  "name"), msg = FALSE)
+
+reopenProject(projectName, out = c("project", "baseline", "report", "name"))
+
+getProject(projectName, out = c("project", "baseline", "report", "name"),
   msg = FALSE)
 
-reopenProject(projectName, out = c("project", "baseline", "name"))
-
-getProject(projectName, msg = FALSE)
+getProject_old(projectName, msg = FALSE)
 
 updateProject(projectName)
 
@@ -64,7 +68,7 @@ readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 
 \item{msg}{Logical: If TRUE, print messages to the console.}
 
-\item{out}{One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.}
+\item{out}{One of "project", "baseline" or "name" (project name), specifying the output.}
 
 \item{soft}{Logical: If TRUE, do not save the current javaParameters to the savedParameters field in the project environment (used in saveasProject()).}
 
@@ -92,7 +96,7 @@ A project object
 \code{createProject} creates a new StoX project (from xml files). \cr \cr
 \code{openProject} opens a StoX project. If the project has already been opened, \code{openProject} will only retrieve the project object from the RstoxEnv enviromnent. To force open the project use \code{reopenProject}. \cr \cr
 \code{reopenProject} re-opens a StoX project, which is equivalent to closeing and then opening the project. \cr \cr
-\code{getProject} gets the project object, either from the input if this is a baseline or project object, or from the project environment. \cr \cr
+\code{getProject} gets a project object (one of "project", "baseline", "report", "name"), either from the input if this is a baseline or project object, or from the project environment. \cr \cr
 \code{updateProject} updates links to xml files in a project. \cr \cr
 \code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
 \code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr

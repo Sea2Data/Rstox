@@ -2,10 +2,25 @@
 % Please edit documentation in R/rstox_base.r
 \name{sampleSorted}
 \alias{sampleSorted}
+\alias{setSeedSingle}
+\alias{getSeedV}
+\alias{getSeedM}
+\alias{expandSeed}
+\alias{getSequenceToSampleFrom}
 \title{Sample a vector after sorting the vector and applying the seed}
 \usage{
 sampleSorted(x, size, seed = 0, by = NULL, replace = TRUE,
   sorted = TRUE, drop = FALSE)
+
+setSeedSingle(seed)
+
+getSeedV(seed, nboot)
+
+getSeedM(i, seedV, nrow)
+
+expandSeed(seed, nboot)
+
+getSequenceToSampleFrom()
 }
 \arguments{
 \item{x}{A vector or a single integer.}
@@ -21,6 +36,14 @@ sampleSorted(x, size, seed = 0, by = NULL, replace = TRUE,
 \item{sorted}{Should the data be sorted prior to sampling?}
 
 \item{drop}{Should data frames be dropped when sampling?}
+
+\item{nboot}{The number of bootstrap replicates (for the functions used by bootstrapping and imputing).}
+
+\item{i}{The index of the bootstrap replicate to generate seeds for.}
+
+\item{seedV}{A vector of seeds.}
+
+\item{seed}{A single seed.}
 }
 \description{
 Sample a vector after sorting the vector and applying the seed
