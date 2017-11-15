@@ -2077,6 +2077,7 @@ abbrMatch <- function(x, table, ignore.case=FALSE){
 #' @return The requested variable as returned using "$".
 #'
 #' @export
+#' @rdname getVar
 #' @keywords internal
 #'
 getVar <- function(x, var){
@@ -2096,6 +2097,28 @@ getVar <- function(x, var){
 	}
 	else{
 		as.data.frame(sapply(var, getVarOne, x=x))
+	}
+}
+#'
+#' @export
+#' @rdname getVar
+#' @keywords internal
+#'
+is.empty <- function(x){
+	if(length(x)==0){
+		return(TRUE)
+	}
+	else if(nchar(x)==0){
+		return(TRUE)
+	}
+	else if(identical(tolower(x), "null")){
+		return(TRUE)
+	}
+	else if(is.na(x)){
+		return(TRUE)
+	}
+	else{
+		return(FALSE)
 	}
 }
 

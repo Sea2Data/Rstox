@@ -2,12 +2,15 @@
 % Please edit documentation in R/rstox_reports.r
 \name{reportAbundance}
 \alias{reportAbundance}
+\alias{reportTotalCatch}
 \alias{reportAbundanceAtLevel}
 \title{Calculate a summary of the bootstrap iterations (possibly after imputing unknown ages).}
 \usage{
 reportAbundance(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
   plotOutput = FALSE, write = FALSE)
+
+reportTotalCatch(projectName, unit = NULL, baseunit = NULL, write = FALSE)
 
 reportAbundanceAtLevel(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, level = "bootstrapImpute", grp1 = "age", grp2 = NULL,
@@ -38,7 +41,8 @@ reportAbundanceAtLevel(projectName, var = "Abundance", unit = NULL,
 A data frame of the abundance in sumary per grp2 and grp1 if plotOutput=FALSE, and a list holding this object (keeping "-" for missing values and not ordering) and other objects needed by plotAbundance().
 }
 \description{
-This function is used in the plotting function plotAbundance().
+\code{reportAbundance} returns abundance and summary statistics generated from bootstrap replicates (possibly imputed).
+\code{reportTotalCatch} returns summary statistics generated from bootstrap replicates for projects with only total catch.
 }
 \examples{
 projectName <- "Test_Rstox"
@@ -49,3 +53,4 @@ reportAbundance(projectName, grp1="age", grp2="Stratum")
 reportAbundance(projectName, grp1="age", grp2="Stratum")
 
 }
+\keyword{internal}

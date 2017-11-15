@@ -370,15 +370,21 @@ runBootstrap_sweptArea_length <- function(projectName, acousticMethod=NULL, biot
 #' @rdname runBootstrap
 #'
 runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, endProcess="SweptAreaDensity", nboot=5, seed=1, cores=1, ignore.case=TRUE, sorted=TRUE, ...){
-	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE){
+	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE, sample=TRUE){
 		# Function for calculating the mean density and keep the first row of a matrix:
 		MeanDensity1 <- function(y){
 			out <- y[1, , drop=FALSE]
 			out$Density <- mean(y$Density)
 			out
 		}
+		
 		# Sample the rows of each stratum of each species (the input 'data' is split into a list by species):
-		b <- lapply(data, function(y) by(y, y$Stratum, sampleSorted, seed=seed, by="SampleUnit"))
+		if(sample){
+			b <- lapply(data, function(y) by(y, y$Stratum, sampleSorted, seed=seed, by="SampleUnit"))
+		}
+		else{
+			b <- list(data)
+		}
 		# Calculate the mean density of each stratum of each species, and combine to a data.frame:
 		m <- lapply(b, function(y) lapply(y, MeanDensity1))
 		m <- lapply(m, data.table::rbindlist)
@@ -405,9 +411,14 @@ runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioti
 	
 	seedV <- getSeedV(seed, nboot=nboot)
 	
-	DensityMatrix <- getBaseline(projectName, proc=endProcess, input=NULL)
+	DensityMatrix <- getBaseline(projectName, proc=endProcess, input="par")
+	var <- DensityMatrix$parameters[[endProcess]]$CatchVariable
+	DensityMatrix <- DensityMatrix$outputData[[endProcess]]
 	# Add stratum:
 	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=TRUE)
+	
+	# Get the base TotalCatch:
+	base.TotalCatch <- boot1(data=DensityMatrix, sample=FALSE)
 	
 	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
 	availableCores = detectCores()
@@ -415,48 +426,38 @@ runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioti
 		warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
 	}
 	cores = min(cores, nboot, availableCores)
-	
 	# Generate the clusters of time steps:
 	if(cores>1){
 		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
 		cl<-makeCluster(cores)
 		# Bootstrap:
-		out <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, cl=cl)
+		TotalCatch <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, cl=cl)
 		# End the parallel bootstrapping:
 		stopCluster(cl)
 	}
 	else{
 		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		out <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted)
+		TotalCatch <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted)
 	}
-	
-	#boot <- rbindlist(lapply(out, "[[", "tot"))
-	boot <- data.table::rbindlist(out)
-	Variance <- apply(boot, 2, var)
-	SD <- sqrt(Variance)
-	Mean <- apply(boot, 2, mean)
-	CV <- SD / Mean
-	varianceTable <- cbind(Variance, SD, Mean, CV)
-	
 	
 	bootstrapParameters <- list(
 		seed = seed, 
 		seedV = seedV, 
 		nboot = nboot, 
 		cores = cores, 
-		acousticMethod <- acousticMethod, 
-		bioticMethod <- bioticMethod, 
-		description <- "Bootstrap of PSUs within Stratum per species for projects with only total catch reported.", 
-		alias <- "sweptArea_total"
+		acousticMethod = acousticMethod, 
+		bioticMethod = bioticMethod, 
+		description = "Bootstrap of PSUs within Stratum per species for projects with only total catch reported.", 
+		alias = "sweptArea_total",
+		var = var
 		)
 		
 	# Return the bootstrap data and parameters:
-	bootstrap <- list(summary=varianceTable, TotalCatch=out, bootstrapParameters=bootstrapParameters) 
-	
+	bootstrap <- list(base.TotalCatch=base.TotalCatch, TotalCatch=TotalCatch, bootstrapParameters=bootstrapParameters) 
 	
 	setProjectData(projectName=projectName, var=bootstrap)
 
-	return(varianceTable)
+	invisible(TRUE)
 }
 #'
 #' @export

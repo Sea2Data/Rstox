@@ -1,4 +1,4 @@
-# Rstox version: 1.6.4 (latest alpha, 2017-11-14)
+# Rstox version: 1.6.4 (latest alpha, 2017-11-15)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -71,3 +71,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 # 18. Added the parameter 'out' to the function getProject(), with a new possible value "report" for returning the Baseline Report object.
 
 # 19. Changed how seeds are generated throughout Rstox. All seeds are now generated using the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed() and getSequenceToSampleFrom(). This is intended to make the generation of seeds in the package less fragile to changes in the code.
+
+# 20. Changed names of bootstrap replicates to have fixed width, by padding with trailing zeros in the run index number (e.g, run001, run002, ..., run123, for nboot=123).
+
+# 21. Added the function is.empty() for use to test whether parameters are given (returns TRUE for zeros length, zeros characters, "null" and NA).

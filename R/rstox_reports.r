@@ -564,14 +564,14 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 	
 		# Set the missing values to low value (assuming only postive values are used for age and stratum and other variables):
 		cat("Abundance by age for ", level, "\n", se0="")
-		xForMissing1 <- min(tmp1[[grp1]], na.rm=TRUE) - 1
-		if(length(grp1)){
+		if(!is.empty(grp1)){
+			xForMissing1 <- min(tmp1[[grp1]], na.rm=TRUE) - 1
 			suppressWarnings(tmp1[[grp1]][is.na(tmp1[[grp1]])] <- xForMissing1)
 			suppressWarnings(out[[grp1]][is.na(out[[grp1]])] <- xForMissing1)
 			unique_grp1 <- unique(tmp1[[grp1]])
 		}
-		xForMissing2 <- min(tmp1[[grp2]], na.rm=TRUE) - 1
-		if(length(grp2)){
+		if(!is.empty(grp2)){
+			xForMissing2 <- min(tmp1[[grp2]], na.rm=TRUE) - 1
 			suppressWarnings(tmp1[[grp2]][is.na(tmp1[[grp2]])] <- xForMissing2)
 			suppressWarnings(out[[grp2]][is.na(out[[grp2]])] <- xForMissing2)
 			unique_grp2 <- unique(tmp1[[grp2]])
@@ -619,7 +619,7 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 		
 		tryCatch(
 			{
-				if(is.null(grp2)){
+				if(is.empty(grp2)){
 					pl <- ggplot() + 
 						geom_boxplot(data=tmp1, aes_string(x=factor(tmp1[[grp1]], levels=levels), y="Ab.Sum")) + 
 						theme_bw() + 
@@ -667,7 +667,8 @@ plotAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL
 #*********************************************
 #' Calculate a summary of the bootstrap iterations (possibly after imputing unknown ages).
 #' 
-#' This function is used in the plotting function plotAbundance().
+#' \code{reportAbundance} returns abundance and summary statistics generated from bootstrap replicates (possibly imputed).
+#' \code{reportTotalCatch} returns summary statistics generated from bootstrap replicates for projects with only total catch.
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
 #' @param var			A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).
@@ -704,6 +705,49 @@ reportAbundance <- function(projectName, var="Abundance", unit=NULL, baseunit=NU
 }
 #'
 #' @export
+#' @rdname reportAbundance
+#' 
+reportTotalCatch <- function(projectName, unit=NULL, baseunit=NULL, write=FALSE){
+	level <- "bootstrap"
+	projectEnv <- loadProjectData(projectName=projectName, var=level)
+	
+	plottingUnit <- getPlottingUnit(unit=unit, baseunit=baseunit, def.out=FALSE)
+	plottingUnit$nboot <- projectEnv[[level]]$bootstrapParameters$nboot
+	plottingUnit$seed <- projectEnv[[level]]$bootstrapParameters$seed
+	plottingUnit$var <- projectEnv[[level]]$bootstrapParameters$var
+	
+	units <- getPlottingUnit(unit=unit, baseunit=baseunit, def.out=FALSE)
+	boot <- projectEnv[[level]]$TotalCatch
+	if(length(boot)==0){
+		warning(paste0("No object named TotalCatch in the project environment of project", projectName))
+		return(NULL)
+	}
+	boot <- do.call("rbind", boot) / plottingUnit$scale
+	Variance <- apply(boot, 2, var)
+	SD <- sqrt(Variance)
+	Mean <- apply(boot, 2, mean)
+	CV <- SD / Mean
+	abnd <- cbind(Variance, SD, Mean, CV)
+	
+	
+	# Write the data to a tab-separated file:
+	if(write){
+		filename <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var), collapse="_")), ".txt")
+		moveToTrash(filename)
+		writeLines(paste(names(plottingUnit), unlist(plottingUnit), sep=": "), con=filename)
+		suppressWarnings(write.table(abnd, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
+	}
+	else{
+		filename <- NULL
+	}
+	
+	outlist <- c(list(abnd=abnd, filename=filename), plottingUnit)
+	
+	outlist
+}
+#'
+#' @export
+#' @keywords internal
 #' @rdname reportAbundance
 #' 
 reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE){

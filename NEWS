@@ -365,3 +365,7 @@ Added the option format=NULL in plotAbundance() and plotNASCDistribution(), caus
 Added the parameter 'out' to the function getProject(), with a new possible value "report" for returning the Baseline Report object.
 
 Changed how seeds are generated throughout Rstox. All seeds are now generated using the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed() and getSequenceToSampleFrom(). This is intended to make the generation of seeds in the package less fragile to changes in the code.
+
+Changed names of bootstrap replicates to have fixed width, by padding with trailing zeros in the run index number (e.g, run001, run002, ..., run123, for nboot=123).
+
+Added the function is.empty() for use to test whether parameters are given (returns TRUE for zeros length, zeros characters, "null" and NA).
