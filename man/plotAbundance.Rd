@@ -2,9 +2,25 @@
 % Please edit documentation in R/rstox_reports.r
 \name{plotAbundance}
 \alias{plotAbundance}
+\alias{reportAbundance_AcousticTrawl}
+\alias{plotAbundance_SweptAreaTotal}
+\alias{plotAbundance_old}
 \title{Plot abundance results to file (generic)}
 \usage{
-plotAbundance(projectName, var = "Abundance", unit = NULL,
+plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
+  var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
+  grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
+  ...)
+
+reportAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
+  baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
+  plotOutput = FALSE, write = FALSE, ...)
+
+plotAbundance_SweptAreaTotal(projectName, var = "Abundance", unit = NULL,
+  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
+  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
+
+plotAbundance_old(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
   ylab = NULL, main = "", format = "png", maxcv = 1, ...)
 }
@@ -21,6 +37,8 @@ plotAbundance(projectName, var = "Abundance", unit = NULL,
 
 \item{grp2}{An optional second grouping variable}
 
+\item{...}{Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).}
+
 \item{xlab}{The label to user for the x axis, with default depending on data plotted,}
 
 \item{ylab}{The label to user for the y axis, with default depending on data plotted.}
@@ -30,8 +48,6 @@ plotAbundance(projectName, var = "Abundance", unit = NULL,
 \item{format}{The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, , resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.}
 
 \item{maxcv}{The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.}
-
-\item{...}{Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).}
 }
 \value{
 Plot saved to file and abundance table printed
@@ -46,3 +62,4 @@ plotAbundance(projectName, grp1="age")
 plotAbundance(projectName, grp1="age", unit=1)
 
 }
+\keyword{internal}

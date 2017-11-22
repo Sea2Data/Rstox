@@ -205,9 +205,12 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' Run a bootstrap in StoX
 #'
 #' \code{runBootstrap} is a wrapper function for the bootstrap functions below.
-#' \code{runBootstrap_acousticTrawl} Run a simple bootstrap of biotic PSUs within strata.
-#' \code{runBootstrap_sweptArea_length} Run a simple bootstrap of biotic PSUs within strata.
-#' \code{runBootstrap_sweptArea_total} Run a simple bootstrap of biotic PSUs within strata.
+#' \code{runBootstrap_1.6} runs the bootstrap of Rstox 1.6. The bootstrap changed from Rstox 1.6 to 1.7, by applying sorting prior to sampling, and different results (but with the same expected value) should be expected. Using \code{runBootstrap_1.6} identical results from previous runs should be expected.
+#' \code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata.
+#' \code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata.
+#' \code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata.
+#' \code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user.
+#' \code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'.
 #'
 #' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 #'
@@ -215,9 +218,9 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' @param bootstrapMethod				The method to use for the bootstrap. Currently implemented are given in the following table:
 #' \tabular{rrr}{
 #'   bootstrapMethod \tab Description
-#'   acousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
-#'   sweptArea_length \tab Bootstrap only biotic data with length information\cr
-#'   sweptArea_total \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
+#'   AcousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
+#'   SweptAreaLength \tab Bootstrap only biotic data with length information\cr
+#'   SweptAreaTotal \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
 #' }
 #' @param acousticMethod,bioticMethod   Specification of the method to use for bootstrapping the acoustic and biotic data. Currently only one method is available for acoustic and one for biotic data: acousticMethod = PSU~Stratum, bioticMethod = PSU~Stratum. Other methods are planned in later versions, involving the levels of the data given in the below table.
 #' \tabular{rrr}{
@@ -243,39 +246,14 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #'
 #' @examples
 #' \dontrun{
-#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")}
+#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")}
 #'
 #' @importFrom stats terms as.formula
 #'
 #' @export
 #' @rdname runBootstrap
 #'
-runBootstrap <- function(projectName, bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
-	
-	# Function used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user:
-	getBootstrapLevels <- function(x){
-		isNULL <- any(length(x)==0, sum(nchar(x))==0, identical(x, FALSE), is.character(x) && identical(tolower(x), "null"))
-		if(isNULL){
-			return(NULL)
-		}
-		if(is.function(x)){
-			warning("Method as a function not yet implemented")
-			return(NULL)
-		}
-		if(!any(unlist(gregexpr("~", as.character(x), fixed=TRUE))>0)){
-			warning("Invalid formula")
-			return(NULL)
-		}
-		# The c(x) is added to assure that sapply works on each formula and not on the parts of one formula, if only one is given:
-		if(is.character(x) || all(sapply(c(x), function(xx) class(xx)=="formula"))){
-			return(sapply(c(x), function(xx) rownames(attributes(terms(as.formula(xx)))$fact)))
-		}
-		else{
-			warning("Invalid input")
-			return(NULL)
-		}
-	}
-	
+runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
 	lll <- list(...)
 	### Backwards compatibility: ###
 	# If the old numIterations is given, override the nboot by this:
@@ -301,15 +279,15 @@ runBootstrap <- function(projectName, bootstrapMethod="acousticTrawl", acousticM
 #' @export
 #' @rdname runBootstrap
 #'
-runBootstrap_1.6 <- function(projectName, bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, ...){
+runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, ...){
 	runBootstrap(projectName=projectName, bootstrapMethod=bootstrapMethod, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=FALSE, ...)
 }
 #'
 #' @export
+#' @keywords internal
 #' @rdname runBootstrap
 #'
-runBootstrap_acousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
-	
+runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
 	# Baseline and biotic assignments:
 	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
 	assignments <- getBioticAssignments(baseline=baseline)
@@ -328,11 +306,11 @@ runBootstrap_acousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
 
 	# Add the method specification:
+	bootstrap$bootstrapParameters$bootstrapMethod <- "AcousticTrawl"
 	bootstrap$bootstrapParameters$acousticMethod <- acousticMethod
 	bootstrap$bootstrapParameters$bioticMethod <- bioticMethod
 	bootstrap$bootstrapParameters$description <- "Original Rstox default 'Acoustic' method up until Rstox 1.5, bootstrapping acousic PSUs within stratum, and scaleing the PSUs to have mean matching that of the bootstrap, and bootstrapping biotic stations within stratum, and assigning station weights equal to the frequency of occurrence of each station"
-	bootstrap$bootstrapParameters$alias <- "acousticTrawl"
-
+	
 	# Assign the bootstrap to the project environment:
 	setProjectData(projectName=projectName, var=bootstrap)
 	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
@@ -341,10 +319,10 @@ runBootstrap_acousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 }
 #'
 #' @export
+#' @keywords internal
 #' @rdname runBootstrap
 #'
-runBootstrap_sweptArea_length <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
-	
+runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
 	# Baseline and biotic assignments:
 	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
 	assignments <- getBioticAssignments(baseline=baseline)
@@ -353,10 +331,10 @@ runBootstrap_sweptArea_length <- function(projectName, acousticMethod=NULL, biot
 	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
 	
 	# Add the method specification:
+	bootstrap$bootstrapParameters$bootstrapMethod <- "SweptAreaLength"
 	bootstrap$bootstrapParameters$acousticMethod <- acousticMethod
 	bootstrap$bootstrapParameters$bioticMethod <- bioticMethod
 	description <- "Original Rstox default 'SweptArea' method up until Rstox 1.5, bootstrapping biotic stations within stratum, and assigning station weights equal to the frequency of occurrence of each station"
-	alias <- "sweptArea_length"
 	
 	# Assign varialbes to the global environment for use in plotting functions. This should be changed to a local Rstox environment in the future:
 	setProjectData(projectName=projectName, var=bootstrap)
@@ -366,10 +344,11 @@ runBootstrap_sweptArea_length <- function(projectName, acousticMethod=NULL, biot
 }
 #'
 #' @importFrom data.table rbindlist
+#' @keywords internal
 #' @export
 #' @rdname runBootstrap
 #'
-runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, endProcess="SweptAreaDensity", nboot=5, seed=1, cores=1, ignore.case=TRUE, sorted=TRUE, ...){
+runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, startProcess="SweptAreaDensity", endProcess=NULL, nboot=5, seed=1, cores=1, ignore.case=TRUE, sorted=TRUE, ...){
 	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE, sample=TRUE){
 		# Function for calculating the mean density and keep the first row of a matrix:
 		MeanDensity1 <- function(y){
@@ -386,7 +365,7 @@ runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioti
 			b <- list(data)
 		}
 		# Calculate the mean density of each stratum of each species, and combine to a data.frame:
-		m <- lapply(b, function(y) lapply(y, MeanDensity1))
+		m <- lapply(b, function(y) if(is.list(y)) lapply(y, MeanDensity1) else MeanDensity1(y))
 		m <- lapply(m, data.table::rbindlist)
 		m <- lapply(m, as.data.frame)
 		# Calculate the total abundance:
@@ -400,6 +379,10 @@ runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioti
 		}
 	}
 	
+	if(length(endProcess)){
+		startProcess <- endProcess
+	}
+	
 	# Define seeds, and save these later:
 	###if(length(seed)==1){
 	###	set.seed(seed)
@@ -408,14 +391,13 @@ runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioti
 	###else{
 	###	seed <- rep(seed, length.out=nboot)
 	###}
-	
 	seedV <- getSeedV(seed, nboot=nboot)
 	
-	DensityMatrix <- getBaseline(projectName, proc=endProcess, input="par")
-	var <- DensityMatrix$parameters[[endProcess]]$CatchVariable
-	DensityMatrix <- DensityMatrix$outputData[[endProcess]]
+	DensityMatrix <- getBaseline(projectName, proc=startProcess, input="par")
+	var <- DensityMatrix$parameters[[startProcess]]$CatchVariable
+	DensityMatrix <- DensityMatrix$outputData[[startProcess]]
 	# Add stratum:
-	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=TRUE)
+	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=TRUE, fill0=TRUE)
 	
 	# Get the base TotalCatch:
 	base.TotalCatch <- boot1(data=DensityMatrix, sample=FALSE)
@@ -445,10 +427,10 @@ runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioti
 		seedV = seedV, 
 		nboot = nboot, 
 		cores = cores, 
+		bootstrapMethod = "SweptAreaTotal", 
 		acousticMethod = acousticMethod, 
 		bioticMethod = bioticMethod, 
 		description = "Bootstrap of PSUs within Stratum per species for projects with only total catch reported.", 
-		alias = "sweptArea_total",
 		var = var
 		)
 		
@@ -461,9 +443,37 @@ runBootstrap_sweptArea_total <- function(projectName, acousticMethod=NULL, bioti
 }
 #'
 #' @export
+#' @keywords internal
 #' @rdname runBootstrap
 #'
-getBootstrapMethod <- function(bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, ...){
+getBootstrapLevels <- function(x){
+	isNULL <- any(length(x)==0, sum(nchar(x))==0, identical(x, FALSE), is.character(x) && identical(tolower(x), "null"))
+	if(isNULL){
+		return(NULL)
+	}
+	if(is.function(x)){
+		warning("Method as a function not yet implemented")
+		return(NULL)
+	}
+	if(!any(unlist(gregexpr("~", as.character(x), fixed=TRUE))>0)){
+		warning("Invalid formula")
+		return(NULL)
+	}
+	# The c(x) is added to assure that sapply works on each formula and not on the parts of one formula, if only one is given:
+	if(is.character(x) || all(sapply(c(x), function(xx) class(xx)=="formula"))){
+		return(sapply(c(x), function(xx) rownames(attributes(terms(as.formula(xx)))$fact)))
+	}
+	else{
+		warning("Invalid input")
+		return(NULL)
+	}
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname runBootstrap
+#'
+getBootstrapMethod <- function(bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, ...){
 	# Function for comparing strings:
 	strequal <- function(x, y, ignore.case=TRUE){
 		if(ignore.case){
@@ -474,43 +484,19 @@ getBootstrapMethod <- function(bootstrapMethod="acousticTrawl", acousticMethod=P
 		}
 	}
 	
-	# Function used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user:
-	getBootstrapLevels <- function(x){
-		isNULL <- any(length(x)==0, sum(nchar(x))==0, identical(x, FALSE), is.character(x) && identical(tolower(x), "null"))
-		if(isNULL){
-			return(NULL)
-		}
-		if(is.function(x)){
-			warning("Method as a function not yet implemented")
-			return(NULL)
-		}
-		if(!any(unlist(gregexpr("~", as.character(x), fixed=TRUE))>0)){
-			warning("Invalid formula")
-			return(NULL)
-		}
-		# The c(x) is added to assure that sapply works on each formula and not on the parts of one formula, if only one is given:
-		if(is.character(x) || all(sapply(c(x), function(xx) class(xx)=="formula"))){
-			return(sapply(c(x), function(xx) rownames(attributes(terms(as.formula(xx)))$fact)))
-		}
-		else{
-			warning("Invalid input")
-			return(NULL)
-		}
-	}
-
 	# get the bootstrap levels:
 	acousticMethod <- getBootstrapLevels(acousticMethod)
 	bioticMethod <- getBootstrapLevels(bioticMethod)
 	
 	
-	# Special care for when bootstrapMethod=="acousticTrawl" (the default) and acousticMethod = NULL and bioticMethod = PSU~Stratum or EDSU~Stratum:
-	if(strequal(bootstrapMethod[1], "acousticTrawl")){
+	# Special care for when bootstrapMethod=="AcousticTrawl" (the default) and acousticMethod = NULL and bioticMethod = PSU~Stratum or EDSU~Stratum:
+	if(strequal(bootstrapMethod[1], "AcousticTrawl")){
 		if(	length(acousticMethod)==0 
 			&& length(bioticMethod)==2 
 			&& (strequal(bioticMethod[1,1], "edsu") || strequal(bioticMethod[1,1], "psu")) 
 			&& strequal(bioticMethod[2,1], "stratum")){
-				bootstrapMethod <- "sweptArea_length"
-				warning("The value of 'bootstrapMethod' changed from \"acousticTrawl\" to \"sweptArea_length\"")
+				bootstrapMethod <- "SweptAreaLength"
+				warning("The value of 'bootstrapMethod' changed from \"AcousticTrawl\" to \"SweptAreaLength\"")
 		}
 	}
 	
@@ -518,11 +504,11 @@ getBootstrapMethod <- function(bootstrapMethod="acousticTrawl", acousticMethod=P
 	lll <- list(...)
 	# Backwards compatibility for type="Acoustic", hidden in ... (used prior to Rstox 1.5):
 	if(length(lll$type) && strequal(lll$type, "Acoustic")){
-		bootstrapMethod <- "acousticTrawl"
+		bootstrapMethod <- "AcousticTrawl"
 	}
 	# Backwards compatibility for type="SweptArea", hidden in ... (used prior to Rstox 1.5):
 	if(length(lll$type) && strequal(lll$type, "SweptArea")){
-		bootstrapMethod <- "sweptArea_length"
+		bootstrapMethod <- "SweptAreaLength"
 	}
 	
 	list(bootstrapMethod=bootstrapMethod, acousticMethod=acousticMethod, bioticMethod=bioticMethod)
@@ -569,9 +555,10 @@ getBootstrapMethod <- function(bootstrapMethod="acousticTrawl", acousticMethod=P
 ### }
 #'
 #' @export
+#' @keywords internal
 #' @rdname runBootstrap
 #'
-runBootstrap_old <- function(projectName, bootstrapMethod="acousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+runBootstrap_old <- function(projectName, bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
 	
 	# Documentation removed on 2017-08-25, since it has not been implemented:
 	# acousticMethod,bioticMethod   Specification of the method to use for bootstrapping the acoustic and biotic data. These can be formulas or characters which can be converted to formulas, given as 'variable to bootstrap ~ level to bootstrap within'. Multiple bootstraps can be specified, such as bioticMethod=c(EDSU~Stratum, Sample~EDSU), instructing to bootstrap the EDSUs (stations) within each stratum, and also bootstrapping the individual catch samples within each EDSU. Only certain strings can be used in the formulas, as shown in the table below. The methods can also be given as functions of at least two arguments, 'projectName' and 'process', which makes modifications to the output from getBaseline(projectName, proc=process, input=NULL) and sends the modified data back to the baseline in Java memory and runs the baseline with the modified data. Using funcitons is not yet implemented. 
@@ -738,6 +725,25 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 	
 	# Function used for adding statistics:
 	JollyHampton <- function(x, na.rm=TRUE){
+		# Function used for inserting an object 'add' into a data frame 'x':
+		addVar <- function(x, add, name=NULL){
+			# Interpret the name if missing, and add prefix:
+			if(length(name)==0){
+				name <- deparse(substitute(add))
+			}
+		
+			# If only one value is given, insert this in all rows:
+			if(length(add)==1){
+				atStratum <- 1
+			}
+			else{
+				atStratum <- match(x$Stratum, names(add))
+			}
+			# Add the 'add' at the correct rows as specified by Stratum:s
+			x[name] <- add[atStratum]
+			x
+		}
+		
 		# Eq (3) in Jolly and Hampton (1990), but replacing the weights w by 1:
 		VarDensityStratumFun <- function(x, varName, meanName, na.rm=TRUE){
 			n = nrow(x)
@@ -759,6 +765,8 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 		
 		# Add the MeanDensityStratum:
 		MeanDensityStratum <- tapply(x$Density, x[c("Stratum")], mean, na.rm=na.rm)
+		x <- addVar(x, MeanDensityStratum)
+		
 		# Add the VarDensityStratum, SDDensityStratum and CVDensityStratum:
 		VarDensityStratum <- c(by(x, x[c("Stratum")], VarDensityStratumFun, varName="Density", meanName="MeanDensityStratum", na.rm=na.rm))
 		SDDensityStratum <- sqrt(VarDensityStratum)
@@ -771,6 +779,7 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 		SDDensity <- sqrt(VarDensity)
 		CVDensity <- SDDensity / MeanDensity
 		
+		browser()
 		# Create output for stratum:
 		xStratum <- data.frame(
 			SpecCat = x$SpecCat[1], # 1
@@ -806,7 +815,7 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 	StratumArea <- getBaseline(projectName, proc="StratumArea", input=NULL)
 	psustratum <- getBaseline(projectName, proc=NULL, input="psustratum")
 	# Check for the number of SampleUnits:
-	numSampleUnit <- checkNumPSUsInStratum(psustratum=psustratum)
+	numSampleUnit <- checkNumPSUsInStratum(projectName)
 	# Get the density matrix:
 	output <- getBaseline(projectName, proc=proc, input=NULL)
 	
@@ -1031,7 +1040,7 @@ varianceEstimation_old <- function(projectName, proc="SweptAreaDensity", ignore.
 #' @keywords internal
 #' @rdname linkPSU2Stratum
 #'
-linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, list.out=TRUE, ignore.case=TRUE){
+linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, list.out=TRUE, ignore.case=TRUE, fill0=FALSE){
 	# Funciton for expanding the matrix by zero density for missing PSUs in the matrix:
 	fillZeros <- function(y, psustratum){
 		n <- nrow(psustratum)
@@ -1052,7 +1061,7 @@ linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, l
 	}
 	# Function for adding sample size of the strata:
 	addSampleSize <- function(y){
-		# Get samole size:
+		# Get sample size:
 		y$PosSampleSize <- as.numeric(y$Density>0)
 		
 		# Aggregate over Stratum:
@@ -1091,9 +1100,11 @@ linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, l
 	
 	# Split into species categories:
 	x <- split(x, if(ignore.case) tolower(x$SpecCat) else x$SpecCat)
-	x <- lapply(x, fillZeros, psustratum=psustratum)
-	x <- lapply(x, addSampleSize)
 	x <- lapply(x, addstratumArea, StratumArea=StratumArea)
+	if(fill0){
+		x <- lapply(x, fillZeros, psustratum=psustratum)
+	}
+	x <- lapply(x, addSampleSize)
 	
 	# Return either a list or combined into a matrix:
 	if(!list.out){
@@ -1106,15 +1117,20 @@ linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, l
 #' @keywords internal
 #' @rdname linkPSU2Stratum
 #'
-checkNumPSUsInStratum <- function(psustratum=NULL, projectName){
-	# Get the strata definitions to add to the data:
-	if(length(psustratum)==0){
-		psustratum <- getBaseline(projectName, proc=NULL, input="psustratum")
-	}
-	# Check for the number of SampleUnits:
+checkNumPSUsInStratum <- function(projectName){
+	# Get and combine the PSU and strata definitions:
+	psustratum <- getBaseline(projectName, proc=NULL, input="psustratum")
+	stratumpolygon <- getBaseline(projectName, proc=NULL, input="stratumpolygon")
 	numSampleUnit <- table(psustratum$Stratum)
-	if(any(numSampleUnit < 2)){
-		warning(paste0("The following strata have less than 2 SampleUnits, which disallows variance estimation: ", paste(names(numSampleUnit)[which(numSampleUnit < 2)], collapse=", ")))
+	
+	allStrata <- data.frame(Stratum=unique(stratumpolygon$Stratum))
+	allStrata$Count <- 0
+	allStrata$Count[match(names(numSampleUnit), allStrata$Stratum)] <- numSampleUnit
+	
+	# Check for the number of SampleUnits:
+	if(any(allStrata$Count < 2)){
+		invalid <- which(allStrata$Count < 2)
+		warning(paste0("The following strata have less than 2 SampleUnits, resulting in infinite variance estimate of the survey: ", paste0(allStrata$Stratum[invalid], " (", allStrata$Count[invalid], ")", collapse=", ")))
 	}
-	numSampleUnit
+	allStrata
 }

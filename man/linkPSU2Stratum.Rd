@@ -6,9 +6,9 @@
 \title{Bootstrap utils.}
 \usage{
 linkPSU2Stratum(x, projectName, psustratum = NULL, StratumArea = NULL,
-  list.out = TRUE, ignore.case = TRUE)
+  list.out = TRUE, ignore.case = TRUE, fill0 = FALSE)
 
-checkNumPSUsInStratum(psustratum = NULL, projectName)
+checkNumPSUsInStratum(projectName)
 }
 \arguments{
 \item{x}{A data frame with with one row per PSU, to which Stratum information should be added.}

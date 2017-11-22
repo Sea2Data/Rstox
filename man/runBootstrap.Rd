@@ -3,42 +3,45 @@
 \name{runBootstrap}
 \alias{runBootstrap}
 \alias{runBootstrap_1.6}
-\alias{runBootstrap_acousticTrawl}
-\alias{runBootstrap_sweptArea_length}
-\alias{runBootstrap_sweptArea_total}
+\alias{runBootstrap_AcousticTrawl}
+\alias{runBootstrap_SweptAreaLength}
+\alias{runBootstrap_SweptAreaTotal}
+\alias{getBootstrapLevels}
 \alias{getBootstrapMethod}
 \alias{runBootstrap_old}
 \title{Run a bootstrap in StoX}
 \usage{
-runBootstrap(projectName, bootstrapMethod = "acousticTrawl",
+runBootstrap(projectName, bootstrapMethod = "AcousticTrawl",
   acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
 
-runBootstrap_1.6(projectName, bootstrapMethod = "acousticTrawl",
+runBootstrap_1.6(projectName, bootstrapMethod = "AcousticTrawl",
   acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, ...)
 
-runBootstrap_acousticTrawl(projectName, acousticMethod = PSU ~ Stratum,
+runBootstrap_AcousticTrawl(projectName, acousticMethod = PSU ~ Stratum,
   bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
 
-runBootstrap_sweptArea_length(projectName, acousticMethod = NULL,
+runBootstrap_SweptAreaLength(projectName, acousticMethod = NULL,
   bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
 
-runBootstrap_sweptArea_total(projectName, acousticMethod = NULL,
-  bioticMethod = PSU ~ Stratum, endProcess = "SweptAreaDensity",
-  nboot = 5, seed = 1, cores = 1, ignore.case = TRUE, sorted = TRUE,
-  ...)
+runBootstrap_SweptAreaTotal(projectName, acousticMethod = NULL,
+  bioticMethod = PSU ~ Stratum, startProcess = "SweptAreaDensity",
+  endProcess = NULL, nboot = 5, seed = 1, cores = 1,
+  ignore.case = TRUE, sorted = TRUE, ...)
 
-getBootstrapMethod(bootstrapMethod = "acousticTrawl", acousticMethod = PSU ~
+getBootstrapLevels(x)
+
+getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
   Stratum, bioticMethod = PSU ~ Stratum, ...)
 
-runBootstrap_old(projectName, bootstrapMethod = "acousticTrawl",
+runBootstrap_old(projectName, bootstrapMethod = "AcousticTrawl",
   acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
@@ -49,9 +52,9 @@ runBootstrap_old(projectName, bootstrapMethod = "acousticTrawl",
 \item{bootstrapMethod}{The method to use for the bootstrap. Currently implemented are given in the following table:
 \tabular{rrr}{
   bootstrapMethod \tab Description
-  acousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
-  sweptArea_length \tab Bootstrap only biotic data with length information\cr
-  sweptArea_total \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
+  AcousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
+  SweptAreaLength \tab Bootstrap only biotic data with length information\cr
+  SweptAreaTotal \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
 }}
 
 \item{acousticMethod, bioticMethod}{Specification of the method to use for bootstrapping the acoustic and biotic data. Currently only one method is available for acoustic and one for biotic data: acousticMethod = PSU~Stratum, bioticMethod = PSU~Stratum. Other methods are planned in later versions, involving the levels of the data given in the below table.
@@ -88,15 +91,19 @@ list with (1) the abundance by length in the orginal model, (2) the abundance by
 }
 \description{
 \code{runBootstrap} is a wrapper function for the bootstrap functions below.
-\code{runBootstrap_acousticTrawl} Run a simple bootstrap of biotic PSUs within strata.
-\code{runBootstrap_sweptArea_length} Run a simple bootstrap of biotic PSUs within strata.
-\code{runBootstrap_sweptArea_total} Run a simple bootstrap of biotic PSUs within strata.
+\code{runBootstrap_1.6} runs the bootstrap of Rstox 1.6. The bootstrap changed from Rstox 1.6 to 1.7, by applying sorting prior to sampling, and different results (but with the same expected value) should be expected. Using \code{runBootstrap_1.6} identical results from previous runs should be expected.
+\code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata.
+\code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata.
+\code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata.
+\code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user.
+\code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'.
 }
 \details{
 Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 }
 \examples{
 \dontrun{
-boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")}
+boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")}
 
 }
+\keyword{internal}

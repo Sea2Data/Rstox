@@ -328,6 +328,8 @@ Removed the integers leading the name of sub lists in the element "outputData" i
 
 ########## Version 1.6.4 (2017-10-01) ##########
 
+As of Rstox_1.7 (starting from Rstox_1.6.3) the results from runBootstrap() differs in precision due to a change in StoX. Before, very small numbers were rounded off to 0, whereas from Rstox_1.6.3 numbers on StoX are kept with 4 significant digits. This change may lead to small changes ( < 1e-7) in abundance from the baseline model, which also propagates into the results of runBaseline() and imputeByAge(). 
+
 Removed plotAbundance_old(), which is no longer used. The new plotAbundance() uses ggplot2 for nicer plotting.
 
 Changed default width, height, dpi to 5000, 3000, 500. Also added the option format=NULL, causing plots to only show in the graphics window.
@@ -369,3 +371,6 @@ Changed how seeds are generated throughout Rstox. All seeds are now generated us
 Changed names of bootstrap replicates to have fixed width, by padding with trailing zeros in the run index number (e.g, run001, run002, ..., run123, for nboot=123).
 
 Added the function is.empty() for use to test whether parameters are given (returns TRUE for zeros length, zeros characters, "null" and NA).
+
+Fixed bug in checkNumPSUsInStratum(), where the number of PSUs in each stratum is evaluated, and a warnings is issued for strata with less than 2 PSUs. Here only the strata with a positive number of PSUs were checked. Fixed by combining 'psustratum' and 'stratumpolygon' in the process data.
+
