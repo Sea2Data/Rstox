@@ -403,10 +403,10 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	var <- DensityMatrix$parameters[[startProcess]]$CatchVariable
 	DensityMatrix <- DensityMatrix$outputData[[startProcess]]
 	# Add stratum:
-	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=FALSE, fill0=TRUE)
+	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=TRUE, fill0=TRUE)
 	
 	# Get the base TotalCatch:
-	base.TotalCatch <- boot1(data=DensityMatrix, sample=FALSE)
+	base.TotalCatch <- boot1(data=DensityMatrix, sample=FALSE, list.out=FALSE)
 	
 	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
 	availableCores = detectCores()
@@ -425,7 +425,7 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	}
 	else{
 		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		TotalCatch <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted)
+		TotalCatch <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, sample=TRUE)
 	}
 	
 	bootstrapParameters <- list(

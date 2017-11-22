@@ -2861,7 +2861,7 @@ getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
 #*********************************************
 #' Functions for setting and getting the precision level of a project.
 #'
-#' @param projectName   	Project identifyer (see \link{\code{openProject}}).
+#' @param projectName   	Project identifyer (see \code{\link{openProject}}).
 #' @param precisionLevel	The precision level to set to the project, where 0L represents the low precision level used prior to Rstox 1.7 and Stox 2.5, and 1L represents the 4-significant digits precision used from those versions and onward.
 #'
 #' @value The precision level.

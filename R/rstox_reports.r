@@ -748,14 +748,21 @@ plotAbundance_SweptAreaTotal <- function(projectName, var="Abundance", unit=NULL
 		tryCatch(
 			{
 				x <- cbind(SpecCat=rownames(abnd), abnd)
-				pl <- ggplot(x, aes(x=SpecCat, y=Mean, color=SpecCat)) + 
-					geom_point(data=x, aes(x=SpecCat, y=Mean, color=SpecCat), size=2) + 
-					geom_errorbar(aes(ymax=Mean + SD, ymin=Mean - SD), position="dodge")				
+				x$Mean_minus_SD <- x$Mean - x$SD
+				x$Mean_plus_SD <- x$Mean + x$SD
+				pl <- ggplot(x, aes_string(x="SpecCat", y="Mean", color="SpecCat")) + 
+					geom_point(data=x, aes_string(x="SpecCat", y="Mean", color="SpecCat"), size=2) + 
+					geom_errorbar(aes_string(ymax="Mean_minus_SD", ymin="Mean_plus_SD"), position="dodge")
+				
+				#x <- cbind(SpecCat=rownames(abnd), abnd)
+				#pl <- ggplot(x, aes(x=SpecCat, y=Mean, color=SpecCat)) + 
+				#	geom_point(data=x, aes(x=SpecCat, y=Mean, color=SpecCat), size=2) + 
+				#	geom_errorbar(aes(ymax=Mean + SD, ymin=Mean - SD), position="dodge")				
 		
 				pl <- pl + 
-				xlab(xlab) +
-				ylab(ylab) + 
-				ggtitle(main)
+					xlab(xlab) +
+					ylab(ylab) + 
+					ggtitle(main)
 		
 				# Activate the plot:
 				print(pl)
@@ -987,7 +994,7 @@ reportAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL
 	units <- getPlottingUnit(unit=unit, baseunit=baseunit, def.out=FALSE)
 	boot <- projectEnv[[level]]$TotalCatch
 	if(length(boot)==0){
-		warning(paste0("No object named TotalCatch in the project environment of project", projectName))
+		warning(paste0("No object named TotalCatch in the project environment of project '", projectName, "'"))
 		return(NULL)
 	}
 	boot <- do.call("rbind", boot) / plottingUnit$scale

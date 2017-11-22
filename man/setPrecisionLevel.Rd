@@ -10,7 +10,7 @@ setPrecisionLevel(projectName, precisionLevel)
 getPrecisionLevel(projectName)
 }
 \arguments{
-\item{projectName}{Project identifyer (see \link{\code{openProject}}).}
+\item{projectName}{Project identifyer (see \code{\link{openProject}}).}
 
 \item{precisionLevel}{The precision level to set to the project, where 0L represents the low precision level used prior to Rstox 1.7 and Stox 2.5, and 1L represents the 4-significant digits precision used from those versions and onward.}
 }
