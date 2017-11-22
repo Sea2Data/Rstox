@@ -1161,6 +1161,7 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	if(!exportCSV){
 		baseline$setExportCSV(jBoolean(FALSE))
 	}
+	
 	# Remove processes that saves the project.xml file, which is assumed to ALWAYS be the last process. Please ask Åsmund to set this as a requirement in StoX:
 	numProcesses <- baseline$getProcessList()$size() - length(baseline$getProcessByFunctionName("WriteProcessData"))
 	currentEndProcess <- baseline$getRunningProcessIdx() + 1
@@ -2852,4 +2853,36 @@ getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
 	
 	# Return a list givint the value of 'ow' and whether to jump to the next in an eventual for loop or not (i.e., skipping the rest of the code in the for loop and jump to next if not at the end of the loop)
 	return(list(ow=ow, jumpToNext=jumpToNext))
+}
+
+
+
+#*********************************************
+#*********************************************
+#' Functions for setting and getting the precision level of a project.
+#'
+#' @param projectName   	Project identifyer (see \link{\code{openProject}}).
+#' @param precisionLevel	The precision level to set to the project, where 0L represents the low precision level used prior to Rstox 1.7 and Stox 2.5, and 1L represents the 4-significant digits precision used from those versions and onward.
+#'
+#' @value The precision level.
+#'
+#' @export
+#' @keywords internal
+#' @rdname setPrecisionLevel
+#'
+setPrecisionLevel <- function(projectName, precisionLevel){
+	# Set the precision level:
+	project <- openProject(projectName, out="project")
+	project$setPrecisionLevel(as.integer(precisionLevel))
+	precisionLevel
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname setPrecisionLevel
+#'
+getPrecisionLevel <- function(projectName){
+	# Get the precision level:
+	project <- openProject(projectName, out="project")
+	project$getPrecisionLevel()
 }

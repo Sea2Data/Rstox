@@ -724,7 +724,7 @@ plotAbundance_SweptAreaTotal <- function(projectName, var="Abundance", unit=NULL
 	
 		# Get ylab and xlab text:
 		if(length(ylab)==0){
-			ylab <- paste0(plottingUnit$var, " (", plottingUnit$unit, ")")
+			ylab <- paste0(plottingUnit$var, ", mean \u00B1 standard deviation (", plottingUnit$unit, ")")
 		}
 		xlab <- "SpecCat"
 		

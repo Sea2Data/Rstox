@@ -116,6 +116,8 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 #' @keywords internal
 #'
 bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, baseline=NULL, msg=TRUE, parameters=list(), sorted=TRUE){
+	
+	browser()
 	# Stop the funciton if both projectName and baseline are missing:
 	if(length(baseline)==0 && missing(projectName)){
 		stop("Either projectName or baseline must be given.")
@@ -280,7 +282,10 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 #' @rdname runBootstrap
 #'
 runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, ...){
+	g <- getPrecisionLevel(projectName)
+	setPrecisionLevel(projectName, 0L)
 	runBootstrap(projectName=projectName, bootstrapMethod=bootstrapMethod, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=FALSE, ...)
+	setPrecisionLevel(projectName, g)
 }
 #'
 #' @export
@@ -288,6 +293,7 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 #' @rdname runBootstrap
 #'
 runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+	browser()
 	# Baseline and biotic assignments:
 	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
 	assignments <- getBioticAssignments(baseline=baseline)
@@ -397,7 +403,7 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	var <- DensityMatrix$parameters[[startProcess]]$CatchVariable
 	DensityMatrix <- DensityMatrix$outputData[[startProcess]]
 	# Add stratum:
-	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=TRUE, fill0=TRUE)
+	DensityMatrix <- linkPSU2Stratum(DensityMatrix, projectName, ignore.case=ignore.case, list.out=FALSE, fill0=TRUE)
 	
 	# Get the base TotalCatch:
 	base.TotalCatch <- boot1(data=DensityMatrix, sample=FALSE)
