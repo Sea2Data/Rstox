@@ -201,7 +201,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #'
 #' @examples
 #' projectName <- "Test_Rstox"
-#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")
+#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")
 #' # imputeByAge() fills in empty cells:
 #' system.time(bootstrap_Acoustic_imputed <- imputeByAge(projectName))
 #'
@@ -428,7 +428,7 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' @examples
 #' projectName <- "Test_Rstox"
 #' # Run bootstrap before plotting:
-#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="acousticTrawl")
+#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")
 #' plotNASCDistribution(projectName)
 #'
 #' @export
@@ -552,7 +552,7 @@ plotAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="Abu
 #' @keywords internal
 #' @rdname plotAbundance
 #'
-reportAbundance_AcousticTrawl <- reportAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, ...){
+plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, ...){
 	
 	# Function used for replacing missing values by a value sorting first of all values, useful for positioning missing values to the left in plots:
 	setValueForMissing <- function(x){

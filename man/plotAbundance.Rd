@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstox_reports.r
 \name{plotAbundance}
 \alias{plotAbundance}
-\alias{reportAbundance_AcousticTrawl}
+\alias{plotAbundance_AcousticTrawl}
 \alias{plotAbundance_SweptAreaTotal}
 \alias{plotAbundance_old}
 \title{Plot abundance results to file (generic)}
@@ -12,9 +12,9 @@ plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
   grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
   ...)
 
-reportAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
-  plotOutput = FALSE, write = FALSE, ...)
+plotAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
+  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
+  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
 
 plotAbundance_SweptAreaTotal(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
