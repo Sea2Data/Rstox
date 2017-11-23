@@ -4,6 +4,7 @@
 \alias{createProject}
 \alias{createProject_old}
 \alias{openProject}
+\alias{openProject_1.6.4}
 \alias{reopenProject}
 \alias{getProject}
 \alias{getProject_old}
@@ -13,6 +14,7 @@
 \alias{resetProject}
 \alias{closeProject}
 \alias{isProject}
+\alias{getAvailableProjects}
 \alias{readXMLfiles}
 \title{Create, open or save a StoX project}
 \usage{
@@ -26,6 +28,9 @@ createProject_old(projectName = NULL, files = list(), dir = NULL,
 
 openProject(projectName = NULL, out = c("project", "baseline", "report",
   "name"), msg = FALSE)
+
+openProject_1.6.4(projectName = NULL, out = c("project", "baseline",
+  "report", "name"), msg = FALSE)
 
 reopenProject(projectName, out = c("project", "baseline", "report", "name"))
 
@@ -46,6 +51,8 @@ resetProject(projectName, to = "original")
 closeProject(projectName)
 
 isProject(projectName, subset.out = FALSE)
+
+getAvailableProjects()
 
 readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 }
@@ -103,6 +110,7 @@ A project object
 \code{resetProject} resets a project to the original settings. \cr \cr
 \code{closeProject} removes the project from memory. \cr \cr
 \code{isProject} checks whether the project exists on file. \cr \cr
+\code{getAvailableProjects} lists available projects. \cr \cr
 \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
 }
 \examples{

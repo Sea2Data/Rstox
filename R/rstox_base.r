@@ -12,6 +12,7 @@
 #' \code{resetProject} resets a project to the original settings. \cr \cr
 #' \code{closeProject} removes the project from memory. \cr \cr
 #' \code{isProject} checks whether the project exists on file. \cr \cr
+#' \code{getAvailableProjects} lists available projects. \cr \cr
 #' \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
 #'
 #' @param projectName   	The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.
@@ -526,12 +527,133 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "report",
 	# Old version, listing everything in the default workspace:
 	#return(list.files(J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()))
 	
+	# get the available projects, ordered from the top level and down:
+	availableProjects <- getAvailableProjects()
+	
+	# If nothing is given return a list of the projects in the StoX project directory:
+	if(length(projectName)==0){
+		if(is.list(projectName)){
+			return(availableProjects$projectNameList)
+		}
+		else{
+			return(availableProjects$projectPaths)
+		}
+	}
+	
+	# Get the project Java object, possibly retrieved from the project environment (getProject() uses getProjectPaths() if a character is given):
+	project <- getProject(projectName, msg=msg)
+	
+	# Otherwise, open the project, generate the project object, and save it to the RstoxEnv evnironment:
+	if(length(project)==0){
+		# Search for the project:
+		if(!isProject(projectName)){
+			# If the Test_Rstox project is requested, create it:
+			if(identical(projectName, "Test_Rstox")){
+				temp <- createProject("Test_Rstox")
+				availableProjects$projectPaths <- c(temp, availableProjects$projectPaths)
+			}
+			
+			# Get avaiable project names and match against the requested project. The top levels are prioritized in availableProjects$projectPaths:
+			availableProjectNames <- basename(availableProjects$projectPaths)
+			matches <- which(availableProjectNames %in% getProjectPaths(projectName)$projectName)
+			if(length(matches)==0){
+				warning(paste0("The StoX project \"", projectName, "\" not found in the default workspace \"", availableProjects$workspace, "\". For projects not located in this directory or its sub directories, the full path to the project folder must be specified."))
+				return(NULL)
+			}
+			else if(length(matches)>1){
+				warning(paste0("Multiple StoX projects matching \"", projectName, "\". Use the full path, or path relative to the default workspace, to specify the project uniquely. The first of the following list selected:\n", paste0("\t", availableProjects$projectPaths[matches], collapse="\n")))
+			}
+			projectName <- availableProjects$projectPaths[matches[1]]
+		}
+		
+		
+		projectPaths <- getProjectPaths(projectName)
+		projectName <- projectPaths$projectName
+		projectRoot <- projectPaths$projectRoot
+		projectPath <- projectPaths$projectPath
+		########## Open the project in Java memory: ##########
+		Rstox.init()
+		project <- J("no.imr.stox.factory.FactoryUtil")$openProject(projectRoot, projectName)
+		# This line was added on 2017-08-23 due to a bug discovered when estimating the area of polygons using the "accurate" method. When baseline is run, Java calls the function polyArea() when AreaMethod="accurate". However, whenever this failed, the simple method implemented in Java was used (which was a bug). The problem was that the path to the R-bin was not set in Rstox. To solve this, a file holding this path (or the command project$setRFolder(PATH_TO_R_BIN)) will be saved by StoX, and called every time a triggerscript is run. In Rstox we solve the problem by the below sequence:
+		RFolder <- project$getRFolder()
+		if(length(RFolder)==0 || (is.character(RFolder) && nchar(RFolder)==0)){
+			project$setRFolder(R.home("bin"))
+		}
+		############################################### ######
+		
+		########## Open the project in R memory: ##########
+		# Create a list for the project in the environment 'RstoxEnv':
+		parameters <- readBaselineParameters(projectPath)
+		# The first line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
+		temp <- getRstoxEnv()
+		RstoxEnv[[projectName]] <- list(originalParameters=parameters, savedParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectPath=projectPath, projectData=new.env())
+		#assign(projectName, list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()), envir=getRstoxEnv())
+		##assign(getRstoxEnv()[[projectName]], list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()))
+		###getRstoxEnv()[[projectName]] <- list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env())
+		# Also add the last used parameters to the projectData, in order to save this to file. 
+		##### NOTE (2017-08-28): This is different from the 'lastParameters' object in the project environment (rstoxEnv[[projectName]]), and is only used when writing project data such as bootstrap results to file: #####
+		setProjectData(projectName=projectName, var=parameters, name="lastParameters")
+
+		# As of version 1.4.2, create the new folder structure:
+		suppressWarnings(dir.create(projectPaths$RDataDir, recursive=TRUE))
+		suppressWarnings(dir.create(projectPaths$RReportDir, recursive=TRUE))
+		###################################################
+		#}
+	}
+	
+	### # Return a baseline object:
+	### if(tolower(substr(out[1], 1, 1)) == "b"){
+	### 	return(project$getBaseline())
+	### }
+	### # Return the project object:
+	### else if(tolower(substr(out[1], 1, 1)) == "p"){
+	### 	return(project)
+	### }
+	### # Return the project name:
+	### else if(tolower(substr(out[1], 1, 1)) == "n"){
+	### 	return(project$getProjectName())
+	### }
+	
+	### # Return a baseline object:
+	### if(startsWith(tolower(out[1]), "baseline"){
+	### 	return(project$getBaseline())
+	### }
+	### # Return the baseline report object:
+	### if(startsWith(tolower(out[1]), "report"){
+	### 	return(project$getBaselineReport())
+	### }
+	### # Return the project object:
+	### else if(startsWith(tolower(out[1]), "project"){
+	### 	return(project)
+	### }
+	### # Return the project name:
+	### else if(startsWith(tolower(out[1]), "name"){
+	### 	return(project$getProjectName())
+	### }
+	### else{
+	### 	warning("Invalid value of 'out'")
+	### 	return(NULL)
+	### }
+	
+	# Return the requested object:
+	getProject(project, out=out)
+}
+#' 
+#' @importFrom rJava J
+#' @export
+#' @rdname createProject
+#' 
+openProject_1.6.4 <- function(projectName=NULL, out=c("project", "baseline", "report", "name"), msg=FALSE){
+	# Old version, listing everything in the default workspace:
+	#return(list.files(J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()))
+	
+	browser()
 	# 2017-09-03 (Arne Johannes Holmin): Change made to list projects located in sub folders in the default workspace. These are returned with thir full path:
 	Rstox.init()
 	# Get all files and folders in the default workspace:
 	workspace <- J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()
 	
-	# List the valied StoX project folders and the other folders:
+	# List the valid StoX project folders and the other folders:
 	listProjectsAndFolders <- function(x){
 		paths <- list.dirs(x, recursive=FALSE)
 		if(length(paths)==0){
@@ -546,17 +668,18 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "report",
 	
 	# Iterate through the workspace and find StoX projects:
 	availableProjectsList <- list()
+	workspaceTemp <- workspace
 	while(TRUE){
 		# Get the projects and non-StoX-project directories
-		this <- lapply(workspace, listProjectsAndFolders)
+		this <- lapply(workspaceTemp, listProjectsAndFolders)
 		dir <- unlist(lapply(this, "[[", "dir"))
-		# Update the workspace:
-		workspace <- unlist(lapply(this, "[[", "notPr"))
+		# Update the workspaceTemp:
+		workspaceTemp <- unlist(lapply(this, "[[", "notPr"))
 		this <- lapply(this, "[[", "pr")
 		names(this) <- dir
 		# Append the projects to the list:
 		availableProjectsList <- c(availableProjectsList, this)
-		if(length(workspace)==0){
+		if(length(workspaceTemp)==0){
 			break
 		}
 	}
@@ -619,11 +742,12 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "report",
 				temp <- createProject("Test_Rstox")
 				availableProjects <- c(temp, availableProjects)
 			}
-			# Get avaiable project names and match against the requested project:
+			
+			# Get avaiable project names and match against the requested project. The top levels are prioritized in 'availableProjects':
 			availableProjectNames <- basename(availableProjects)
 			matches <- which(availableProjectNames %in% getProjectPaths(projectName)$projectName)
 			if(length(matches)==0){
-				warning(paste0("The StoX project ", projectName, " does not exist"))
+				warning(paste0("The StoX project ", projectName, " not found in the default workspace ", workspace, ". For projects not located in this directory or its sub directories, the full path to the project folder must be  specified."))
 				return(NULL)
 			}
 			else if(length(matches)>1){
@@ -949,6 +1073,62 @@ isProject <- function(projectName, subset.out=FALSE){
 	### out
 	
 	hasStoX_data_types(projectName, subset.out=subset.out)
+}
+#' 
+#' @importFrom rJava J
+#' @export
+#' @rdname createProject
+#' 
+getAvailableProjects <- function(){
+	# List the valid StoX project folders and the other folders:
+	listProjectsAndFolders <- function(x){
+		paths <- list.dirs(x, recursive=FALSE)
+		if(length(paths)==0){
+			return(list())
+		}
+		# Get projects at the top level:
+		arePr <- isProject(paths)
+		paths_notPr <- paths[!arePr]
+		paths <- paths[arePr]
+		return(list(pr=paths, notPr=paths_notPr, dir=x))
+	}
+	
+	# 2017-09-03 (Arne Johannes Holmin): Change made to list projects located in sub folders in the default workspace. These are returned with thir full path:
+	Rstox.init()
+	# Get all files and folders in the default workspace:
+	workspace <- J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()
+	
+	# Iterate through the workspace and find StoX projects:
+	projectPathList <- list()
+	workspaceTemp <- workspace
+	while(TRUE){
+		# Get the projects and non-StoX-project directories
+		this <- lapply(workspaceTemp, listProjectsAndFolders)
+		dir <- unlist(lapply(this, "[[", "dir"))
+		# Update the workspaceTemp:
+		workspaceTemp <- unlist(lapply(this, "[[", "notPr"))
+		this <- lapply(this, "[[", "pr")
+		names(this) <- dir
+		# Append the projects to the list:
+		projectPathList <- c(projectPathList, this)
+		if(length(workspaceTemp)==0){
+			break
+		}
+	}
+	# Clean the list:
+	projectPathList <- projectPathList[sapply(projectPathList, length)>0]
+	projectPaths <- unname(unlist(projectPathList))
+	
+	# If nothing is given return a list of the projects in the StoX project directory:
+	temp <- names(projectPathList)
+	projectNameList <- lapply(seq_along(projectPathList), function(i) substring(sub(names(projectPathList)[i], "", projectPathList[[i]], fixed=TRUE), 2))
+	names(projectNameList) <- temp
+	
+	return(list(
+		projectPaths = projectPaths, 
+		projectPathList = projectPathList, 
+		projectNameList = projectNameList, 
+		workspace = workspace))
 }
 #'
 #' @export
@@ -1862,7 +2042,7 @@ getProjectPaths <- function(projectName=NULL, projectRoot=NULL, recursive=2){
 			projectRoot <- dirname(projectPath)
 			projectName <- basename(projectPath)
 		}
-		# If the projectRoot was not givenm default it:
+		# If the projectRoot was not given default it:
 		else if(length(projectRoot)==0){
 			# The functions J and .jnew and other functions in the rJava library needs initialization:
 			Rstox.init()
@@ -2215,7 +2395,8 @@ saveProjectData <- function(projectName, var="all", ...){
 	unlink(files, recursive=TRUE, force=TRUE)
 	
 	# Save files:
-	lapply(var, function(x) save(list=x, file=file.path(projectPaths$RDataDir, paste0(x, ".RData")), envir=projectDataEnv))
+	#lapply(var, function(x) save(list=x, file=file.path(projectPaths$RDataDir, paste0(x, ".RData")), envir=projectDataEnv))
+	lapply(seq_along(var), function(i) save(list=var[i], file=files[i], envir=projectDataEnv))
 	invisible(files)
 }
 #' 

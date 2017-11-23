@@ -117,7 +117,6 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 #'
 bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, baseline=NULL, msg=TRUE, parameters=list(), sorted=TRUE){
 	
-	browser()
 	# Stop the funciton if both projectName and baseline are missing:
 	if(length(baseline)==0 && missing(projectName)){
 		stop("Either projectName or baseline must be given.")
@@ -293,7 +292,6 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 #' @rdname runBootstrap
 #'
 runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
-	browser()
 	# Baseline and biotic assignments:
 	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
 	assignments <- getBioticAssignments(baseline=baseline)
@@ -301,12 +299,21 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	# Acoustic data:
 	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keept this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
 	psuNASC <- getPSUNASC(baseline=baseline)
-	stratumNASC <- getNASCDistr(baseline=baseline, psuNASC=psuNASC, NASCDistr="observed")
-	resampledNASC <- getResampledNASCDistr(baseline=baseline, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(nboot=nboot, seed=seed), sorted=sorted)
-	# Assign varialbes to the project environment:
-	setProjectData(projectName=projectName, var=psuNASC)
-	setProjectData(projectName=projectName, var=stratumNASC)
-	setProjectData(projectName=projectName, var=resampledNASC)
+	# Warning if 'psuNASC' is not of positive length, in which case psuNASC, stratumNASC and resampledNASC are set to NULL and not written, and bootstrapMethod "SweptAreaLength" is run as a consequence of these being empty:
+	if(length(psuNASC)==0){
+		warning("bootstrapMethod set to \"AcousticTrawl\", but no acoustic data recognized (empty psuNASC). bootstrapMethod changed to \"SweptAreaLength\", and this change should be applied also in the project parameters.")
+		stratumNASC <- NULL
+		resampledNASC <- NULL
+	}
+	else{
+		stratumNASC <- getNASCDistr(baseline=baseline, psuNASC=psuNASC, NASCDistr="observed")
+		resampledNASC <- getResampledNASCDistr(baseline=baseline, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(nboot=nboot, seed=seed), sorted=sorted)
+		# Assign varialbes to the project environment:
+		setProjectData(projectName=projectName, var=psuNASC)
+		setProjectData(projectName=projectName, var=stratumNASC)
+		setProjectData(projectName=projectName, var=resampledNASC)
+	}
+	
 
 	# Run bootstrap:
 	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
@@ -785,7 +792,6 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 		SDDensity <- sqrt(VarDensity)
 		CVDensity <- SDDensity / MeanDensity
 		
-		browser()
 		# Create output for stratum:
 		xStratum <- data.frame(
 			SpecCat = x$SpecCat[1], # 1
