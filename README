@@ -1,4 +1,4 @@
-# Rstox version: 1.6.4 (latest alpha, 2017-11-23)
+# Rstox version: 1.6.4 (latest alpha, 2017-11-27)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -10,12 +10,17 @@ install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 # Install Rstox:
 install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.4/Rstox_1.6.4.tar.gz", repos=NULL)
 
-# Alternatively, install the latest development version from GitHub. Note that this does not garantee a stable version. For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.4 as described above. Install from github using the devtools package:
+# Alternatively, install the latest development version from GitHub.
+# Note that this does not guarantee a stable version.
+# For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.4 as described above.
+# Install from github using the devtools package:
 # devtools::install_github("Sea2Data/Rstox", ref="develop")
 
 # Note that 64 bit Java is required to run Rstox
-# On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp, or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/
-# On Mac, getting Java and Rstox to communicate can be challenging. If you run into problems such as "Unsupported major.minor version ...", try the following:
+# On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp,
+# or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/
+# On Mac, getting Java and Rstox to communicate can be challenging.
+# If you run into problems such as "Unsupported major.minor version ...", try the following:
 # Update java, on
 # 	http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 # If this does not work install first the JDK and then the JRE:
@@ -80,3 +85,14 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 
 # 23. Fixed bug in checkNumPSUsInStratum(), where the number of PSUs in each stratum is evaluated, and a warnings is issued for strata with less than 2 PSUs. Here only the strata with a positive number of PSUs were checked. Fixed by combining 'psustratum' and 'stratumpolygon' in the process data.
 
+# 24. Changed the structure of the RstoxEnv environment to having two lists "Definitions" and "Projects". Also added the project path to project environments, which are located in "Projects".
+
+# 25. Added the function listOpenProjects() which returns a data frame with the project name and path of the loaded projects.
+
+# 26. Fixed bug in getProjectPaths(), where repeated calls using the output project name of the functions as input resulted in different project paths. Fixed by checking the loaded projects.
+
+# 27. Added the option 'log' in getPlots(), specifying which axes to apply log10() to.
+
+# 28. Changed the shape of outliers in plotAbundance to filled diamonds, to separate them from other points.
+
+# 29. Changed structure and name of bootstrapImpute$imputeParameters$msg to bootstrapImpute$imputeParameters$imputeSummary in the project data environment (getProjectDataEnv()). Added bootstrapMethod, acousticMethod and bioticMethod to bootstrapImpute$imputeParameters. 

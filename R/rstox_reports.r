@@ -5,11 +5,11 @@
 #' This function fills in holes in individual fish samples (also called imputation).
 #' In cases where individuals are not aged, missing biological variables (e.g "weight","age","sex", and "specialstage") are sampled from 
 #' fish in the same length group at the lowest imputation level possible.
-#'	impLevel = 0: no imputation, biological information exists
-#'	impLevel = 1: imputation at station level; biological information is selected at random from fish within station
-#'	impLevel = 2: imputation at strata level; no information available at station level, random selection within stratum
-#'	impLevel = 3: imputation at survey level; no information available at lower levels, random selection within suvey
-#'	impLevel = 99: no imputation, no biological information exists for this length group
+#'	imputeLevel = 0: no imputation, biological information exists
+#'	imputeLevel = 1: imputation at station level; biological information is selected at random from fish within station
+#'	imputeLevel = 2: imputation at strata level; no information available at station level, random selection within stratum
+#'	imputeLevel = 3: imputation at survey level; no information available at lower levels, random selection within suvey
+#'	imputeLevel = 99: no imputation, no biological information exists for this length group
 #'
 #' @param i		The index in the list of bootstrap iterations.
 #' @param abnd	Abundance matrix with individual data
@@ -24,10 +24,11 @@
 #' 
 #distributeAbundance <- function(i=NULL, abnd, seedV=NULL, dotfile=NULL) {
 distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
-	# Function for replacing NAs by data given missing and replacement indices. This function treats individual columns to keep data type:
+	# Function for replacing NAs by data given missing and replacement indices. This function treats individual columns to preserve the data type:
 	imputeFromInd <- function(x, indMissing, indReplacement){
 		if(length(indMissing)){
 			for(i in unique(indMissing[,2])){
+				# Get the row indices of missing and replacement values for the current column 'i':
 				indMissingInCurrentCol <- indMissing[indMissing[, 2] == i, 1]
 				indReplacementInCurrentCol <- indReplacement[indReplacement[, 2] == i, 1]
 				x[indMissingInCurrentCol, i] <- x[indReplacementInCurrentCol, i]
@@ -56,9 +57,10 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	atUnknownAge <- which(is.na(getVar(abnd, "age")))
 	NatKnownAge <- length(atKnownAge)
 	NatUnknownAge <- length(atUnknownAge)
-	msg <- double(6)
-	msg[1] <- NatKnownAge
-	msg[2] <- NatUnknownAge
+	imputeSummary <- vector("list", 7)
+	names(imputeSummary) <- c("NumNotAged", "NumAged", "NumUsed", "NumNoMatch", "NumImputedAtStation", "NumImputedAtStratum", "NumImputedAtSurvey")
+	imputeSummary$NumAged <- NatKnownAge
+	imputeSummary$NumNotAged <- NatUnknownAge
 	
 	# Stop if no known ages and return if no unknown:
 	if(NatKnownAge == 0){
@@ -70,8 +72,8 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	}
 	if(NatUnknownAge == 0){
 		warning(paste0("No unknown ages in bootstrap replicate ", i))
-		abnd$impLevel <- 0L
-		return(list(data=abnd, msg=msg, indMissing=NULL, indReplacement=NULL, seedM=NULL))
+		abnd$imputeLevel <- 0L
+		return(list(data=abnd, imputeSummary=imputeSummary, indMissing=NULL, indReplacement=NULL, seedM=NULL))
 	}
 
 	# Set the seed matrix:
@@ -86,10 +88,14 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	#}
 	seedM <- getSeedM(i, seedV=seedV, nrow=NatUnknownAge)
 	
+	########## HERE WE RATHER NEED TO CREATE LISTS OF INDICES FOR THE KNOWN INDIVIDUALS, AND GENERATE THE INIDCES IN THESE LISTS FOR EACH UNIQUE VALUE OF THE KNOWNS ##########
+	
 	# Run through the unknown rows and get indices for rows at which the missing data should be extracetd:
 	#imputeRows <- rep("-", N)
 	imputeRows <- rep(NA, N)
 	imputeLevels <- integer(N)
+	imputeCount <- integer(N)
+	
 	for(atUnkn in seq_along(atUnknownAge)){
 		indUnkn <- atUnknownAge[atUnkn]
 		# Get indices for which of the rows with known ages that have the same station, stratum and survey as the current unknown individual:
@@ -106,8 +112,8 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 		id.known.stratum <- atKnownAge[matchStratum & matchLenGrp]
 		# Get the indices of known individuals in the wnrite survey:
 		id.known.survey <- atKnownAge[matchLenGrp]
-		Nid.known.stratum <- length(id.known.stratum)
 		Nid.known.sta <- length(id.known.sta)
+		Nid.known.stratum <- length(id.known.stratum)
 		Nid.known.survey <- length(id.known.survey)
 												
 		## Replace by station:
@@ -117,6 +123,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
 			#imputeRows[indUnkn] <- id.known.sta[sample.int(Nid.known.sta, size=1)]
 			#imputeRows[indUnkn] <- sampleSorted(id.known.sta, size=1, lx=Nid.known.sta, seed=seedM[atUnkn,1], sorted=FALSE)
+			imputeCount[indUnkn] <- Nid.known.sta
 			imputeRows[indUnkn] <- sampleSorted(id.known.sta, size=1, seed=seedM[atUnkn,1], sorted=FALSE)
 			
 			#imputeRows[indUnkn] <- id.known.sta[.Internal(sample(Nid.known.sta, 1L, FALSE, NULL))]
@@ -129,6 +136,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
 			#imputeRows[indUnkn] <- id.known.stratum[sample.int(Nid.known.stratum, size=1)]
 			#imputeRows[indUnkn] <- sampleSorted(id.known.stratum, size=1, lx=Nid.known.stratum, seed=seedM[atUnkn,2], sorted=FALSE)
+			imputeCount[indUnkn] <- Nid.known.stratum
 			imputeRows[indUnkn] <- sampleSorted(id.known.stratum, size=1, seed=seedM[atUnkn,2], sorted=FALSE)
 			
 			#imputeRows[indUnkn] <- id.known.stratum[.Internal(sample(Nid.known.stratum, 1L, FALSE, NULL))]
@@ -141,6 +149,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 			# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
 			#imputeRows[indUnkn] <- id.known.survey[sample.int(Nid.known.survey, size=1)]
 			#imputeRows[indUnkn] <- sampleSorted(id.known.survey, size=1, lx=Nid.known.survey, seed=seedM[atUnkn,3], sorted=FALSE)
+			imputeCount[indUnkn] <- Nid.known.survey
 			imputeRows[indUnkn] <- sampleSorted(id.known.survey, size=1, seed=seedM[atUnkn,3], sorted=FALSE)
 			
 			#imputeRows[indUnkn] <- id.known.survey[.Internal(sample(Nid.known.survey, 1L, FALSE, NULL))]
@@ -150,13 +159,10 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 			imputeLevels[indUnkn] <- 99L
 		}
 	}
-	abnd$impLevel <- imputeLevels
-	abnd$impRow <- imputeRows
-	# Store process info:
-	msg[3] <- sum(abnd$impLevel[atUnknownAge]==1)
-	msg[4] <- sum(abnd$impLevel[atUnknownAge]==2)
-	msg[5] <- sum(abnd$impLevel[atUnknownAge]==3)
-	msg[6] <- sum(abnd$impLevel[atUnknownAge]==99)
+	
+	abnd$imputeLevel <- imputeLevels
+	abnd$imputeRow <- imputeRows
+	abnd$imputeCount <- imputeCount
 	
 	# Create the following two data frames: 1) the rows of abnd which contain missing age and where there is age available in other rows, and 2) the rows with age available for imputing:
 	missing <- abnd[atUnknownAge, , drop=FALSE]
@@ -169,8 +175,22 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	# Get the indices of missing data in 'missing' which are present in 'available':
 	#ind <- which(missing == "-" & available != "-", arr.ind=TRUE)
 	ind <- which(is.na(missing) & !is.na(available), arr.ind=TRUE)
-	indMissing <- cbind(missing$Row[ind[,1]], ind[,2])
-	indReplacement <- cbind(available$Row[ind[,1]], ind[,2])
+	#indMissing <- cbind(missing$Row[ind[,1]], ind[,2])
+	#indReplacement <- cbind(available$Row[ind[,1]], ind[,2])
+	indMissing <- data.frame(Row=missing$Row[ind[,1]], Col=ind[,2])
+	indReplacement <- data.frame(Row=available$Row[ind[,1]], Col=ind[,2])
+	
+	# Store process info:
+	imputeSummary$NumUsed <- length(unique(indReplacement[,1]))
+	#msg[3] <- sum(abnd$imputeLevel[atUnknownAge]==1)
+	#msg[4] <- sum(abnd$imputeLevel[atUnknownAge]==2)
+	#msg[5] <- sum(abnd$imputeLevel[atUnknownAge]==3)
+	#msg[6] <- sum(abnd$imputeLevel[atUnknownAge]==99)
+	imputeSummary$NumNoMatch <- sum(abnd$imputeLevel[atUnknownAge]==99)
+	imputeSummary$NumImputedAtStation <- sum(abnd$imputeLevel[atUnknownAge]==1)
+	imputeSummary$NumImputedAtStratum <- sum(abnd$imputeLevel[atUnknownAge]==2)
+	imputeSummary$NumImputedAtSurvey <- sum(abnd$imputeLevel[atUnknownAge]==3)
+	imputeSummary <- as.data.frame(imputeSummary)
 	
 	# Apply the replacement. This may be moved to the funciton imputeByAge() in the future to allow for using previously generated indices:
 	abnd <- imputeFromInd(abnd, indMissing, indReplacement)
@@ -182,7 +202,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	#	cat(".", file=dotfile, append=TRUE)
 	#}
 	#list(data=abnd, msg=msg, indMissing=indMissing, indReplacement=indReplacement, atUnknownAge=atUnknownAge, imputeRows=imputeRows, seedM=seedM)
-	list(data=abnd, msg=msg, indMissing=indMissing, indReplacement=indReplacement, seedM=seedM)
+	list(data=abnd, imputeSummary=imputeSummary, indMissing=indMissing, indReplacement=indReplacement, seedM=seedM)
 }
 
 
@@ -220,7 +240,7 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	imputeVariable <- getProjectData(projectName=projectName, var="bootstrap")
 	
 	nboot <- length(imputeVariable$SuperIndAbundance) ## The length of the data collection corresponds to the number of bootstrap iterations
-	msg.out <- vector("list", nboot)
+	imputeSummary.out <- vector("list", nboot)
 	indMissing.out <- vector("list", nboot)
 	indReplacement.out <- vector("list", nboot)
 	seedM.out <- vector("list", nboot)
@@ -274,7 +294,7 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	imputeVariable$SuperIndAbundance <- lapply(out, "[[", "data")
 	# Add names ot the iterations:
 	names(imputeVariable$SuperIndAbundance) <- namesOfIterations
-	msg.out <- lapply(out, "[[", "msg")
+	imputeSummary.out <- lapply(out, "[[", "imputeSummary")
 	indMissing.out <- lapply(out, "[[", "indMissing")
 	indReplacement.out <- lapply(out, "[[", "indReplacement")
 	seedM.out <- lapply(out, "[[", "seedM")
@@ -286,17 +306,24 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	#indReplacement.out <- lapply(out, "[[", "indReplacement")
 	#seedM.out <- lapply(out, "[[", "seedM")	
 		
-	msg.out <- t(as.data.frame(msg.out))
-	colnames(msg.out) <- c("Aged", "NotAged", "ImputedAtStation", "ImputedAtStrata", "ImputedAtSurvey", "NotImputed")
-	rownames(msg.out) <- paste0("Iter", seq_len(nboot))
+	# imputeSummary.out <- t(as.data.frame(imputeSummary.out))
+	imputeSummary.out <- do.call("rbind", imputeSummary.out)
+	#colnames(msg.out) <- c("Aged", "NotAged", "ImputedAtStation", "ImputedAtStrata", "ImputedAtSurvey", "NotImputed")
+	#colnames(imputeSummary.out) <- c("NumAged", "NumNotAged", "NumUsed", "NumNoMatch", "NumImputedAtStation", "NumImputedAtStratum", "NumImputedAtSurvey")
+	rownames(imputeSummary.out) <- paste0("Iter", seq_len(nboot))
 	
 	# Store the output messages, the missing and replace indices, the seeds and other parameters of the imputing:
-	imputeVariable$imputeParameters$msg <- msg.out
+	imputeVariable$imputeParameters$imputeSummary <- imputeSummary.out
 	imputeVariable$imputeParameters$seed <- seed
 	imputeVariable$imputeParameters$seedV <- seedV
 	imputeVariable$imputeParameters$seedM <- seedM.out
 	imputeVariable$imputeParameters$nboot <- nboot
 	imputeVariable$imputeParameters$cores <- cores
+	# Add bootstrap methods:
+	imputeVariable$imputeParameters$bootstrapMethod <- imputeVariable$bootstrapParameters$bootstrapMethod
+	imputeVariable$imputeParameters$acousticMethod  <- imputeVariable$bootstrapParameters$acousticMethod 
+	imputeVariable$imputeParameters$bioticMethod    <- imputeVariable$bootstrapParameters$bioticMethod   
+	
 	if(saveInd){
 		imputeVariable$imputeParameters$indMissing <- indMissing.out
 		imputeVariable$imputeParameters$indReplacement <- indReplacement.out
@@ -305,7 +332,7 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	# Assign the data to the environment of the project:
 	setProjectData(projectName=projectName, var=imputeVariable, name="bootstrapImpute")
 	
-	return(msg.out)
+	return(imputeSummary.out)
 }
 
 
@@ -446,8 +473,9 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 	if(length(projectEnv)==0){
 		return(NULL)
 	}
-	else if(length(projectEnv) && !all(c("psuNASC", "resampledNASC") %in% ls(projectEnv))){
-		warning(paste0("At least one of the objects psuNASC and getResampledNASCDistr required to plot by the function plotNASCDistribution() are missing. These are generated by runBootstrap(, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum)"))
+	#else if(length(projectEnv) && !all(c("psuNASC", "resampledNASC") %in% ls(projectEnv))){
+	if(length(projectEnv$psuNASC)==0 || length(projectEnv$resampledNASC)==0){
+		warning(paste0("At least one of the objects psuNASC and getResampledNASCDistr required to plot by the function plotNASCDistribution() are missing. These are generated by runBootstrap(, bootstrapMethod=\"AcousticTrawl\")"))
 		return(NULL)
 	}
 	# Aggregate the NACS values:
@@ -519,18 +547,19 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 #' Prints summary table and plot is exported to a tif- or png-file.
 #' 
 #' 
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
-#' @param var			A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).
-#' @param unit			A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).
-#' @param baseunit		The unit used in the data.
-#' @param grp1			Variable used to group results, e.g. "age", "LenGrp", "sex"
-#' @param grp2			An optional second grouping variable
-#' @param xlab			The label to user for the x axis, with default depending on data plotted,
-#' @param ylab			The label to user for the y axis, with default depending on data plotted.
-#' @param main			Main title for plot (text)
-#' @param format		The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, , resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.
-#' @param maxcv			The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.
-#' @param ...			Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).
+#' @param projectName   	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param bootstrapMethod	The bootstrap method used to generate the data.
+#' @param var				A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).
+#' @param unit				A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).
+#' @param baseunit			The unit used in the data.
+#' @param grp1				Variable used to group results, e.g. "age", "LenGrp", "sex"
+#' @param grp2				An optional second grouping variable
+#' @param xlab				The label to user for the x axis, with default depending on data plotted,
+#' @param ylab				The label to user for the y axis, with default depending on data plotted.
+#' @param main				Main title for plot (text)
+#' @param format			The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, , resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.
+#' @param maxcv				The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.
+#' @param ...				Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).
 #' 
 #' @return Plot saved to file and abundance table printed
 #'
@@ -542,9 +571,9 @@ plotNASCDistribution <- function(projectName, format="png", ...){
 #' @export
 #' @rdname plotAbundance
 #' 
-plotAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, ...){
+plotAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, log=NULL, ...){
 	fun <- paste0("plotAbundance_", bootstrapMethod)
-	do.call(fun, list(projectName=projectName, var=var, unit=unit, baseunit=baseunit, grp1=grp1, grp2=grp2, numberscale=numberscale, plotOutput=plotOutput, write=write, ...))
+	do.call(fun, list(projectName=projectName, var=var, unit=unit, baseunit=baseunit, grp1=grp1, grp2=grp2, numberscale=numberscale, plotOutput=plotOutput, write=write, log=log, ...))
 }
 #'
 #' @export
@@ -552,14 +581,7 @@ plotAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="Abu
 #' @keywords internal
 #' @rdname plotAbundance
 #'
-plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, ...){
-	
-	# Function used for replacing missing values by a value sorting first of all values, useful for positioning missing values to the left in plots:
-	setValueForMissing <- function(x){
-		value <- if(is.character(x)) "-" else min(x, na.rm=TRUE) - 1
-		x[is.na(x)] <- value
-		x
-	}
+plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, log=NULL, ...){
 	
 	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
@@ -580,41 +602,60 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 	for(i in seq_along(temp)){
 		level <- names(temp)[i]
 		out <- temp[[i]]$abnd
+		thisgrp1 <- temp[[i]]$grp1
 		#grp1.unknown <- temp[[i]]$grp1.unknown
 		abundanceSum <- temp[[i]]$abundanceSum
 		
 		# Set the missing values to low value (assuming only postive values are used for age and stratum and other variables):
 		cat("Abundance by age for ", level, "\n", se0="")
-		if(!is.empty(grp1)){
-			abundanceSum[[grp1]] <- setValueForMissing(abundanceSum[[grp1]])
-			out[[grp1]] <- setValueForMissing(out[[grp1]])
-			###xForMissing1 <- min(tmp1[[grp1]], na.rm=TRUE) - 1
-			###suppressWarnings(tmp1[[grp1]][is.na(tmp1[[grp1]])] <- xForMissing1)
-			###suppressWarnings(out[[grp1]][is.na(out[[grp1]])] <- xForMissing1)
-			unique_grp1 <- unique(abundanceSum[[grp1]])
+		
+		
+		abundanceSum[[thisgrp1]] <- setValueForMissing(abundanceSum[[thisgrp1]])
+		out[[thisgrp1]] <- setValueForMissing(out[[thisgrp1]])
+		xlab <- paste(thisgrp1)
+		xlim <- range(unique(abundanceSum[[thisgrp1]]))
+		if(is.numeric(abundanceSum[[thisgrp1]])){
+			levels <- seq(min(abundanceSum[[thisgrp1]], na.rm=TRUE), max(abundanceSum[[thisgrp1]], na.rm=TRUE), by=median(diff(sort(unique(abundanceSum[[thisgrp1]]))), na.rm=TRUE))
 		}
+		else{
+			levels <- unique(abundanceSum[[thisgrp1]])
+		}
+		
+		
+		
+		
+		#if(!is.empty(grp1)){
+		#	abundanceSum[[grp1]] <- setValueForMissing(abundanceSum[[grp1]])
+		#	out[[grp1]] <- setValueForMissing(out[[grp1]])
+		#	xlab <- paste(grp1)
+		#	xlim <- range(unique(abundanceSum[[grp1]]))
+		#	levels <- seq(min(abundanceSum[[grp1]], na.rm=TRUE), max(abundanceSum[[grp1]], na.rm=TRUE), by=median(diff(sort(unique(abundanceSum[[grp1]]))), na.rm=TRUE))
+		#}
+		#else{
+		#	xlab <- names(out)[1]
+		#	xlim <- range(xlab)
+		#	levels <- xlab
+		#	grp1 <- xlab
+		#}
 		if(!is.empty(grp2)){
 			abundanceSum[[grp2]] <- setValueForMissing(abundanceSum[[grp2]])
 			out[[grp2]] <- setValueForMissing(out[[grp2]])
-			###xForMissing2 <- min(tmp1[[grp2]], na.rm=TRUE) - 1
-			###suppressWarnings(tmp1[[grp2]][is.na(tmp1[[grp2]])] <- xForMissing2)
-			###suppressWarnings(out[[grp2]][is.na(out[[grp2]])] <- xForMissing2)
-			unique_grp2 <- unique(abundanceSum[[grp2]])
+			xlab <- paste(thisgrp1,"by", grp2)
 		}
 	
 		# Get ylab and xlab text:
 		if(length(ylab)==0){
 			ylab <- paste0(plottingUnit$var, " (", plottingUnit$unit, ")")
 		}
-		if(is.null(xlab) & !is.null(grp2)){
-			xlab <- paste(grp1,"by", grp2)
-		}
-		if(is.null(xlab)){
-			xlab <- paste(grp1)
-		}
+		#if(is.empty(xlab) & !is.empty(grp2)){
+		#	xlab <- paste(grp1,"by", grp2)
+		#}
+		#if(is.empty(xlab)){
+		#	xlab <- paste(grp1)
+		#}
 	
 		# Get file name:
-		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_"))
+		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, thisgrp1, grp2), collapse="_"))
 		filename <- paste(filenamebase, format, sep=".")
 		
 		# If width and height is not given, default to width=5000, height=3000:
@@ -635,37 +676,42 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 			maxcv <- 1
 		}
 		cvLabels <- pretty(c(0, maxcv)) 
-		xlim <- range(unique_grp1)
 		ylim <- c(0, max(abundanceSum$Ab.Sum, na.rm=TRUE))
 		cvScalingFactor <- max(ylim) / maxcv
 		outtmp <- out
 		outtmp$Ab.Sum.cv <- outtmp$Ab.Sum.cv * cvScalingFactor
-		levels <- seq(min(abundanceSum[[grp1]], na.rm=TRUE), max(abundanceSum[[grp1]], na.rm=TRUE), by=median(diff(sort(unique(abundanceSum[[grp1]]))), na.rm=TRUE))
 		
 		tryCatch(
 			{
 				if(is.empty(grp2)){
 					pl <- ggplot() + 
-						geom_boxplot(data=abundanceSum, aes_string(x=factor(abundanceSum[[grp1]], levels=levels), y="Ab.Sum")) + 
+						geom_boxplot(data=abundanceSum, aes_string(x=factor(abundanceSum[[thisgrp1]], levels=levels), y="Ab.Sum"), outlier.shape=18) + 
 						theme_bw() + 
 						scale_x_discrete(drop=FALSE) + 
-						geom_line(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE) + 
-						geom_point(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE)
+						geom_line(aes_string(x=factor(outtmp[[thisgrp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE) + 
+						geom_point(aes_string(x=factor(outtmp[[thisgrp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE)
 				}	
 				else{
 					pl <- ggplot() + 
-						geom_boxplot(data=abundanceSum, aes_string(x=factor(abundanceSum[[grp1]], levels=levels), y="Ab.Sum", fill=as.factor(abundanceSum[[grp2]]))) + 
+						geom_boxplot(data=abundanceSum, aes_string(x=factor(abundanceSum[[thisgrp1]], levels=levels), y="Ab.Sum", fill=as.factor(abundanceSum[[grp2]])), outlier.shape=18) + 
 						theme_bw() + 
 						scale_x_discrete(drop=FALSE) + 
 						scale_fill_discrete(name=grp2) + 
-						geom_line(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE) + 
-						geom_point(aes_string(x=factor(outtmp[[grp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE)
-				}
+						geom_line(aes_string(x=factor(outtmp[[thisgrp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE) + 
+						geom_point(aes_string(x=factor(outtmp[[thisgrp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE)
+					}
 				pl <- pl + 
-				scale_y_continuous(limits=ylim, sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
-				xlab(xlab) +
-				ylab(ylab) + 
-				ggtitle(main)
+					scale_y_continuous(limits=if("y" %in% log) range(abundanceSum$Ab.Sum) else ylim, trans=if("y" %in% log) "log10" else "identity", sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
+					xlab(xlab) +
+					ylab(ylab) + 
+					ggtitle(main)
+			
+				#if("x" %in% log){
+				#	pl <- pl + scale_x_log10()
+				#}
+				#if("y" %in% log){
+				#	pl <- pl + scale_y_log10()
+				#}
 			
 				# Activate the plot:
 				print(pl)
@@ -692,14 +738,7 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 #' @keywords internal
 #' @rdname plotAbundance
 #' 
-plotAbundance_SweptAreaTotal <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, ...){
-	
-	# Function used for replacing missing values by a value sorting first of all values, useful for positioning missing values to the left in plots:
-	setValueForMissing <- function(x){
-		value <- if(is.character(x)) "-" else min(x, na.rm=TRUE) - 1
-		x[is.na(x)] <- value
-		x
-	}
+plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, xlab=NULL, ylab=NULL, main="", format="png", log=NULL, ...){
 	
 	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
@@ -744,7 +783,6 @@ plotAbundance_SweptAreaTotal <- function(projectName, var="Abundance", unit=NULL
 			moveToTrash(filename)
 		}
 		
-	
 		tryCatch(
 			{
 				x <- cbind(SpecCat=rownames(abnd), abnd)
@@ -763,9 +801,16 @@ plotAbundance_SweptAreaTotal <- function(projectName, var="Abundance", unit=NULL
 					xlab(xlab) +
 					ylab(ylab) + 
 					ggtitle(main)
-		
+				
+				if("x" %in% log){
+					pl <- pl + scale_x_log10()
+				}
+				if("y" %in% log){
+					pl <- pl + scale_y_log10()
+				}
+	
 				# Activate the plot:
-				print(pl)
+				suppressWarnings(print(pl))
 			}, 
 			finally = {
 				# safe closure of image resource inside finally block
@@ -919,6 +964,19 @@ plotAbundance_old <- function(projectName, var="Abundance", unit=NULL, baseunit=
 		outList$data[[level]] <- temp[[i]]
 	}
 }
+#'
+#' @export
+#' @keywords internal
+#' @rdname plotAbundance
+#' 
+setValueForMissing <- function(x){
+	is.nax <- is.na(x)
+	value <- if(is.character(x) || all(is.nax)) "-" else min(x, na.rm=TRUE) - 1
+	x[is.nax] <- value
+	x
+}
+
+
 
 
 #*********************************************
@@ -967,7 +1025,7 @@ reportAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="A
 #'
 reportAbundance_AcousticTrawl <- reportAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, ...){
 	out <- list()
-	for(level in getRstoxEnv()$processLevels){
+	for(level in getRstoxDef("processLevels")){
 		out[[level]] <- reportAbundanceAtLevel(projectName, var=var, unit=unit, baseunit=baseunit, level=level, grp1=grp1, grp2=grp2, numberscale=numberscale, plotOutput=plotOutput, write=write)
 	}
 	out[sapply(out, length)>0]
@@ -1037,11 +1095,12 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 		warning(paste0("The object ", level, " not present for project ", projectName))
 		return(NULL)
 	}
-
+	
 	# If grp1 is missing, replace it with all zeros:
 	if(length(grp1)==0 || length(DT[[grp1]])==0){
 		grp1 <- c("TSN", "TSB")[varInd$ind]
-		DT[[grp1]] <- integer(nrow(DT))
+		#DT[[grp1]] <- integer(nrow(DT))
+		DT[[grp1]] <- grp1
 	}
 
 	## Is any data in the grp1 input unkown?
@@ -1052,7 +1111,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 		#DT[[grp1]] <- as.numeric(DT[[grp1]]) 
 		grp1.unknown <- FALSE 
 	}
-	if(!is.null(grp2)){
+	if(!is.empty(grp2)){
 		setkeyv(DT, cols=c(".id","Stratum", grp1, grp2))
 	}
 	else{
@@ -1095,7 +1154,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	setkeyv(abundanceSumDT, cols=c(".id", grp1))
 	abundanceSumDT <- abundanceSumDT[CJ(unique(abundanceSumDT$.id), unique_grp1), allow.cartesian=TRUE]
 
-	if(!is.null(grp2)){
+	if(!is.empty(grp2)){
 		setkeyv(abundanceSumDT, cols=c(".id", grp1, grp2))
 		abundanceSumDT <- abundanceSumDT[CJ(unique(abundanceSumDT$.id), unique_grp1, unique_grp2), allow.cartesian=TRUE]
 	} 
@@ -1116,10 +1175,20 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	orderFact2 <- if(length(grp2) && length(out[[grp2]])) out[[grp2]] else integer(nrow(out))
 	out <- out[order(orderFact2, orderFact1, na.last=FALSE),]
 	rownames(out) <- NULL
-	if(nrow(out)==1){
-		out <- out[,-1]
-		rownames(out) <- c("TSN", "TSB")[varInd$ind]
-	}
+	
+	### if(nrow(out)==1){
+	### 	if(length(grp1)){
+	### 		out[1] <- "-"
+	### 	}
+	### 	else{
+	### 		out[1] <- c("TSN", "TSB")[varInd$ind]
+	### 		rownames(out) <- out[1]
+	### 		grp1 <- out[1]
+	### 	}
+	### 	#out <- out[,-1]
+	### 	#out <- out[1] <- 
+	### 	#rownames(out) <- c("TSN", "TSB")[varInd$ind]
+	### }
 	
 	# Write the data to a tab-separated file:
 	if(write){
@@ -1140,7 +1209,8 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	
 	if(plotOutput){
 		#outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=abundanceSumDT$Ab.Sum, abundanceSumDT=abundanceSumDT))
-		outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=abundanceSumDT$Ab.Sum))
+		#outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=abundanceSumDT$Ab.Sum))
+		outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, Ab.Sum=abundanceSumDT$Ab.Sum, grp1=grp1))
 	}
 	outlist
 }

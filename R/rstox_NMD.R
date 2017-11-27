@@ -897,8 +897,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	
 	##########
 	# Define the valid types:
-	NMD_data_types <- getRstoxEnv()$NMD_data_types
-	StoX_data_types <- getRstoxEnv()$StoX_data_types
+	NMD_data_types <- getRstoxDef("NMD_data_types")
+	StoX_data_types <- getRstoxDef("StoX_data_types")
 	if(length(datatype)==0){
 		datatype <- NMD_data_types
 	}
@@ -912,6 +912,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	sts <- getNMDinfo("sts", recursive=FALSE)
 	#######################################
 	
+	dir <- getProjectPaths(projectName="", projectRoot=dir)$projectRoot
 	
 	########################################
 	########## (1) Serial number: ##########
@@ -937,7 +938,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		# Abbreviate:
 		projectName <- abbrevWords(projectName, abbrev=abbrev, sub=-1)
 		# Set the directory of the project specfied by serial number:
-		dir <- getProjectPaths(projectName="", projectRoot=dir)$projectRoot
 		projectPath <- createProject(projectName, dir=dir, model=model, ow=ow, ...)
 	
 		xmlfiles <- rep(NA, nrow(serialno))
@@ -966,7 +966,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		projectParts <- vector("list", nprojects)
 		for(i in seq_len(nprojects)){
 			projectParts[[i]] <- list(
-				dir = getProjectPaths(projectName="", projectRoot=dir)$projectRoot, # The default workspace or 'dir' if this is given
+				dir = dir, # The default workspace or 'dir' if this is given
 				subdir = getSubdir(subdir=subdir, name=sts), # See getSubdir(). If subdir==TRUE, this will become the survey time series name
 				filebase = NULL, 
 				name = sts, # The survey time series name
@@ -1039,7 +1039,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		# Wrap in a list to indicate the numer of projects to generate:
 		projectParts <- list(
 			list(
-				dir = getProjectPaths(projectName="", projectRoot=dir)$projectRoot, # The default workspace or 'dir' if this is given
+				dir = dir, # The default workspace or 'dir' if this is given
 				subdir = NULL, # See getSubdir(). If subdir==TRUE, this will become the survey time series name
 				filebase = filebase, 
 				name = cs, # The survey time series name
@@ -1083,7 +1083,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			}
 			
 			projectParts[[i]] <- list(
-				dir = getProjectPaths(projectName="", projectRoot=dir)$projectRoot, # The default workspace or 'dir' if this is given
+				dir = dir, # The default workspace or 'dir' if this is given
 				subdir = getSubdir(subdir=if(nprojects==1) NULL else subdir, name=cs),
 				filebase = filebase, 
 				name = name, # The survey time series name

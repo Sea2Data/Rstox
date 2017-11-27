@@ -5,27 +5,32 @@
 \alias{plotAbundance_AcousticTrawl}
 \alias{plotAbundance_SweptAreaTotal}
 \alias{plotAbundance_old}
+\alias{setValueForMissing}
 \title{Plot abundance results to file (generic)}
 \usage{
 plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
   var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
   grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
-  ...)
+  log = NULL, ...)
 
 plotAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
+  ylab = NULL, main = "", format = "png", maxcv = 1, log = NULL, ...)
 
-plotAbundance_SweptAreaTotal(projectName, var = "Abundance", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
+plotAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
+  xlab = NULL, ylab = NULL, main = "", format = "png", log = NULL,
+  ...)
 
 plotAbundance_old(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
   ylab = NULL, main = "", format = "png", maxcv = 1, ...)
+
+setValueForMissing(x)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+
+\item{bootstrapMethod}{The bootstrap method used to generate the data.}
 
 \item{var}{A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).}
 

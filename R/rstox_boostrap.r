@@ -213,7 +213,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' \code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user.
 #' \code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'.
 #'
-#' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
+#' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (bootstrapMethod="AcousticTrawl"), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 #'
 #' @param projectName  					The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
 #' @param bootstrapMethod				The method to use for the bootstrap. Currently implemented are given in the following table:
@@ -270,7 +270,7 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 	bioticMethod <- temp$bioticMethod
 	
 	# Apply the bootstrap:
-	if(!bootstrapMethod %in% getRstoxEnv()$model_types){
+	if(!bootstrapMethod %in% getRstoxDef("model_types")){
 		stop("Invalid bootstrap type.")
 	}
 	bootstrapFun <- paste("runBootstrap", bootstrapMethod, sep="_")

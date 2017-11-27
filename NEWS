@@ -374,3 +374,16 @@ Added the function is.empty() for use to test whether parameters are given (retu
 
 Fixed bug in checkNumPSUsInStratum(), where the number of PSUs in each stratum is evaluated, and a warnings is issued for strata with less than 2 PSUs. Here only the strata with a positive number of PSUs were checked. Fixed by combining 'psustratum' and 'stratumpolygon' in the process data.
 
+Changed the structure of the RstoxEnv environment to having two lists "Definitions" and "Projects". Also added the project path to project environments, which are located in "Projects".
+
+Added the function listOpenProjects() which returns a data frame with the project name and path of the loaded projects.
+
+Fixed bug in getProjectPaths(), where repeated calls using the output project name of the functions as input resulted in different project paths. Fixed by checking the loaded projects.
+
+Added the option 'log' in getPlots(), specifying which axes to apply log10() to.
+
+Changed the shape of outliers in plotAbundance to filled diamonds, to separate them from other points.
+
+Changed structure and name of bootstrapImpute$imputeParameters$msg to bootstrapImpute$imputeParameters$imputeSummary in the project data environment (getProjectDataEnv()). Added bootstrapMethod, acousticMethod and bioticMethod to bootstrapImpute$imputeParameters. 
+
+Fixed bug in plotAbundance_AcousticTrawl() when all values of the variable specified by 'grp1' are missing (NA).
