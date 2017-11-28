@@ -301,7 +301,7 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	psuNASC <- getPSUNASC(baseline=baseline)
 	# Warning if 'psuNASC' is not of positive length, in which case psuNASC, stratumNASC and resampledNASC are set to NULL and not written, and bootstrapMethod "SweptAreaLength" is run as a consequence of these being empty:
 	if(length(psuNASC)==0){
-		warning("bootstrapMethod set to \"AcousticTrawl\", but no acoustic data recognized (empty psuNASC). bootstrapMethod changed to \"SweptAreaLength\", and this change should be applied also in the project parameters.")
+		warning("bootstrapMethod was \"AcousticTrawl\", but no acoustic data recognized (empty psuNASC). bootstrapMethod changed to \"SweptAreaLength\", and this change should be applied also in the project parameters.")
 		stratumNASC <- NULL
 		resampledNASC <- NULL
 	}

@@ -355,3 +355,25 @@ setMeanNASCValues_old <- function(mtrx, tbl){
 	Rstox.init()
 	J("no.imr.stox.bo.MatrixUtil")$setGroupRowColValues(mtrx, .jarray(as.character(tbl$AcoCat)), .jarray(as.character(tbl$SampleUnit)), .jarray(as.character(tbl$Layer)), .jarray(as.double(tbl$Value)))
 }
+
+
+#*********************************************
+#*********************************************
+#' Set the size of the Java memory
+#' 
+#' @param size	The size of the memory (in bytes) assigned to Java for each project
+#'
+#' @export
+#' @rdname setJavaMemory
+#'
+setJavaMemory <- function(size=2e9){
+	size <- paste0(round(size * 1e-6), "m")
+	options(java.parameters=paste0("-Xmx", size))
+}
+#'
+#' @export
+#' @rdname setJavaMemory
+#'
+getJavaMemory <- function(){
+	options("java.parameters")
+}

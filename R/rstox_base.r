@@ -562,7 +562,7 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "report",
 			}
 			else if(length(matches)>1){
 				#warning(paste0("Multiple StoX projects matching \"", projectName, "\". Use the full path, or path relative to the default workspace, to specify the project uniquely. The first of the following list selected:\n", paste0("\t", availableProjects$projectPaths[matches], collapse="\n")))
-				stop(paste0("Multiple StoX projects matching \"", projectName, "\". Use the full path, or path relative to the default workspace (", ,") to specify the project uniquely:\n", paste0("\t", availableProjects$projectPaths[matches], collapse="\n")))
+				stop(paste0("Multiple StoX projects matching \"", projectName, "\". Use the full path, or path relative to the default workspace (", getProjectPaths()$projectRoot, ") to specify the project uniquely:\n", paste0("\t", availableProjects$projectPaths[matches], collapse="\n")))
 			}
 			projectName <- availableProjects$projectPaths[matches[1]]
 		}
@@ -1346,7 +1346,8 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #'
 runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("project", "baseline", "report", "name"), msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
 	# Open the project (avoiding generating multiple identical project which demands memory in Java):
-	projectName <- getProjectPaths(projectName)$projectName
+	#browser()
+	#projectName <- getProjectPaths(projectName)$projectName
 	# If reset==TRUE allow for the warning in getProject():
 	baseline <- openProject(projectName, out="baseline")
 	baseline$setBreakable(jBoolean(FALSE))
@@ -1429,7 +1430,8 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	}
 
 	# Return the object specified in 'out':
-	return(getProject(projectName, out=out))
+	#return(getProject(projectName, out=out))
+	return(getProject(baseline, out=out))
 	## Return a baseline object:
 	#if(tolower(substr(out[1], 1, 1)) == "b"){
 	#	return(baseline)
@@ -2186,9 +2188,9 @@ getProjectPaths_old <- function(projectName=NULL, projectRoot=NULL){
 #' @rdname getProjectPaths
 #' 
 getProjectDataEnv <- function(projectName){
-	projectName <- getProjectPaths(projectName)$projectName
+	#projectName <- getProjectPaths(projectName)$projectName
 	# Do not issue a warning if the project is already open, since getProjectDataEnv() is intended to get data from the project enviroment, assuming it is already open. 
-	openProject(projectName)
+	projectName <- openProject(projectName, out="name")
 	getRstoxEnv()$Projects[[projectName]]$projectData
 }
 

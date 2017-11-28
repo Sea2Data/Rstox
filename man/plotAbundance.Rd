@@ -10,16 +10,17 @@
 \usage{
 plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
   var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
-  grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
-  log = NULL, ...)
+  grp2 = NULL, xlab = NULL, ylab = NULL, main = "", format = "png",
+  log = NULL, filetag = NULL, ...)
 
 plotAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, log = NULL, ...)
+  ylab = NULL, main = "", format = "png", maxcv = 1, log = NULL,
+  filetag = NULL, ...)
 
 plotAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
   xlab = NULL, ylab = NULL, main = "", format = "png", log = NULL,
-  ...)
+  filetag = NULL, ...)
 
 plotAbundance_old(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
@@ -32,7 +33,7 @@ setValueForMissing(x)
 
 \item{bootstrapMethod}{The bootstrap method used to generate the data.}
 
-\item{var}{A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).}
+\item{var}{A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values). For plotAbundance_SweptAreaTotal() \code{var} is hard coded to "Count"}
 
 \item{unit}{A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).}
 
@@ -42,8 +43,6 @@ setValueForMissing(x)
 
 \item{grp2}{An optional second grouping variable}
 
-\item{...}{Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).}
-
 \item{xlab}{The label to user for the x axis, with default depending on data plotted,}
 
 \item{ylab}{The label to user for the y axis, with default depending on data plotted.}
@@ -51,6 +50,12 @@ setValueForMissing(x)
 \item{main}{Main title for plot (text)}
 
 \item{format}{The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, , resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.}
+
+\item{log}{Character string giving the axes to apply log10() to.}
+
+\item{filetag}{A character string to append to the file name (before file extension).}
+
+\item{...}{Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).}
 
 \item{maxcv}{The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.}
 }

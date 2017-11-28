@@ -1,4 +1,4 @@
-# Rstox version: 1.6.4 (latest alpha, 2017-11-27)
+# Rstox version: 1.6.4 (latest alpha, 2017-11-28)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -96,3 +96,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.6.
 # 28. Changed the shape of outliers in plotAbundance to filled diamonds, to separate them from other points.
 
 # 29. Changed structure and name of bootstrapImpute$imputeParameters$msg to bootstrapImpute$imputeParameters$imputeSummary in the project data environment (getProjectDataEnv()). Added bootstrapMethod, acousticMethod and bioticMethod to bootstrapImpute$imputeParameters. 
+
+# 30. Fixed bug in plotAbundance_AcousticTrawl() when all values of the variable specified by 'grp1' are missing (NA).
+
+# 31. Added support for separating options by comma (",") in getPlots() and getReports() (only applicable if none of the individual parameters are specified as vectors or in some other way specified using commas).

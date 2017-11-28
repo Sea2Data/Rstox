@@ -387,3 +387,5 @@ Changed the shape of outliers in plotAbundance to filled diamonds, to separate t
 Changed structure and name of bootstrapImpute$imputeParameters$msg to bootstrapImpute$imputeParameters$imputeSummary in the project data environment (getProjectDataEnv()). Added bootstrapMethod, acousticMethod and bioticMethod to bootstrapImpute$imputeParameters. 
 
 Fixed bug in plotAbundance_AcousticTrawl() when all values of the variable specified by 'grp1' are missing (NA).
+
+Added support for separating options by comma (",") in getPlots() and getReports() (only applicable if none of the individual parameters are specified as vectors or in some other way specified using commas).

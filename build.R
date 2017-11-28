@@ -213,7 +213,8 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	onAttachText = paste(
 		".onAttach <- function(libname, pkgname){",
 		"	",
-		paste0("	packageStartupMessage(\"", pkgName, "_", version, "\n**********\nIf problems with Java Memory such as java.lang.OutOfMemoryError occurs, try increasing the Java memory by running options(java.parameters=\\\"-Xmx4g\\\"), and possibly using an even higher value than 4g\n**********\n\", appendLF=FALSE)"),
+		# paste0("	packageStartupMessage(\"", pkgName, "_", version, "\n**********\nIf problems with Java Memory such as java.lang.OutOfMemoryError occurs, try increasing the Java memory by running options(java.parameters=\\\"-Xmx4g\\\"), and possibly using an even higher value than 4g\n**********\n\", appendLF=FALSE)"),
+		paste0("	packageStartupMessage(\"", pkgName, "_", version, "\n**********\nIf problems with Java Memory such as java.lang.OutOfMemoryError occurs, try increasing the Java memory by running setJavaMemory(4e9), and possibly using an even higher value than 4 gigabytes\n**********\n\", appendLF=FALSE)"),
 	"}", sep="\n")
 	write(onAttachText, onAttachFile)
 	##########

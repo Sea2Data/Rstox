@@ -14,7 +14,7 @@ reportAbundance(projectName, bootstrapMethod = "AcousticTrawl",
 
 reportAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
-  plotOutput = FALSE, write = FALSE, ...)
+  plotOutput = FALSE, write = FALSE, msg = TRUE, ...)
 
 reportAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
   write = FALSE, ...)
