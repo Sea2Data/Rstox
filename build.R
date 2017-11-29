@@ -266,10 +266,6 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	}
 	##########
 	
-	##### Create platform independent bundle of source package: #####
-	dir.create(thisExportDir, recursive=TRUE)
-	pkgFileVer <- build(buildDir, path=thisExportDir)
-	
 	### Generate the README file: ###
 	betaAlpha <- length(gregexpr(".", version, fixed=TRUE)[[1]]) + 1
 	betaAlphaString <- c("", "beta", "alpha")[betaAlpha]
@@ -277,6 +273,10 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	writeRstoxREADME(READMEfile, NEWSfile, version, Rversion, betaAlpha, betaAlphaString, imports=getImports(buildDir), official=official)
 	file.copy(READMEfile, READMEfileExport, overwrite=TRUE)
 	##########
+	
+	##### Create platform independent bundle of source package: #####
+	dir.create(thisExportDir, recursive=TRUE)
+	pkgFileVer <- build(buildDir, path=thisExportDir)
 	
 	##### Unload the package: #####
 	unload(buildDir)
