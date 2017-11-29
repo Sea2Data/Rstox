@@ -1349,7 +1349,13 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	#browser()
 	#projectName <- getProjectPaths(projectName)$projectName
 	# If reset==TRUE allow for the warning in getProject():
-	baseline <- openProject(projectName, out="baseline")
+	if(length(projectName)){
+		baseline <- openProject(projectName, out="baseline")
+	}
+	else{
+		warning("Empty 'projectName'")
+		return(NULL)
+	}
 	baseline$setBreakable(jBoolean(FALSE))
 	baseline$setWarningLevel(jInt(warningLevel))
 	if(!exportCSV){
