@@ -8,7 +8,7 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
   stratumNASC = NULL, resampledNASC = NULL, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seed = 1, cores = 1, baseline = NULL, msg = TRUE,
-  parameters = list())
+  parameters = list(), sorted = TRUE)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -40,6 +40,8 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
 \item{parameters$nboot}{Number of bootstrap replicates}
 \item{parameters$seed}{The seed for the random number generator (used for reproducibility)}
 }}
+
+\item{sorted}{Should the data be sorted prior to sampling?}
 }
 \value{
 list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run

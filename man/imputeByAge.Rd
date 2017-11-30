@@ -22,10 +22,8 @@ Updated list with imputed bootstrap results
 Impute missing data within the bootstrap data object
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 projectName <- "Test_Rstox"
-boot <- runBootstrap(projectName, nboot=10, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum)
+boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")
 # imputeByAge() fills in empty cells:
 system.time(bootstrap_Acoustic_imputed <- imputeByAge(projectName))
 

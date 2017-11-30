@@ -3,7 +3,7 @@
 \name{getPSUNASC}
 \alias{getPSUNASC}
 \alias{aggPSUNASC}
-\title{Get and aggregate PSUNASC}
+\title{Get and aggregate PSUNASC. Rows are reordered.}
 \usage{
 getPSUNASC(baseline)
 
@@ -24,8 +24,6 @@ A Java integer, double, or Boolean
 \code{aggPSUNASC} aggregates psuNASC Layer to PELBOT. Used within functions when resampling and rescaling NASC values if Layer!=PELBOT.
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 psuNASC <- getPSUNASC("Test_Rstox")
 psuNASC_agg <- aggPSUNASC(psuNASC=psuNASC)
 

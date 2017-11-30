@@ -5,38 +5,52 @@
 \alias{openProject}
 \alias{reopenProject}
 \alias{getProject}
+\alias{listOpenProjects}
 \alias{updateProject}
 \alias{saveProject}
+\alias{saveasProject}
+\alias{resetProject}
 \alias{closeProject}
 \alias{isProject}
+\alias{getAvailableProjects}
 \alias{readXMLfiles}
 \title{Create, open or save a StoX project}
 \usage{
 createProject(projectName = NULL, files = list(), dir = NULL,
   model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
-  ignore.processXML = FALSE, parlist = list(), ...)
+  ignore.processXML = FALSE, parlist = list(), msg = TRUE, ...)
 
-openProject(projectName = NULL, out = c("project", "baseline", "name"),
+openProject(projectName = NULL, out = c("project", "baseline", "report",
+  "name"), msg = FALSE)
+
+reopenProject(projectName, out = c("project", "baseline", "report", "name"))
+
+getProject(projectName, out = c("project", "baseline", "report", "name"),
   msg = FALSE)
 
-reopenProject(projectName, out = c("project", "baseline", "name"))
-
-getProject(projectName, msg = FALSE)
+listOpenProjects()
 
 updateProject(projectName)
 
-saveProject(projectName)
+saveProject(projectName, soft = FALSE)
+
+saveasProject(projectName, newProjectName, dir = NULL, ow = NULL,
+  msg = TRUE)
+
+resetProject(projectName, to = "original")
 
 closeProject(projectName)
 
-isProject(projectName)
+isProject(projectName, subset.out = FALSE)
+
+getAvailableProjects()
 
 readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.}
 
-\item{files}{A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in StoX_data_types in the environment "RstoxEnv". Get these by get("StoX_data_types", envir=get("RstoxEnv"))). These could be given as directories, in which case all files in those directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If files has length 0 (default), the files present in the project directory are used, if already existing (requires to answer "y" when asked to overwrite the project if ow=NULL, or alternatively to set ow=TRUE).}
+\item{files}{A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in Definitions$StoX_data_types in the environment "RstoxEnv". Get these by getRstoxDef("StoX_data_types"). These could be given as directories, in which case all files within the directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If \code{files} has length 0 (default), no files are written to the project except the project.xml file using the specified \code{model}. If multiple projects are created, the files are copied to all projects. If given as a single URL to a zipped StoX project, the project is downloaded and unzipped, usting the}
 
 \item{dir}{The directory in which to put the project. The project is a directory holding three sub directories named "input", "output" and "process", where input, output and process files are stored.}
 
@@ -50,9 +64,17 @@ readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 
 \item{parlist, ...}{See \code{\link{runBaseline}}.}
 
-\item{out}{One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.}
+\item{msg}{Logical: If TRUE, print messages to the console.}
 
-\item{msg}{Logical: If TRUE print messages to the console.}
+\item{out}{One of "project", "baseline" or "name" (project name), specifying the output.}
+
+\item{soft}{Logical: If TRUE, do not save the current javaParameters to the savedParameters field in the project environment (used in saveasProject()).}
+
+\item{newProjectName}{The name of the project to save an open project as.}
+
+\item{to}{A string naming the parameters to reset a project to (one of "original" and "saved", where the latter is only used in saveasProject()).}
+
+\item{subset.out}{Logical: Used in \code{is.project}. If TRUE, subset the input project names, and if False, return a logical vector.}
 
 \item{nchars}{The number of characters to read when determining the types of the files in readXMLfiles().}
 }
@@ -72,18 +94,26 @@ A project object
 \code{createProject} creates a new StoX project (from xml files). \cr \cr
 \code{openProject} opens a StoX project. If the project has already been opened, \code{openProject} will only retrieve the project object from the RstoxEnv enviromnent. To force open the project use \code{reopenProject}. \cr \cr
 \code{reopenProject} re-opens a StoX project, which is equivalent to closeing and then opening the project. \cr \cr
-\code{getProject} gets the project object, either from the input if this is a baseline or project object, or from the project environment. \cr \cr
+\code{getProject} gets a project object (one of "project", "baseline", "report", "name"), either from the input if this is a baseline or project object, or from the project environment. \cr \cr
+\code{listOpenProjects} lists all open projects. \cr \cr
 \code{updateProject} updates links to xml files in a project. \cr \cr
 \code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
+\code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr
+\code{resetProject} resets a project to the original settings. \cr \cr
 \code{closeProject} removes the project from memory. \cr \cr
 \code{isProject} checks whether the project exists on file. \cr \cr
+\code{getAvailableProjects} lists available projects. \cr \cr
 \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
 }
 \examples{
 # Show templates:
 createProject()
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+
+# See avilable projects, either as full paths or as a list:
+openProject()
+openProject(list())
+# A test project "Test_Rstox" is automatically created when openProject("Test_Rstox") is run. 
+# If one wishes to re-create the "Test_Rstox" project, use createProject("Test_Rstox", ow=TRUE).
 
 # Read xml file directly from any location:
 xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")

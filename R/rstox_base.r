@@ -5,30 +5,42 @@
 #' \code{createProject} creates a new StoX project (from xml files). \cr \cr
 #' \code{openProject} opens a StoX project. If the project has already been opened, \code{openProject} will only retrieve the project object from the RstoxEnv enviromnent. To force open the project use \code{reopenProject}. \cr \cr
 #' \code{reopenProject} re-opens a StoX project, which is equivalent to closeing and then opening the project. \cr \cr
-#' \code{getProject} gets the project object, either from the input if this is a baseline or project object, or from the project environment. \cr \cr
+#' \code{getProject} gets a project object (one of "project", "baseline", "report", "name"), either from the input if this is a baseline or project object, or from the project environment. \cr \cr
+#' \code{listOpenProjects} lists all open projects. \cr \cr
 #' \code{updateProject} updates links to xml files in a project. \cr \cr
 #' \code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
+#' \code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr
+#' \code{resetProject} resets a project to the original settings. \cr \cr
 #' \code{closeProject} removes the project from memory. \cr \cr
 #' \code{isProject} checks whether the project exists on file. \cr \cr
+#' \code{getAvailableProjects} lists available projects. \cr \cr
 #' \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
 #'
-#' @param projectName   	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
-#' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in StoX_data_types in the environment "RstoxEnv". Get these by get("StoX_data_types", envir=get("RstoxEnv"))). These could be given as directories, in which case all files in those directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If files has length 0 (default), the files present in the project directory are used, if already existing (requires to answer "y" when asked to overwrite the project if ow=NULL, or alternatively to set ow=TRUE).
+#' @param projectName   	The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.
+#' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in Definitions$StoX_data_types in the environment "RstoxEnv". Get these by getRstoxDef("StoX_data_types"). These could be given as directories, in which case all files within the directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If \code{files} has length 0 (default), no files are written to the project except the project.xml file using the specified \code{model}. If multiple projects are created, the files are copied to all projects. If given as a single URL to a zipped StoX project, the project is downloaded and unzipped, usting the 
+#' @param newProjectName	The name of the project to save an open project as.
 #' @param dir				The directory in which to put the project. The project is a directory holding three sub directories named "input", "output" and "process", where input, output and process files are stored.
 #' @param model   			The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (see \code{parlist}). Show available templates with createProject().
 #' @param ow   				Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.
 #' @param open   			Logical: if TRUE (defalut) open the project in memory.
 #' @param ignore.processXML	Logical: if TRUE do not copy any project.XML file given in \code{files} to the project.
 #' @param parlist,...   	See \code{\link{runBaseline}}.
-#' @param out   			One of "project", "baseline" or "name" (project name) (only first character used), specifying the output.
+#' @param out   			One of "project", "baseline" or "name" (project name), specifying the output.
 #' @param nchars			The number of characters to read when determining the types of the files in readXMLfiles().
-#' @param msg				Logical: If TRUE print messages to the console.
+#' @param msg				Logical: If TRUE, print messages to the console.
+#' @param soft				Logical: If TRUE, do not save the current javaParameters to the savedParameters field in the project environment (used in saveasProject()).
+#' @param to				A string naming the parameters to reset a project to (one of "original" and "saved", where the latter is only used in saveasProject()).
+#' @param subset.out		Logical: Used in \code{is.project}. If TRUE, subset the input project names, and if False, return a logical vector.
 #'
 #' @examples
 #' # Show templates:
 #' createProject()
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
+#'
+#' # See avilable projects, either as full paths or as a list:
+#' openProject()
+#' openProject(list())
+#' # A test project "Test_Rstox" is automatically created when openProject("Test_Rstox") is run. 
+#' # If one wishes to re-create the "Test_Rstox" project, use createProject("Test_Rstox", ow=TRUE).
 #'
 #' # Read xml file directly from any location:
 #' xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")
@@ -50,13 +62,20 @@
 #' @export
 #' @rdname createProject
 #' 
-createProject <- function(projectName=NULL, files=list(), dir=NULL, model="StationLengthDistTemplate", ow=NULL, open=TRUE, ignore.processXML=FALSE, parlist=list(), ...){
+createProject <- function(projectName=NULL, files=list(), dir=NULL, model="StationLengthDistTemplate", ow=NULL, open=TRUE, ignore.processXML=FALSE, parlist=list(), msg=TRUE, ...){
 	##### Functions: #####
 	# Return available templates as default:
 	getTemplates <- function(){
 		templates <- J("no.imr.stox.factory.Factory")$getAvailableTemplates()$toArray()
 		descriptions <- sapply(templates, J("no.imr.stox.factory.Factory")$getTemplateDescription)
-		cbind(Template=templates, Description=unname(descriptions))
+		templateProcesses <- lapply(templates, function(x) J("no.imr.stox.factory.FactoryUtil")$getTemplateProcessNamesByModel(x, "baseline"))
+		names(templateProcesses) <- templates
+		for(i in seq_along(templateProcesses)){
+			attr(templateProcesses[[i]], "description") <- descriptions[i]
+		}
+		templateProcesses
+		#l <- list(Templates=templateProcesses, Descriptions=cbind(Template=templates, Description=unname(descriptions)))
+		#cbind(Template=templates, Description=unname(descriptions), processNames=sapply(templateProcesses, paste, collapse=", "))
 	}
 	matchTemplates <- function(template, availableTemplates){
 		availableTemplates[ which(tolower(substr(availableTemplates, 1, nchar(template))) == tolower(template)) ]
@@ -94,6 +113,14 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	##############################################################################################
 	##### 1. Initiate Rstox, get templates and project name, root and directory (full path): #####
 	##############################################################################################
+	# If an URL to a zip file is given in 'projectName', assume the URL points to a zipped StoX project and download the project:
+	if(length(files)==1 && isProjectZipURL(files)){
+		return(downloadProjectZip(URL=files, projectName=projectName, projectRoot=dir, cleanup=TRUE, ow=ow)$projectPath)
+	}
+	if(length(projectName)==1 && isProjectZipURL(projectName)){
+		return(downloadProjectZip(URL=projectName, projectRoot=dir, cleanup=TRUE, ow=ow)$projectPath)
+	}
+	
 	# J() and reference to "no/imr/stox/model/Project" requires	Rstox.init():
 	Rstox.init()
 	
@@ -102,215 +129,330 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		return(availableTemplates)
 	}
 	
-	# Set the project name and the root directory of the project:
-	projectPaths <- getProjectPaths(projectName, dir=dir)
-	projectName <- projectPaths$projectName
-	dir <- projectPaths$projectRoot
-	projectPath <- projectPaths$projectPath
-	##############################################################################################
-	##############################################################################################
+	nprojects <- length(projectName)
+	projectPath <- rep(NA, nprojects)
 	
-	
-	
-	#################################
-	##### 2. Treat overwriting: #####
-	#################################
-	if(file.exists(projectPath)){
-		if(length(ow)==0){
-			ans <- readline(paste0("Project \"", projectPath, "\" already exists. Overwrite? (y/n)\n"))
-			if(ans!="y"){
-				cat("Not overwriting:", projectPath, "\n")
+	for(i in seq_len(nprojects)){
+		# Set the project name and the root directory of the project:
+		projectPaths <- getProjectPaths(projectName[i], projectRoot=dir)
+		thisProjectName <- projectPaths$projectName
+		dir <- projectPaths$projectRoot
+		thisProjectPath <- projectPaths$projectPath
+		##############################################################################################
+		##############################################################################################
+		
+		#################################
+		##### 2. Treat overwriting: #####
+		#################################
+		if(file.exists(thisProjectPath)){
+			temp <- getow(ow=ow, projectPath=thisProjectPath, onlyone=nprojects==1, msg=msg)
+			ow <- temp$ow
+			if(nprojects==1 && temp$jumpToNext){
 				return()
 			}
+			else if(temp$jumpToNext){
+				next
+			}	
+		
+			# Delete the existing project if the function/for loop did not exit:
+			unlink(thisProjectPath, recursive=TRUE, force=TRUE)
+			# Also remove the projet from R memory, that is delete the project environment:
+			closeProject(thisProjectName)
 		}
-		else if(!ow){
-			cat("Not overwriting:", projectPath, "\n")
-			return()
-		}
-		# Delete the existing project if the function did not exit:
-		unlink(projectPath, recursive=TRUE, force=TRUE)
-		# Also remove the projet from R memory, that is delete the project environment:
-		closeProject(projectName)
-	}
-	#################################
-	#################################
+		#################################
+		#################################
 	
 		
-	############################################
-	##### 3. Apply the specified template: #####
-	############################################
-	userDefined <- is.list(model) || (length(model)>0 && !model[1] %in% availableTemplates[,1])
-	# Select the template given the user input:
-	if(userDefined){
-		template <- matchTemplates("UserDefined", availableTemplates[,1])
-	}
-	else if(length(model)){
-		# Find the templates that match the available tempaltes case insensitively and using abbreviation:
-		template <- matchTemplates(model[1], availableTemplates[,1])
-		if(length(template)>1){
-			template <- template[1]
-			warning(paste0("Multiple templates matched. The first used (", template, ")"))
+		############################################
+		##### 3. Apply the specified template: #####
+		############################################
+		userDefined <- is.list(model) || (length(model)>0 && !model[1] %in% names(availableTemplates))
+		# Select the template given the user input:
+		if(userDefined){
+			template <- matchTemplates("UserDefined", names(availableTemplates))
 		}
-		 else if(length(template)==0){
-			warning(paste0("'template' matches no templates. Run createProject() to get a list of available tempaltes. Default used (", "StationLengthDist", ")"))
-			template <- matchTemplates("StationLengthDist", availableTemplates[,1])
-		}
-	}
-	else{
-		template <- matchTemplates("StationLengthDist", availableTemplates[,1])
-	}
-	############################################
-	############################################
-	
-	
-	########################################################
-	##### 4. Generate folder structure and copy files: #####
-	########################################################
-	# Create the project, that is create in memory and set ut the folder structure. This writes folders to the directory 'dir'!:
-	project <- J("no.imr.stox.factory.FactoryUtil")$createProject(dir, projectName, template)
-	
-	# Copy files to the project directory:
-	StoX_data_types <- getRstoxEnv()$StoX_data_types
-	StoXdirs <- file.path(projectPath, "input", StoX_data_types)
-	# Add the process directory to allow for the project.xml file to be given in the input 'files':
-	StoX_data_types <- c(StoX_data_types, "process")	 
-	StoXdirs <- c(StoXdirs, file.path(projectPath, "process"))	 
-
-	# Get the files:
-	files <- getFiles(files, StoX_data_types)
-	if(ignore.processXML){
-		files$process <- NULL
-		}
-	# Copy the files 
-	if(length(files) && is.list(files)){
-		copyFilesToStoX(StoX_data_types, files, dirs=StoXdirs)
-	}
-	
-	# Save the project if no project.xml file was given. This is done in order to open the project in the next step using openProject(), which is needed to create the project environment. Here we need to the project object, since that is what we wish to save. If we used the project name, getProject() used in saveProject() would look for the project object in the project environment, which we have not created yet:
-	if(length(files$process)==0){
-		saveProject(project)
-	}
-	
-	# Open the project with the project.xml file copied to the prodect directory or generated from the template given in 'model':
-	project <- openProject(projectPath, out="project")
-	# Update the xml files containg the data. This is done to make sure the files are pointed to in the project even after moving files (for example if the full path was used in the project.xml file copied to the project). This is only effectice if the model includes StoX reading function such as readBioticXML:
-	updateProject(projectPath)
-	########################################################
-	########################################################
-	
-	
-	#####################################################
-	##### 5. Add the processes specified in 'model' #####
-	#####################################################
-	# Specify the model if a valid template was not given:
-	if(userDefined){
-		if(length(files$process)){
-			warning(paste0("a project.xml file was copied to the project ", projectPath, ", and any model specification given in 'model' is ignored (ignore.processXML = TRUE can be used to discard the project.xml file)"))
+		else if(length(model)){
+			# Find the templates that match the available tempaltes case insensitively and using abbreviation:
+			template <- matchTemplates(model[1], names(availableTemplates))
+			if(length(template)>1){
+				template <- template[1]
+				warning(paste0("Multiple templates matched. The first used (", template, ")"))
+			}
+			 else if(length(template)==0){
+				warning(paste0("'template' matches no templates. Run createProject() to get a list of available tempaltes. Default used (", "StationLengthDist", ")"))
+				template <- matchTemplates("StationLengthDist", names(availableTemplates))
+			}
 		}
 		else{
-			# Get the list of parameters specified either in 'model', or in 'parlist' or '...' in addition (usually only used then a template is used so that userDefined=FALSE, but kept here for robustness):
-			parlist <- getParlist(parlist=c(model, parlist), ...)
-			# Add the processes. Set the parameter values below:
-			addProcesses(project, parlist)
+			template <- matchTemplates("StationLengthDist", names(availableTemplates))
 		}
-	}
-	else{
-		parlist <- getParlist(parlist=parlist, ...)
-	}
+		############################################
+		############################################
 	
-	# Override parameters in the project:
-	if(length(parlist)){
-		# Re-open the project in order to sucessfully set the parameters in the 'parlist':
-		saveProject(projectPath)
-		reopenProject(projectPath)
-		setBaselineParameters(projectPath, parlist=parlist, msg=FALSE, save.project=TRUE)
-	}
 	
-	# Finally, save all changes to the project.xml file:
-	saveProject(projectPath)
-	#####################################################
-	#####################################################
+		########################################################
+		##### 4. Generate folder structure and copy files: #####
+		########################################################
+		# Create the project, that is create in memory and set ut the folder structure. This writes folders to the directory 'dir'!:
+		project <- J("no.imr.stox.factory.FactoryUtil")$createProject(dir, thisProjectName, template)
 	
+		# Copy files to the project directory:
+		StoX_data_types <- getRstoxDef("StoX_data_types")
+		StoXdirs <- file.path(thisProjectPath, "input", StoX_data_types)
+		# Add the process directory to allow for the project.xml file to be given in the input 'files':
+		StoX_data_types <- c(StoX_data_types, "process")	 
+		StoXdirs <- c(StoXdirs, file.path(thisProjectPath, "process"))	 
+
+
+		### Add the files: ####
+		# If the Test_Rstox project is to be created, add the example files, thus overriding any other files specified in the input:
+		if(identical(thisProjectName, "Test_Rstox")){
+			thisfiles <- system.file("extdata", "Test_Rstox", package="Rstox")
+		}
+		else{
+			thisfiles <- files
+		}
+		
+		# Get the different files:
+		thisfiles <- getFiles(thisfiles, StoX_data_types)
+		if(ignore.processXML){
+			thisfiles$process <- NULL
+			}
+		# Copy the files 
+		if(length(thisfiles) && is.list(thisfiles)){
+			copyFilesToStoX(StoX_data_types, thisfiles, dirs=StoXdirs)
+		}
+	
+		# Save the project if no project.xml file was given. This is done in order to open the project in the next step using openProject(), which is needed to create the project environment. Here we need to the project object, since that is what we wish to save. If we used the project name, getProject() used in saveProject() would look for the project object in the project environment, which we have not created yet:
+		if(length(thisfiles$process)==0){
+			saveProject(project)
+		}
+	
+		# Open the project with the project.xml file copied to the prodect directory or generated from the template given in 'model':
+		project <- openProject(thisProjectPath, out="project")
+		# Update the xml files containg the data. This is done to make sure the files are pointed to in the project even after moving files (for example if the full path was used in the project.xml file copied to the project). This is only effectice if the model includes StoX reading function such as readBioticXML:
+		updateProject(thisProjectPath)
+		########################################################
+		########################################################
+	
+	
+		#####################################################
+		##### 5. Add the processes specified in 'model' #####
+		#####################################################
+		# Specify the model if a valid template was not given:
+		if(userDefined){
+			if(length(thisfiles$process)){
+				warning(paste0("a project.xml file was copied to the project ", thisProjectPath, ", and any model specification given in 'model' is ignored (ignore.processXML = TRUE can be used to discard the project.xml file)"))
+			}
+			else{
+				# Get the list of parameters specified either in 'model', or in 'parlist' or '...' in addition (usually only used then a template is used so that userDefined=FALSE, but kept here for robustness):
+				parlist <- getParlist(parlist=c(model, parlist), ...)
+				# Add the processes. Set the parameter values below:
+				addProcesses(project, parlist)
+			}
+		}
+		else{
+			parlist <- getParlist(parlist=parlist, ...)
+		}
+	
+		# Override parameters in the project:
+		if(length(parlist)){
+			# Re-open the project in order to sucessfully set the parameters in the 'parlist':
+			saveProject(thisProjectPath)
+			reopenProject(thisProjectPath)
+			setBaselineParameters(thisProjectPath, parlist=parlist, msg=FALSE, save=c("last", "java"))
+		}
+	
+		# Finally, save all changes to the project.xml file:
+		saveProject(thisProjectPath)
+		
+		projectPath[i] <- thisProjectPath
+		#####################################################
+		#####################################################
+	} # End of for loop through projects.
 	
 	# Return the project directory:
 	projectPath
 }
 #' 
-#' @importFrom rJava J .jnew
+#' @importFrom rJava J
 #' @export
 #' @rdname createProject
 #' 
-openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), msg=FALSE){
+openProject <- function(projectName=NULL, out=c("project", "baseline", "report", "name"), msg=FALSE){
+	# Old version, listing everything in the default workspace:
+	#return(list.files(J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()))
+	
+	# get the available projects, ordered from the top level and down:
+	availableProjects <- getAvailableProjects()
+	
 	# If nothing is given return a list of the projects in the StoX project directory:
 	if(length(projectName)==0){
-		Rstox.init()
-		return(list.files(J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()))
+		if(is.list(projectName)){
+			return(availableProjects$projectNameList)
+		}
+		else{
+			return(availableProjects$projectPaths)
+		}
 	}
 	
 	# Get the project Java object, possibly retrieved from the project environment (getProject() uses getProjectPaths() if a character is given):
 	project <- getProject(projectName, msg=msg)
 	
-
-#	
-#   - projectName can be the name of a folder in the workspace or a full path to the project
-#
-#   - Java$openProject() and Java$createProject() both take workspace and projectName as parameters, where projectName is really basename(projectName).
-#
-#   - getWorkspace() should take both a dir and projectName input, where dir is extracted from projectName by dirname(projectName) in the case that isTRUE(file.info(projectName)$isdir)
-	
-	
 	# Otherwise, open the project, generate the project object, and save it to the RstoxEnv evnironment:
 	if(length(project)==0){
-		# If the project exists on file, open in Java and R memory:
+		# Search for the project:
 		if(!isProject(projectName)){
-			warning(paste0("The StoX project ", projectName, " does not exist"))
-			return(NULL)
+			# If the Test_Rstox project is requested, create it:
+			if(identical(projectName, "Test_Rstox")){
+				temp <- createProject("Test_Rstox")
+				availableProjects$projectPaths <- c(temp, availableProjects$projectPaths)
+			}
+			
+			# Get avaiable project names and match against the requested project. The top levels are prioritized in availableProjects$projectPaths:
+			availableProjectNames <- basename(availableProjects$projectPaths)
+			matches <- which(availableProjectNames %in% getProjectPaths(projectName)$projectName)
+			if(length(matches)==0){
+				warning(paste0("The StoX project \"", projectName, "\" not found in the default workspace \"", availableProjects$workspace, "\". For projects not located in this directory or its sub directories, the full path to the project folder must be specified."))
+				return(NULL)
+			}
+			else if(length(matches)>1){
+				#warning(paste0("Multiple StoX projects matching \"", projectName, "\". Use the full path, or path relative to the default workspace, to specify the project uniquely. The first of the following list selected:\n", paste0("\t", availableProjects$projectPaths[matches], collapse="\n")))
+				stop(paste0("Multiple StoX projects matching \"", projectName, "\". Use the full path, or path relative to the default workspace (", getProjectPaths()$projectRoot, ") to specify the project uniquely:\n", paste0("\t", availableProjects$projectPaths[matches], collapse="\n")))
+			}
+			projectName <- availableProjects$projectPaths[matches[1]]
+		}
+		
+		
+		projectPaths <- getProjectPaths(projectName)
+		projectName <- projectPaths$projectName
+		projectRoot <- projectPaths$projectRoot
+		projectPath <- projectPaths$projectPath
+		########## Open the project in Java memory: ##########
+		Rstox.init()
+		project <- J("no.imr.stox.factory.FactoryUtil")$openProject(projectRoot, projectName)
+		# This line was added on 2017-08-23 due to a bug discovered when estimating the area of polygons using the "accurate" method. When baseline is run, Java calls the function polyArea() when AreaMethod="accurate". However, whenever this failed, the simple method implemented in Java was used (which was a bug). The problem was that the path to the R-bin was not set in Rstox. To solve this, a file holding this path (or the command project$setRFolder(PATH_TO_R_BIN)) will be saved by StoX, and called every time a triggerscript is run. In Rstox we solve the problem by the below sequence:
+		RFolder <- project$getRFolder()
+		if(length(RFolder)==0 || (is.character(RFolder) && nchar(RFolder)==0)){
+			project$setRFolder(R.home("bin"))
+		}
+		############################################### ######
+		
+		########## Open the project in R memory: ##########
+		# Create a list for the project in the environment 'RstoxEnv':
+		
+		# Prior to rstox_1.7 the function readBaselineParameters() was used, but this caused problems when parameters were changed when read to the Java memory. Thus DO NOT USE readBaselineParameters(), BUT RATHER readBaselineParametersJava():
+		#parameters <- readBaselineParameters(projectPath)
+		parameters <- readBaselineParametersJava(project)
+		# The first line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
+		temp <- getRstoxEnv()
+		RstoxEnv$Projects[[projectName]] <- list(originalParameters=parameters, savedParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectPath=projectPath, projectData=new.env())
+		#assign(projectName, list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()), envir=getRstoxEnv())
+		##assign(getRstoxEnv()[[projectName]], list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()))
+		###getRstoxEnv()[[projectName]] <- list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env())
+		# Also add the last used parameters to the projectData, in order to save this to file. 
+		##### NOTE (2017-08-28): This is different from the 'lastParameters' object in the project environment (rstoxEnv[[projectName]]), and is only used when writing project data such as bootstrap results to file: #####
+		setProjectData(projectName=projectName, var=parameters, name="lastParameters")
+
+		# As of version 1.4.2, create the new folder structure:
+		suppressWarnings(dir.create(projectPaths$RDataDir, recursive=TRUE))
+		suppressWarnings(dir.create(projectPaths$RReportDir, recursive=TRUE))
+		###################################################
+		#}
+	}
+	
+	### # Return a baseline object:
+	### if(tolower(substr(out[1], 1, 1)) == "b"){
+	### 	return(project$getBaseline())
+	### }
+	### # Return the project object:
+	### else if(tolower(substr(out[1], 1, 1)) == "p"){
+	### 	return(project)
+	### }
+	### # Return the project name:
+	### else if(tolower(substr(out[1], 1, 1)) == "n"){
+	### 	return(project$getProjectName())
+	### }
+	
+	### # Return a baseline object:
+	### if(startsWith(tolower(out[1]), "baseline"){
+	### 	return(project$getBaseline())
+	### }
+	### # Return the baseline report object:
+	### if(startsWith(tolower(out[1]), "report"){
+	### 	return(project$getBaselineReport())
+	### }
+	### # Return the project object:
+	### else if(startsWith(tolower(out[1]), "project"){
+	### 	return(project)
+	### }
+	### # Return the project name:
+	### else if(startsWith(tolower(out[1]), "name"){
+	### 	return(project$getProjectName())
+	### }
+	### else{
+	### 	warning("Invalid value of 'out'")
+	### 	return(NULL)
+	### }
+	
+	# Return the requested object:
+	getProject(project, out=out)
+}
+#' 
+#' @export
+#' @rdname createProject
+#' 
+reopenProject <- function(projectName, out=c("project", "baseline", "report", "name")){
+	closeProject(projectName)
+	openProject(projectName,  out=out)
+}
+#' 
+#' @export
+#' @rdname createProject
+#' 
+getProject <- function(projectName, out=c("project", "baseline", "report", "name"), msg=FALSE){
+	# Return immediately if a project or baseline object is given:
+	if(class(projectName) == "jobjRef"){
+		if(projectName@jclass=="no/imr/stox/model/Project"){
+			project <- projectName
+		}
+		else if(projectName@jclass=="no/imr/stox/model/Model"){
+			project <- projectName$getProject()
+		}
+	}
+	# Check for the existence of the project object in the RstoxEnv evnironment (getProjectPaths(projectName)$projectName assures that the project name is used and not the full project path if given in 'projectName'):
+	#else if(is.character(projectName) && nchar(projectName)>0 && length(getRstoxEnv()[[getProjectPaths(projectName)$projectName]]$projectObject)>0){
+	else if(is.character(projectName) && nchar(projectName)>0){
+		projectName <- getProjectPaths(projectName)$projectName
+		if(length(getRstoxEnv()$Projects[[projectName]]$projectObject)){
+			if(msg){
+				warning(paste0("Project retrieved from RstoxEnv$Projects[['", projectName, "']]. To reopen the project use reopenProject(", projectName, ")"))
+			}
+			project <- getRstoxEnv()$Projects[[projectName]]$projectObject
 		}
 		else{
-			projectPaths <- getProjectPaths(projectName)
-			projectName <- projectPaths$projectName
-			projectRoot <- projectPaths$projectRoot
-			projectPath <- projectPaths$projectPath
-			########## Open the project in Java memory: ##########
-			Rstox.init()
-			project <- J("no.imr.stox.factory.FactoryUtil")$openProject(projectRoot, projectName)
-			# This line was added on 2017-08-23 due to a bug discovered when estimating the area of polygons using the "accurate" method. When baseline is run, Java calls the function polyArea() when AreaMethod="accurate". However, whenever this failed, the simple method implemented in Java was used (which was a bug). The problem was that the path to the R-bin was not set in Rstox. To solve this, a file holding this path (or the command project$setRFolder(PATH_TO_R_BIN)) will be saved by StoX, and called every time a triggerscript is run. In Rstox we solve the problem by the below sequence:
-			RFolder <- project$getRFolder()
-			if(length(RFolder)==0 || (is.character(RFolder) && nchar(RFolder)==0)){
-				project$setRFolder(R.home("bin"))
-			}
-			############################################### ######
-			
-			########## Open the project in R memory: ##########
-			# Create a list for the project in the environment 'RstoxEnv':
-			parameters <- readBaselineParameters(projectPath)
-			# The first line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
-			temp <- getRstoxEnv()
-			RstoxEnv[[projectName]] <- list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env())
-			#assign(projectName, list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()), envir=getRstoxEnv())
-			##assign(getRstoxEnv()[[projectName]], list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env()))
-			###getRstoxEnv()[[projectName]] <- list(originalParameters=parameters, javaParameters=parameters, lastParameters=parameters, projectObject=project, projectData=new.env())
-			# Also add the last used parameters to the projectData, in order to save this to file. 
-			##### NOTE (2017-08-28): This is different from the 'lastParameters' object in the project environment (rstoxEnv[[projectName]]), and is only used when writing project data such as bootstrap results to file: #####
-			setProjectData(projectName=projectName, var=parameters, name="lastParameters")
-	
-			# As of version 1.4.2, create the new folder structure:
-			suppressWarnings(dir.create(projectPaths$RDataDir, recursive=TRUE))
-			suppressWarnings(dir.create(projectPaths$RReportDir, recursive=TRUE))
-			###################################################
+			return(NULL)
 		}
+		#return(getRstoxEnv()[[projectName]]$projectObject)
+	}
+	else{
+		return(NULL)
 	}
 	
 	# Return a baseline object:
-	if(tolower(substr(out[1], 1, 1)) == "b"){
+	if(startsWith(tolower(out[1]), "baseline")){
 		return(project$getBaseline())
 	}
+	# Return the baseline report object:
+	if(startsWith(tolower(out[1]), "report")){
+		return(project$getBaselineReport())
+	}
 	# Return the project object:
-	else if(tolower(substr(out[1], 1, 1)) == "p"){
+	else if(startsWith(tolower(out[1]), "project")){
 		return(project)
 	}
 	# Return the project name:
-	else if(tolower(substr(out[1], 1, 1)) == "n"){
+	else if(startsWith(tolower(out[1]), "name")){
 		return(project$getProjectName())
 	}
 	else{
@@ -322,43 +464,12 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "name"), 
 #' @export
 #' @rdname createProject
 #' 
-reopenProject <- function(projectName, out=c("project", "baseline", "name")){
-	closeProject(projectName)
-	openProject(projectName,  out=out)
-}
-#' 
-#' @importFrom rJava J .jnew
-#' @export
-#' @rdname createProject
-#' 
-getProject <- function(projectName, msg=FALSE){
-	# Return immediately if a project or baseline object is given:
-	if(class(projectName) == "jobjRef"){
-		if(projectName@jclass=="no/imr/stox/model/Project"){
-			return(projectName)
-		}
-		else if(projectName@jclass=="no/imr/stox/model/Model"){
-			return(projectName$getProject())
-		}
-	}
-	# Check for the existence of the project object in the RstoxEnv evnironment (getProjectPaths(projectName)$projectName assures that the project name is used and not the full project path if given in 'projectName'):
-	#else if(is.character(projectName) && nchar(projectName)>0 && length(getRstoxEnv()[[getProjectPaths(projectName)$projectName]]$projectObject)>0){
-	else if(is.character(projectName) && nchar(projectName)>0){
-		projectName <- getProjectPaths(projectName)$projectName
-		if(length(getRstoxEnv()[[projectName]]$projectObject)){
-			if(msg){
-				warning(paste0("Project retrieved from the RstoxEnv$", projectName, " enviroment. To reopen the project use reopenProject(", projectName, ")"))
-			}
-			return(getRstoxEnv()[[projectName]]$projectObject)
-		}
-		else{
-			return(NULL)
-		}
-		#return(getRstoxEnv()[[projectName]]$projectObject)
-	}
-	else{
-		return(NULL)
-	}
+listOpenProjects <- function(){
+	out <- data.frame(
+		projectName = names(getRstoxEnv()$Projects), 
+		projectPath = sapply(getRstoxEnv()$Projects, function(x) x$projectPath), stringsAsFactors=FALSE)
+	rownames(out) <- NULL
+	out
 }
 #' 
 #' @export
@@ -379,10 +490,17 @@ updateProject <- function(projectName){
 #' @export
 #' @rdname createProject
 #' 
-saveProject <- function(projectName){
+saveProject <- function(projectName, soft=FALSE){
 	project <- getProject(projectName)
 	if(length(project)){
+		# Save the project:
 		project$save()
+		if(!soft){
+			# In case the project object was given as 'projectName':
+			projectName <- getProjectPaths(project)$projectName
+			# Set the savedParameters to the current javaParameters:
+			RstoxEnv$Projects[[projectName]]$savedParameters <- RstoxEnv$Projects[[projectName]]$javaParameters
+		}
 	}
 	else{
 		warning(paste("Project", projectName, "is not open, and cannot be saved."))
@@ -393,11 +511,62 @@ saveProject <- function(projectName){
 #' @export
 #' @rdname createProject
 #' 
+saveasProject <- function(projectName, newProjectName, dir=NULL, ow=NULL, msg=TRUE){
+	project <- getProject(projectName)
+	# First save the project (and reset at the end of the function):
+	saveProject(projectName, soft=TRUE)
+	# Get the path to the new project:
+	newProjectName <- getProjectPaths(newProjectName, projectRoot=dir)$projectPath
+	# If the new project is open, stop the function:
+	if(length(getProject(newProjectName))){
+		warning("Cannot overwrite an open project")
+	}
+	# If the new project exists, 
+	if(file.exists(newProjectName)){
+		ow <- getow(ow, newProjectName, onlyone=TRUE, msg=msg)$ow
+	}
+	else{
+		ow <- TRUE
+	}
+	if(ow){
+		suppressWarnings(dir.create(newProjectName))
+		tocopy <- list.dirs(getProjectPaths(project, projectRoot=dir)$projectPath, recursive=FALSE)
+		lapply(tocopy, file.copy, newProjectName, recursive=TRUE)
+	}
+	# Reset the project:
+	resetProject(projectName, to="saved")
+	
+}
+#' 
+#' @export
+#' @rdname createProject
+#' 
+resetProject <- function(projectName, to="original"){
+	# Get parameters:
+	parameters <- getBaselineParameters(projectName)
+	# Reset to original parameters
+	resetParameters <- parameters[[to[1]]]
+	if(length(resetParameters)==0){
+		warning("Invalid input for 'to'. Should be either \"original\" to reset to the original parameters (those present on openProject()) or \"saved\" to reset to the last saved parameters (only used in saveasProject() to reset a soft save).")
+	}
+	setBaselineParameters(projectName, parlist=resetParameters, save="java", msg=FALSE)
+	# Save the project:	
+	saveProject(projectName)
+	# Reset to previous parameters
+	setBaselineParameters(projectName, parlist=parameters$java, save="java", msg=FALSE)
+	projectName
+}
+#' 
+#' @export
+#' @rdname createProject
+#' 
 closeProject <- function(projectName){
 	projectName <- getProjectPaths(projectName)$projectName
 	# Remove the project list:
-	if(length(getRstoxEnv()[[projectName]])){
-		rm(list=projectName, envir=getRstoxEnv())
+	if(length(getRstoxEnv()$Projects[[projectName]])){
+		#rm(list=projectName, envir=getRstoxEnv())
+		temp <- getRstoxEnv()
+		temp$Projects[[projectName]] <- NULL
 		TRUE
 	}
 	else{
@@ -409,20 +578,21 @@ closeProject <- function(projectName){
 #' @export
 #' @rdname createProject
 #' 
-isProject <- function(projectName){
+isProject <- function(projectName, subset.out=FALSE){
+	# The following is done in getProjectPaths():
 	#	1. Look for the project if given by the full path
-	#	2. Look for the project in the default root
-	#	3. Return if not
+	#	2. Look for the project in the default root and sub directories
 	# Function for checking whether all the folders given in getRstoxEnv()$StoX_data_types are present in the directory:
-	hasStoX_data_types <- function(projectName){
+	hasStoX_data_typesOne <- function(projectName){
+		projectName <- getProjectPaths(projectName)$projectPath
 		projectInfo <- file.info(projectName)
 		if(isTRUE(projectInfo$isdir)){
 			dirs <- list.dirs(projectName, full.names=FALSE, recursive=FALSE)
-			if(all(getRstoxEnv()$StoXFolders %in% dirs)){
+			if(all(getRstoxDef("StoXFolders") %in% dirs)){
 				return(TRUE)
 			}
 			else{
-				warning(paste0("The path ", projectName, " does not contain the required folders (", paste(getRstoxEnv()$StoX_data_types, collapse=", "), ")"))
+				#warning(paste0("The path ", projectName, " does not contain the required folders (", paste(getRstoxEnv()$StoX_data_types, collapse=", "), ")"))
 				return(FALSE)
 			}
 		}
@@ -430,6 +600,16 @@ isProject <- function(projectName){
 			return(FALSE)
 		}
 	}	
+	
+	hasStoX_data_types <- function(x, subset.out=FALSE){
+		out <- unlist(lapply(x, hasStoX_data_typesOne))
+		if(subset.out){
+			x[out]
+		}
+		else{
+			out
+		}
+	}
 	
 	### # Check first the 'projectName' directly (which needs to be a full path, indicated by the !dirname(projectName) %in% c(".", "", "/")):
 	### out <- FALSE
@@ -442,7 +622,63 @@ isProject <- function(projectName){
 	### }
 	### out
 	
-	hasStoX_data_types(getProjectPaths(projectName)$projectPath)
+	hasStoX_data_types(projectName, subset.out=subset.out)
+}
+#' 
+#' @importFrom rJava J
+#' @export
+#' @rdname createProject
+#' 
+getAvailableProjects <- function(){
+	# List the valid StoX project folders and the other folders:
+	listProjectsAndFolders <- function(x){
+		paths <- list.dirs(x, recursive=FALSE)
+		if(length(paths)==0){
+			return(list())
+		}
+		# Get projects at the top level:
+		arePr <- isProject(paths)
+		paths_notPr <- paths[!arePr]
+		paths <- paths[arePr]
+		return(list(pr=paths, notPr=paths_notPr, dir=x))
+	}
+	
+	# 2017-09-03 (Arne Johannes Holmin): Change made to list projects located in sub folders in the default workspace. These are returned with thir full path:
+	Rstox.init()
+	# Get all files and folders in the default workspace:
+	workspace <- J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()
+	
+	# Iterate through the workspace and find StoX projects:
+	projectPathList <- list()
+	workspaceTemp <- workspace
+	while(TRUE){
+		# Get the projects and non-StoX-project directories
+		this <- lapply(workspaceTemp, listProjectsAndFolders)
+		dir <- unlist(lapply(this, "[[", "dir"))
+		# Update the workspaceTemp:
+		workspaceTemp <- unlist(lapply(this, "[[", "notPr"))
+		this <- lapply(this, "[[", "pr")
+		names(this) <- dir
+		# Append the projects to the list:
+		projectPathList <- c(projectPathList, this)
+		if(length(workspaceTemp)==0){
+			break
+		}
+	}
+	# Clean the list:
+	projectPathList <- projectPathList[sapply(projectPathList, length)>0]
+	projectPaths <- unname(unlist(projectPathList))
+	
+	# If nothing is given return a list of the projects in the StoX project directory:
+	temp <- names(projectPathList)
+	projectNameList <- lapply(seq_along(projectPathList), function(i) substring(sub(names(projectPathList)[i], "", projectPathList[[i]], fixed=TRUE), 2))
+	names(projectNameList) <- temp
+	
+	return(list(
+		projectPaths = projectPaths, 
+		projectPathList = projectPathList, 
+		projectNameList = projectNameList, 
+		workspace = workspace))
 }
 #'
 #' @export
@@ -455,13 +691,13 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 			return(files)
 		}
 		first <- sapply(files, readChar, nchars=nchars)
-		out <- lapply(getRstoxEnv()$StoX_data_type_keys, grep, first, ignore.case=TRUE)
+		out <- lapply(getRstoxDef("StoX_data_type_keys"), grep, first, ignore.case=TRUE)
 		if(sum(sapply(out, length))){
 			out <- lapply(out, function(x) files[x])
-			names(out) <- getRstoxEnv()$StoX_data_types
+			names(out) <- getRstoxDef("StoX_data_types")
 		}
 		else{
-			warning(paste0("No acoustic, biotic or landing XML files detected (using the characteristic strings ", paste(paste0("'", getRstoxEnv()$StoX_data_type_keys, "'"), collapse=", "), " as identifyers for the file types ", paste(paste0("'", getRstoxEnv()$StoX_data_types, "'"), collapse=", ") , ") "))
+			warning(paste0("No acoustic, biotic or landing XML files detected (using the characteristic strings ", paste(paste0("'", getRstoxDef("StoX_data_type_keys"), "'"), collapse=", "), " as identifyers for the file types ", paste(paste0("'", getRstoxDef("StoX_data_types"), "'"), collapse=", ") , ") "))
 			out <- list()
 		}
 		return(out)
@@ -476,8 +712,8 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 		if(length(files)==1 && isTRUE(file.info(files)$isdir)){
 			dirs <- list.dirs(files, recursive=FALSE, full.names=FALSE)
 			# Get the files if given as a directory holding sub directories named "biotic", "acoustic", or "landing":
-			if(any(getRstoxEnv()$StoX_data_types %in% dirs)){
-				presentDirs <- file.path(files, intersect(getRstoxEnv()$StoX_data_types, dirs))
+			if(any(getRstoxDef("StoX_data_types") %in% dirs)){
+				presentDirs <- file.path(files, intersect(getRstoxDef("StoX_data_types"), dirs))
 				files <- lapply(presentDirs, list.files, recursive=TRUE, full.names=TRUE)
 				names(files) <- basename(presentDirs)
 				files <- files[unlist(lapply(files, length))>0]
@@ -490,7 +726,7 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 	}
 	
 	# Keep only the valid file types:
-	files <- files[getRstoxEnv()$StoX_data_types]
+	files <- files[getRstoxDef("StoX_data_types")]
 	# And only non-empty elements:
 	files <- files[sapply(files, length)>0]
 	# Expand all paths for StoX to recognize the files:
@@ -507,7 +743,7 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 	model <- c(readmodel, model)
 	
 	# Create a temporary project:
-	project <- createProject("tempProject", dir=path.expand(dir), model=model, ow=TRUE)
+	project <- createProject("tempProject", dir=path.expand(dir), model=model, msg=FALSE, ow=TRUE)
 	
 	out <- getBaseline(project, input=NULL, msg=FALSE)
 	unlink(project)
@@ -540,7 +776,7 @@ pointToStoXFiles <- function(projectName, files=NULL){
 	}
 	getFiles <- function(projectPath, StoX_data_types, files=NULL){
 		if(length(files)==0){
-			files <- lapply(StoX_data_types, getFilesOfDataType, projectPath)
+			files <- lapply(StoX_data_types, getFilesOfDataType, projectPath=projectPath)
 			names(files) <- StoX_data_types
 		}
 		if(!all(names(files) %in% StoX_data_types)){
@@ -550,13 +786,26 @@ pointToStoXFiles <- function(projectName, files=NULL){
 		lapply(files, path.expand)
 	}
 	# Function that points to the files[[data_type]] in the project. Lapply this:
-	pointToStoXFilesSingle <- function(data_type, project, files){
+	#pointToStoXFilesSingle <- function(data_type, project, files){
+	#	# Get the files of the specified type:
+	#	thesefiles <- files[[data_type]]
+	#	# Get the StoX-function name for reading these files:
+	#	fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
+	#	for(i in seq_along(thesefiles)){
+	#		proc <- project$getBaseline()$findProcessByFunction(fun)
+	#		if(length(names(proc))){
+	#			proc$setParameterValue(paste0("FileName",i), thesefiles[i])
+	#		}
+	#	}
+	#	thesefiles
+	#}
+	pointToStoXFilesSingle <- function(data_type, baseline, files){
 		# Get the files of the specified type:
 		thesefiles <- files[[data_type]]
 		# Get the StoX-function name for reading these files:
 		fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
 		for(i in seq_along(thesefiles)){
-			proc <- project$getBaseline()$findProcessByFunction(fun)
+			proc <- baseline$findProcessByFunction(fun)
 			if(length(names(proc))){
 				proc$setParameterValue(paste0("FileName",i), thesefiles[i])
 			}
@@ -567,15 +816,24 @@ pointToStoXFiles <- function(projectName, files=NULL){
 	#  # Get the project name (possibly interpreted from a project or baseline object):
 	#  projectName <- getProjectPaths(projectName)$projectName
 	# Open the project:
-	project <- openProject(projectName, out="project")
+	#project <- openProject(projectName, out="project")
+	baseline <- openProject(projectName, out="baseline")
+	projectPath <- getProjectPaths(projectName)$projectPath
 	# Get the currently defined StoX data types:
-	StoX_data_types <- getRstoxEnv()$StoX_data_types
+	StoX_data_types <- getRstoxDef("StoX_data_types")
 	# Get the files if not specified in the input:
-	files <- getFiles(project$getProjectFolder(), StoX_data_types, files)
+	#files <- getFiles(project$getProjectFolder(), StoX_data_types, files)
+	files <- getFiles(projectPath, StoX_data_types=StoX_data_types, files=files)
 	# Point to the files, save and return:
-	out <- lapply(StoX_data_types, pointToStoXFilesSingle, project, files)
+	#out <- lapply(StoX_data_types, pointToStoXFilesSingle, project, files)
+	out <- lapply(StoX_data_types, pointToStoXFilesSingle, baseline=baseline, files=files)
 	names(out) <- StoX_data_types
-	project$save()
+	
+	# Save the project:
+	#project$save()
+	saveProject(projectName)
+	
+	# Return the file paths:
 	out
 }
 
@@ -588,8 +846,8 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' \code{getBaseline} returns input and output data from the StoX baseline model. \cr \cr
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
-#' @param startProcess	The name or number of the start process in the list of processes in the model (use info=TRUE to return a list of the processes). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
-#' @param endProcess	The name or number of the end process in the list of processes in the model (use info=TRUE to return a list of the processes).
+#' @param startProcess	The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
+#' @param endProcess	The name or number of the end process in the list of processes in the model.
 #' @param reset			Logical; if TRUE rerun the baseline model even if it has been run previously.
 #' @param save			Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.
 #' @param out			The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object).
@@ -603,14 +861,11 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' @param par			A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.
 #' @param drop			Logical: if TRUE drop empty list elements (default).
 #'
-#' @return For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "output", "processData", where empty elements can be dropped.
+#' @return For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "outputData", "processData", where empty elements can be dropped.
 #'
 #' @examples
-#' # Create the test project:
-#' projectName <- "Test_Rstox"
-#' createProject(projectName, files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
-#'
 #' # Get output from the baseline:
+#' projectName <- "Test_Rstox"
 #' system.time(baselineData <- getBaseline(projectName))
 #' # Check the structure of the output from getBaseline():
 #' ls.str(baselineData)
@@ -626,16 +881,24 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' @export
 #' @rdname runBaseline
 #'
-runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("name", "baseline", "project"), msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
+runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("project", "baseline", "report", "name"), msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
 	# Open the project (avoiding generating multiple identical project which demands memory in Java):
-	projectName <- getProjectPaths(projectName)$projectName
+	#browser()
+	#projectName <- getProjectPaths(projectName)$projectName
 	# If reset==TRUE allow for the warning in getProject():
-	baseline <- openProject(projectName, out="baseline")
+	if(length(projectName)){
+		baseline <- openProject(projectName, out="baseline")
+	}
+	else{
+		warning("Empty 'projectName'")
+		return(NULL)
+	}
 	baseline$setBreakable(jBoolean(FALSE))
 	baseline$setWarningLevel(jInt(warningLevel))
 	if(!exportCSV){
 		baseline$setExportCSV(jBoolean(FALSE))
 	}
+	
 	# Remove processes that saves the project.xml file, which is assumed to ALWAYS be the last process. Please ask Åsmund to set this as a requirement in StoX:
 	numProcesses <- baseline$getProcessList()$size() - length(baseline$getProcessByFunctionName("WriteProcessData"))
 	currentEndProcess <- baseline$getRunningProcessIdx() + 1
@@ -653,9 +916,9 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	}
 	else{
 		# Detect changes to the baseline parameters compared to the last used parameters. This is done only to determin whether the baseline should be rerun:
-		currentpar <- getBaselineParameters(baseline, type="current")
-		newpar <- modifyBaselineParameters(currentpar, parlist=parlist, ...)$parameters
-		lastpar <- getBaselineParameters(baseline, type="last")
+		javapar <- getBaselineParameters(baseline)$java
+		newpar <- modifyBaselineParameters(javapar, parlist=parlist, ...)$parameters
+		lastpar <- getBaselineParameters(baseline)$last
 		
 		# Change made on 2017-09-15: If no valid processes are given in parlist or ..., using which() around the following line returned an error. which() is now moved to inside the if(any(changedProcesses)){}:
 		changedProcesses <- sapply(seq_along(newpar), function(i) !identical(newpar[[i]], lastpar[[i]]))
@@ -686,36 +949,21 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 		if(msg)	{cat("Running baseline process ", startProcess, " to ", endProcess, " (out of ", numProcesses, " processes)\n", sep="")}
 		parlist <- getParlist(parlist=parlist, ...)
 
-		# If parameters are given, override the current parameters in memory, and store the current (if save=TRUE) and last used parameters:
+		# If parameters are given, override the java parameters in memory, and store the java (if save=TRUE) and last used parameters:
 		if(length(parlist)){
-			# Get the current and the new parameters:
-			currentpar <- getBaselineParameters(baseline, type="current")
-			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE)
-			# The first line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
-			temp <- getRstoxEnv()
-			# Set the 'lastParameters' object in the poject list and in the processData environment:
-			RstoxEnv[[projectName]]$lastParameters <- newpar
-			#assign("lastParameters", newpar, envir=getRstoxEnv()[[projectName]])
-			##assign(getRstoxEnv()[[projectName]]$lastParameters, newpar)
-			###getRstoxEnv()[[projectName]]$lastParameters <- newpar
-			##### NOTE (2017-08-28): This is different from the 'lastParameters' object in the project environment (rstoxEnv[[projectName]]), and is only used when writing project data such as bootstrap results to file: #####
-			setProjectData(projectName=projectName, var=newpar, name="lastParameters")
-	
+			# Get the java parameters for use later if save==FALSE:
+			if(!save){
+				javapar <- getBaselineParameters(baseline)$java
+			}
+			# Set the new parameters :
+			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE, save=c("last", "java"))
+			
 			# Run the baseline:
 			baseline$run(jInt(startProcess), jInt(endProcess), jBoolean(FALSE))
 
-			# Change the 'javaParameters' object and keep the last used parameters in Java memory (do nothing compared to using setBaselineParameters() below):
-			if(save){
-				# The first line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
-				temp <- getRstoxEnv()
-				RstoxEnv[[projectName]]$javaParameters <- newpar
-				#assign("javaParameters", newpar, envir=getRstoxEnv()[[projectName]])
-				##assign(getRstoxEnv()[[projectName]]$javaParameters, newpar)
-				###getRstoxEnv()[[projectName]]$javaParameters <- newpar
-			}
-			# Else return to original parameter values:
-			else{
-				setBaselineParameters(baseline, parlist=currentpar, msg=FALSE)
+			# Set the 'javaParameters' object and the parameters in Java memory back to the original:
+			if(!save){
+				setBaselineParameters(baseline, parlist=javapar, msg=FALSE, save="java")
 			}
 		}
 		else{
@@ -724,18 +972,21 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 		}
 	}
 
-	# Return a baseline object:
-	if(tolower(substr(out[1], 1, 1)) == "b"){
-		return(baseline)
-	}
-	# Return the project object:
-	if(tolower(substr(out[1], 1, 1)) == "p"){
-		return(baseline$getProject())
-	}
-	# Return the project name:
-	else{
-		return(projectName)
-	}
+	# Return the object specified in 'out':
+	#return(getProject(projectName, out=out))
+	return(getProject(baseline, out=out))
+	## Return a baseline object:
+	#if(tolower(substr(out[1], 1, 1)) == "b"){
+	#	return(baseline)
+	#}
+	## Return the project object:
+	#if(tolower(substr(out[1], 1, 1)) == "p"){
+	#	return(baseline$getProject())
+	#}
+	## Return the project name:
+	#else{
+	#	return(projectName)
+	#}
 }
 #'
 #' @export
@@ -746,7 +997,7 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 	baseline <- runBaseline(projectName, startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, out="baseline", msg=msg, parlist=parlist, ...)
 
 	if(msg){ cat("Reading:\n")}
-	processes <- getBaselineParameters(baseline, type="last")
+	processes <- getBaselineParameters(baseline)$last
 	processNames <- names(processes)
 	### functionNames <- sapply(processes, "[[", "functionName")
 	matchedProcesses <- processNames[getProcess(baseline, proc=proc)]
@@ -849,7 +1100,7 @@ getProcess <- function(projectName, proc="all"){
 	}
 	
 	# Locate/run the baseline object. If rerun=TRUE or if parameters are given different from the parameters used in the last baseline run, rerun the baseline, and if the :
-	processes <- getBaselineParameters(projectName, type="last")
+	processes <- getBaselineParameters(projectName)$last
 	procNames <- names(processes)
 	funNames <- sapply(processes, "[[", "functionName")
 	
@@ -885,72 +1136,143 @@ getProcess <- function(projectName, proc="all"){
 #' 
 #' 
 #' \code{setBaselineParameters} Sets baseline parameters in memory to new values specified in \code{parlist} or \code{...}. \cr \cr
-#' \code{readBaselineParameters} Reads the baseline parameters from the project.xml file \cr \cr
-#' \code{getBaselineParameters} Gets either original, current or last used baseline parameters \cr \cr
-#' \code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment or in the project file). \cr \cr
+#' \code{readBaselineParametersJava} Reads the baseline parameters from the Java memory. \cr \cr
+#' \code{readBaselineParameters} Depricated, use \code{readBaselineParametersJava} instead: Reads the baseline parameters from the project.xml file \cr \cr
+#' \code{getBaselineParameters} Gets either original, java or last used baseline parameters \cr \cr
+#' \code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment nor in the project file). \cr \cr
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param project   	The project Java object.
 #' @param msg			Logical; if TRUE print old and new parameters.
 #' @param parlist		List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE. New parameters can be set by setBaselineParameters() but not removed in the current version.
-#' @param save.project	Logical: if TRUE save the changes to the project.xml file.
+#' @param save			A string naming the types of parameter to save ("java" implies saving the parameters to Java memory and to RstoxEnv[[projectName]]$javaParameters, whereas "last" implies saving the parameters to RstoxEnv[[projectName]]$javaParameters and to the projectData which are saved along with bootstrap and impute data). If save=TRUE, save is set to c("java", "last").
 #' @param ...			Same as parlist, but can be specified separately (not in a list but as separate inputs).
 #' @param rver			The version of the stox library.
-#' @param type			The type of baseline parameter list, one of  "original", "current" and "last".
 #' @param parameters	A list of the baseline parameters to modify using \code{parlist} or \code{...}.
 #'
 #' @return The original parameters
 #'
 #' @export
+#' @keywords internal
 #' @rdname setBaselineParameters
 #'
-setBaselineParameters <- function(projectName, msg=TRUE, parlist=list(), save.project=FALSE, ...){
+setBaselineParameters <- function(projectName, msg=FALSE, parlist=list(), save=c("last", "java"), ...){
 	# Get the baseline object, asuming the project is already open, thus the suppressWarnings():
 	suppressWarnings(baseline <- openProject(projectName, out="baseline"))
+	# Get the project name:
+	projectName <- getProjectPaths(projectName)$projectName
 	# Include both parameters specified in 'parlist' and parameters specified freely in '...':
 	parlist <- getParlist(parlist=parlist, ...)
 
-	# Get current parameters:
-	currentpar <- getBaselineParameters(baseline, type="current")
+	
+	# Get java parameters:
+	javapar <- getBaselineParameters(baseline)$java
 	
 	# Override parameters in the baseline:
 	if(length(parlist)>0){
+		
+		if(isTRUE(save)){
+			save <- c("last", "java")
+		}
 
 		# Get changed parameters, and discard ..., since it has been accounted for in getParlist(). This function simpy returns a list of the new parameters and indices for which parameters have been changed, and does not actually alter the parameters in Java memory:
-		newpar <- modifyBaselineParameters(currentpar, parlist=parlist)
+		newpar <- modifyBaselineParameters(javapar, parlist=parlist)
+		# The following line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
+		temp <- getRstoxEnv()
+		
+		if("java" %in% tolower(save)){
+			# Change the parameter values in Java memory and return the original values:
+			for(i in seq_along(newpar$changeProcessesIdx)){
+				# get the parameter value from Java:
+				temp <- baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$getParameterValue(newpar$changeParameters[i])
+				# Warning if the parameter was previously not set:
+				#if(length(temp)==0){
+					#warning(paste("The parameter", newpar$changeParameters[i], "of process", newpar$changeProcesses[i], "was not defined in the original baseline model, and cannot be changed in the current version of Rstox."))
+					#}
+				# Change the parameter value in Java:
+				baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$setParameterValue(newpar$changeParameters[i], newpar$changeValues[i])
+			}
+			
+			RstoxEnv$Projects[[projectName]]$javaParameters <- newpar$parameters
+		}
+		if("last" %in% tolower(save)){
+			# Set the 'lastParameters' object in the poject list and in the processData environment:
+			RstoxEnv$Projects[[projectName]]$lastParameters <- newpar$parameters
+			#assign("lastParameters", newpar, envir=getRstoxEnv()[[projectName]])
+			##assign(getRstoxEnv()[[projectName]]$lastParameters, newpar)
+			###getRstoxEnv()[[projectName]]$lastParameters <- newpar
+			##### NOTE (2017-08-28): This is different from the 'lastParameters' object in the project environment (rstoxEnv[[projectName]]), and is only used when writing project data such as bootstrap results to file: #####
+			setProjectData(projectName=projectName, var=newpar, name="lastParameters")
+		}
 	
-		# Change the parameter values in Java memory and return the original values:
-		for(i in seq_along(newpar$changeProcessesIdx)){
-			# get the parameter value from Java:
-			temp <- baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$getParameterValue(newpar$changeParameters[i])
-			# Warning if the parameter was previously not set:
-			#if(length(temp)==0){
-				#warning(paste("The parameter", newpar$changeParameters[i], "of process", newpar$changeProcesses[i], "was not defined in the original baseline model, and cannot be changed in the current version of Rstox."))
-				#}
-			# Change the parameter value in Java:
-			baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$setParameterValue(newpar$changeParameters[i], newpar$changeValues[i])
-		}
-		if(msg){ print(list(old=currentpar[newpar$changeProcesses], new=newpar$parameters[newpar$changeProcesses]))}
-		# Save only if specified. Otherwise the changes are only made in memory:
-		if(save.project){
-			saveProject(projectName)
-		}
+		if(msg){ print(list(old=javapar[newpar$changeProcesses], new=newpar$parameters[newpar$changeProcesses]))}
+		
 		# Return the new parameters:
 		return(newpar$parameters)
 	}
 	else{
-		# Return the current parameters, that is the parameters stored in Java memory:
-		return(currentpar)
+		# Return the java parameters, that is the parameters stored in Java memory:
+		return(javapar)
 	}
 }
 #'
-#' @importFrom XML xmlDoc
-#' @importFrom XML getNodeSet
-#' @importFrom XML xmlValue
-#' @importFrom XML xpathSApply
-#' @importFrom XML xmlGetAttr
-#' @importFrom XML xmlRoot
-#' @importFrom XML xmlNamespaceDefinitions
 #' @export
+#' @keywords internal
+#' @rdname setBaselineParameters
+#' 
+readBaselineParametersJava <- function(projectName, keepMissing=FALSE){
+	getParametersOfProcess <- function(processNr, baseline, keepMissing=FALSE){
+		# Number of parameters:
+		L = baseline$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$size()
+		if(L==0){
+			return()
+		}
+		parameterNames = unlist(lapply(seq(0,L-1), function(j) baseline$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$get(as.integer(j))$getName()))
+		parameterValues = lapply(seq(1,L), function(j) baseline$getProcessList()$get(as.integer(processNr))$getParameterValue(parameterNames[j]))
+		# Convert to a list:
+		names(parameterValues) <- parameterNames
+		empty = sapply(parameterValues, length)==0
+		if(sum(empty)){
+			if(keepMissing){
+				parameterValues[empty] = rep(list(NA),sum(empty))
+			}
+			else{
+				parameterValues <- parameterValues[!empty]
+			}
+		}
+		
+		# Add function name and enabled:
+		parameterValues <- c(
+			list(
+				functionName = baseline$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getName(), 
+				enabled = baseline$getProcessList()$get(as.integer(processNr))$isEnabled()), 
+			parameterValues
+		)
+		
+		#parameterValues$functionName <- baseline$getProcessList()$get(as.integer(processNr))$isEnabled()
+		#parameterValues$enabled <- baseline$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getName()
+		#cbind(parameterNames, unlist(parameterValues))
+		parameterValues
+	}
+	baseline <- getProject(projectName, out="baseline")
+	if(length(baseline)==0){
+		Rstox.init()
+		projectPaths <- getProjectPaths(projectName)
+		projectName <- projectPaths$projectName
+		projectRoot <- projectPaths$projectRoot
+		project <- J("no.imr.stox.factory.FactoryUtil")$openProject(projectRoot, projectName)
+		baseline <- getProject(projectName, out="baseline")
+	}
+	processList <- baseline$getProcessList()$toString()
+	processList <- JavaString2vector(processList)
+	out <- lapply(seq_along(processList) - 1L, getParametersOfProcess, baseline, keepMissing=keepMissing)
+	names(out) <- processList
+	out
+}
+#'
+#' @importFrom XML xmlDoc getNodeSet xmlValue xpathSApply xmlGetAttr xmlRoot xmlNamespaceDefinitions xmlParse
+#' @export
+#' @keywords internal
 #' @rdname setBaselineParameters
 #' 
 readBaselineParameters <- function(projectName, rver="1"){
@@ -985,10 +1307,10 @@ readBaselineParameters <- function(projectName, rver="1"){
 		r <- getNodeSet(subDoc, "//ns:enabled", namespaces = c(ns=namespace))
 		isEnabled <- xmlValue(r[[1]])
 
-		# If a process is marked as disabled, stop and return NA instead
-		if(toupper(isEnabled)!="TRUE"){
-			return(c(DISABLED=NA))
-		}
+		### # If a process is marked as disabled, stop and return NA instead
+		### if(toupper(isEnabled)!="TRUE"){
+		### 	return(c(DISABLED=NA))
+		### }
 		
 		# Extract the attribute 'name' from the process node
 		processName<- xmlGetAttr(xmlRoot(subDoc), 'name')
@@ -999,10 +1321,10 @@ readBaselineParameters <- function(projectName, rver="1"){
 
 		# Extract parameters name and value
 		r <- xpathSApply(subDoc, "//ns:parameter", getParamPV , namespaces = c(ns=namespace))
-
+		
 		# Append function name and parameters
-		ret[[processName]] <- c(list(functionName=functionName), r)
-
+		ret[[processName]] <- c(list(functionName=functionName, enabled=toupper(isEnabled)=="TRUE"), r)
+		
 		return(ret)
 	}
 	
@@ -1041,49 +1363,31 @@ readBaselineParameters <- function(projectName, rver="1"){
 }
 #'
 #' @export
-#' @rdname setBaselineParameters
-#' 
-readBaselineParametersJava <- function(projectName){
-	getParametersOfProcess <- function(processNr, project){
-		# Number of parameters:
-		L = project$getBaseline()$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$size()
-		if(L==0){
-			return()
-		}
-		parameterNames = unlist(lapply(seq(0,L-1), function(j) project$getBaseline()$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$get(as.integer(j))$getName()))
-		parameterValues = lapply(seq(1,L), function(j) project$getBaseline()$getProcessList()$get(as.integer(processNr))$getParameterValue(parameterNames[j]))
-		empty = sapply(parameterValues, length)==0
-		if(sum(empty)){
-			parameterValues[empty] = rep(list(NA),sum(empty))
-		}
-		cbind(parameterNames, unlist(parameterValues))
-	}
-	project <- getProject(projectName)
-	processList <- project$getBaseline()$getProcessList()$toString()
-	processList <- JavaString2vector(processList)
-	out <- lapply(seq_along(processList) - 1L, getParametersOfProcess, project)
-	names(out) <- processList
-	out
-}
-#'
-#' @export
+#' @keywords internal
 #' @rdname setBaselineParameters
 #'
-getBaselineParameters <- function(projectName, type=c("original", "current", "last")){
+getBaselineParameters <- function(projectName){
+	#getBaselineParameters <- function(projectName, type=c("original", "java", "last")){
 	projectName <- getProjectPaths(projectName)$projectName
-	if(tolower(substr(type[1], 1, 1)) == "o"){
-		type <- "originalParameters"
-	}
-	else if(tolower(substr(type[1], 1, 1)) == "c"){
-		type <- "javaParameters"
-	}
-	else{
-		type <- "lastParameters"
-	}
-	getRstoxEnv()[[projectName]][[type]]
+	#if(tolower(substr(type[1], 1, 1)) == "o"){
+	#	type <- "originalParameters"
+	#}
+	#else if(tolower(substr(type[1], 1, 1)) == "c"){
+	#	type <- "javaParameters"
+	#}
+	#else{
+	#	type <- "lastParameters"
+	#}
+	#getRstoxEnv()[[projectName]][[type]]
+	return(list(
+		original = getRstoxEnv()$Projects[[projectName]][["originalParameters"]],
+		saved = getRstoxEnv()$Projects[[projectName]][["savedParameters"]],
+		java = getRstoxEnv()$Projects[[projectName]][["javaParameters"]],
+		last = getRstoxEnv()$Projects[[projectName]][["lastParameters"]]))
 }
 #'
 #' @export
+#' @keywords internal
 #' @rdname setBaselineParameters
 #' 
 modifyBaselineParameters <- function(parameters, parlist=list(), ...){
@@ -1108,9 +1412,15 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 
 		# Unlist using recursive=FAKSE since it can hold different types (logical, string), and collapse to a vector after converting to logical strings as used in StoX: 
 		changeValues <- unlist(parlist, recursive=FALSE)
+		
 		# Set logical values to "true"/"false":
 		logicalValues <- sapply(changeValues, is.logical)
 		changeValues[logicalValues] <- lapply(changeValues[logicalValues], function(xx) if(xx) "true" else "false")
+		
+		# Convert parameter values given as a data frame to a string:
+		data.frameValues <- sapply(changeValues, is.data.frame)
+		changeValues[data.frameValues] <- lapply(changeValues[data.frameValues], data.frame2parString)
+		
 		# Collapse to a vector as the other three change vectors:
 		changeValues <- as.character(unlist(changeValues, use.names=FALSE))
 
@@ -1134,6 +1444,12 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 			changeProcessesIdx <- changeProcessesIdx[valid]
 			changeParameters <- changeParameters[valid]
 			changeValues <- changeValues[valid]
+		}
+		
+		# If any parameter values are strings with the name of a process, convert to Process(processName)
+		atProcess <- changeValues %in% processNames
+		if(any(atProcess)){
+			changeValues[atProcess] <- paste0("Process(", changeValues[atProcess], ")")
 		}
 		
 		changed <- logical(length(changeValues))
@@ -1204,8 +1520,6 @@ getParlist <- function(parlist=list(), ...){
 #' @return Dataframe with trawl assignments merged with psu and stratum
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' baseline <- openProject("Test_Rstox", out="baseline")
 #' assignments <- getBioticAssignments(baseline)
 #'
@@ -1228,7 +1542,8 @@ getBioticAssignments <- function(baseline) {
 #' \code{getProjectDataEnv} gets the project environment. \cr \cr
 #'
 #' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
-#' @param dir			The directory holding the project(s).
+#' @param projectRoot	The directory holding the project(s).
+#' @param recursive		The number of levels above the project path at which the directory should exist, where recursive=1 indicated that the dirname(project path) should exist.
 #'
 #' @return Various names and directories
 #' 
@@ -1237,83 +1552,127 @@ getBioticAssignments <- function(baseline) {
 #' @export
 #' @rdname getProjectPaths
 #' 
-getProjectPaths <- function(projectName=NULL, dir=NULL){
+getProjectPaths <- function(projectName=NULL, projectRoot=NULL, recursive=2){
+	# Declare the output to use when somthing fails:
+	out <- as.list(rep(NA, 6))
+	names(out) <- c("projectName", "projectRoot", "projectPath", "RDataDir", "RReportDir", "projectXML")
+	
+	####################################
+	##### 1. projectName is empty: #####
+	####################################
 	# Return the default workspace immediately if nothing is given:
 	if(length(projectName)==0){
-		return(.jnew("no/imr/stox/model/Project")$getRootFolder())
+		# The functions J and .jnew and other functions in the rJava library needs initialization:
+		Rstox.init()
+		out$projectRoot <- .jnew("no/imr/stox/model/Project")$getRootFolder()
+		return(out)
 	}
-	##################################################
-	##### 1. Get the project name: #####
+	####################################
+	
+	
+	###########################################################
+	##### 2. projectName is a project or baseline object: #####
+	###########################################################
 	if(any(class(projectName)=="jobjRef")){
 		# If a baseline object is given:
 		type <- tolower(projectName$getClass()$toString())
 		if(endsWith(type, "model")){
-			projectName <- projectName$getProject()$getProjectName()
+			projectName <- projectName$getProject()
 		}
 		# If a StoX project object is given:
-		else if(endsWith(type, "project")){
-			projectName <- projectName$getProjectName()
-		}
-		else{
+		else if(!endsWith(type, "project")){
 			warning("Invalid projectName (must be a character sting or a baseline or project object)")
-			projectName <- NA
+			return(out)
 		}
+		projectRoot <- dirname(projectName$getProjectFolder())
+		projectName <- projectName$getProjectName()
 	}
 	else if(!is.character(projectName)){
 		warning("Invalid projectName (must be a character sting or a baseline or project object)")
-		projectName <- NA
+		return(out)
 	}
-	# Use the basename:
-	if(length(dir)==0){
+	###########################################################
+	
+	# Change added on 2017-11-24 by Arne Johannes Holmin: When a relative or full path has been applied to getProjectPaths(), which has identified the projectName and projectRoot and other values, and the output projectNAme is used further in a function, again calling getProjectPaths(), the resulting projectPath will differ from the path returned from the first call to getProjectPaths(). This is avaided by retrieving the projectPath from the project environment by the following lines:
+	projectlist <- listOpenProjects()
+	if(is.character(projectName) && projectName %in% projectlist$projectName){
+		projectName <- projectlist$projectPath[projectName == projectlist$projectName]
+	}
+	
+	# Special behavior if en empty string is given for the projectName, in which case it is replaced by a dot, making it a tool for extracting the projectRoot:
+	if(nchar(projectName)==0){
+		projectName <- "."
+	}
+	
+	dirnameRecursive <- function(x, recursive=1){
+		for(i in seq_len(recursive)){
+			x <- dirname(x)
+		}
+		x
+	}
+	
+	###########################################
+	##### 3. dirname(projectName) exists: #####
+	###########################################
+	projectDirName <- dirnameRecursive(projectName, recursive=recursive)
+	if(isTRUE(file.info(projectDirName)$isdir) && !projectDirName %in% c(".", "", "/")){
 		projectRoot <- dirname(projectName)
+		projectName <- basename(projectName)
 	}
+	###########################################
+	
+	
+	####################################################################################
+	##### 4. dirname(projectName) does not exist, but dirname(projectPath) exists: #####
+	####################################################################################
 	else{
-		projectRoot <- path.expand(dir)
+		# Does the constructed projectPath exist?:
+		projectPath <- file.path(projectRoot, projectName)
+		projectDirName <- dirnameRecursive(projectPath, recursive=recursive)
+		if(isTRUE(file.info(projectDirName)$isdir)){
+			projectRoot <- dirname(projectPath)
+			projectName <- basename(projectPath)
+		}
+		# If the projectRoot was not given default it:
+		else if(length(projectRoot)==0){
+			# The functions J and .jnew and other functions in the rJava library needs initialization:
+			Rstox.init()
+			projectRoot <- .jnew("no/imr/stox/model/Project")$getRootFolder()
+			projectPath <- file.path(projectRoot, projectName)
+			projectDirName <- dirnameRecursive(projectPath, recursive=recursive)
+			if(isTRUE(file.info(projectDirName)$isdir)){
+				projectRoot <- dirname(projectPath)
+				projectName <- basename(projectPath)
+			}
+		}
+		else{
+			warning(paste0("Invalid projectName (", projectName, ") or projectRoot (", projectRoot, ")"))
+			return(out)
+		}
 	}
-	projectName <- basename(projectName)
-	##################################################
+	####################################################################################
 	
-	##################################################
-	##### 2. Get the project root: #####
-	##################################################
-	if(projectRoot %in% c(".", "", "/") && length(dir)==0){
-		# The functions J and .jnew and other functions in the rJava library needs initialization:
-		Rstox.init()
-		projectRoot <- .jnew("no/imr/stox/model/Project")$getRootFolder()
-	}
 	
-	##################################################
-	##### 3. Get the project path: #####
-	##################################################
 	projectPath <- file.path(projectRoot, projectName)
 	
-	##################################################
-	##### 4. Get the project R data directory: #####
-	##################################################
 	RDataDir <- file.path(projectPath, "output", "r", "data")
 	
-	##################################################
-	##### 5. Get the project R report directory: #####
-	##################################################
 	RReportDir <- file.path(projectPath, "output", "r", "report")
 	
-	##################################################
-	##### 6. Get the project XML file: #####
-	##################################################
 	projectXML <- file.path(projectPath, "process", "project.xml")
 	
-	# Output a list of the objects formerly retrieved by individual functions:
-	list(projectName=projectName, projectRoot=projectRoot, projectPath=projectPath, RDataDir=RDataDir, RReportDir=RReportDir, projectXML=projectXML)
+	
+	return(list(projectName=projectName, projectRoot=projectRoot, projectPath=projectPath, RDataDir=RDataDir, RReportDir=RReportDir, projectXML=projectXML))
 }
 #' 
 #' @export
 #' @rdname getProjectPaths
 #' 
 getProjectDataEnv <- function(projectName){
-	projectName <- getProjectPaths(projectName)$projectName
+	#projectName <- getProjectPaths(projectName)$projectName
 	# Do not issue a warning if the project is already open, since getProjectDataEnv() is intended to get data from the project enviroment, assuming it is already open. 
-	openProject(projectName)
-	getRstoxEnv()[[projectName]]$projectData
+	projectName <- openProject(projectName, out="name")
+	getRstoxEnv()$Projects[[projectName]]$projectData
 }
 
 
@@ -1394,6 +1753,7 @@ abbrMatch <- function(x, table, ignore.case=FALSE){
 #' @return The requested variable as returned using "$".
 #'
 #' @export
+#' @rdname getVar
 #' @keywords internal
 #'
 getVar <- function(x, var){
@@ -1401,8 +1761,11 @@ getVar <- function(x, var){
 		if(var %in% names(x)){
 			x[[var]]
 		}
+		else if(length(x)==0){
+			warning("Empty data frame \"x\"")
+		}
 		else{
-			stop(paste0("Variable ", var, " not present in the data frame \"", deparse(substitute(x)), "\""))
+			stop(paste0("Variable ", var, " not present in the data frame \"x\""))
 		}
 	}
 	if(length(var)==1){
@@ -1410,6 +1773,28 @@ getVar <- function(x, var){
 	}
 	else{
 		as.data.frame(sapply(var, getVarOne, x=x))
+	}
+}
+#'
+#' @export
+#' @rdname getVar
+#' @keywords internal
+#'
+is.empty <- function(x){
+	if(length(x)==0){
+		return(TRUE)
+	}
+	else if(nchar(x)==0){
+		return(TRUE)
+	}
+	else if(identical(tolower(x), "null")){
+		return(TRUE)
+	}
+	else if(is.na(x)){
+		return(TRUE)
+	}
+	else{
+		return(FALSE)
 	}
 }
 
@@ -1505,21 +1890,17 @@ saveProjectData <- function(projectName, var="all", ...){
 	unlink(files, recursive=TRUE, force=TRUE)
 	
 	# Save files:
-	lapply(var, function(x) save(list=x, file=file.path(projectPaths$RDataDir, paste0(x, ".RData")), envir=projectDataEnv))
+	#lapply(var, function(x) save(list=x, file=file.path(projectPaths$RDataDir, paste0(x, ".RData")), envir=projectDataEnv))
+	lapply(seq_along(var), function(i) save(list=var[i], file=files[i], envir=projectDataEnv))
 	invisible(files)
 }
 #' 
 #' @export
 #' @rdname setProjectData
 #' 
-saveRImage <- saveProjectData
-#' 
-#' @export
-#' @rdname setProjectData
-#' 
 loadProjectData <- function(projectName, var="all", ow=FALSE, ...){
 	# Simple function for loading Rstox data into R, treating overwriting.
-	.loadToRstox <- function(file, envir, ow=FALSE){
+	loadToRstox <- function(file, envir, ow=FALSE){
 		# Check for existance of the data in memory:
 		if(!ow){
 			var <- basename(file_path_sans_ext(file))
@@ -1528,7 +1909,6 @@ loadProjectData <- function(projectName, var="all", ow=FALSE, ...){
 			}
 		}
 		# Load the data:
-		#print(file)
 		load(file=file, envir=envir)
 	}
 	
@@ -1560,7 +1940,7 @@ loadProjectData <- function(projectName, var="all", ow=FALSE, ...){
 			#warning(paste0("None of the requested data (", paste(var, collapse=", "), ") are present in the directory output/r/data"))
 			return()
 		}
-		lapply(filelist, .loadToRstox, envir=projectDataEnv, ow=ow)
+		lapply(filelist, loadToRstox, envir=projectDataEnv, ow=ow)
 		return(projectDataEnv)
 	}
 	else{
@@ -1572,6 +1952,11 @@ loadProjectData <- function(projectName, var="all", ow=FALSE, ...){
 	#	loadEnv(projectName, level=level, fileBaseName=fileBaseName, outputFolder=outputFolder, fileName=fileName)
 	#}
 }
+#' 
+#' @export
+#' @rdname setProjectData
+#' 
+saveRImage <- saveProjectData
 #' 
 #' @export
 #' @rdname setProjectData
@@ -1621,6 +2006,14 @@ getRstoxEnv <- function(){
 	}
 	RstoxEnv
 }
+#'
+#' @export
+#' @keywords internal
+#' @rdname getRstoxEnv
+#'
+getRstoxDef <- function(name){
+	getRstoxEnv()$Definitions[[name]]
+}
 #' 
 #' @export
 #' @keywords internal
@@ -1630,11 +2023,404 @@ initiateRstoxEnv <- function(){
 	# Create a Rstox environment in which the baseline objects of the various projects are placed. This allows for a check for previously run baseline models and avoids memory leakage:", 
 	assign("RstoxEnv", new.env(), envir=.GlobalEnv)
 	# Assign fundamental variables to the RstoxEnv:
-	assign("StoXFolders", c("input", "output", "process"), envir=get("RstoxEnv"))
-	assign("NMD_data_types", c("echosounder", "biotic", "landing"), envir=get("RstoxEnv"))
-	assign("StoX_data_types", c("acoustic", "biotic", "landing"), envir=get("RstoxEnv"))
-	assign("StoX_data_type_keys", c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel"), envir=get("RstoxEnv"))
-	assign("bootstrapTypes", c("Acoustic", "SweptArea"), envir=get("RstoxEnv"))
-	assign("processLevels", c("bootstrap", "bootstrapImpute"), envir=get("RstoxEnv"))
+	Definitions <- list(
+		StoXFolders = c("input", "output", "process"), 
+		NMD_data_types = c("echosounder", "biotic", "landing"), 
+		StoX_data_types = c("acoustic", "biotic", "landing"), 
+		StoX_data_type_keys = c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel"), 
+		model_types = c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal"), 
+		processLevels = c("bootstrap", "bootstrapImpute")
+		)
+	assign("Definitions", Definitions, envir=get("RstoxEnv"))
+	assign("Projects", list(), envir=get("RstoxEnv"))
 }
 
+
+#*********************************************
+#*********************************************
+#' Get the Rstox version and the version of the Java library used by Rstox, on which StoX is built.
+#'
+#' @export
+#' @keywords internal
+#'
+getRstoxVersion <- function(){
+	Rstox.init()
+	list(Rstox=packageVersion("Rstox"), StoXLib=J("no.imr.stox.model.Project")$RESOURCE_VERSION)
+}
+
+
+#*********************************************
+#*********************************************
+#' Convert to and from parameter strings in StoX.
+#'
+#' @param x	A data.frame with the parameters as columns, such as data.frame(SpecCat=c("Torsk", "Sild", ""), Alpha=runif(3), Beta=runif(3), LMin=runif(3), LMax=runif(3)).
+#' @param x	Parameter string to convert to data frame, given as <parameter1> = <value>; <parameter2> = <value>; and so on, where lines in the data frame are separated by "/". See examples.
+#'
+#' @examples
+#' df1 <- data.frame(
+#'     SpecCat=c("Torsk", "Hyse", ""), 
+#'     Alpha=c(5,9,2), 
+#'     Beta=c(2,2,3), 
+#'     LMin=c(1,2,3), 
+#'     LMax=c(5,7,9))
+#' string <- data.frame2parString(df1)
+#' df2 <- parString2data.frame(string)
+#' df1
+#' df2
+#' identical(df1, df2)
+#'
+#' @export
+#' @keywords internal
+#' @rdname data.frame2parString
+#'
+data.frame2parString <- function(x){
+	out <- apply(x, 1, function(y) paste(names(x), y, sep="="))
+	paste(apply(out, 2, paste, collapse=";"), collapse="/")
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname data.frame2parString
+#'
+parString2data.frame <- function(string){
+	out <- lapply(strsplit(string, "/")[[1]], strsplit, ";")
+	out <- strsplit(unlist(out), "=")
+	# get column names and strip off leading and trailing whitespace:
+	colnames <- sapply(out, "[", 1)
+	colnames <- gsub("^\\s+|\\s+$", "", colnames)
+	ucolnames <- unique(colnames)
+	table <- sapply(out, "[", 2)
+	table <- gsub("^\\s+|\\s+$", "", table)
+	table <- split(table, colnames)
+	suppressWarnings(table <- lapply(table, function(y) if(!any(is.na(as.numeric(y)))) as.numeric(y) else y))
+	table <- as.data.frame(table)
+	table[,match(ucolnames, colnames(table))]
+}
+
+
+#*********************************************
+#*********************************************
+#' Download a zipped StoX project to a specified project path.
+#'
+#' @param URL			The URL of the zipped project.
+#' @param projectPath	The local path to the project to be downloaded.
+#' @param cleanup		Logical: if FALSE, the downloaded zip file is not deleted.
+#'
+#' @export
+#' @keywords internal
+#' @rdname downloadProjectZip
+#'
+downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=TRUE, ow=TRUE, msg=TRUE){
+	# Get the project path. If 'projectName' is not given, set this to a temporary name, and use the project name stored in the zip file. If the project path is given in 'projectName', all is good:
+	if(length(projectName)==0){
+		projectPath <- getProjectPaths(projectName="temporaryZipDownload", projectRoot=projectRoot)$projectPath
+	}
+	else{
+		projectPath <- getProjectPaths(projectName=projectName, projectRoot=projectRoot)$projectPath
+	}
+	
+	# Define the path to the downloaded zip file:
+	zipPath <- paste0(projectPath, ".zip")
+	
+	# Download the zip file, overwriting any existing file with the path 'zipPath'. Added mode="wb" to make the zip openable on Windows:
+	# Treat overwriting before downloading if the projectName was given:
+	if(length(projectName)){
+		if(file.exists(projectPath)){
+			temp <- getow(ow, projectPath, onlyone=TRUE, msg=msg)
+			# Return from the funciton if not overwriting:
+			if(temp$jumpToNext){
+				return()
+			}
+		}
+	}
+	status <- download.file(URL, zipPath, mode="wb")
+
+	# Get the path of the unzipped file:
+	ziplist <- unzip(zipPath, list=TRUE)[,1]
+	if(dirname(ziplist[1])!="."){
+		unzipPath <- file.path(dirname(zipPath), dirname(ziplist[1]))
+	}
+	else{
+		unzipPath <- file.path(dirname(zipPath), dirname(ziplist[2]))
+	}
+	# Rename the projectPath to the unzipdir if projectName was not given:
+	if(length(projectName)==0){
+		projectPath <- unzipPath
+		# Treat overwriting:
+		if(file.exists(projectPath)){
+			temp <- getow(ow, projectPath, onlyone=TRUE, msg=msg)
+			# Return from the funciton if not overwriting:
+			if(temp$jumpToNext){
+				return()
+			}
+		}
+	}
+	
+	# Unzip the downloaded zip file:
+	unzip(zipPath, exdir=dirname(zipPath))
+	
+	# Delete zipPath, and if not equal, delete the projectPath and rename unzipPath:
+	if(length(projectName) && !identical(projectPath, unzipPath)){
+		# Delete the existing project:
+		unlink(projectPath, recursive=TRUE)
+		file.rename(unzipPath, projectPath)
+	}
+	if(cleanup){
+		unlink(zipPath)
+	}
+	# Return download status:
+	list(status=status, projectPath=projectPath)
+}
+
+
+#*********************************************
+#*********************************************
+#' Are the specified URLs acutally URLs to zip files?
+#'
+#' @param URL	The URL(s) of the zipped project(s).
+#'
+#' @export
+#' @keywords internal
+#'
+isProjectZipURL <- function(URL){
+	# Detect hhtp or ftp AND zip:
+	sapply(gregexpr("http|ftp", URL), function(x) any(x>0)) & sapply(gregexpr("zip", URL), function(x) any(x>0))
+}
+
+
+#*********************************************
+#*********************************************
+#' Sample a vector after sorting the vector and applying the seed, and functions for setting seeds in Rstox.
+#'
+#' @param x			A vector or a single integer.
+#' @param size		A non-negative integer giving the number of items to choose.
+#' @param seed		The seed to apply before sampling.
+#' @param by		The name of the column to sample by when sampling rows of a data frame.
+#' @param replace	Should sampling be with replacement?
+#' @param sorted	Should the data be sorted prior to sampling?
+#' @param drop		Should data frames be dropped when sampling?
+#' @param seed		A single seed.
+#' @param seedV		A vector of seeds.
+#' @param nboot		The number of bootstrap replicates (for the functions used by bootstrapping and imputing).
+#' @param i			The index of the bootstrap replicate to generate seeds for.
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+sampleSorted <- function(x, size, seed=0, by=NULL, replace=TRUE, sorted=TRUE, drop=FALSE){
+	# Function for sampling a vector after sorting:
+	sampleVectorSorted <- function(x, size, seed=0, replace=TRUE, sorted=TRUE){
+		lx <- length(x)
+		if(missing(size)){
+			size <- lx
+		}
+		if(sorted){
+			x <- sort(x)
+		}
+		set.seed(seed)
+		x[sample.int(lx, size=size, replace=replace)]
+	}
+	# If rows of a data frame should be sampled:
+	if(length(dim(x))==2 && length(by)){
+		s <- sampleVectorSorted(x=x[[by]], size=size, seed=seed, replace=replace, sorted=sorted)
+		x[match(s, x[[by]]), , drop=drop]
+	}
+	# Sample a vector:
+	else{
+		sampleVectorSorted(x=x, size=size, seed=seed, replace=replace, sorted=sorted)
+	}
+	#lx <- length(x)
+	#if(missing(size)){
+	#	size <- lx
+	#}
+	#if(sorted){
+	#	x <- sort(x)
+	#}
+	#set.seed(seed)
+	#x[sample.int(lx, size=size, replace=replace)]
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+setSeedSingle <- function(seed){
+	set.seed(if(isTRUE(seed)) 1234 else if(is.numeric(seed)) seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+getSeedV <- function(seed, nboot){
+	setSeedSingle(seed)
+	SeedV <- sample(getSequenceToSampleFrom(), nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+	SeedV
+}		
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+getSeedM <- function(i, seedV, nrow){
+	if(isTRUE(seedV[i])){
+		seedM <- matrix(c(1231234, 1234, 1234), nrow=nrow, ncol=3, byrow=TRUE)
+	}
+	else{
+		set.seed(seedV[i])
+		# Create a seed matrix with 3 columns representing the replacement by station, stratum and survey:
+		seedM <- matrix(sample(getSequenceToSampleFrom(), 3*nrow, replace=FALSE), ncol=3)
+	}
+	seedM
+}	
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+expandSeed <- function(seed, nboot){
+	if(isTRUE(seed)){
+		seedV = rep(TRUE, nboot+1) # seed==TRUE giving 1234 for compatibility with older versions
+	}
+	else if(is.numeric(seed)){
+		set.seed(seed)
+		seedV = sample(getSequenceToSampleFrom(), nboot+1, replace=FALSE)
+	}
+	else{
+		seedV = NULL
+	}
+	seedV
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname sampleSorted
+#'
+getSequenceToSampleFrom <- function(){
+	size <- 1e7
+	seq_len(size)
+}
+
+
+#*********************************************
+#*********************************************
+#' Function for controling overwriting of prjects.
+#'
+#' @param ow   			Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.
+#' @param projectPath   The full path to the project folder.
+#' @param onlyone   	Logical: If TRUE, only one project is checked (no for loop).
+#' @param msg			Logical: If TRUE, print messages to the console.
+#'
+#' @value A list of two elements ow and jumpToNext.
+#'
+#' @export
+#' @keywords internal
+#' @rdname getow
+#'
+getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
+	if(length(ow)==0){
+		if(onlyone){
+			ans <- readline(paste0("Project \"", projectPath, "\" already exists. Overwrite? (y/n)\n"))
+			if(ans!="y"){
+				if(msg){
+					cat("Not overwriting:", projectPath, "\n")
+				}
+				# For a single project, jumpToNext can be used to return from the motherfunction:
+				jumpToNext <- TRUE
+				ow <- FALSE
+			}
+			else{
+				# Do not return:
+				jumpToNext <- FALSE
+				ow <- TRUE
+			}
+		}
+		else{
+			ans <- readline(paste0("Project \"", projectPath, "\" already exists. Overwrite?\n", paste(c("\"y\": ", "\"n\": ", "\"ya\":", "\"na\":"), c("Yes", "No", "Yes to all remaining", "No to all remaining"), collapse="\n"), "\n"))
+			# This workflow sets ow to TRUE if "ya", to FALSE if "na" (jumps to next in the for loop), does nothing if "y", and jumps to next in the for loop if "n"
+			if(ans=="ya"){
+				if(msg){
+					cat("Overwriting:", projectPath, "\n")
+				}
+				# Do not jump to the next in the for loop, and set ow to TRUE:
+				jumpToNext <- FALSE
+				ow <- TRUE
+			}
+			else if(ans=="na"){
+				if(msg){
+					cat("Not overwriting:", projectPath, "\n")
+				}
+				# Do jump to the next in the for loop, and set overwriting to FALSE:
+				jumpToNext <- TRUE
+				ow <- FALSE
+			}
+			else if(ans=="y"){
+				if(msg){
+					cat("Overwriting:", projectPath, "\n")
+				}
+				# Do not jump to the next in the for loop:
+				jumpToNext <- FALSE
+				ow <- ow
+			}
+			else{
+				if(msg){
+					cat("Not overwriting:", projectPath, "\n")
+				}
+				# Do jump to the next in the for loop:
+				jumpToNext <- TRUE
+				ow <- ow
+			}
+		}
+	}
+	else if(ow){
+		if(msg){
+			cat("Overwriting:", projectPath, "\n")
+		}
+		# Do not jump to the next in the for loop:
+		jumpToNext <- FALSE
+		ow <- ow
+	}
+	else if(!ow){
+		if(msg){
+			cat("Not overwriting:", projectPath, "\n")
+		}
+		# Do jump to the next in the for loop:
+		jumpToNext <- TRUE
+		ow <- ow
+	}
+	
+	# Return a list givint the value of 'ow' and whether to jump to the next in an eventual for loop or not (i.e., skipping the rest of the code in the for loop and jump to next if not at the end of the loop)
+	return(list(ow=ow, jumpToNext=jumpToNext))
+}
+
+
+#*********************************************
+#*********************************************
+#' Functions for setting and getting the precision level of a project.
+#'
+#' @param projectName   	Project identifyer (see \code{\link{openProject}}).
+#' @param precisionLevel	The precision level to set to the project, where 0L represents the low precision level used prior to Rstox 1.7 and Stox 2.5, and 1L represents the 4-significant digits precision used from those versions and onward.
+#'
+#' @value The precision level.
+#'
+#' @export
+#' @keywords internal
+#' @rdname setPrecisionLevel
+#'
+setPrecisionLevel <- function(projectName, precisionLevel){
+	# Set the precision level:
+	project <- openProject(projectName, out="project")
+	project$setPrecisionLevel(as.integer(precisionLevel))
+	precisionLevel
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname setPrecisionLevel
+#'
+getPrecisionLevel <- function(projectName){
+	# Get the precision level:
+	project <- openProject(projectName, out="project")
+	project$getPrecisionLevel()
+}

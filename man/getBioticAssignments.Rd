@@ -16,8 +16,6 @@ Dataframe with trawl assignments merged with psu and stratum
 Get trawl assignments from baseline in StoX Java memory.
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 baseline <- openProject("Test_Rstox", out="baseline")
 assignments <- getBioticAssignments(baseline)
 

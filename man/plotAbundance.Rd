@@ -2,21 +2,33 @@
 % Please edit documentation in R/rstox_reports.r
 \name{plotAbundance}
 \alias{plotAbundance}
-\alias{plotAbundance_old}
-\title{Plot abundance results to file (generic)}
+\alias{plotAbundance_AcousticTrawl}
+\alias{plotAbundance_SweptAreaTotal}
+\alias{setValueForMissing}
+\title{Plot abundance results to the graphics device or to a file}
 \usage{
-plotAbundance(projectName, var = "Abundance", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
+plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
+  var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
+  grp2 = NULL, xlab = NULL, ylab = NULL, main = "", format = "png",
+  log = NULL, filetag = NULL, ...)
 
-plotAbundance_old(projectName, var = "Abundance", unit = NULL,
+plotAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
+  ylab = NULL, main = "", format = "png", maxcv = 1, log = NULL,
+  filetag = NULL, ...)
+
+plotAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
+  xlab = NULL, ylab = NULL, main = "", format = "png", log = NULL,
+  filetag = NULL, ...)
+
+setValueForMissing(x)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 
-\item{var}{A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).}
+\item{bootstrapMethod}{The bootstrap method used to generate the data.}
+
+\item{var}{A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values). For plotAbundance_SweptAreaTotal() \code{var} is hard coded to "Count"}
 
 \item{unit}{A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).}
 
@@ -32,24 +44,26 @@ plotAbundance_old(projectName, var = "Abundance", unit = NULL,
 
 \item{main}{Main title for plot (text)}
 
-\item{format}{The file format of the saved plot, either given as a function such as bmp, jpeg, png, tiff, with \code{filename} as its first argument, or as a string naming the function. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=800, height=600.}
+\item{format}{The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, , resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.}
 
-\item{maxcv}{The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.}
+\item{log}{Character string giving the axes to apply log10() to.}
+
+\item{filetag}{A character string to append to the file name (before file extension).}
 
 \item{...}{Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).}
+
+\item{maxcv}{The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.}
 }
 \value{
 Plot saved to file and abundance table printed
 }
 \description{
 Plots boxplot of bootstrap results together with Coefficient of Variation (CV).
-Prints summary table and plot is exported to a tif- or png-file.
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 projectName <- "Test_Rstox"
 plotAbundance(projectName, grp1="age")
 plotAbundance(projectName, grp1="age", unit=1)
 
 }
+\keyword{internal}

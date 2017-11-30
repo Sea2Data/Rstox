@@ -7,7 +7,7 @@
 bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
   stratumNASC = NULL, resampledNASC = NULL,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seedV = NULL)
+  seedV = NULL, sorted = TRUE)
 }
 \arguments{
 \item{i}{The boostrap iteration number.}
@@ -29,6 +29,8 @@ bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
 \item{endProcess}{The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".}
 
 \item{seedV}{A vector of seeds. seedV[i] is used.}
+
+\item{sorted}{Should the data be sorted prior to sampling?}
 }
 \value{
 list with (1) the abundance by length in the bootstrap run, (2) the abundance by super individuals in the bootstrap run
