@@ -4,12 +4,14 @@
 \alias{plotNASCDistribution}
 \title{Plot NASC distribution to file}
 \usage{
-plotNASCDistribution(projectName, format = "png", ...)
+plotNASCDistribution(projectName, format = "png", filetag = NULL, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 
-\item{format}{The file format of the saved plot (one of "png" and "tiff").}
+\item{format}{The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.}
+
+\item{filetag}{A character string to append to the file name (before file extension).}
 
 \item{...}{Parameters passed on from other functions.}
 }
@@ -23,12 +25,9 @@ Probability densities, component density, are plotted (so that the histogram has
 Plot is exported to a tif- or png-file
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 projectName <- "Test_Rstox"
 # Run bootstrap before plotting:
-bootstrap <- runBootstrap(projectName, nboot=10, seed=1, acousticMethod=PSU~Stratum, bioticMethod=EDSU~Stratum)
+boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")
 plotNASCDistribution(projectName)
 
 }
-

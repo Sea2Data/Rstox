@@ -2,14 +2,17 @@
 % Please edit documentation in R/rstox_base.r
 \name{getRstoxEnv}
 \alias{getRstoxEnv}
+\alias{getRstoxDef}
 \alias{initiateRstoxEnv}
 \title{Set up the RstoxEnv}
 \usage{
 getRstoxEnv()
+
+getRstoxDef(name)
 
 initiateRstoxEnv()
 }
 \description{
 \code{getRstoxEnv} initiates the RstoxEnv environment if not existing.
 }
-
+\keyword{internal}

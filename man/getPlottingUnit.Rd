@@ -5,10 +5,10 @@
 \title{Interprets a unit key stings as a scaleing factor}
 \usage{
 getPlottingUnit(unit = NULL, var = "Abundance", baseunit = NULL,
-  implemented = c(1, 2), def.out = TRUE)
+  implemented = c(1, 2, 3), def.out = TRUE)
 }
 \arguments{
-\item{unit}{A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).}
+\item{unit}{A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings), or alternatively a numeric value giving the scaling factor.}
 
 \item{var}{A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).}
 
@@ -30,4 +30,4 @@ getPlottingUnit(unit="milli", var="weight", baseunit="stox", def.out=FALSE)
 getPlottingUnit(unit="hecto", var="weight", baseunit="stox")
 
 }
-
+\keyword{internal}

@@ -20,10 +20,10 @@ Abundance matrix with imputed biological information
 This function fills in holes in individual fish samples (also called imputation).
 In cases where individuals are not aged, missing biological variables (e.g "weight","age","sex", and "specialstage") are sampled from 
 fish in the same length group at the lowest imputation level possible.
-impLevel = 0: no imputation, biological information exists
-impLevel = 1: imputation at station level; biological information is selected at random from fish within station
-impLevel = 2: imputation at strata level; no information available at station level, random selection within stratum
-impLevel = 3: imputation at survey level; no information available at lower levels, random selection within suvey
-impLevel = 99: no imputation, no biological information exists for this length group
+imputeLevel = 0: no imputation, biological information exists
+imputeLevel = 1: imputation at station level; biological information is selected at random from fish within station
+imputeLevel = 2: imputation at strata level; no information available at station level, random selection within stratum
+imputeLevel = 3: imputation at survey level; no information available at lower levels, random selection within suvey
+imputeLevel = 99: no imputation, no biological information exists for this length group
 }
-
+\keyword{internal}

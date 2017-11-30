@@ -2,12 +2,15 @@
 % Please edit documentation in R/rstox_base.r
 \name{getVar}
 \alias{getVar}
-\title{(Internal) Get a specific variable of a list by its name, and issue an error if the variable has zero length}
+\alias{is.empty}
+\title{Get a specific variable of a list by its name, and issue an error if the variable has zero length}
 \usage{
 getVar(x, var)
+
+is.empty(x)
 }
 \arguments{
-\item{x}{The name of a variable.}
+\item{x}{The names of variables.}
 
 \item{var}{A list or data frame of data from a project.}
 }
@@ -17,4 +20,4 @@ The requested variable as returned using "$".
 \description{
 This funciton is used to ensure that the requested variable has positive length. If not and error is issued, which may happen it there is a naming discrepancy between Rstox and StoX.
 }
-
+\keyword{internal}

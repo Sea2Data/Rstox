@@ -2,11 +2,13 @@
 % Please edit documentation in R/rstox_boostrap.r
 \name{bootstrapParallel}
 \alias{bootstrapParallel}
-\title{(Internal) Bootstrap biotic stations and acoustic data}
+\title{Bootstrap biotic stations and acoustic data}
 \usage{
 bootstrapParallel(projectName, assignments, psuNASC = NULL,
-  stratumNASC = NULL, resampledNASC = NULL, nboot = 5, seed = 1,
-  cores = 1, baseline = NULL, msg = TRUE, parameters = list())
+  stratumNASC = NULL, resampledNASC = NULL, nboot = 5,
+  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
+  seed = 1, cores = 1, baseline = NULL, msg = TRUE,
+  parameters = list(), sorted = TRUE)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
@@ -21,6 +23,10 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
 
 \item{nboot}{Number of bootstrap replicates.}
 
+\item{startProcess}{The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.}
+
+\item{endProcess}{The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".}
+
 \item{seed}{The seed for the random number generator (used for reproducibility).}
 
 \item{cores}{An integer giving the number of cores to run the bootstrapping over.}
@@ -34,6 +40,8 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
 \item{parameters$nboot}{Number of bootstrap replicates}
 \item{parameters$seed}{The seed for the random number generator (used for reproducibility)}
 }}
+
+\item{sorted}{Should the data be sorted prior to sampling?}
 }
 \value{
 list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
@@ -41,4 +49,4 @@ list with (1) the abundance by length in the orginal model, (2) the abundance by
 \description{
 Resample (bootstrap) trawl stations based on survey (Cruise) number and station numbers (SerialNo) to estimate uncertainty in estimates.
 }
-
+\keyword{internal}

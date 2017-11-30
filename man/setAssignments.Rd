@@ -3,7 +3,7 @@
 \name{setAssignments}
 \alias{setAssignments}
 \alias{setNASC}
-\title{(Internal) Set NASC data and assignments to memory}
+\title{Set NASC data and assignments to memory}
 \usage{
 setAssignments(projectName, assignments)
 
@@ -25,4 +25,3 @@ An assignment
 \code{setAssignments} Sets assignments to the assignment table in the process data (in memory).
 \code{setMeanNASCValues} Sets NASC or meanNASC values to the baseline data (in memory).
 }
-

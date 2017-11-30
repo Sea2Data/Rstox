@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstox_java.r
 \name{JavaString2vector}
 \alias{JavaString2vector}
-\title{(Internal) Convert a Java string to R vector}
+\title{Convert a Java string to R vector}
 \usage{
 JavaString2vector(x)
 }
@@ -12,4 +12,4 @@ JavaString2vector(x)
 \description{
 When reading some data from the StoX Java memory using toString(), the resulting string is converted to a string vector by this function.
 }
-
+\keyword{internal}

@@ -1,6 +1,6 @@
 #*********************************************
 #*********************************************
-#' Get and aggregate PSUNASC
+#' Get and aggregate PSUNASC. Rows are reordered.
 #' 
 #' \code{getPSUNASC} gets a joined table with meanNASC, psu, stratum, and area. I.e., reads transect data, strata and area information from baseline Java object and merges them into one data frame. \cr \cr
 #' \code{aggPSUNASC} aggregates psuNASC Layer to PELBOT. Used within functions when resampling and rescaling NASC values if Layer!=PELBOT.
@@ -13,8 +13,6 @@
 #' \code{aggPSUNASC} returns psuNASC_agg Data frame with mean NASC (Value) per transect (PSU)
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 #' psuNASC <- getPSUNASC("Test_Rstox")
 #' psuNASC_agg <- aggPSUNASC(psuNASC=psuNASC)
 #'
@@ -22,9 +20,10 @@
 #' @rdname getPSUNASC
 #'
 getPSUNASC <- function(baseline){
-
+	
 	#psuNASC <- getDataFrame1(baseline, 'MeanNASC')
-	psuNASC <- getBaseline(baseline, fun="MeanNASC", input=FALSE, msg=FALSE)
+	### psuNASC <- getBaseline(baseline, fun="MeanNASC", input=FALSE, msg=FALSE)
+	psuNASC <- getBaseline(baseline, proc="MeanNASC", input=FALSE, msg=FALSE)
 	# Test the presence of acoustic data:
 	if(length(psuNASC)==0){
 		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(baseline)$projectName, "\""))
@@ -41,7 +40,8 @@ getPSUNASC <- function(baseline){
 	psuStratum <- psuStratum[psuStratum$Stratum %in% inclStrata,]
 	
 	#stratumArea <- getDataFrame1(baseline, 'StratumArea')
-	stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
+	### stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
+	stratumArea <- getBaseline(baseline, proc="StratumArea", input=FALSE, msg=FALSE)
 	# Added a warning if SampleUnitType is not set to PSU, but rahter EDSU:
 	if(!any(tolower(psuNASC$SampleUnitType) == "psu")){
 		warning("getPSUNASC() requires SampleUnit to be PSU in the baseline.")
@@ -62,7 +62,7 @@ getPSUNASC <- function(baseline){
 #'
 aggPSUNASC <- function(psuNASC){
 	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	.Rstox.init()
+	Rstox.init()
 	Functions <- J("no.imr.stox.functions.utils.Functions")
 	# psuNASC contains the column PSU (AJ 2016-08-31):
 	if(length(psuNASC$PSU)){
@@ -85,8 +85,10 @@ aggPSUNASC <- function(psuNASC){
 #' @return list with mean and variance by stratum
 #'
 #' @export
+#' @keywords internal
 #' 
 wtd.strata.est <- function(tr.value, tr.dist){
+	# Average of transect values weighted by transect distance:
 	mean.strata <- sum(tr.value * tr.dist) / sum(tr.dist)
 	#var.strata <- (sum((tr.dist^2) * ((tr.value - mean.strata)^2))) /
 	#	(((mean(tr.dist))^2) * length(tr.value) * (length(tr.value) -1) )
@@ -110,13 +112,9 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #' @return list with mean(NASC) and var(NASC) per strata, global (stratified) mean, SE and RSE (Relative standard error) of NASC
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 #' projectName <- "Test_Rstox"
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
-#'
-#' @importFrom MASS fitdistr
 #'
 #' @export
 #' 
@@ -128,7 +126,8 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 	}
 	
 	#stratumArea <- getDataFrame1(baseline, 'StratumArea')
-	stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
+	### stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
+	stratumArea <- getBaseline(baseline, proc="StratumArea", input=FALSE, msg=FALSE)
 	names(stratumArea)[1] <- "Stratum"
 	tmp <- psuNASC
 	if(psuNASC$LayerType[1]!="WaterColumn") {
@@ -145,10 +144,10 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 	## Put in function that tests data before this step!
 	switch(NASCDistr,
 		 observed = distr.fit <- sapply(tmp2,function(yy) {c('mean' = NA, 'sd' = NA)}),
-		 normal = distr.fit <- sapply(tmp2,function(yy) {coef(fitdistr(yy$Value, 'normal'))}),
-		 lognormal = distr.fit <-	sapply(tmp2,function(yy) {coef(fitdistr(yy$Value+1, 'lognormal'))}),
-		 gamma = distr.fit <-	sapply(tmp2,function(yy) {if(length(yy$Value>0)>5) coef(fitdistr(yy$Value+1, 'gamma')) else c(shape=0,rate=1)}),
-		 weibull = distr.fit <-	sapply(tmp2,function(yy) {if(length(yy$Value>0)>5) coef(fitdistr(yy$Value+1, 'weibull',lower=c(0.001,0.001)))	else c(shape=0,scale=1)})
+		 normal = distr.fit <- sapply(tmp2,function(yy) {coef(MASS::fitdistr(yy$Value, 'normal'))}),
+		 lognormal = distr.fit <-	sapply(tmp2,function(yy) {coef(MASS::fitdistr(yy$Value+1, 'lognormal'))}),
+		 gamma = distr.fit <-	sapply(tmp2,function(yy) {if(length(yy$Value>0)>5) coef(MASS::fitdistr(yy$Value+1, 'gamma')) else c(shape=0,rate=1)}),
+		 weibull = distr.fit <-	sapply(tmp2,function(yy) {if(length(yy$Value>0)>5) coef(MASS::fitdistr(yy$Value+1, 'weibull',lower=c(0.001,0.001)))	else c(shape=0,scale=1)})
 	)
 	tmp3 <- as.data.frame(cbind(strata.mean, strata.var, n.by.strata, distr.fit[1,], distr.fit[2,]))
 	names(tmp3)[4:5]<-row.names(distr.fit)
@@ -183,47 +182,59 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #' @param parameters	Parameters set by user in Stox;
 #'			parameters$nboot: Number of bootstrap replicates
 #'			parameters$seed: The seed for the random number generator (used for reproducibility)
+#' @param sorted	Should the data be sorted prior to sampling?
 #'
 #' @return Matrix of resampled strata NASC means 
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 #' projectName <- "Test_Rstox"
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
-#' resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(seed=1, nboot=5))
+#' resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, 
+#'     parameters=list(seed=1, nboot=5))
 #'
 #' @export
 #' 
-getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
+getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters, sorted=TRUE){
 	# Test the presence of acoustic data:
 	if(length(psuNASC)==0){
 		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(baseline)$projectName, "\""))
 		return(NULL)
 	}
 	
+	# Declare the seed vector, as this is returned from the function:
+	SeedV <- NULL
+	
+	# Run the reampling of acoustic data:
 	if(stratumNASC$NASCDistr=="observed"){
 		tmpNASC <- psuNASC
 		if(psuNASC$LayerType[1]!="WaterColumn"){
 			tmpNASC <- aggPSUNASC(psuNASC)
 		}
-		set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
-		SeedV <- sample(c(1:10000000), parameters$nboot, replace = FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+		
+		# Change introduced on 2017-11-14 by Holmin. To make the code more robust to changes, all generation of seeds has been moved to the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed():
+		#set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+		#SeedV <- sample(c(1:10000000), parameters$nboot, replace=FALSE) # Makes seed vector for fixed seeds (for reproducibility).
+		SeedV <- getSeedV(parameters$seed, nboot=parameters$nboot)
+		
 		tmp2NASC <- split(tmpNASC,list(tmpNASC$Stratum))
 		res.NASC.dist <- matrix(NA,nrow=parameters$nboot,ncol=length(unique(tmpNASC$Stratum)))
 		for(i in 1:parameters$nboot){
 			# Function used for sampling the PSUs:
 			reest <- function(yy){
-				set.seed(SeedV[i])
 				# Change made by Holmin 2016-08-26: Initiated after warnings from Are Salthaug that the variance in the boostrap estimates were unexpectedly low. An error was found in this function, where the variable formerly named "PSU" has been renamed to "SampleUnit" in the Java code, but this has not been updated here. 
 				#if(length(yy$PSU)){
 					#	tID <- sample(yy$PSU, length(yy$PSU), replace = TRUE) # Resample NASC
 					#	yy2 <- yy[match(tID,yy$PSU), ]
 					#}
 					#else{
-				tID <- sample(yy$SampleUnit, length(yy$SampleUnit), replace = TRUE) # Resample NASC
-				yy2 <- yy[match(tID,yy$SampleUnit), ]
+				
+				# Change introduced on 2017-11-03, applying the function sampleSorted() for all sampling throughout Rstox in order to avoid dependency on the order of rows in the data:
+				#set.seed(SeedV[i])
+				#tID <- sample(yy$SampleUnit, length(yy$SampleUnit), replace=TRUE) # Resample NASC
+				tID <- sampleSorted(yy$SampleUnit, size=length(yy$SampleUnit), seed=SeedV[i], replace=TRUE, sorted=sorted)
+		
+				yy2 <- yy[match(tID, yy$SampleUnit), ]
 				#}
 				resmean <- wtd.strata.est(yy2$Value,yy2$dist)$strata.mean
 			}
@@ -239,7 +250,11 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
 	}
 	
 	tmp <- split(stratumNASC$NASC.by.strata,list(stratumNASC$NASC.by.strata$Stratum))
-	set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+	
+	# Change introduced on 2017-11-14 by Holmin. To make the code more robust to changes, all generation of seeds has been moved to the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed():
+	#set.seed(if(isTRUE(parameters$seed)) 1234 else if(is.numeric(parameters$seed)) parameters$seed else NULL) # seed==TRUE giving 1234 for compatibility with older versions
+	setSeedSingle(parameters$seed)
+	
 	switch(stratumNASC$NASCDistr,
 		 normal = res.NASC.dist <- sapply(tmp, function(yy) {rnorm(parameters$nboot, mean=yy$strata.mean, sd=sqrt(yy$strata.var))}),
 		 lognormal = res.NASC.dist <- sapply(tmp, function(yy) {rlnorm(parameters$nboot, meanlog=yy$meanlog, sdlog=yy$sdlog)-1}),
@@ -247,5 +262,5 @@ getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters){
 		 weibull = res.NASC.dist <- sapply(tmp, function(yy) {rweibull(parameters$nboot, shape=yy$shape, scale=yy$scale)-1})
 	)
 	res.NASC.dist <- ifelse(res.NASC.dist<0, 0, res.NASC.dist) # Note this assumption! Negative values are set to zero
-	out <- res.NASC.dist
+	return(list(NASC=res.NASC.dist, seed=SeedV))
 }

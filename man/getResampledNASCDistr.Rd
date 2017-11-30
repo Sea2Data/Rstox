@@ -4,7 +4,8 @@
 \alias{getResampledNASCDistr}
 \title{Resample NASC distribution}
 \usage{
-getResampledNASCDistr(baseline, psuNASC, stratumNASC, parameters)
+getResampledNASCDistr(baseline, psuNASC, stratumNASC, parameters,
+  sorted = TRUE)
 }
 \arguments{
 \item{baseline}{StoX Java baseline object.}
@@ -16,6 +17,8 @@ getResampledNASCDistr(baseline, psuNASC, stratumNASC, parameters)
 \item{parameters}{Parameters set by user in Stox;
 parameters$nboot: Number of bootstrap replicates
 parameters$seed: The seed for the random number generator (used for reproducibility)}
+
+\item{sorted}{Should the data be sorted prior to sampling?}
 }
 \value{
 Matrix of resampled strata NASC means
@@ -24,12 +27,10 @@ Matrix of resampled strata NASC means
 Generates resampled NASC distribution.
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 projectName <- "Test_Rstox"
 psuNASC <- getPSUNASC(projectName)
 stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
-resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(seed=1, nboot=5))
+resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, 
+    parameters=list(seed=1, nboot=5))
 
 }
-

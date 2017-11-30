@@ -1,6 +1,6 @@
 #*********************************************
 #*********************************************
-#' (Internal) Initialize rJava
+#' Initialize rJava
 #' 
 #' This funcion initializes the connection to Java.
 #' 
@@ -11,8 +11,9 @@
 #'
 #' @importFrom rJava .jpackage
 #' @export
+#' @keywords internal
 #' 
-.Rstox.init <- function() {
+Rstox.init <- function() {
 	# Package initialization of rJava. Note that the documentatino of this functions also contains importing of the four packages grDevices, graphics, stats and utils. This is a bit of cheating, but avoids using :: for such common functions.
 	pkgname <- "Rstox";
 	loc = dirname(path.package(pkgname))
@@ -23,29 +24,76 @@
 
 #*********************************************
 #*********************************************
-#' (Internal) Get available StoX functions
+#' Get available StoX functions
 #' 
 #' This funcion gets available StoX functions.
 #' 
 #' @importFrom rJava .jnew
 #' @export
+#' @keywords internal
 #' 
-getAvailableFunctions <- function(){
+getAvailableFunctions <- function(type="baseline"){
+	# The functions J and .jnew and other functions in the rJava library needs initialization:
+	Rstox.init()
 	projectName <- .jnew("no/imr/stox/model/Project")
 	functions <- projectName$getLibrary()$getMetaFunctions()$toString()
-	JavaString2vector(functions)
+	functions <- JavaString2vector(functions)
+	if(!identical(type, "all")){
+		categories <- sapply(functions, function(x) projectName$getLibrary()$findMetaFunction(x)$getCategory())
+		functions <- functions[categories %in% type]
+	}
+	return(functions)
 }
 
 
 #*********************************************
 #*********************************************
-#' (Internal) Convert a Java string to R vector
+#' Add processes to a project given as output from getParlist():
+#' 
+#' This function extracts the project names and adds function names where these are not given, and adds processes to the project.
+#' 
+#' @param project	A project object.
+#' @param processes	A list of processes as returned from \code{\link{getParlist}}.
+#' 
+#' @export
+#' @keywords internal
+#' 
+addProcesses <- function(project, processes){
+	if(!is.list(processes)){
+		stop("processes must be a list of elements processName = list(par1 = value, par2 = value, ...)")
+	}
+	# Discard duplicated process names, since we are only using the process and function names, and not the parameter values, which are treated by setBaselineParameters():
+	processes <- processes[!duplicated(names(processes))]
+	# Get the processes names and realted function names:
+	processNames <- names(processes)
+	functionNames <- sapply(processes, function(x) if(length(x$functionName)) x$functionName else "")
+	empty <- nchar(functionNames)==0
+	functionNames[empty] <- processNames[empty]
+	
+	# Remove the processes with invalid functions:
+	valid <- functionNames %in% getAvailableFunctions()
+	if(any(!valid)){
+		warning(paste0("The following functions were not recognized (use getAvailableFunctions() to get a list of available Stox functions):\n"), paste(functionNames[!valid], sep="\n"))
+	}
+	functionNames <- functionNames[valid]
+	processNames <- processNames[valid]
+	
+	# Add the processes:
+	lapply(seq_along(processNames), function(i) project$getBaseline()$addProcess(processNames[i], functionNames[i]))
+	return(list(processNames=processNames, functionNames=functionNames))
+}
+
+
+#*********************************************
+#*********************************************
+#' Convert a Java string to R vector
 #' 
 #' When reading some data from the StoX Java memory using toString(), the resulting string is converted to a string vector by this function.
 #' 
 #' @param x	A Java string imported from the StoX Java library.
 #' 
 #' @export
+#' @keywords internal
 #' 
 JavaString2vector <- function(x){
 	x <- gsub("[", "", x, fixed=TRUE)
@@ -56,7 +104,7 @@ JavaString2vector <- function(x){
 
 #*********************************************
 #*********************************************
-#' (Internal) Wrap basic R objects into Java objects
+#' Wrap basic R objects into Java objects
 #' 
 #' Wraps a value \code{i} into a Java integer, double, og Boolean for use in Java functions accessable by the package Rstox.
 #' 
@@ -66,32 +114,35 @@ JavaString2vector <- function(x){
 #'
 #' @importFrom rJava .jnew
 #' @export
-#' @rdname .jInt
+#' @keywords internal
+#' @rdname jInt
 #' 
-.jInt <- function(i) {
+jInt <- function(i) {
 	.jnew("java/lang/Integer", as.integer(i))
 }
 #' 
 #' @importFrom rJava .jnew
 #' @export
-#' @rdname .jInt
+#' @keywords internal
+#' @rdname jInt
 #' 
-.jDouble <- function(i) {
+jDouble <- function(i) {
 	.jnew("java/lang/Double", as.double(i))
 }
 #' 
 #' @importFrom rJava .jnew
 #' @export
-#' @rdname .jInt
+#' @keywords internal
+#' @rdname jInt
 #' 
-.jBoolean <- function(i) {
+jBoolean <- function(i) {
 	.jnew("java/lang/Boolean", i)
 }
 
 
 #*********************************************
 #*********************************************
-#' (Internal) Convert a storage object into a dataframe representation
+#' Convert a storage object into a dataframe representation
 #' 
 #' \code{getDataFrame} converts a StoX storage object into a dataframe, and is used by the more user friendly \code{getDataFrame1} to convert a baseline object to dataframe. \cr \cr
 #' \code{getProcessDataTableAsDataFrame} gets a joined table with meanNASC, psu, stratum, and area. Reads transect data, strata and area information from baseline Java object and merges them into one data frame.
@@ -108,6 +159,7 @@ JavaString2vector <- function(x){
 #' @return A dataframe
 #'
 #' @export
+#' @keywords internal
 #' @rdname getDataFrame
 #' 
 getDataFrame <- function(baseline, processName=NULL, functionName=NULL, level=NULL, drop=TRUE){
@@ -159,7 +211,10 @@ getDataFrame <- function(baseline, processName=NULL, functionName=NULL, level=NU
 	
 	# Output a list of the data of each requested level:
 	out <- lapply(level, getDataFrameAtLevel, storage=storage, data=data)
-	names(out) <- sapply(seq_along(out), function(xx) basename(storage$getStorageFileName(.jInt(xx))))
+	outnames <- sapply(seq_along(out), function(xx) basename(storage$getStorageFileName(jInt(xx))))
+	# Remove leading integers in sublists of the output from processes:
+	outnames <- sub("[0-9]+_", "", outnames)
+	names(out) <- outnames
 	if(drop && length(out)==1){
 		out[[1]]
 	}
@@ -169,6 +224,7 @@ getDataFrame <- function(baseline, processName=NULL, functionName=NULL, level=NU
 }
 #' 
 #' @export
+#' @keywords internal
 #' @rdname getDataFrame
 #' 
 getDataFrame1 <- function(baseline, processName=NULL, functionName=NULL, level=NULL, drop=TRUE){
@@ -177,13 +233,14 @@ getDataFrame1 <- function(baseline, processName=NULL, functionName=NULL, level=N
 }
 #' 
 #' @export
+#' @keywords internal
 #' @rdname getDataFrame
 #' 
 getDataFrameAtLevel <- function(level, storage, data) {
 	if(is.null(storage) || is.null(data)){
 		return(NULL)
 	} 
-	s <- storage$asTable(data, .jInt(level))
+	s <- storage$asTable(data, jInt(level))
 	#out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=F)
 	out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=F, na.strings="-", encoding="UTF-8")
 	# Interpret true/false as TRUE/FALSE (move along the columns of 'out'):
@@ -197,12 +254,13 @@ getDataFrameAtLevel <- function(level, storage, data) {
 }
 #' 
 #' @export
+#' @keywords internal
 #' @rdname getDataFrame
 #' 
 getProcessDataTableAsDataFrame <- function(baseline, tableName) {
 	s <- baseline$getProject()$getProcessData()$asTable(tableName)
 	if(nchar(s)>0){
-	out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=F, na.strings="-", encoding="UTF-8")
+		out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=F, na.strings="-", encoding="UTF-8")
 		# Interpret true/false as TRUE/FALSE:
 		for(i in seq_along(out)){
 			if(length(out[[i]])>0 && head(out[[i]], 1) %in% c("true", "false")){
@@ -220,7 +278,7 @@ getProcessDataTableAsDataFrame <- function(baseline, tableName) {
 
 #*********************************************
 #*********************************************
-#' (Internal) Set NASC data and assignments to memory
+#' Set NASC data and assignments to memory
 #' 
 #' \code{setAssignments} Sets assignments to the assignment table in the process data (in memory).
 #' \code{setMeanNASCValues} Sets NASC or meanNASC values to the baseline data (in memory).
@@ -242,7 +300,7 @@ setAssignments <- function(projectName, assignments){
 	# Define the Java-object to modify:
 	JavaPath <- baseline$getProject()$getProcessData()$getMatrix("bioticassignment")
 	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	.Rstox.init()
+	Rstox.init()
 	# Modify with the 'assignments':
 	J("no.imr.stox.functions.utils.AbndEstProcessDataUtil")$setAssignments(JavaPath, .jarray(as.character(assignments$AssignmentID)), .jarray(as.character(assignments$Station)), .jarray(as.double(assignments$StationWeight)))
 }
@@ -257,41 +315,29 @@ setNASC <- function(projectName, process="MeanNASC", data){
 	# Define the Java-object to modify:
 	JavaPath <- baseline$findProcessByFunction(process)$getOutput()$getData()
 	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	.Rstox.init()
+	Rstox.init()
 	# Modify with the 'data':
 	J("no.imr.stox.bo.MatrixUtil")$setGroupRowColValues(JavaPath, .jarray(as.character(data$AcoCat)), .jarray(as.character(data$SampleUnit)), .jarray(as.character(data$Layer)), .jarray(as.double(data$Value)))
 }
 
 
-
 #*********************************************
 #*********************************************
-#' (Internal) Set and remove assignments
+#' Set the size of the Java memory
 #' 
-#' \code{setAssignments_old} Sets assignments to the assignment table in the process data (in memory).
-#' \code{setMeanNASCValues_old} Sets NASC or meanNASC values to the baseline data (in memory).
-#' 
-#' @param ta_table		Table 'TRAWLASSIGNMENT' in ProcessData
-#' @param assignments	Modified trawl assignments
-#' @param mtrx			The mean NASC matrix
-#' @param tbl			The table dataframe
+#' @param size	The size of the memory (in bytes) assigned to Java for each project
 #'
-#' @importFrom rJava J .jarray
 #' @export
-#' @rdname setAssignments_old
+#' @rdname setJavaMemory
 #'
-setAssignments_old <- function(ta_table, assignments){
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	.Rstox.init()
-	J("no.imr.stox.functions.utils.AbndEstProcessDataUtil")$setAssignments(ta_table, .jarray(as.character(assignments$AssignmentID)), .jarray(as.character(assignments$Station)), .jarray(as.double(assignments$StationWeight)))
+setJavaMemory <- function(size=2e9){
+	size <- paste0(round(size * 1e-6), "m")
+	options(java.parameters=paste0("-Xmx", size))
 }
 #'
-#' @importFrom rJava J .jarray
 #' @export
-#' @rdname setAssignments_old
+#' @rdname setJavaMemory
 #'
-setMeanNASCValues_old <- function(mtrx, tbl){
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	.Rstox.init()
-	J("no.imr.stox.bo.MatrixUtil")$setGroupRowColValues(mtrx, .jarray(as.character(tbl$AcoCat)), .jarray(as.character(tbl$SampleUnit)), .jarray(as.character(tbl$Layer)), .jarray(as.double(tbl$Value)))
+getJavaMemory <- function(){
+	options("java.parameters")
 }

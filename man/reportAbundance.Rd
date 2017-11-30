@@ -2,12 +2,22 @@
 % Please edit documentation in R/rstox_reports.r
 \name{reportAbundance}
 \alias{reportAbundance}
+\alias{reportAbundance_AcousticTrawl}
+\alias{reportAbundance_SweptAreaTotal}
 \alias{reportAbundanceAtLevel}
 \title{Calculate a summary of the bootstrap iterations (possibly after imputing unknown ages).}
 \usage{
-reportAbundance(projectName, var = "Abundance", unit = NULL,
+reportAbundance(projectName, bootstrapMethod = "AcousticTrawl",
+  var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
+  grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
+  ...)
+
+reportAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
-  plotOutput = FALSE, write = FALSE)
+  plotOutput = FALSE, write = FALSE, msg = TRUE, ...)
+
+reportAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
+  write = FALSE, ...)
 
 reportAbundanceAtLevel(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, level = "bootstrapImpute", grp1 = "age", grp2 = NULL,
@@ -38,11 +48,13 @@ reportAbundanceAtLevel(projectName, var = "Abundance", unit = NULL,
 A data frame of the abundance in sumary per grp2 and grp1 if plotOutput=FALSE, and a list holding this object (keeping "-" for missing values and not ordering) and other objects needed by plotAbundance().
 }
 \description{
-This function is used in the plotting function plotAbundance().
+\code{reportAbundance} is a wrapper function for the reportAbundance functions for the bootstrapMehtods "AcousticTrawl", "SweptAreaLength" and "SweptAreaTotal".
+\code{reportAbundance_AcousticTrawl} reports and writes to file the abundance with uncertanty for the different groups given by \code{grp1} and (possibly) \code{grp2}.
+\code{reportAbundance_SweptAreaLength} is an alias for \code{reportAbundance_AcousticTrawl}.
+\code{reportAbundance_SweptAreaTotal} returns summary statistics generated from bootstrap replicates for projects with only total catch.
+\code{reportAbundanceAtLevel} is used in \code{reportAbundance_AcousticTrawl} and \code{reportAbundance_SweptAreaLength} for generating the report for each level "bootstra" or "bootstrapImpute".
 }
 \examples{
-# Create the test project:
-createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=TRUE)
 projectName <- "Test_Rstox"
 reportAbundance(projectName, grp1=NULL, grp2=NULL)
 reportAbundance(projectName, grp1="age", grp2=NULL)
@@ -51,4 +63,4 @@ reportAbundance(projectName, grp1="age", grp2="Stratum")
 reportAbundance(projectName, grp1="age", grp2="Stratum")
 
 }
-
+\keyword{internal}

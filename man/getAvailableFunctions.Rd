@@ -2,11 +2,11 @@
 % Please edit documentation in R/rstox_java.r
 \name{getAvailableFunctions}
 \alias{getAvailableFunctions}
-\title{(Internal) Get available StoX functions}
+\title{Get available StoX functions}
 \usage{
-getAvailableFunctions()
+getAvailableFunctions(type = "baseline")
 }
 \description{
 This funcion gets available StoX functions.
 }
-
+\keyword{internal}
