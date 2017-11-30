@@ -3,25 +3,27 @@
 \name{data.frame2parString}
 \alias{data.frame2parString}
 \alias{parString2data.frame}
-\title{Get the Rstox version and the version of the Java library used by Rstox, on which StoX is built.}
+\title{Convert to and from parameter strings in StoX.}
 \usage{
 data.frame2parString(x)
 
-parString2data.frame(x)
+parString2data.frame(string)
 }
 \arguments{
 \item{x}{A data.frame with the parameters as columns, such as data.frame(SpecCat=c("Torsk", "Sild", ""), Alpha=runif(3), Beta=runif(3), LMin=runif(3), LMax=runif(3)).}
+
+\item{x}{Parameter string to convert to data frame, given as <parameter1> = <value>; <parameter2> = <value>; and so on, where lines in the data frame are separated by "/". See examples.}
 }
 \description{
-Get the Rstox version and the version of the Java library used by Rstox, on which StoX is built.
+Convert to and from parameter strings in StoX.
 }
 \examples{
 df1 <- data.frame(
-SpecCat=c("Torsk", "Hyse", ""), 
-Alpha=c(5,9,2), 
-Beta=c(2,2,3), 
-LMin=c(1,2,3), 
-LMax=c(5,7,9))
+    SpecCat=c("Torsk", "Hyse", ""), 
+    Alpha=c(5,9,2), 
+    Beta=c(2,2,3), 
+    LMin=c(1,2,3), 
+    LMax=c(5,7,9))
 string <- data.frame2parString(df1)
 df2 <- parString2data.frame(string)
 df1

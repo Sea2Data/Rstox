@@ -2,12 +2,9 @@
 % Please edit documentation in R/rstox_base.r
 \name{createProject}
 \alias{createProject}
-\alias{createProject_old}
 \alias{openProject}
-\alias{openProject_1.6.4}
 \alias{reopenProject}
 \alias{getProject}
-\alias{getProject_old}
 \alias{listOpenProjects}
 \alias{updateProject}
 \alias{saveProject}
@@ -23,22 +20,13 @@ createProject(projectName = NULL, files = list(), dir = NULL,
   model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
   ignore.processXML = FALSE, parlist = list(), msg = TRUE, ...)
 
-createProject_old(projectName = NULL, files = list(), dir = NULL,
-  model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
-  ignore.processXML = FALSE, parlist = list(), msg = TRUE, ...)
-
 openProject(projectName = NULL, out = c("project", "baseline", "report",
   "name"), msg = FALSE)
-
-openProject_1.6.4(projectName = NULL, out = c("project", "baseline",
-  "report", "name"), msg = FALSE)
 
 reopenProject(projectName, out = c("project", "baseline", "report", "name"))
 
 getProject(projectName, out = c("project", "baseline", "report", "name"),
   msg = FALSE)
-
-getProject_old(projectName, msg = FALSE)
 
 listOpenProjects()
 
@@ -107,6 +95,7 @@ A project object
 \code{openProject} opens a StoX project. If the project has already been opened, \code{openProject} will only retrieve the project object from the RstoxEnv enviromnent. To force open the project use \code{reopenProject}. \cr \cr
 \code{reopenProject} re-opens a StoX project, which is equivalent to closeing and then opening the project. \cr \cr
 \code{getProject} gets a project object (one of "project", "baseline", "report", "name"), either from the input if this is a baseline or project object, or from the project environment. \cr \cr
+\code{listOpenProjects} lists all open projects. \cr \cr
 \code{updateProject} updates links to xml files in a project. \cr \cr
 \code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
 \code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr

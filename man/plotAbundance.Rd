@@ -4,9 +4,8 @@
 \alias{plotAbundance}
 \alias{plotAbundance_AcousticTrawl}
 \alias{plotAbundance_SweptAreaTotal}
-\alias{plotAbundance_old}
 \alias{setValueForMissing}
-\title{Plot abundance results to file (generic)}
+\title{Plot abundance results to the graphics device or to a file}
 \usage{
 plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
   var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
@@ -21,10 +20,6 @@ plotAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
 plotAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
   xlab = NULL, ylab = NULL, main = "", format = "png", log = NULL,
   filetag = NULL, ...)
-
-plotAbundance_old(projectName, var = "Abundance", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, ...)
 
 setValueForMissing(x)
 }
@@ -64,7 +59,6 @@ Plot saved to file and abundance table printed
 }
 \description{
 Plots boxplot of bootstrap results together with Coefficient of Variation (CV).
-Prints summary table and plot is exported to a tif- or png-file.
 }
 \examples{
 projectName <- "Test_Rstox"

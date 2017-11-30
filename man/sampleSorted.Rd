@@ -7,7 +7,7 @@
 \alias{getSeedM}
 \alias{expandSeed}
 \alias{getSequenceToSampleFrom}
-\title{Sample a vector after sorting the vector and applying the seed}
+\title{Sample a vector after sorting the vector and applying the seed, and functions for setting seeds in Rstox.}
 \usage{
 sampleSorted(x, size, seed = 0, by = NULL, replace = TRUE,
   sorted = TRUE, drop = FALSE)
@@ -46,6 +46,6 @@ getSequenceToSampleFrom()
 \item{seed}{A single seed.}
 }
 \description{
-Sample a vector after sorting the vector and applying the seed
+Sample a vector after sorting the vector and applying the seed, and functions for setting seeds in Rstox.
 }
 \keyword{internal}

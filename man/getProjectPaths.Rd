@@ -2,13 +2,10 @@
 % Please edit documentation in R/rstox_base.r
 \name{getProjectPaths}
 \alias{getProjectPaths}
-\alias{getProjectPaths_old}
 \alias{getProjectDataEnv}
 \title{Functions to return various paths and file names.}
 \usage{
 getProjectPaths(projectName = NULL, projectRoot = NULL, recursive = 2)
-
-getProjectPaths_old(projectName = NULL, projectRoot = NULL)
 
 getProjectDataEnv(projectName)
 }

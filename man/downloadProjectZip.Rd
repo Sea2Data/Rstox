@@ -2,13 +2,9 @@
 % Please edit documentation in R/rstox_base.r
 \name{downloadProjectZip}
 \alias{downloadProjectZip}
-\alias{downloadProjectZip_old}
 \title{Download a zipped StoX project to a specified project path.}
 \usage{
 downloadProjectZip(URL, projectName = NULL, projectRoot = NULL,
-  cleanup = TRUE, ow = TRUE, msg = TRUE)
-
-downloadProjectZip_old(URL, projectName = NULL, projectRoot = NULL,
   cleanup = TRUE, ow = TRUE, msg = TRUE)
 }
 \arguments{

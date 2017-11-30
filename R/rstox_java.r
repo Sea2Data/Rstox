@@ -321,42 +321,6 @@ setNASC <- function(projectName, process="MeanNASC", data){
 }
 
 
-
-#*********************************************
-#*********************************************
-#' Set and remove assignments
-#' 
-#' \code{setAssignments_old} Sets assignments to the assignment table in the process data (in memory).
-#' \code{setMeanNASCValues_old} Sets NASC or meanNASC values to the baseline data (in memory).
-#' 
-#' @param ta_table		Table 'TRAWLASSIGNMENT' in ProcessData
-#' @param assignments	Modified trawl assignments
-#' @param mtrx			The mean NASC matrix
-#' @param tbl			The table dataframe
-#'
-#' @importFrom rJava J .jarray
-#' @export
-#' @keywords internal
-#' @rdname setAssignments_old
-#'
-setAssignments_old <- function(ta_table, assignments){
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	Rstox.init()
-	J("no.imr.stox.functions.utils.AbndEstProcessDataUtil")$setAssignments(ta_table, .jarray(as.character(assignments$AssignmentID)), .jarray(as.character(assignments$Station)), .jarray(as.double(assignments$StationWeight)))
-}
-#'
-#' @importFrom rJava J .jarray
-#' @export
-#' @keywords internal
-#' @rdname setAssignments_old
-#'
-setMeanNASCValues_old <- function(mtrx, tbl){
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	Rstox.init()
-	J("no.imr.stox.bo.MatrixUtil")$setGroupRowColValues(mtrx, .jarray(as.character(tbl$AcoCat)), .jarray(as.character(tbl$SampleUnit)), .jarray(as.character(tbl$Layer)), .jarray(as.double(tbl$Value)))
-}
-
-
 #*********************************************
 #*********************************************
 #' Set the size of the Java memory

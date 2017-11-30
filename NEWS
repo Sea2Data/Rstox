@@ -389,3 +389,141 @@ Changed structure and name of bootstrapImpute$imputeParameters$msg to bootstrapI
 Fixed bug in plotAbundance_AcousticTrawl() when all values of the variable specified by 'grp1' are missing (NA).
 
 Added support for separating options by comma (",") in getPlots() and getReports() (only applicable if none of the individual parameters are specified as vectors or in some other way specified using commas).
+
+
+
+########## Version 1.6.5 (2017-11-30) ##########
+
+Fixed bug in openProject() where the function readBaselineParameters() was used to read the parameters directly from the project.xml file, as opposed to reading the parameters from the project Java object. As a result, changes to parameters made by StoX when opening av project were not picked up. From Rstox_1.6.5 the function readBaselineParametersJava() is used instead.
+
+
+
+########## Version 1.7 (2017-11-30) ##########
+
+Fixed bug in openProject() where the function readBaselineParameters() was used to read the parameters directly from the project.xml file, as opposed to reading the parameters from the project Java object. As a result, changes to parameters made by StoX when opening av project were not picked up. From Rstox_1.6.5 the function readBaselineParametersJava() is used instead.
+
+As of Rstox_1.7 (starting from Rstox_1.6.3) the results from runBootstrap() differs in precision due to a change in StoX. Before, very small numbers were rounded off to 0, whereas from Rstox_1.6.3 numbers on StoX are kept with 4 significant digits. This change may lead to small changes ( < 1e-7) in abundance from the baseline model, which also propagates into the results of runBaseline() and imputeByAge(). 
+
+Removed plotAbundance_old(), which is no longer used. The new plotAbundance() uses ggplot2 for nicer plotting.
+
+Changed default width, height, dpi to 5000, 3000, 500. Also added the option format=NULL, causing plots to only show in the graphics window.
+
+Fixed a bug in readBaselineParameters(), where processes with 'enabled' set to "false" were removed. This caused problems when matching process names, and from now 'enabled' is returned in the parameter list instead.
+
+Changed names of bootstrap runs to have constant number of characters, by padding run number by zeros.
+
+Added the function sampleSorted(), which is used for all sampling throughout Rstox. This function sorts the values before sampling in order to be independent of any rearranging of the data (suppressed when the parameter sorted=FALSE). The function also includes a seed, ensuring that seeds are applied immediately before sampling.
+
+Added the parameter 'sorted' with default TRUE to all bootstrap functions. This implies that all bootstrap functions change from Rstox_1.6 to Rstox_1.7, and different results should be expected. This change was forced by the discovery that two copies of the same project, where in the first the option NASC -> LayerType = WaterColumn is selected, and in the second NASC -> LayerType = PChannel, resulted in different bootstrap estimates. This behavior was considered to be a bug, and the chosen solution was to sort values prior to sampling (in the latter project the aggregation over depth layers was done in Rstox, with a method that resulted in a different ordering of the data than that of the first project).
+
+Added the function runBootstrap_1.6(), which is identical to runBootstrap() with sorted=FALSE. This function can be used to obtain identical bootstrap results as in Rstox_1.6.
+
+Introduced the new parameter 'bootstrapMethod' in runBootstrap(), which indicates the method to use for the different project types. Also restructured the bootstrap functions to have one function per project type, runBootstrap_acousticTrawl(), runBootstrap_sweptArea_length() and runBootstrap_sweptArea_total(), where the latter is a new bootstrap method designed for projects with total catch only and no individual measurements in the samples. The parameters 'acousticMethod' and 'bioticMethod' are still in use, but specifying the levels of the bootstrapping rather than the method itself. In the current version only the PSU~Stratum value is accepted (for bioticMethod EDSU~Stratum is interpreted as PSU~Stratum), but other combinations will can be implemented in future versions, such as Individual~PSU and even multiple combinations.
+
+Changed the function setBaselineParameters() to set the parameters either in Java memory and in the javaParameters field in the project environment (save="java"), or in the lastParameters field in the project environment and projectData outputed from bootstrap and impute functions (save="last"), or both (save=TRUE or c("java", "last")).
+
+Added the function linkPSU2Stratum(), which adds stratum information to PSU data. This is used in the functions varianceEstimation() and runBootstrap_sweptArea_total().
+
+Reorganized the function getProjectPaths() to more clearly execute the following intension given the input 'projectName': If given as a baseline or project Java object, get and return project parts from the object. If given as a full path, check whether the dirname(dirname()) exists. Otherwise paste the projectRoot and projectName, and do the same check on this path. Otherwise paste the default projectRoot and the projectName and to the same check on this path.
+
+Added the function saveasProject(), which saves the current Java settings of a project to a new project. This function first saves (softly) the current project, copies the saved project, and then resets the current project using the new function resetProject() with to="saved".
+
+Added the object 'savedParameters' in the project environment, which is changed when saveProject() is run with soft=FALSE.
+
+Changed default msg to FALSE in setBaselineParameters().
+
+Fixed bug in plotAbundance() and plotNASCDistribution(), where parameters specified in the ... could result in the function specified by 'format' (such as png and jpeg). 
+
+Fixed bug in plotAbundance(), where missing valued in the variable specified by 'grp2' were assigned the value min(grp1) - 1. Changed to min(grp2) - 1.
+
+Added the option format=NULL in plotAbundance() and plotNASCDistribution(), causing the plot to show in the graphics window only (not saved to file).
+
+Added the parameter 'out' to the function getProject(), with a new possible value "report" for returning the Baseline Report object.
+
+Changed how seeds are generated throughout Rstox. All seeds are now generated using the functions setSeedSingle(), getSeedV(), getSeedM(), expandSeed() and getSequenceToSampleFrom(). This is intended to make the generation of seeds in the package less fragile to changes in the code.
+
+Changed names of bootstrap replicates to have fixed width, by padding with trailing zeros in the run index number (e.g, run001, run002, ..., run123, for nboot=123).
+
+Added the function is.empty() for use to test whether parameters are given (returns TRUE for zeros length, zeros characters, "null" and NA).
+
+Fixed bug in checkNumPSUsInStratum(), where the number of PSUs in each stratum is evaluated, and a warnings is issued for strata with less than 2 PSUs. Here only the strata with a positive number of PSUs were checked. Fixed by combining 'psustratum' and 'stratumpolygon' in the process data.
+
+Changed the structure of the RstoxEnv environment to having two lists "Definitions" and "Projects". Also added the project path to project environments, which are located in "Projects".
+
+Added the function listOpenProjects() which returns a data frame with the project name and path of the loaded projects.
+
+Fixed bug in getProjectPaths(), where repeated calls using the output project name of the functions as input resulted in different project paths. Fixed by checking the loaded projects.
+
+Added the option 'log' in getPlots(), specifying which axes to apply log10() to.
+
+Changed the shape of outliers in plotAbundance to filled diamonds, to separate them from other points.
+
+Changed structure and name of bootstrapImpute$imputeParameters$msg to bootstrapImpute$imputeParameters$imputeSummary in the project data environment (getProjectDataEnv()). Added bootstrapMethod, acousticMethod and bioticMethod to bootstrapImpute$imputeParameters. 
+
+Fixed bug in plotAbundance_AcousticTrawl() when all values of the variable specified by 'grp1' are missing (NA).
+
+Added support for separating options by comma (",") in getPlots() and getReports() (only applicable if none of the individual parameters are specified as vectors or in some other way specified using commas).
+
+Added support in modifyBaselineParameters() used by runBaseline() for specifying StoX processes by their name only, and not Process(name_of_the_processs).
+
+Modified the function getNMDinfo() to return data frames instead of matrices.
+
+Added the function abbrevWords(), used when abbreviting survey time series and cruise series downloaded from NMD using getNMDdata(, abbrev=TRUE). 
+
+Restructured the function getNMDdata(). Added the parameters subdir, which creates a directory inside the StoX projects directory in which to put multiple StoX projects (typically survey time series and cruise series), and abbrev, which abbreviates the StoX project names by the function abbrevWords() (using sub=-1 on years, ship names and other suffixes).
+
+Updated the Test_Rstox project to the new R and R report structure (bootstrap and imputeByAge in R, and plots and reports in R report).
+
+Changed the output from createProject(NULL) to return full paths of StoX projects located in the default workspace and sub directories.
+
+Added the parameter 'msg' to createProject().
+
+Changed the way Rstox recognizes StoX projects. From this version on StoX project names can be given either (i) by their full path, (ii) their name, in which case Rstox searches first in the default workspace and then in subdirectories, (iii) the path relative to the default workspace. This build support for organizing projects in the workspace in subdirectories.
+
+Changed the output from createProject() to return a list of processes for the available templates.
+
+Changed createProject("Test_Rstox") to autumatically use the example files for this particular project name. Also changed openProject("Test_Rstox") to create the project if missing. Thus there is no need to pre-create the test project. It is created when needed. Use createProject("Test_Rstox", ow=TRUE) to re-create the test project. This simplified the examples. 
+
+Added support for creating a project directly from an URL of a zipped StoX project, either given as 'files' in createProject() (where the projectName can be specified), or as 'projectName', in which case the project name of the zipped project is used.
+
+Added the function getRstoxVersion(), which returns the version of Rstox and the StoX Java library used by Rstox (and StoX).
+
+Added the function downloadProjectZip(), which downloads a zipped project from an URL, used by createProject() and getNMDdata().
+
+Added the function data.frame2parString() and parString2data.frame(), converting from a data.frame to a string as used by the StoX functions Catchability and SplitNASC, and the the opposite.
+
+Added the function isProjectZipURL(), which returns TRUE for URLs containing "http" or "ftp" AND "zip".
+
+Included a requirement on the data.table package  (>= 1.10.4-3) in this version, due to issues with parallel processing on Mac in the version preceding the required one.
+
+Removed the integers leading the name of sub lists in the element "outputData" in the list returned from getBaseline().
+
+Fixed bug with AreaMethod="accurate" in the process StratumArea, which had no effect when run from Rstox.
+
+Added the function varianceEstimation(), which implements the variance estimation of Jolly, G. M., & Hampton, I. (1990). A stratified random transect design for acoustic surveys of fish stocks. Canadian Journal of Fisheries and Aquatic Sciences, 47(7), 1282-1291.
+
+Re-introduced the defaults acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum in runBootstrap().
+
+Changed the function readBaselineParameters() to parse the project.XML file.
+
+Added the parameter 'model' in readXMLfiles(), allowing for specifying additional processing of the data read from XML files. A simple example is readXMLfiles(AcousticXMLfiles, model=list(NASC=list(AcousticData="Process(ReadAcousticXML)"))), which for acoustic XML files also calculates the NASC values.
+
+Added the function addProcesses(), which adds processes to a project object given a list of parameter specifications as returned by getParlist().
+
+Simplified how custom models are implemented in createProject(), which now first runs addProcesses() and then setBaselineParameters(). 
+
+Renamed the object currentParameters in the project environment to javaParameters, to stress that these are the current parameter values in the project Java object. The object lastParameters is the parameters used during the last baseline run, which do not have to be identical to the javaParameters, in case the parameter values in Java were reset to the previous parameter values.
+
+Fixed bug on Mac with rJava: Changed Sys.setenv(JAVA_HOME="") to if(Sys.getenv("JAVA_HOME")!="") Sys.setenv(JAVA_HOME="") in the onload() function.
+
+Changed the output from runBootstrap() to TRUE (invisibly), instead of the bootstrap object, which can be memory consuming.
+
+Removed the parameter 'par' of getBaseline(), which was used to uniquely select processes using the same function. This method was replaced by the following method: If more than one process use the same function, return data from that which has process name equal to the function name, and if such a process does not exist, return the first process with a warning.
+
+Removed the parameter 'fun' of getBaseline(). The old method supported both the process name 'proc' and the function name 'fun' when specifying which process to get data from, but the new method only use one parameter 'proc'. The function now searces for a match in process name, and then in function name, picking the first process in the case of multiple matches, with a warning.
+
+Removed the old functions bootstrapBioticAcoustic() and bootstrapBioticSweptArea().
+
+Added the function wkt_MULTIPOLYGON(), adding support for lists of two column polygon matrices in polyArea().
+
+Fixed bug in baseline2eca().

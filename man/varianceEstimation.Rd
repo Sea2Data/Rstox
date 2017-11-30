@@ -2,15 +2,11 @@
 % Please edit documentation in R/rstox_boostrap.r
 \name{varianceEstimation}
 \alias{varianceEstimation}
-\alias{varianceEstimation_old}
 \title{Parametric variance estimation}
 \usage{
 varianceEstimation(projectName, proc = "SweptAreaDensity",
   ignore.case = TRUE, na.rm = TRUE, out = c("bySpecCat", "byLevel",
   "listByLevel"))
-
-varianceEstimation_old(projectName, proc = "SweptAreaDensity",
-  ignore.case = TRUE)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}

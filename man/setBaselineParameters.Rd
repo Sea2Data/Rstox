@@ -2,8 +2,8 @@
 % Please edit documentation in R/rstox_base.r
 \name{setBaselineParameters}
 \alias{setBaselineParameters}
-\alias{readBaselineParameters}
 \alias{readBaselineParametersJava}
+\alias{readBaselineParameters}
 \alias{getBaselineParameters}
 \alias{modifyBaselineParameters}
 \title{Set, read, get or modify baseline parameters.}
@@ -11,9 +11,9 @@
 setBaselineParameters(projectName, msg = FALSE, parlist = list(),
   save = c("last", "java"), ...)
 
-readBaselineParameters(projectName, rver = "1")
+readBaselineParametersJava(projectName, keepMissing = FALSE)
 
-readBaselineParametersJava(projectName)
+readBaselineParameters(projectName, rver = "1")
 
 getBaselineParameters(projectName)
 
@@ -33,13 +33,17 @@ modifyBaselineParameters(parameters, parlist = list(), ...)
 \item{rver}{The version of the stox library.}
 
 \item{parameters}{A list of the baseline parameters to modify using \code{parlist} or \code{...}.}
+
+\item{project}{The project Java object.}
 }
 \value{
 The original parameters
 }
 \description{
 \code{setBaselineParameters} Sets baseline parameters in memory to new values specified in \code{parlist} or \code{...}. \cr \cr
-\code{readBaselineParameters} Reads the baseline parameters from the project.xml file \cr \cr
+\code{readBaselineParametersJava} Reads the baseline parameters from the Java memory. \cr \cr
+\code{readBaselineParameters} Depricated, use \code{readBaselineParametersJava} instead: Reads the baseline parameters from the project.xml file \cr \cr
 \code{getBaselineParameters} Gets either original, java or last used baseline parameters \cr \cr
 \code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment nor in the project file). \cr \cr
 }
+\keyword{internal}

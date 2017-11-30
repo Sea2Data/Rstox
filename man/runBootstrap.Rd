@@ -8,7 +8,6 @@
 \alias{runBootstrap_SweptAreaTotal}
 \alias{getBootstrapLevels}
 \alias{getBootstrapMethod}
-\alias{runBootstrap_old}
 \title{Run a bootstrap in StoX}
 \usage{
 runBootstrap(projectName, bootstrapMethod = "AcousticTrawl",
@@ -40,11 +39,6 @@ getBootstrapLevels(x)
 
 getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
   Stratum, bioticMethod = PSU ~ Stratum, ...)
-
-runBootstrap_old(projectName, bootstrapMethod = "AcousticTrawl",
-  acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum, nboot = 5,
-  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seed = 1, cores = 1, msg = TRUE, sorted = TRUE, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}

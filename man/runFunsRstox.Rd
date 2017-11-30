@@ -2,14 +2,11 @@
 % Please edit documentation in R/rstox_reports.r
 \name{runFunsRstox}
 \alias{runFunsRstox}
-\alias{getFunsRstoxOld}
 \alias{getFunsRstox}
 \title{Get various plots and reports in Rstox}
 \usage{
 runFunsRstox(projectName, string, out = "all", options = "",
   all.out = FALSE, drop.out = TRUE, ...)
-
-getFunsRstoxOld(string, out = "all")
 
 getFunsRstox(string, out = "all")
 }
