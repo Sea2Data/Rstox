@@ -574,6 +574,16 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 				suffix = stsInfo[i, "sampleTime"]
 			)
 		}
+		
+		# Select all or some of the projects:
+		if(length(subset)==0){
+			subset = seq_len(nprojects)
+		}
+		else{
+			subset = subset[subset>=1 & subset<=nprojects]
+		}
+		projectParts <- projectParts[subset]
+		stsInfo <- stsInfo[subset, , drop=FALSE]
 	
 		# Download and unzip all StoX projects of the survey time series:
 		projectNames <- getSurveyTimeSeriesStoXProjects(sts=sts, stsInfo=stsInfo, projectParts=projectParts, dir=dir, cleanup=cleanup, ow=ow, abbrev=abbrev, downloadtype="?format=zip")
