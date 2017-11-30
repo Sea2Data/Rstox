@@ -14,8 +14,6 @@
 #' @return A reference to the StoX Java baseline object
 #'
 #' @examples
-#' # Create the test project:
-#' createProject("Test_Rstox", files=system.file("extdata", "Test_Rstox", package="Rstox"), ow=FALSE)
 #' system.time(eca <- baseline2ECA("Test_Rstox"))
 #' # Show the covariate definitions:
 #' eca$resources

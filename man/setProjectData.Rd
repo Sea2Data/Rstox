@@ -4,8 +4,8 @@
 \alias{setProjectData}
 \alias{getProjectData}
 \alias{saveProjectData}
-\alias{saveRImage}
 \alias{loadProjectData}
+\alias{saveRImage}
 \alias{loadEnv}
 \title{Set, get, save or load project data.}
 \usage{
@@ -15,9 +15,9 @@ getProjectData(projectName, var = NULL)
 
 saveProjectData(projectName, var = "all", ...)
 
-saveRImage(projectName, var = "all", ...)
-
 loadProjectData(projectName, var = "all", ow = FALSE, ...)
+
+saveRImage(projectName, var = "all", ...)
 
 loadEnv(projectName, var = "all", ow = FALSE, ...)
 }

@@ -33,6 +33,8 @@ Rstox.init <- function() {
 #' @keywords internal
 #' 
 getAvailableFunctions <- function(type="baseline"){
+	# The functions J and .jnew and other functions in the rJava library needs initialization:
+	Rstox.init()
 	projectName <- .jnew("no/imr/stox/model/Project")
 	functions <- projectName$getLibrary()$getMetaFunctions()$toString()
 	functions <- JavaString2vector(functions)
@@ -209,7 +211,10 @@ getDataFrame <- function(baseline, processName=NULL, functionName=NULL, level=NU
 	
 	# Output a list of the data of each requested level:
 	out <- lapply(level, getDataFrameAtLevel, storage=storage, data=data)
-	names(out) <- sapply(seq_along(out), function(xx) basename(storage$getStorageFileName(jInt(xx))))
+	outnames <- sapply(seq_along(out), function(xx) basename(storage$getStorageFileName(jInt(xx))))
+	# Remove leading integers in sublists of the output from processes:
+	outnames <- sub("[0-9]+_", "", outnames)
+	names(out) <- outnames
 	if(drop && length(out)==1){
 		out[[1]]
 	}
@@ -255,7 +260,7 @@ getDataFrameAtLevel <- function(level, storage, data) {
 getProcessDataTableAsDataFrame <- function(baseline, tableName) {
 	s <- baseline$getProject()$getProcessData()$asTable(tableName)
 	if(nchar(s)>0){
-	out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=F, na.strings="-", encoding="UTF-8")
+		out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=F, na.strings="-", encoding="UTF-8")
 		# Interpret true/false as TRUE/FALSE:
 		for(i in seq_along(out)){
 			if(length(out[[i]])>0 && head(out[[i]], 1) %in% c("true", "false")){
@@ -316,37 +321,23 @@ setNASC <- function(projectName, process="MeanNASC", data){
 }
 
 
-
 #*********************************************
 #*********************************************
-#' Set and remove assignments
+#' Set the size of the Java memory
 #' 
-#' \code{setAssignments_old} Sets assignments to the assignment table in the process data (in memory).
-#' \code{setMeanNASCValues_old} Sets NASC or meanNASC values to the baseline data (in memory).
-#' 
-#' @param ta_table		Table 'TRAWLASSIGNMENT' in ProcessData
-#' @param assignments	Modified trawl assignments
-#' @param mtrx			The mean NASC matrix
-#' @param tbl			The table dataframe
+#' @param size	The size of the memory (in bytes) assigned to Java for each project
 #'
-#' @importFrom rJava J .jarray
 #' @export
-#' @keywords internal
-#' @rdname setAssignments_old
+#' @rdname setJavaMemory
 #'
-setAssignments_old <- function(ta_table, assignments){
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	Rstox.init()
-	J("no.imr.stox.functions.utils.AbndEstProcessDataUtil")$setAssignments(ta_table, .jarray(as.character(assignments$AssignmentID)), .jarray(as.character(assignments$Station)), .jarray(as.double(assignments$StationWeight)))
+setJavaMemory <- function(size=2e9){
+	size <- paste0(round(size * 1e-6), "m")
+	options(java.parameters=paste0("-Xmx", size))
 }
 #'
-#' @importFrom rJava J .jarray
 #' @export
-#' @keywords internal
-#' @rdname setAssignments_old
+#' @rdname setJavaMemory
 #'
-setMeanNASCValues_old <- function(mtrx, tbl){
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	Rstox.init()
-	J("no.imr.stox.bo.MatrixUtil")$setGroupRowColValues(mtrx, .jarray(as.character(tbl$AcoCat)), .jarray(as.character(tbl$SampleUnit)), .jarray(as.character(tbl$Layer)), .jarray(as.double(tbl$Value)))
+getJavaMemory <- function(){
+	options("java.parameters")
 }

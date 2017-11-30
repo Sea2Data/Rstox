@@ -2,20 +2,20 @@
 % Please edit documentation in R/rstox_base.r
 \name{setBaselineParameters}
 \alias{setBaselineParameters}
-\alias{readBaselineParameters}
 \alias{readBaselineParametersJava}
+\alias{readBaselineParameters}
 \alias{getBaselineParameters}
 \alias{modifyBaselineParameters}
 \title{Set, read, get or modify baseline parameters.}
 \usage{
-setBaselineParameters(projectName, msg = TRUE, parlist = list(),
-  save.project = FALSE, ...)
+setBaselineParameters(projectName, msg = FALSE, parlist = list(),
+  save = c("last", "java"), ...)
+
+readBaselineParametersJava(projectName, keepMissing = FALSE)
 
 readBaselineParameters(projectName, rver = "1")
 
-readBaselineParametersJava(projectName)
-
-getBaselineParameters(projectName, type = c("original", "current", "last"))
+getBaselineParameters(projectName)
 
 modifyBaselineParameters(parameters, parlist = list(), ...)
 }
@@ -26,22 +26,24 @@ modifyBaselineParameters(parameters, parlist = list(), ...)
 
 \item{parlist}{List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE. New parameters can be set by setBaselineParameters() but not removed in the current version.}
 
-\item{save.project}{Logical: if TRUE save the changes to the project.xml file.}
+\item{save}{A string naming the types of parameter to save ("java" implies saving the parameters to Java memory and to RstoxEnv[[projectName]]$javaParameters, whereas "last" implies saving the parameters to RstoxEnv[[projectName]]$javaParameters and to the projectData which are saved along with bootstrap and impute data). If save=TRUE, save is set to c("java", "last").}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
 \item{rver}{The version of the stox library.}
 
-\item{type}{The type of baseline parameter list, one of  "original", "current" and "last".}
-
 \item{parameters}{A list of the baseline parameters to modify using \code{parlist} or \code{...}.}
+
+\item{project}{The project Java object.}
 }
 \value{
 The original parameters
 }
 \description{
 \code{setBaselineParameters} Sets baseline parameters in memory to new values specified in \code{parlist} or \code{...}. \cr \cr
-\code{readBaselineParameters} Reads the baseline parameters from the project.xml file \cr \cr
-\code{getBaselineParameters} Gets either original, current or last used baseline parameters \cr \cr
-\code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment or in the project file). \cr \cr
+\code{readBaselineParametersJava} Reads the baseline parameters from the Java memory. \cr \cr
+\code{readBaselineParameters} Depricated, use \code{readBaselineParametersJava} instead: Reads the baseline parameters from the project.xml file \cr \cr
+\code{getBaselineParameters} Gets either original, java or last used baseline parameters \cr \cr
+\code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment nor in the project file). \cr \cr
 }
+\keyword{internal}

@@ -1,6 +1,6 @@
 Package: Rstox
 Title: Running Stox functionality independently in R
-Version: 1.6.2
+Version: 1.6.5
 Authors@R: c(
   person("Arne Johannes", "Holmin", role = c("aut","cre"), email = "arnejh@imr.no"),
   person("Edvin", "Fuglebakk", role = "ctb"),
@@ -13,14 +13,14 @@ Author: Arne Johannes Holmin [aut, cre],
   Aasmund Skaalevik [ctr],
   Espen Johnsen [ctr]
 Maintainer: Arne Johannes Holmin <arnejh@imr.no>
-Depends: R (>= 3.3.3)
+Depends: R (>= 3.4.2)
 Description: This package contains most of the functionality of the StoX software, which is used for assessment of fish and other marine resources based on biotic and acoustic survey and landings data, among other uses. Rstox is intended for further analyses of such data, facilitating iterations over an arbitrary number of parameter values and data sets.
 BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
 LazyData: true
 RoxygenNote: 6.0.1
 Imports:
-		data.table,
+		data.table (>= 1.10.4-3),
 		ggplot2,
 		pbapply,
 		rgdal,

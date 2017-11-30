@@ -2,9 +2,12 @@
 % Please edit documentation in R/rstox_base.r
 \name{getVar}
 \alias{getVar}
+\alias{is.empty}
 \title{Get a specific variable of a list by its name, and issue an error if the variable has zero length}
 \usage{
 getVar(x, var)
+
+is.empty(x)
 }
 \arguments{
 \item{x}{The names of variables.}

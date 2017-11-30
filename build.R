@@ -4,7 +4,7 @@
 library("devtools")
 ##########
 
-buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1", official=FALSE, check=FALSE, exportDir=NULL) {
+buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1", pckversion=list(), official=FALSE, check=FALSE, exportDir=NULL) {
 	
 	########## Functions ##########
 	# Function used for writing the README file automatically, including package dependencies, R and Rstox version and release notes:
@@ -12,18 +12,20 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		# Write Rstox and R version in the first two lines. THIS SHOULD NEVER BE CHANGED, SINCE STOX READS THESE TWO LINES TO CHECK VERSIONS:
 		write(paste0("# Rstox version: ", version, " (latest ", betaAlphaString, ", ", format(Sys.time(), "%Y-%m-%d"), ")"), READMEfile)
 		write(paste0("# R version: ", Rversion), READMEfile, append=TRUE)
+		
 		write("", READMEfile, append=TRUE)
 		# Package description and installation code:
 		write("# The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:", READMEfile, append=TRUE)
+		
 		write("", READMEfile, append=TRUE)
 		write("# Install the packages that Rstox depends on. Note that this updates all the specified packages to the latest (binary) version:", READMEfile, append=TRUE)
 		write(paste0("dep.pck <- c(\"", paste0(imports, collapse="\", \""), "\")"), READMEfile, append=TRUE)
 		# WARNING: IT IS CRUSIAL TO ENCLUDE THE repos IN THIS CALL, FOR STOX TO SOURCE THE README FILE PROPERLY (RESULTS IN AN ERROR IF ABSENT) IT SEEMS "R CMD BATCH source(TheReadMeFile)" RETURNS AN ERROR WHEN repos IS NOT SET (2016-12-16):
 		write("install.packages(dep.pck, repos=\"http://cran.us.r-project.org\", type=\"binary\")", READMEfile, append=TRUE)
 		#write("install.packages(dep.pck, type=\"binary\")", READMEfile, append=TRUE)
+		
 		write("", READMEfile, append=TRUE)
 		write("# Install Rstox:", READMEfile, append=TRUE)
-	
 		# Get the version string, the name of the Rstox tar file, the ftp root and, finally, the ftp directory and full path to the Rstox tar file:
 		versionString <- paste0("Rstox_", version)
 		tarName <- paste0(versionString, ".tar.gz")
@@ -40,16 +42,22 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 			}
 		}
 		tarFile <- file.path(ftpDir, tarName)
-	
 		# Write the Rstox install command:
 		write(paste0("install.packages(\"", tarFile, "\", repos=NULL)"), READMEfile, append=TRUE)
+		
 		write("", READMEfile, append=TRUE)
-		write(paste0("# Alternatively, install the latest development version from GitHub. Note that this does not garantee a stable version. For official versions of Rstox, refer to the ftp server ", ftpDir, " as described above. Install from github using the devtools package:"), READMEfile, append=TRUE)
+		write("# Alternatively, install the latest development version from GitHub.", READMEfile, append=TRUE)
+		write(paste0("# Note that this does not guarantee a stable version."), READMEfile, append=TRUE)
+		write(paste0("# For official versions of Rstox, refer to the ftp server ", ftpDir, " as described above."), READMEfile, append=TRUE)
+		write("# Install from github using the devtools package:", READMEfile, append=TRUE)
 		write("# devtools::install_github(\"Sea2Data/Rstox\", ref=\"develop\")", READMEfile, append=TRUE)
+		
 		write("", READMEfile, append=TRUE)
 		write("# Note that 64 bit Java is required to run Rstox", READMEfile, append=TRUE)
-		write("# On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp, or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/", READMEfile, append=TRUE)
-		write("# On Mac, getting Java and Rstox to communicate can be challenging. If you run into problems such as \"Unsupported major.minor version ...\", try the following:", READMEfile, append=TRUE)
+		write("# On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp,", READMEfile, append=TRUE)
+		write("# or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/", READMEfile, append=TRUE)
+		write("# On Mac, getting Java and Rstox to communicate can be challenging.", READMEfile, append=TRUE)
+		write("# If you run into problems such as \"Unsupported major.minor version ...\", try the following:", READMEfile, append=TRUE)
 		write("# Update java, on", READMEfile, append=TRUE)
 		write("# \thttp://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html", READMEfile, append=TRUE)
 		write("# If this does not work install first the JDK and then the JRE:", READMEfile, append=TRUE)
@@ -64,7 +72,7 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		write("# Open R (close and then open if already open) and install rJava:", READMEfile, append=TRUE)
 		write("# \tinstall.packages('rJava', type='source')", READMEfile, append=TRUE)
 		write("# Then the installed Rstox should work.", READMEfile, append=TRUE)
-	
+		
 		# Write release notes:
 		write("", READMEfile, append=TRUE)
 		write("", READMEfile, append=TRUE)
@@ -109,7 +117,14 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	#
 	#	return(imports)
 	#}
-	getImports <- function(buildDir){
+	discardBasePackages <- function(x){
+		inst <- installed.packages()
+		Base <- inst[, "Package"][inst[,"Priority"] %in% c("base", "recommended")]
+		sort(setdiff(x, Base))
+	}
+	
+	
+	getImports <- function(buildDir, version=list()){
 		# Read the NAMESPACE file and get the package dependencies:
 		buildDirList <- list.files(buildDir, recursive=TRUE, full.names=TRUE)
 		imports <- NULL
@@ -121,13 +136,28 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 			imports <- sapply(strsplit(imports, "(", fixed=TRUE), "[", 2)
 			imports <- sapply(strsplit(imports, ")", fixed=TRUE), "[", 1)
 			imports <- unique(sapply(strsplit(imports, ",", fixed=TRUE), "[", 1))
-			inst <- installed.packages()
-			Base <- inst[, "Package"][inst[,"Priority"] %in% c("base", "recommended")]
-			imports <- sort(setdiff(imports, Base))
+			#inst <- installed.packages()
+			#Base <- inst[, "Package"][inst[,"Priority"] %in% c("base", "recommended")]
+			#imports <- sort(setdiff(imports, Base))
+			imports <- discardBasePackages(imports)
 			#notBase <- inst[, "Package"][!(inst[,"Priority"]) %in% "base"]
 			#imports <- sort(imports[!imports %in% notBase])
 		}
-		imports
+		
+		# Add required version for packages:
+		if(length(version)){
+			# Remove version information for packages that are not present in the imports:
+			if(!all(names(version) %in% imports)){
+				warning("Not all package versions specified in 'version' are present as imports.")
+			}
+			version <- version[names(version) %in% imports]
+			atversion <- match(names(version), imports)
+			for(i in seq_along(version)){
+				imports[atversion[i]] <- paste0(imports[atversion[i]], " (>= ", version[i], ")")
+			}
+		}
+		
+		return(imports)
 	}
 	########## End of functions ##########
 	
@@ -164,12 +194,17 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		"	options(java.parameters=\"-Xmx2g\")",
 		"# Create a Rstox environment in which the baseline objects of the various projects are placed. This allows for a check for previously run baseline models and avoids memory leakage:", 
 		"	assign(\"RstoxEnv\", new.env(), envir=.GlobalEnv)",
-		"	assign(\"StoXFolders\", c(\"input\", \"output\", \"process\"), envir=get(\"RstoxEnv\"))",
-		"	assign(\"NMD_data_types\", c(\"echosounder\", \"biotic\", \"landing\"), envir=get(\"RstoxEnv\"))",
-		"	assign(\"StoX_data_types\", c(\"acoustic\", \"biotic\", \"landing\"), envir=get(\"RstoxEnv\"))",
-		"	assign(\"StoX_data_type_keys\", c(acoustic=\"echosounder_dataset\", biotic=\"missions xmlns\", landing=\"Sluttseddel\"), envir=get(\"RstoxEnv\"))",
-		"	assign(\"bootstrapTypes\", c(\"Acoustic\", \"SweptArea\"), envir=get(\"RstoxEnv\"))",
-		"	assign(\"processLevels\", c(\"bootstrap\", \"bootstrapImpute\"), envir=get(\"RstoxEnv\"))",
+		"	# Assign fundamental variables to the RstoxEnv:",
+		"	Definitions <- list(",
+		"		StoXFolders = c(\"input\", \"output\", \"process\"), ",
+		"		NMD_data_types = c(\"echosounder\", \"biotic\", \"landing\"), ",
+		"		StoX_data_types = c(\"acoustic\", \"biotic\", \"landing\"), ",
+		"		StoX_data_type_keys = c(acoustic=\"echosounder_dataset\", biotic=\"missions xmlns\", landing=\"Sluttseddel\"), ",
+		"		model_types = c(\"AcousticTrawl\", \"SweptAreaLength\", \"SweptAreaTotal\"), ",
+		"		processLevels = c(\"bootstrap\", \"bootstrapImpute\")",
+		"		)",
+		"	assign(\"Definitions\", Definitions, envir=get(\"RstoxEnv\"))",
+		"	assign(\"Projects\", list(), envir=get(\"RstoxEnv\"))",
 	"}", sep="\n")
 	write(onLoadText, onLoadFile)
 	##########
@@ -178,7 +213,8 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	onAttachText = paste(
 		".onAttach <- function(libname, pkgname){",
 		"	",
-		paste0("	packageStartupMessage(\"", pkgName, "_", version, "\n**********\nIf problems with Java Memory such as java.lang.OutOfMemoryError occurs, try increasing the Java memory by running options(java.parameters=\\\"-Xmx4g\\\"), and possibly using an even higher value than 4g\n**********\n\", appendLF=FALSE)"),
+		# paste0("	packageStartupMessage(\"", pkgName, "_", version, "\n**********\nIf problems with Java Memory such as java.lang.OutOfMemoryError occurs, try increasing the Java memory by running options(java.parameters=\\\"-Xmx4g\\\"), and possibly using an even higher value than 4g\n**********\n\", appendLF=FALSE)"),
+		paste0("	packageStartupMessage(\"", pkgName, "_", version, "\n**********\nIf problems with Java Memory such as java.lang.OutOfMemoryError occurs, try increasing the Java memory by running setJavaMemory(4e9), and possibly using an even higher value than 4 gigabytes\n**********\n\", appendLF=FALSE)"),
 	"}", sep="\n")
 	write(onAttachText, onAttachFile)
 	##########
@@ -215,11 +251,12 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	document(buildDir)
 	
 	# Alter the DESCRIPTION file to contain the imports listed in the NAMESPACE file:
-	imports <- getImports(buildDir)
-	DESCRIPTIONtext <- readLines(DESCRIPTIONfile)
+	imports <- getImports(buildDir, version=pckversion)
+	#DESCRIPTIONtext <- readLines(DESCRIPTIONfile)
 	if(length(imports)){
 		cat("Imports:\n		", file=DESCRIPTIONfile, append=TRUE)
 		cat(paste(imports, collapse=",\n		"), file=DESCRIPTIONfile, append=TRUE)
+		cat("", file=DESCRIPTIONfile, append=TRUE)
 	}
 	##########
 	
@@ -229,10 +266,6 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	}
 	##########
 	
-	##### Create platform independent bundle of source package: #####
-	dir.create(thisExportDir, recursive=TRUE)
-	pkgFileVer <- build(buildDir, path=thisExportDir)
-	
 	### Generate the README file: ###
 	betaAlpha <- length(gregexpr(".", version, fixed=TRUE)[[1]]) + 1
 	betaAlphaString <- c("", "beta", "alpha")[betaAlpha]
@@ -240,6 +273,10 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	writeRstoxREADME(READMEfile, NEWSfile, version, Rversion, betaAlpha, betaAlphaString, imports=getImports(buildDir), official=official)
 	file.copy(READMEfile, READMEfileExport, overwrite=TRUE)
 	##########
+	
+	##### Create platform independent bundle of source package: #####
+	dir.create(thisExportDir, recursive=TRUE)
+	pkgFileVer <- build(buildDir, path=thisExportDir)
 	
 	##### Unload the package: #####
 	unload(buildDir)
@@ -261,7 +298,22 @@ dir <- "~/Documents/Produktivt/Prosjekt/R-packages/Rstox/Rstox"
 
 
 # Build 1.6.2:
-buildRstox(dir, version="1.6.2", Rversion="3.3.3", official=FALSE, check=FALSE)
-# buildRstox(dir, version="1.6.2", Rversion="3.3.3", official=FALSE, check=TRUE)
+# buildRstox(dir, version="1.6.2", Rversion="3.3.3", official=FALSE, check=FALSE)
+
+
+# # Build 1.6.3:
+# buildRstox(dir, version="1.6.3", Rversion="3.3.3", official=FALSE, check=FALSE, pckversion=list(data.table="1.10.4-3"))
+
+
+# Build 1.6.4:
+# buildRstox(dir, version="1.6.4", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
+
+
+# Build 1.6.5:
+#buildRstox(dir, version="1.6.5", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
+
+
+# Build 1.6.5:
+buildRstox(dir, version="1.7", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=TRUE, check=FALSE)
 
 

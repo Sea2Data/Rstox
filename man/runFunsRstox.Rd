@@ -6,7 +6,7 @@
 \title{Get various plots and reports in Rstox}
 \usage{
 runFunsRstox(projectName, string, out = "all", options = "",
-  all.out = FALSE, ...)
+  all.out = FALSE, drop.out = TRUE, ...)
 
 getFunsRstox(string, out = "all")
 }
@@ -32,6 +32,8 @@ All the examples in one string:
 options = "string = 'a string'; stringvec = c('red', 'blue', 'yellow2'); num = 1.55; numvec = c(1.4e-6, 16/3, runif(3)); ok = TRUE; okvec = c( TRUE, FALSE, T, F, runif(3)>0.3 ); arr = array(runif(12), dim=3:4); fun1 = function(x) sin(rev(x)); fun3 = runif"}
 
 \item{all.out}{Logical: if TRUE return all data from the functions, and otherwise only return file names.}
+
+\item{drop.out}{Should the list of be dropped if only one funciton is run?}
 
 \item{...}{Parameters passed on to the plotting functions.}
 }
