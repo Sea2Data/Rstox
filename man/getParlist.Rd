@@ -10,6 +10,8 @@ getParlist(parlist = list(), ...)
 \item{parlist}{List of parameters values specified as processName = list(parameter = value)}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
+
+\item{fun}{The name of a function to which the parameters in parlist should be fit.}
 }
 \value{
 Merged list of parameters, duplicates not removed.

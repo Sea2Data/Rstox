@@ -313,7 +313,8 @@ dir <- "~/Documents/Produktivt/Prosjekt/R-packages/Rstox/Rstox"
 #buildRstox(dir, version="1.6.5", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
 
 
-# Build 1.6.5:
-buildRstox(dir, version="1.7", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=TRUE, check=FALSE)
+# Build 1.7:
+#buildRstox(dir, version="1.7", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=TRUE, check=FALSE)
 
-
+# Build 1.7.1:
+buildRstox(dir, version="1.7.1", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)

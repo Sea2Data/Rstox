@@ -4,7 +4,7 @@
 \alias{plotAbundance}
 \alias{plotAbundance_AcousticTrawl}
 \alias{plotAbundance_SweptAreaTotal}
-\alias{setValueForMissing}
+\alias{factorNAfirst}
 \title{Plot abundance results to the graphics device or to a file}
 \usage{
 plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
@@ -21,7 +21,7 @@ plotAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
   xlab = NULL, ylab = NULL, main = "", format = "png", log = NULL,
   filetag = NULL, ...)
 
-setValueForMissing(x)
+factorNAfirst(x)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}

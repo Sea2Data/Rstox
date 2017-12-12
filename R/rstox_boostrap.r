@@ -407,6 +407,9 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	seedV <- getSeedV(seed, nboot=nboot)
 	
 	DensityMatrix <- getBaseline(projectName, proc=startProcess, input="par")
+	if(length(DensityMatrix$parameters[[startProcess]])==0){
+		stop(paste0("Invalid startProcess: ", startProcess))
+	}
 	var <- DensityMatrix$parameters[[startProcess]]$CatchVariable
 	DensityMatrix <- DensityMatrix$outputData[[startProcess]]
 	# Add stratum:

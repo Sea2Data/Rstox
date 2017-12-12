@@ -333,8 +333,10 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "report",
 		project <- J("no.imr.stox.factory.FactoryUtil")$openProject(projectRoot, projectName)
 		# This line was added on 2017-08-23 due to a bug discovered when estimating the area of polygons using the "accurate" method. When baseline is run, Java calls the function polyArea() when AreaMethod="accurate". However, whenever this failed, the simple method implemented in Java was used (which was a bug). The problem was that the path to the R-bin was not set in Rstox. To solve this, a file holding this path (or the command project$setRFolder(PATH_TO_R_BIN)) will be saved by StoX, and called every time a triggerscript is run. In Rstox we solve the problem by the below sequence:
 		RFolder <- project$getRFolder()
+		#__# RFolder <- .jcall(project, "S", "getRFolder")
 		if(length(RFolder)==0 || (is.character(RFolder) && nchar(RFolder)==0)){
 			project$setRFolder(R.home("bin"))
+			#__# RFolder <- .jcall(project, "S", "setRFolder", R.home("bin"))
 		}
 		############################################### ######
 		
@@ -1475,6 +1477,7 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 #' 
 #' @param parlist		List of parameters values specified as processName = list(parameter = value)
 #' @param ...			Same as parlist, but can be specified separately (not in a list but as separate inputs).
+#' @param fun			The name of a function to which the parameters in parlist should be fit.
 #'
 #' @return Merged list of parameters, duplicates not removed.
 #'
@@ -1506,6 +1509,14 @@ getParlist <- function(parlist=list(), ...){
 		parlist <- parlist[sapply(parlist, length)>0]
 	}
 	return(parlist)
+}
+#'
+#' @export
+#' @keywords internal
+#'
+applyParlist <- function(parlist, fun){
+	print(names(parlist))
+	parlist[intersect(names(parlist), names(formals(fun)))]
 }
 
 
@@ -2424,3 +2435,4 @@ getPrecisionLevel <- function(projectName){
 	project <- openProject(projectName, out="project")
 	project$getPrecisionLevel()
 }
+

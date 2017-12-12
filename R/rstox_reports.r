@@ -57,22 +57,28 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	atUnknownAge <- which(is.na(getVar(abnd, "age")))
 	NatKnownAge <- length(atKnownAge)
 	NatUnknownAge <- length(atUnknownAge)
-	imputeSummary <- vector("list", 7)
+	# Bug discovered on 2017-12-12, where for no unknown ages NULL was returned for 'NumUsed' and onwards. Changed to returning NA:
+	#imputeSummary <- vector("list", 7)
+	imputeSummary <- as.list(rep(NA, 7))
 	names(imputeSummary) <- c("NumNotAged", "NumAged", "NumUsed", "NumNoMatch", "NumImputedAtStation", "NumImputedAtStratum", "NumImputedAtSurvey")
 	imputeSummary$NumAged <- NatKnownAge
 	imputeSummary$NumNotAged <- NatUnknownAge
 	
-	# Stop if no known ages and return if no unknown:
-	if(NatKnownAge == 0){
-		# Change made on 2017-09-15: Issuing an error here is deprecated. It should be a warning, but the imputing should continue. See note 2017-09-15 below:
-		# stop("No known ages")
-		# 2017-09-21: Ibrahim experienced a strange error " one node produced an error: replacement has 1 row, data has 0" when running impute on 4 cores over 50 bootstrap replicated. He will test with 5 replicates to see if the error is memory related.
-		# 2017-09-22: Having some problems merging develop into alpha... (typing this in to add a small changed in the process of fixing the problem.)
-		warning(paste0("No known ages in bootstrap replicate ", i))
-	}
+	# The following conditional expression was found obsolete after issuing the warning in imputeByAge() instead, based on the values of imputeSummary$NatKnownAge (no known ages) and imputeSummary$NumUsed (no unknown ages)
+	### # Stop if no known ages and return if no unknown:
+	### if(NatKnownAge == 0){
+	### 	# Change made on 2017-09-15: Issuing an error here is deprecated. It should be a warning, but the imputing should continue. See note 2017-09-15 below:
+	### 	# stop("No known ages")
+	### 	# 2017-09-21: Ibrahim experienced a strange error " one node produced an error: replacement has 1 row, data has 0" when running impute on 4 cores over 50 bootstrap replicated. He will test with 5 replicates to see if the error is memory related.
+	### 	# 2017-09-22: Having some problems merging develop into alpha... (typing this in to add a small changed in the process of fixing the problem.)
+	### 	warning(paste0("No known ages in bootstrap replicate ", i))
+	### }
 	if(NatUnknownAge == 0){
-		warning(paste0("No unknown ages in bootstrap replicate ", i))
+		#warning(paste0("No unknown ages in bootstrap replicate ", i))
+		# Add columns added to the bootstrap runs and return:
 		abnd$imputeLevel <- 0L
+		abnd$imputeRow <- 0L
+		abnd$imputeCount <- 0L
 		return(list(data=abnd, imputeSummary=imputeSummary, indMissing=NULL, indReplacement=NULL, seedM=NULL))
 	}
 
@@ -310,7 +316,19 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	imputeSummary.out <- do.call("rbind", imputeSummary.out)
 	#colnames(msg.out) <- c("Aged", "NotAged", "ImputedAtStation", "ImputedAtStrata", "ImputedAtSurvey", "NotImputed")
 	#colnames(imputeSummary.out) <- c("NumAged", "NumNotAged", "NumUsed", "NumNoMatch", "NumImputedAtStation", "NumImputedAtStratum", "NumImputedAtSurvey")
-	rownames(imputeSummary.out) <- paste0("Iter", seq_len(nboot))
+	#rownames(imputeSummary.out) <- paste0("Iter", seq_len(nboot))
+	rownames(imputeSummary.out) <- names(imputeVariable$SuperIndAbundance)
+	
+	# Issue warnings for runs with no unknown, and no known ages:
+	NatKnownAge0 <- which(imputeSummary.out$NatKnownAge==0)
+	NumUsedNA <- which(is.na(imputeSummary.out$NumUsed))
+	if(length(NatKnownAge0)){
+		warning("The following bootstrap runs had no known ages, resulting in no imputing: ", paste(NatKnownAge0, collapse=", "))
+	}
+	if(length(NumUsedNA)){
+		warning("The following bootstrap runs had no unknown ages, resulting in no imputing: ", paste(NumUsedNA, collapse=", "))
+	}
+	
 	
 	# Store the output messages, the missing and replace indices, the seeds and other parameters of the imputing:
 	imputeVariable$imputeParameters$imputeSummary <- imputeSummary.out
@@ -464,7 +482,6 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
-	lll <- lll[intersect(names(lll), names(formals(png)))]
 	
 	# Read the saved data from the R model. In older versions the user loaded the file "rmodel.RData" separately, but in the current code the environment "RstoxEnv" is declared on load of Rstox, and all relevant outputs are assigned to this environment:
 	var <- c("psuNASC", "resampledNASC")
@@ -514,7 +531,7 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 	}
 	
 	if(length(format)){
-		do.call(format, c(list(filename=filename), lll))
+		do.call(format, c(list(filename=filename), applyParlist(lll, format)))
 		moveToTrash(filename)
 	}
 	
@@ -588,7 +605,6 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 	
 	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
-	lll <- lll[intersect(names(lll), names(formals(png)))]
 	
 	# The old parameter 'numberscale' is kept for backwards compatibility:
 	if("numberscale" %in% names(lll)){
@@ -610,6 +626,7 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		level <- names(temp)[i]
 		out <- temp[[i]]$abnd
 		thisgrp1 <- temp[[i]]$grp1
+		thisgrp2 <- temp[[i]]$grp2
 		#grp1.unknown <- temp[[i]]$grp1.unknown
 		abundanceSum <- temp[[i]]$abundanceSum
 		
@@ -617,18 +634,17 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		cat("Abundance by age for ", level, "\n", se0="")
 		
 		
-		abundanceSum[[thisgrp1]] <- setValueForMissing(abundanceSum[[thisgrp1]])
-		out[[thisgrp1]] <- setValueForMissing(out[[thisgrp1]])
+		#abundanceSum[[thisgrp1]] <- setValueForMissing(abundanceSum[[thisgrp1]])
+		#out[[thisgrp1]] <- setValueForMissing(out[[thisgrp1]])
 		xlab <- paste(thisgrp1)
-		xlim <- range(unique(abundanceSum[[thisgrp1]]))
-		if(is.numeric(abundanceSum[[thisgrp1]])){
-			levels <- seq(min(abundanceSum[[thisgrp1]], na.rm=TRUE), max(abundanceSum[[thisgrp1]], na.rm=TRUE), by=median(diff(sort(unique(abundanceSum[[thisgrp1]]))), na.rm=TRUE))
-		}
-		else{
-			levels <- unique(abundanceSum[[thisgrp1]])
-		}
-		
-		
+		abundanceSum[[thisgrp1]] <- factorNAfirst(abundanceSum[[thisgrp1]])
+		out[[thisgrp1]] <- factorNAfirst(out[[thisgrp1]])
+		#if(is.numeric(abundanceSum[[thisgrp1]])){
+		#	levels <- seq(min(abundanceSum[[thisgrp1]], na.rm=TRUE), max(abundanceSum[[thisgrp1]], na.rm=TRUE), by=median(diff(sort(unique(abundanceSum[[thisgrp1]]))), na.rm=TRUE))
+		#}
+		#else{
+		#	levels <- unique(abundanceSum[[thisgrp1]])
+		#}
 		
 		
 		#if(!is.empty(grp1)){
@@ -645,9 +661,11 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		#	grp1 <- xlab
 		#}
 		if(!is.empty(grp2)){
-			abundanceSum[[grp2]] <- setValueForMissing(abundanceSum[[grp2]])
-			out[[grp2]] <- setValueForMissing(out[[grp2]])
-			xlab <- paste(thisgrp1,"by", grp2)
+			#abundanceSum[[grp2]] <- setValueForMissing(abundanceSum[[grp2]])
+			#out[[grp2]] <- setValueForMissing(out[[grp2]])
+			xlab <- paste(thisgrp1, "by", grp2)
+			abundanceSum[[thisgrp2]] <- factorNAfirst(abundanceSum[[thisgrp2]])
+			out[[thisgrp2]] <- factorNAfirst(out[[thisgrp2]])
 		}
 	
 		# Get ylab and xlab text:
@@ -673,7 +691,7 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		}
 		
 		if(length(format)){
-			do.call(format, c(list(filename=filename), lll))
+			do.call(format, c(list(filename=filename), applyParlist(lll, format)))
 			moveToTrash(filename)
 		}
 		
@@ -682,9 +700,19 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		if(maxcv==0){
 			maxcv <- 1
 		}
-		cvLabels <- pretty(c(0, maxcv)) 
-		ylim <- c(0, max(abundanceSum$Ab.Sum, na.rm=TRUE))
+		cvLabels <- pretty(c(0, maxcv))
+		
+		# Define the ylim, starting from the lower value of abundanceSum$Ab.Sum in the case of logarithmic plotting on the y axis:
+		if("y" %in% log){
+			ylim <- range(abundanceSum$Ab.Sum, na.rm=TRUE)
+		}
+		else{
+			ylim <- c(0, max(abundanceSum$Ab.Sum, na.rm=TRUE))
+		}
+		#ylim <- c(0, max(abundanceSum$Ab.Sum, na.rm=TRUE))
 		cvScalingFactor <- max(ylim) / maxcv
+		# Add a tiny margin to each side of the range to avid values from missing out due to precision errors during scaling with 'cvScalingFactor':
+		ylim[2] <- ylim[2] * (1 + 1e-12)
 		outtmp <- out
 		outtmp$Ab.Sum.cv <- outtmp$Ab.Sum.cv * cvScalingFactor
 		
@@ -692,27 +720,31 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 			{
 				if(is.empty(grp2)){
 					pl <- ggplot() + 
-						geom_boxplot(data=abundanceSum, aes_string(x=factor(abundanceSum[[thisgrp1]], levels=levels), y="Ab.Sum"), outlier.shape=18) + 
+						geom_boxplot(data=abundanceSum, aes_string(x=thisgrp1, y="Ab.Sum"), outlier.shape=18) + 
 						theme_bw() + 
 						scale_x_discrete(drop=FALSE) + 
-						geom_line(aes_string(x=factor(outtmp[[thisgrp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE) + 
-						geom_point(aes_string(x=factor(outtmp[[thisgrp1]], levels=levels), y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE)
+						 geom_line(aes_string(x=thisgrp1, y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE) + 
+						geom_point(aes_string(x=thisgrp1, y="Ab.Sum.cv", group=1), data=outtmp, show.legend=FALSE)
 				}	
 				else{
 					pl <- ggplot() + 
-						geom_boxplot(data=abundanceSum, aes_string(x=factor(abundanceSum[[thisgrp1]], levels=levels), y="Ab.Sum", fill=as.factor(abundanceSum[[grp2]])), outlier.shape=18) + 
+						geom_boxplot(data=abundanceSum, aes_string(x=thisgrp1, y="Ab.Sum", fill=grp2), outlier.shape=18) + 
 						theme_bw() + 
 						scale_x_discrete(drop=FALSE) + 
 						scale_fill_discrete(name=grp2) + 
-						geom_line(aes_string(x=factor(outtmp[[thisgrp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE) + 
-						geom_point(aes_string(x=factor(outtmp[[thisgrp1]], levels=levels), y="Ab.Sum.cv", group=grp2, colour=as.factor(out[[grp2]])), data=outtmp, show.legend=FALSE)
+						 geom_line(aes_string(x=thisgrp1, y="Ab.Sum.cv", group=grp2, colour=out[[grp2]]), data=outtmp, show.legend=FALSE) + 
+						geom_point(aes_string(x=thisgrp1, y="Ab.Sum.cv", group=grp2, colour=out[[grp2]]), data=outtmp, show.legend=FALSE)
 					}
 				pl <- pl + 
-					scale_y_continuous(limits=if("y" %in% log) range(abundanceSum$Ab.Sum) else ylim, trans=if("y" %in% log) "log10" else "identity", sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
+					scale_y_continuous(limits=ylim, trans=if("y" %in% log) "log10" else "identity", sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
 					xlab(xlab) +
 					ylab(ylab) + 
 					ggtitle(main)
 			
+				# Adjust text size and other theme variables:
+				#pl + theme(applyParlist(lll, "theme"))
+				pl + theme(axis.text=element_text(size=1.5), axis.title=element_text(size=2,face="bold"), , legend.text=element_text(size=2))
+	
 				#if("x" %in% log){
 				#	pl <- pl + scale_x_log10()
 				#}
@@ -749,7 +781,6 @@ plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, 
 	
 	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
-	lll <- lll[intersect(names(lll), names(formals(png)))]
 	
 	# The old parameter 'numberscale' is kept for backwards compatibility:
 	if("numberscale" %in% names(lll)){
@@ -788,13 +819,13 @@ plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, 
 		}
 		
 		if(length(format)){
-			do.call(format, c(list(filename=filename), lll))
+			do.call(format, c(list(filename=filename), applyParlist(lll, format)))
 			moveToTrash(filename)
 		}
 		
 		tryCatch(
 			{
-				x <- cbind(SpecCat=rownames(abnd), abnd)
+				x <- abnd
 				x$Mean_minus_SD <- x$Mean - x$SD
 				x$Mean_plus_SD <- x$Mean + x$SD
 				pl <- ggplot(x, aes_string(x="SpecCat", y="Mean", color="SpecCat")) + 
@@ -817,6 +848,10 @@ plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, 
 				if("y" %in% log){
 					pl <- pl + scale_y_log10()
 				}
+				
+				# Adjust text size and other theme variables:
+				#pl + theme(applyParlist(lll, "theme"))
+				pl + theme(axis.text=element_text(size=1.5), axis.title=element_text(size=2,face="bold"), , legend.text=element_text(size=2))
 	
 				# Activate the plot:
 				suppressWarnings(print(pl))
@@ -838,11 +873,21 @@ plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, 
 #' @keywords internal
 #' @rdname plotAbundance
 #' 
-setValueForMissing <- function(x){
-	is.nax <- is.na(x)
-	value <- if(is.character(x) || all(is.nax)) "-" else min(x, na.rm=TRUE) - 1
-	x[is.nax] <- value
-	x
+factorNAfirst <- function(x){
+	if(is.numeric(x)){
+		levels <- seq(min(x, na.rm=TRUE), max(x, na.rm=TRUE), by=median(diff(sort(unique(x))), na.rm=TRUE))
+	}
+	else{
+		levels <- unique(x)
+	}
+	if(any(is.na(x))){
+		levels <- c(NA, levels)
+	}
+	factor(x, levels=levels, exclude=FALSE)
+	#is.nax <- is.na(x)
+	#value <- if(is.character(x) || all(is.nax)) "-" else min(x, na.rm=TRUE) - 1
+	#x[is.nax] <- value
+	#x
 }
 
 
@@ -892,7 +937,7 @@ reportAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="A
 #' @keywords internal
 #' @rdname reportAbundance
 #'
-reportAbundance_AcousticTrawl <- reportAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, msg=TRUE, ...){
+reportAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, msg=TRUE, ...){
 	out <- list()
 	for(level in getRstoxDef("processLevels")){
 		out[[level]] <- reportAbundanceAtLevel(projectName, var=var, unit=unit, baseunit=baseunit, level=level, grp1=grp1, grp2=grp2, numberscale=numberscale, plotOutput=plotOutput, write=write)
@@ -903,6 +948,12 @@ reportAbundance_AcousticTrawl <- reportAbundance_SweptAreaLength <- function(pro
 	}
 	out
 }
+#'
+#' @export
+#' @keywords internal
+#' @rdname reportAbundance
+#'
+reportAbundance_AcousticTrawl <- reportAbundance_SweptAreaLength
 #'
 #' @export
 #' @keywords internal
@@ -933,7 +984,7 @@ reportAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL
 	SD <- sqrt(Variance)
 	Mean <- apply(boot, 2, mean)
 	CV <- SD / Mean
-	abnd <- data.frame(Variance, SD, Mean, CV)
+	abnd <- data.frame(SpecCat=names(Variance), Variance, SD, Mean, CV)
 	
 	# Write the data to a tab-separated file:
 	if(write){
