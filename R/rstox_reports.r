@@ -76,9 +76,10 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	if(NatUnknownAge == 0){
 		#warning(paste0("No unknown ages in bootstrap replicate ", i))
 		# Add columns added to the bootstrap runs and return:
-		abnd$imputeLevel <- 0L
-		abnd$imputeRow <- 0L
-		abnd$imputeCount <- 0L
+		temp <- integer(nrow(abnd))
+		abnd$imputeLevel <- temp
+		abnd$imputeRow <- temp
+		abnd$imputeCount <- temp
 		return(list(data=abnd, imputeSummary=imputeSummary, indMissing=NULL, indReplacement=NULL, seedM=NULL))
 	}
 

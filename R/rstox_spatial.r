@@ -123,7 +123,15 @@ multipolygon2matrix <- function(multipolygon, drop=TRUE){
 
 
 
-parallelTransects <- function(projectName, bearing="N", t=100, vel=10, nsim=50, rev.entrance=F) {
+
+rotate2d <- function(x, ang, paired=FALSE){
+	A = matrix(c(cos(ang), sin(ang), -sin(ang), cos(ang)), 2, 2, byrow=TRUE)
+	out <- as.data..frame(t(A %*% t(x)))
+	names(out) <- c("x", "y")
+}
+
+
+parallelTransects <- function(projectName, entry=NULL, bearing="N", t=100, vel=10, nsim=50, rev.entrance=F) {
 	library(splancs)
 	library(sp)
 	library(geosphere)
@@ -138,6 +146,38 @@ parallelTransects <- function(projectName, bearing="N", t=100, vel=10, nsim=50, 
 	lonlat <- do.call("rbind", lonlat)
 	names(lonlat) <- c("Longitude", "Latitude", "Stratum")
 	lonlat$Stratum <- factor(lonlat$Stratum)
+	
+	
+	center <- colMeans(apply(lonlat, range))
+	xy <- global2car(lonlat, origin=center)
+	
+	getBearing <- function(bearing, deg=TRUE){
+		if(is.character(bearing)){
+			NWSE <- c("N", "W", "S", "E")
+			WE <- c("W", "E")
+			NWSE_angles <- 1:4 * pi/2
+			WE_angles <- c(1,-1) * pi/4
+			strings <- c(outer(WE, NWSE, paste0))
+			angles <- c(outer(NWSE_angles, WE_angles, "+"))
+			hit <- which(strings==bearing)
+			if(length(hit)){
+				return(angles[hit])
+			}
+			else{
+				warning(paste0("'bearing not matching any of'", paste(strings, collapse=", ")))
+			}
+		}
+		else{
+			return(if(deg) bearing*pi/180 else bearing)
+		}
+	}
+	
+	bearing <- getBearing(bearing)
+	xyRotated <- rotate2d(xy, bearing)
+	
+	# Get the length of the stratum along the bearing:
+	lengthOfStratum <- diff(range(xyRotated$x))
+	
 	
 	# Accept only North or East for bearing (this sohuld be replaced by a general angle, which will make 'rev.entrance') obsolete):
 	getLatlon12 <- function(x, bearing){
@@ -162,7 +202,7 @@ parallelTransects <- function(projectName, bearing="N", t=100, vel=10, nsim=50, 
 		}
 		
 	
-		tra <- vector("list", 1000)
+		tra <- vector("list", nsim)
 		for(i in seq_along(tra)){
 			print(i)
 			tra[[i]] <- parallelTransectOneStratum(1, lonlat=lonlat, lonlat12=lonlat12, bearing=bearing, t=t, vel=vel, nsim=nsim, rev.entrance=rev.entrance)

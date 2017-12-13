@@ -1,4 +1,4 @@
-# Rstox version: 1.7.1 (latest alpha, 2017-12-12)
+# Rstox version: 1.7.1 (latest alpha, 2017-12-13)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -41,13 +41,12 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.7.
 
 # 1. Fixed bug in reportAbundance_SweptAreaTotal() where the column SpecCat was missing.
 
-# 2. Removed updateProject() from ***********
+# 2. Fixed bug in plotAbundance_AcousticTrawl() and plotAbundance_SweptAreaLength(), where missing values were shown as the lowest value minus 1. Now these are shown as NA to the left of the plot (using the new funciton factorNAfirst()).
 
-# 3. Fixed bug in plotting ***************
+# 3. Fixed bug in imputeByAge() where no unknown ages resulted in a different output from distributeAbundance(). 
 
-# 4. Fixed bug in imputeByAge() where no unknown ages resulted in a different output from distributeAbundance(). 
+# 4. Moved warnings due to no unknown or no known ages from distributeAbundance() to imputeByAge().
 
-# 5. Moved warnings due to no unknown or no known ages from distributeAbundance() to imputeByAge().
+# 5. Changed rownames of the output from imputeByAge() to the same as the names of the bootstrap runs.
 
-# 6. Changed rownames of the output from imputeByAge() to the same as the names of the bootstrap runs.
-
+# 6. Replaced the funciton wkt2MULTIPOLYGON() by matrix2multipolygon(), and added the reversed funciton multipolygon2matrix(). See ?polyArea for use of these funciotns.

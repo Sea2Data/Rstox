@@ -48,7 +48,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		# Sampling with replacement will normally result in fewer rows in the final superIndAbundance tables:
 		StID <- sampleSorted(stations, size=length(stations), seed=seedV[i], replace=TRUE, sorted=sorted)
 		
-		# Count weights from resample:
+		# Count weights from resample (resulting in a data frame with columns "Var1" and "Freq"):
 		count <- as.data.frame(table(StID))
 		count$Stratum <- strata[j]
 		BootWeights <- rbind(BootWeights,count)
@@ -66,7 +66,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		}
 	}
 	# Update biostation weighting
-	asg2 <- merge(assignments, BootWeights,by=c("Stratum", "StID"), all.x=TRUE)
+	asg2 <- merge(assignments, BootWeights, by=c("Stratum", "StID"), all.x=TRUE)
 	asg2$StationWeight <- ifelse(!is.na(asg2$Freq), asg2$StationWeight*asg2$Freq, 0)
 	# Update trawl assignment table in Stox Java object:
 	setAssignments(projectName, assignments=asg2)
