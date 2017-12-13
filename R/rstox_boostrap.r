@@ -179,6 +179,12 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	
 	out <- unlist(out, recursive=FALSE)
 	
+	# Check the number of rows of the bootstrap runs:
+	nrows <- sapply(out, nrow)
+	if(any(nrows==0)){
+		warning(paste0("The following bootstrap runs resulted in empty output: ", paste(which(nrows==0), collapse=", ")))
+	}
+	
 	# Order the output from the bootstrapping:
 	#names(out) <- paste0(names(out), "_run", seq_along(out))
 	# If the old version with unsorted sampling and the original names of the bootstrap outputs on each run is needed, this is indicated with the 'sorted' option set to FALSE:

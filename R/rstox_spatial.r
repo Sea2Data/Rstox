@@ -131,10 +131,10 @@ rotate2d <- function(x, ang, paired=FALSE){
 }
 
 
-parallelTransects <- function(projectName, entry=NULL, bearing="N", t=100, vel=10, nsim=50, rev.entrance=F) {
-	library(splancs)
-	library(sp)
-	library(geosphere)
+parallelTransects <- function(projectName, entry=NULL, bearing="N", duration=100, knots=10, nmi=NULL, speed=NULL, nsim=50, rev.entrance=F) {
+	#library(splancs)
+	#library(sp)
+	#library(geosphere)
 	
 	g <- getBaseline(projectName, input="proc", proc=NULL, drop=FALSE)
 	nstrata <- nrow(g$processData$stratumpolygon)
@@ -172,12 +172,60 @@ parallelTransects <- function(projectName, entry=NULL, bearing="N", t=100, vel=1
 		}
 	}
 	
+	trackLengthPerpendicular <- function(coords, nmi){
+		# Get the area in square nmi:
+		area <- splancs::areapl(coords) / (1852^2)
+		L <- vel*t
+		du <- umax - umin
+		c <- area/(vel*t - du)
+		if (c < 0) {
+			c <- 0.5*du
+			}
+			out <- c
+	}
+	
+	
+	
 	bearing <- getBearing(bearing)
 	xyRotated <- rotate2d(xy, bearing)
 	
 	# Get the length of the stratum along the bearing:
 	lengthOfStratum <- diff(range(xyRotated$x))
+	# Get the total traveled length specified by nmi and knots
+	if(length(speed)){
+		knots <- speed * 3600/1852
+	}
+	if(length(nmi)==0){
+		nmi <- duration * knots
+	}
+	# Get the area in square nmi:
+	area <- splancs::areapl(coords) / (1852^2)
+	# Subtract the length of the stratum, and return NULL if the traveled distance is shorter than this:
 	
+	
+	
+	
+	#  Assuming a rectangular stratum as a starting point, get the path to travel in the y direction:
+	
+	
+	
+}
+
+parallelTransects <- function(projectName, entry=NULL, bearing="N", t=100, vel=10, nsim=50, rev.entrance=F) {
+	library(splancs)
+	library(sp)
+	library(geosphere)
+	
+	g <- getBaseline(projectName, input="proc", proc=NULL, drop=FALSE)
+	nstrata <- nrow(g$processData$stratumpolygon)
+	lonlat <- vector("list", nstrata)
+	for(i in seq_along(lonlat)){
+		lonlat[[i]] <- cbind(multipolygon2matrix(g$processData$stratumpolygon$Polygon[i]), Stratum=g$processData$stratumpolygon$Stratum[i])
+	}
+	#r$Stratum <- factor(r$Stratum)
+	lonlat <- do.call("rbind", lonlat)
+	names(lonlat) <- c("Longitude", "Latitude", "Stratum")
+	lonlat$Stratum <- factor(lonlat$Stratum)
 	
 	# Accept only North or East for bearing (this sohuld be replaced by a general angle, which will make 'rev.entrance') obsolete):
 	getLatlon12 <- function(x, bearing){
@@ -200,15 +248,6 @@ parallelTransects <- function(projectName, entry=NULL, bearing="N", t=100, vel=1
 	if (nsim == 1) {
 		nsim == 0
 		}
-		
-	
-		tra <- vector("list", nsim)
-		for(i in seq_along(tra)){
-			print(i)
-			tra[[i]] <- parallelTransectOneStratum(1, lonlat=lonlat, lonlat12=lonlat12, bearing=bearing, t=t, vel=vel, nsim=nsim, rev.entrance=rev.entrance)
-		}
-	
-	
 	
 	transect <- lapply(uStratum, parallelTransectOneStratum, lonlat=lonlat, lonlat12=lonlat12, bearing=bearing, t=t, vel=vel, nsim=nsim, rev.entrance=rev.entrance)
 	list(lonlat=lonlat, lonlat12=lonlat12, transect=transect)
