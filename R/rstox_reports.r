@@ -232,6 +232,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #' # imputeByAge() fills in empty cells:
 #' system.time(bootstrap_Acoustic_imputed <- imputeByAge(projectName))
 #'
+#' @importFrom data.table rbindlist
 #' @importFrom parallel detectCores makeCluster parLapplyLB stopCluster
 #' @importFrom utils tail
 #'
@@ -314,7 +315,9 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	#seedM.out <- lapply(out, "[[", "seedM")	
 		
 	# imputeSummary.out <- t(as.data.frame(imputeSummary.out))
-	imputeSummary.out <- do.call("rbind", imputeSummary.out)
+	# Using do.call("rbind", imputeSummary.out) did not result in a data frame on which the $ operator works. Instead we use data.table::rbindlist:
+	#imputeSummary.out <- do.call("rbind", imputeSummary.out)
+	imputeSummary.out <- data.table::rbindlist(imputeSummary.out)
 	#colnames(msg.out) <- c("Aged", "NotAged", "ImputedAtStation", "ImputedAtStrata", "ImputedAtSurvey", "NotImputed")
 	#colnames(imputeSummary.out) <- c("NumAged", "NumNotAged", "NumUsed", "NumNoMatch", "NumImputedAtStation", "NumImputedAtStratum", "NumImputedAtSurvey")
 	#rownames(imputeSummary.out) <- paste0("Iter", seq_len(nboot))
@@ -322,13 +325,13 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	
 	# Issue warnings for runs with no unknown, and no known ages:
 	NatKnownAge0 <- which(imputeSummary.out$NatKnownAge==0)
-	NumUsedNA <- which(is.na(imputeSummary.out$NumUsed))
+	#NumUsedNA <- which(is.na(imputeSummary.out$NumUsed))
 	if(length(NatKnownAge0)){
 		warning("The following bootstrap runs had no known ages, resulting in no imputing: ", paste(NatKnownAge0, collapse=", "))
 	}
-	if(length(NumUsedNA)){
-		warning("The following bootstrap runs had no unknown ages, resulting in no imputing: ", paste(NumUsedNA, collapse=", "))
-	}
+	#if(length(NumUsedNA)){
+	#	warning("The following bootstrap runs had no unknown ages, resulting in no imputing: ", paste(NumUsedNA, collapse=", "))
+	#}
 	
 	
 	# Store the output messages, the missing and replace indices, the seeds and other parameters of the imputing:

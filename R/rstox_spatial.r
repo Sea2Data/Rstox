@@ -131,7 +131,7 @@ rotate2d <- function(x, ang, paired=FALSE){
 }
 
 
-parallelTransects <- function(projectName, entry=NULL, bearing="N", duration=100, knots=10, nmi=NULL, speed=NULL, nsim=50, rev.entrance=F) {
+parallelTransectsOneStratum <- function(projectName, stratum=1, entry=NULL, bearing="N", duration=100, knots=10, nmi=NULL, speed=NULL, rev.entrance=F) {
 	#library(splancs)
 	#library(sp)
 	#library(geosphere)
@@ -190,7 +190,9 @@ parallelTransects <- function(projectName, entry=NULL, bearing="N", duration=100
 	xyRotated <- rotate2d(xy, bearing)
 	
 	# Get the length of the stratum along the bearing:
-	lengthOfStratum <- diff(range(xyRotated$x))
+	xmin <- min(xyRotated$x)
+	xmax <- max(xyRotated$x)
+	lengthOfStratum <- xmax - xmin
 	# Get the total traveled length specified by nmi and knots
 	if(length(speed)){
 		knots <- speed * 3600/1852
@@ -201,6 +203,33 @@ parallelTransects <- function(projectName, entry=NULL, bearing="N", duration=100
 	# Get the area in square nmi:
 	area <- splancs::areapl(coords) / (1852^2)
 	# Subtract the length of the stratum, and return NULL if the traveled distance is shorter than this:
+	if(nmi < lengthOfStratum){
+		warning("The traveled distance specified by nmi or duration and knots is shorter than the length of the stratum")
+	}
+	nmi_rest <- nmi - lengthOfStratum
+	# Get the number of transects
+	transectSpacing <- area / nmi_rest
+	set.seed(seed)
+	fac <- runif(1)
+	firstTransectPos <- transectSpacing * fac
+	# Get x positions of the transects
+	atTransects <- seq(xmin + firstTransectPos, maxx, by=transectSpacing)
+	
+	# Get intersections between transect lines and the stratum border:
+	getIntersectWithLine <- function(x, line){
+		# Rotate into the angle of the line:
+		ang <- atan2(diff(line$y), diff(line$x))
+		y <- rotate2d(x, ang)
+		
+	}
+	
+	
+	
+	c <- ccalc(uc,vc,vel,t)
+	
+	fac <- runif(1)
+	ur1 <- fac*c
+	urnd <- seq(min(uc)+ur1, max(uc),by = c)
 	
 	
 	
