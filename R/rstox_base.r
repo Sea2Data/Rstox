@@ -1515,7 +1515,6 @@ getParlist <- function(parlist=list(), ...){
 #' @keywords internal
 #'
 applyParlist <- function(parlist, fun){
-	print(names(parlist))
 	parlist[intersect(names(parlist), names(formals(fun)))]
 }
 
