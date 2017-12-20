@@ -1138,7 +1138,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	if(plotOutput){
 		#outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=abundanceSumDT$Ab.Sum, abundanceSumDT=abundanceSumDT))
 		#outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=abundanceSumDT$Ab.Sum))
-		outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, Ab.Sum=abundanceSumDT$Ab.Sum, grp1=grp1))
+		outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, Ab.Sum=abundanceSumDT$Ab.Sum, grp1=grp1, grp2=grp2))
 	}
 	outlist
 }

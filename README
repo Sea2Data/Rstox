@@ -1,4 +1,4 @@
-# Rstox version: 1.7.1 (latest alpha, 2017-12-19)
+# Rstox version: 1.7.1 (latest alpha, 2017-12-20)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -50,3 +50,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.7.
 # 5. Changed rownames of the output from imputeByAge() to the same as the names of the bootstrap runs.
 
 # 6. Replaced the funciton wkt2MULTIPOLYGON() by matrix2multipolygon(), and added the reversed funciton multipolygon2matrix(). See ?polyArea for use of these funciotns.
+
+# 7. Removed bug in reportAbundanceAtLevel(), where grp2 was left out form the output when plotOutput=TRUE,
+
+# 8. Fixed unwanted removal of points in plotAbundance() when CV values were outside of the ylim. Now lines will still show. Also added the option of maxcv=TRUE, which adjusts the upper ylim to the maximum CV if above 1.

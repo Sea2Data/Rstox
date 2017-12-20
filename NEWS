@@ -543,3 +543,7 @@ Moved warnings due to no unknown or no known ages from distributeAbundance() to 
 Changed rownames of the output from imputeByAge() to the same as the names of the bootstrap runs.
 
 Replaced the funciton wkt2MULTIPOLYGON() by matrix2multipolygon(), and added the reversed funciton multipolygon2matrix(). See ?polyArea for use of these funciotns.
+
+Removed bug in reportAbundanceAtLevel(), where grp2 was left out form the output when plotOutput=TRUE,
+
+Fixed unwanted removal of points in plotAbundance() when CV values were outside of the ylim. Now lines will still show. Also added the option of maxcv=TRUE, which adjusts the upper ylim to the maximum CV if above 1.
