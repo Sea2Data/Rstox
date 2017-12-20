@@ -740,10 +740,13 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 						geom_point(aes_string(x=thisgrp1, y="Ab.Sum.cv", group=grp2, colour=out[[grp2]]), data=outtmp, show.legend=FALSE)
 					}
 				pl <- pl + 
-					scale_y_continuous(limits=ylim, trans=if("y" %in% log) "log10" else "identity", sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
+					#scale_y_continuous(limits=ylim, trans=if("y" %in% log) "log10" else "identity", sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
+					scale_y_continuous(trans=if("y" %in% log) "log10" else "identity", sec.axis=sec_axis(~./cvScalingFactor, name="CV")) + 
+					coord_cartesian(ylim=ylim) + 
 					xlab(xlab) +
 					ylab(ylab) + 
 					ggtitle(main)
+					
 			
 				# Adjust text size and other theme variables:
 				#pl + theme(applyParlist(lll, "theme"))
