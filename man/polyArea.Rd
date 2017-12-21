@@ -6,14 +6,20 @@
 \alias{multipolygon2matrix}
 \title{Polygon area}
 \usage{
-polyArea(wkt)
+polyArea(x)
 
 matrix2multipolygon(x)
 
-multipolygon2matrix(multipolygon, drop = TRUE)
+multipolygon2matrix(multipolygon, drop = TRUE, data.frame.out = FALSE)
 }
 \arguments{
-\item{wkt}{Either one two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".}
+\item{x}{Either a two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".}
+
+\item{multipolygon}{A multipolygon string.}
+
+\item{drop}{Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.}
+
+\item{data.frame.out}{Logical: If TRUE convert the matrices to data frames with columns x and y.}
 }
 \value{
 \code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.

@@ -1,4 +1,4 @@
-# Rstox version: 1.7.1 (latest alpha, 2017-12-20)
+# Rstox version: 1.7.1 (latest alpha, 2017-12-21)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -15,6 +15,9 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.7.
 # For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.7.1 as described above.
 # Install from github using the devtools package:
 # devtools::install_github("Sea2Data/Rstox", ref="develop")
+
+# R should be installed as the 64 bit version (and 64 bit version ONLY for Windows 10).
+# On Windows systems with adminstrator requirements, it is recommended to install R in C:/users/<user>/documents/R.
 
 # Note that 64 bit Java is required to run Rstox
 # On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp,
@@ -39,18 +42,23 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.7.
 
 # Release notes:
 
-# 1. Fixed bug in reportAbundance_SweptAreaTotal() where the column SpecCat was missing.
+# 1. Fixed bug in plotAbundance_AcousticTrawl() and plotAbundance_SweptAreaLength(), where missing values were shown as the lowest value minus 1. Now these are shown as NA to the left of the plot (using the new funciton factorNAfirst()).
 
-# 2. Fixed bug in plotAbundance_AcousticTrawl() and plotAbundance_SweptAreaLength(), where missing values were shown as the lowest value minus 1. Now these are shown as NA to the left of the plot (using the new funciton factorNAfirst()).
+# 2. Replaced the funciton wkt2MULTIPOLYGON() by matrix2multipolygon(), and added the reversed funciton multipolygon2matrix(). See ?polyArea for use of these funciotns.
 
-# 3. Fixed bug in imputeByAge() where no unknown ages resulted in a different output from distributeAbundance(). 
+# 3. Fixed unwanted removal of points in plotAbundance() when CV values were outside of the ylim. Now lines will still show. Also added the option of maxcv=TRUE, which adjusts the upper ylim to the maximum CV if above 1.
 
 # 4. Moved warnings due to no unknown or no known ages from distributeAbundance() to imputeByAge().
 
 # 5. Changed rownames of the output from imputeByAge() to the same as the names of the bootstrap runs.
 
-# 6. Replaced the funciton wkt2MULTIPOLYGON() by matrix2multipolygon(), and added the reversed funciton multipolygon2matrix(). See ?polyArea for use of these funciotns.
+# 6. Removed bug in reportAbundanceAtLevel(), where grp2 was left out form the output when plotOutput=TRUE,
 
-# 7. Removed bug in reportAbundanceAtLevel(), where grp2 was left out form the output when plotOutput=TRUE,
+# 7. Fixed bug in reportAbundance_SweptAreaTotal() where the column SpecCat was missing.
 
-# 8. Fixed unwanted removal of points in plotAbundance() when CV values were outside of the ylim. Now lines will still show. Also added the option of maxcv=TRUE, which adjusts the upper ylim to the maximum CV if above 1.
+# 8. Fixed bug in imputeByAge() where no unknown ages resulted in a different output from distributeAbundance(). 
+
+# 9. Added notes about 64 bit R on Windows in the README file.
+
+
+

@@ -1483,6 +1483,7 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 #'
 #' @export
 #' @keywords internal
+#' @rdname getParlist
 #'
 getParlist <- function(parlist=list(), ...){
 	# Get the specifications given as '...':
@@ -1513,6 +1514,7 @@ getParlist <- function(parlist=list(), ...){
 #'
 #' @export
 #' @keywords internal
+#' @rdname getParlist
 #'
 applyParlist <- function(parlist, fun){
 	parlist[intersect(names(parlist), names(formals(fun)))]

@@ -532,18 +532,42 @@ Fixed bug in baseline2eca().
 
 ########## Version 1.7.1 (2017-12-01) ##########
 
-Fixed bug in reportAbundance_SweptAreaTotal() where the column SpecCat was missing.
-
 Fixed bug in plotAbundance_AcousticTrawl() and plotAbundance_SweptAreaLength(), where missing values were shown as the lowest value minus 1. Now these are shown as NA to the left of the plot (using the new funciton factorNAfirst()).
 
-Fixed bug in imputeByAge() where no unknown ages resulted in a different output from distributeAbundance(). 
+Replaced the funciton wkt2MULTIPOLYGON() by matrix2multipolygon(), and added the reversed funciton multipolygon2matrix(). See ?polyArea for use of these funciotns.
+
+Fixed unwanted removal of points in plotAbundance() when CV values were outside of the ylim. Now lines will still show. Also added the option of maxcv=TRUE, which adjusts the upper ylim to the maximum CV if above 1.
 
 Moved warnings due to no unknown or no known ages from distributeAbundance() to imputeByAge().
 
 Changed rownames of the output from imputeByAge() to the same as the names of the bootstrap runs.
 
+Removed bug in reportAbundanceAtLevel(), where grp2 was left out form the output when plotOutput=TRUE,
+
+Fixed bug in reportAbundance_SweptAreaTotal() where the column SpecCat was missing.
+
+Fixed bug in imputeByAge() where no unknown ages resulted in a different output from distributeAbundance(). 
+
+Added notes about 64 bit R on Windows in the README file.
+
+
+
+########## Version 1.8 (2017-12-21) ##########
+
+Fixed bug in plotAbundance_AcousticTrawl() and plotAbundance_SweptAreaLength(), where missing values were shown as the lowest value minus 1. Now these are shown as NA to the left of the plot (using the new funciton factorNAfirst()).
+
 Replaced the funciton wkt2MULTIPOLYGON() by matrix2multipolygon(), and added the reversed funciton multipolygon2matrix(). See ?polyArea for use of these funciotns.
+
+Fixed unwanted removal of points in plotAbundance() when CV values were outside of the ylim. Now lines will still show. Also added the option of maxcv=TRUE, which adjusts the upper ylim to the maximum CV if above 1.
+
+Moved warnings due to no unknown or no known ages from distributeAbundance() to imputeByAge().
+
+Changed rownames of the output from imputeByAge() to the same as the names of the bootstrap runs.
 
 Removed bug in reportAbundanceAtLevel(), where grp2 was left out form the output when plotOutput=TRUE,
 
-Fixed unwanted removal of points in plotAbundance() when CV values were outside of the ylim. Now lines will still show. Also added the option of maxcv=TRUE, which adjusts the upper ylim to the maximum CV if above 1.
+Fixed bug in reportAbundance_SweptAreaTotal() where the column SpecCat was missing.
+
+Fixed bug in imputeByAge() where no unknown ages resulted in a different output from distributeAbundance(). 
+
+Added notes about 64 bit R on Windows in the README file.
