@@ -493,6 +493,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			)
 		}
 		
+		lapply(projectPaths, updateProject)
 		return(projectPaths)
 	}
 	
@@ -726,7 +727,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		
 	# Point to the downloaded files in each project:
 	#lapply(projectNames, pointToStoXFiles) before 2016-11-04
-	lapply(projectNames, updateProject)
+	# The following line was disabled on 2017-12-13 and moved to inside getCruises() to make the code more robust:
+	# lapply(projectNames, updateProject)
 	#getURIAsynchronous
 	
 	return(projectNames)

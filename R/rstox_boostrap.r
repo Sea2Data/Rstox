@@ -48,7 +48,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		# Sampling with replacement will normally result in fewer rows in the final superIndAbundance tables:
 		StID <- sampleSorted(stations, size=length(stations), seed=seedV[i], replace=TRUE, sorted=sorted)
 		
-		# Count weights from resample:
+		# Count weights from resample (resulting in a data frame with columns "Var1" and "Freq"):
 		count <- as.data.frame(table(StID))
 		count$Stratum <- strata[j]
 		BootWeights <- rbind(BootWeights,count)
@@ -66,7 +66,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		}
 	}
 	# Update biostation weighting
-	asg2 <- merge(assignments, BootWeights,by=c("Stratum", "StID"), all.x=TRUE)
+	asg2 <- merge(assignments, BootWeights, by=c("Stratum", "StID"), all.x=TRUE)
 	asg2$StationWeight <- ifelse(!is.na(asg2$Freq), asg2$StationWeight*asg2$Freq, 0)
 	# Update trawl assignment table in Stox Java object:
 	setAssignments(projectName, assignments=asg2)
@@ -178,6 +178,12 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	}
 	
 	out <- unlist(out, recursive=FALSE)
+	
+	# Check the number of rows of the bootstrap runs:
+	nrows <- sapply(out, nrow)
+	if(any(nrows==0)){
+		warning(paste0("The following bootstrap runs resulted in empty output: ", paste(which(nrows==0), collapse=", ")))
+	}
 	
 	# Order the output from the bootstrapping:
 	#names(out) <- paste0(names(out), "_run", seq_along(out))
@@ -407,6 +413,9 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	seedV <- getSeedV(seed, nboot=nboot)
 	
 	DensityMatrix <- getBaseline(projectName, proc=startProcess, input="par")
+	if(length(DensityMatrix$parameters[[startProcess]])==0){
+		stop(paste0("Invalid startProcess: ", startProcess))
+	}
 	var <- DensityMatrix$parameters[[startProcess]]$CatchVariable
 	DensityMatrix <- DensityMatrix$outputData[[startProcess]]
 	# Add stratum:

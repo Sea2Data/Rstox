@@ -2,14 +2,19 @@
 % Please edit documentation in R/rstox_base.r
 \name{getParlist}
 \alias{getParlist}
+\alias{applyParlist}
 \title{Merges a list and the following list elements given as "...".}
 \usage{
 getParlist(parlist = list(), ...)
+
+applyParlist(parlist, fun)
 }
 \arguments{
 \item{parlist}{List of parameters values specified as processName = list(parameter = value)}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
+
+\item{fun}{The name of a function to which the parameters in parlist should be fit.}
 }
 \value{
 Merged list of parameters, duplicates not removed.

@@ -51,7 +51,9 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		write(paste0("# For official versions of Rstox, refer to the ftp server ", ftpDir, " as described above."), READMEfile, append=TRUE)
 		write("# Install from github using the devtools package:", READMEfile, append=TRUE)
 		write("# devtools::install_github(\"Sea2Data/Rstox\", ref=\"develop\")", READMEfile, append=TRUE)
-		
+		write("", READMEfile, append=TRUE)
+		write("# R should be installed as the 64 bit version (and 64 bit version ONLY for Windows 10).", READMEfile, append=TRUE)
+		write("# On Windows systems with adminstrator requirements, it is recommended to install R in C:/users/<user>/documents/R.", READMEfile, append=TRUE)
 		write("", READMEfile, append=TRUE)
 		write("# Note that 64 bit Java is required to run Rstox", READMEfile, append=TRUE)
 		write("# On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp,", READMEfile, append=TRUE)
@@ -313,7 +315,11 @@ dir <- "~/Documents/Produktivt/Prosjekt/R-packages/Rstox/Rstox"
 #buildRstox(dir, version="1.6.5", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
 
 
-# Build 1.6.5:
-buildRstox(dir, version="1.7", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=TRUE, check=FALSE)
+# Build 1.7:
+#buildRstox(dir, version="1.7", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=TRUE, check=FALSE)
 
+# Build 1.7.1:
+buildRstox(dir, version="1.7.1", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
 
+# Build 1.8:
+#buildRstox(dir, version="1.7.1", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)

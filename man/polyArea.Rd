@@ -2,34 +2,53 @@
 % Please edit documentation in R/rstox_spatial.r
 \name{polyArea}
 \alias{polyArea}
-\alias{wkt2MULTIPOLYGON}
+\alias{matrix2multipolygon}
+\alias{multipolygon2matrix}
 \title{Polygon area}
 \usage{
-polyArea(wkt)
+polyArea(x)
 
-wkt2MULTIPOLYGON(wkt)
+matrix2multipolygon(x)
+
+multipolygon2matrix(multipolygon, drop = TRUE, data.frame.out = FALSE)
 }
 \arguments{
-\item{wkt}{Either one two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, tne first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".}
+\item{x}{Either a two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".}
+
+\item{multipolygon}{A multipolygon string.}
+
+\item{drop}{Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.}
+
+\item{data.frame.out}{Logical: If TRUE convert the matrices to data frames with columns x and y.}
 }
 \value{
-\code{polyArea} returns area in nmi squared, and \code{wkt2MULTIPOLYGON} returns a MULTIPOLYGON wkt.
+\code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
 }
 \description{
-Calculate area of wkt polygon with az.eq.are projection / adapted origo. The helper function \code{wkt2MULTIPOLYGON} converts a two column matrix or a list of two column matrices to a wkt string.
+Calculate area of wkt polygon with az.eq.are projection / adapted origo. The helper function \code{matrix2multipolygon} converts a two column matrix or a list of two column matrices to a wkt string.
 }
 \examples{
 library(rgeos)
-p1 <- cbind(c(4, 15, 15, 4, 4), c(55, 56, 59, 59, 55))
-s11 <- cbind(c(7, 12, 12, 7, 7), c(56, 57, 58, 58, 56))
-s12 <- cbind(c(7, 14, 5, 7), c(56, 57, 58, 56))
-p2 <- cbind(20 + c(4, 15, 15, 4, 4), c(55, 56, 59, 59, 55))
-s2 <- cbind(20 + c(7, 12, 12, 7, 7), c(56, 56, 58, 58, 56))
-wkt <- list(
+p1 <- cbind(x=c(4, 15, 15, 4, 4), y=c(55, 56, 59, 59, 55))
+s11 <- cbind(x=c(7, 12, 12, 7, 7), y=c(56, 57, 58, 58, 56))
+s12 <- cbind(x=c(7, 14, 5, 7), y=c(56, 57, 58, 56))
+p2 <- cbind(x=20 + c(4, 15, 15, 4, 4), y=c(55, 56, 59, 59, 55))
+s2 <- cbind(x=20 + c(7, 12, 12, 7, 7), y=c(56, 56, 58, 58, 56))
+x <- list(
 	list(p1, s11, s12),
 	list(p2, s2))
-wkt2MULTIPOLYGON(wkt)
-plot(readWKT(wkt2MULTIPOLYGON(wkt)), col='black', pbg='white')
-polyArea(wkt)
+matrix2multipolygon(x)
+multipolygon <- matrix2multipolygon(x)
+plot(readWKT(multipolygon), col='black', pbg='white')
+polyArea(x)
+# Convert back to a list of matrices:
+multipolygon2matrix(multipolygon)
+# Output from multipolygon2matrix() are rotated counter clockwise:
+y <- multipolygon2matrix(multipolygon)
+all.equal(x, y)
+x1 <- x[[1]][[1]]
+y1 <- y[[1]][[1]]
+orderCols12 <- function(x) x[order(x[,1], x[,2]), ]
+all.equal(orderCols12(x1), orderCols12(y1))
 
 }

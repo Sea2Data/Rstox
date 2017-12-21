@@ -2,6 +2,7 @@
 % Please edit documentation in R/rstox_reports.r
 \name{reportAbundance}
 \alias{reportAbundance}
+\alias{reportAbundance_SweptAreaLength}
 \alias{reportAbundance_AcousticTrawl}
 \alias{reportAbundance_SweptAreaTotal}
 \alias{reportAbundanceAtLevel}
@@ -11,6 +12,10 @@ reportAbundance(projectName, bootstrapMethod = "AcousticTrawl",
   var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
   grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
   ...)
+
+reportAbundance_SweptAreaLength(projectName, var = "Abundance", unit = NULL,
+  baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
+  plotOutput = FALSE, write = FALSE, msg = TRUE, ...)
 
 reportAbundance_AcousticTrawl(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
