@@ -543,6 +543,8 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 	out <- list()
 	tryCatch(
 		{
+			# Changed to not show the project name, in order to avoid diffs between identical plots during automatic version testing:
+			#out <- hist(getVar(agg, "Value"), breaks=20, freq=FALSE, xlab="NASC transect means", ylab="Relative frequency", main=projectName)
 			out <- hist(getVar(agg, "Value"), breaks=20, freq=FALSE, xlab="NASC transect means", ylab="Relative frequency", main=projectName)
 			# Change introduced in the output from getResampledNASCDistr(), which form 2017-11-03 returns a list of elements NASC and seed:
 			#d <- density(projectEnv$resampledNASC)
@@ -580,7 +582,7 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 #' @param ylab				The label to user for the y axis, with default depending on data plotted.
 #' @param main				Main title for plot (text)
 #' @param format			The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, , resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.
-#' @param log				Character string giving the axes to apply log10() to.
+#' @param log				Character string giving the axes to apply log10() to, or TRUE to indicate log="y".
 #' @param filetag			A character string to append to the file name (before file extension).
 #' @param maxcv				The maximum cv in the plot. Use Inf to indicate the maximum cv of the data.
 #' @param ...				Parameters passed on from other functions. Includes \code{numberscale}, which is kept for compability with older versions. Please use 'unit' instead. (Scale results with e.g. 1000 or 1000000).
@@ -636,7 +638,6 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		
 		# Set the missing values to low value (assuming only postive values are used for age and stratum and other variables):
 		cat("Abundance by age for ", level, "\n", se0="")
-		
 		
 		#abundanceSum[[thisgrp1]] <- setValueForMissing(abundanceSum[[thisgrp1]])
 		#out[[thisgrp1]] <- setValueForMissing(out[[thisgrp1]])
@@ -707,6 +708,9 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		cvLabels <- pretty(c(0, maxcv))
 		
 		# Define the ylim, starting from the lower value of abundanceSum$Ab.Sum in the case of logarithmic plotting on the y axis:
+		if(isTRUE(log)){
+			log <- "y"
+		}
 		if("y" %in% log){
 			ylim <- range(abundanceSum$Ab.Sum, na.rm=TRUE)
 		}
@@ -881,20 +885,42 @@ plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, 
 #' @rdname plotAbundance
 #' 
 factorNAfirst <- function(x){
+	### if(is.numeric(x)){
+	### 	levels <- seq(min(x, na.rm=TRUE), max(x, na.rm=TRUE), by=median(diff(sort(unique(x))), na.rm=TRUE))
+	### }
+	### else{
+	### 	levels <- unique(x)
+	### }
+	### if(length(levels)==1 && is.na(levels)){
+	### 	levels <- "NA"
+	### 	x <- rep("NA", length(x))
+	### }
+	### else if(any(is.na(x))){
+	### 	levels <- c(NA, levels[!is.na(levels)])
+	### }
+	### factor(x, levels=levels, exclude=FALSE)
+	### #is.nax <- is.na(x)
+	### #value <- if(is.character(x) || all(is.nax)) "-" else min(x, na.rm=TRUE) - 1
+	### #x[is.nax] <- value
+	### #x
+	
 	if(is.numeric(x)){
 		levels <- seq(min(x, na.rm=TRUE), max(x, na.rm=TRUE), by=median(diff(sort(unique(x))), na.rm=TRUE))
+		if(any(is.na(x))){
+				levels <- c(NA, levels)
+			}
 	}
 	else{
 		levels <- unique(x)
 	}
-	if(any(is.na(x))){
-		levels <- c(NA, levels)
+	if(length(levels)==1 && is.na(levels)){
+		levels <- "NA"
+		x <- rep("NA", length(x))
 	}
+	
+	levels <- sort(levels, na.last=FALSE)
+	
 	factor(x, levels=levels, exclude=FALSE)
-	#is.nax <- is.na(x)
-	#value <- if(is.character(x) || all(is.nax)) "-" else min(x, na.rm=TRUE) - 1
-	#x[is.nax] <- value
-	#x
 }
 
 

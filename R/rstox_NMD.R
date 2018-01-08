@@ -22,7 +22,7 @@
 #' @param cruise				Either the code of a cruise, such as "2015116", or the full or short name of a cruise series or survey time series. In the current version, if given as a cruise code, the parameter 'shipname' must be given as well, based on which the path to the cruise is searched for by functionallity provided by NMD. For cruises prior to the year 1995 several vessels can be linked to the same cruise code, and as of version 2 the user will by default be asked to specify which vessel(s) to specify the vessels when this occurs, instead of having to specify the cruise initially.
 #' @param year					Used in conjunction with 'shipname' to get all cruises from one or more years from a specific ship.
 #' @param shipname				Specifies the ship name (see 'cruise' and 'year').
-#' @param serialno				The serial number range within which to download data.
+#' @param serialno				A vector of the requested serial numbers.
 #' @param tsn					The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.
 #' @param datatype				The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datatype=NULL (default) returns all possible data.
 #' @param dir					The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects
@@ -296,7 +296,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	##### Internal functions: #####
 	# Function for converting a vector of serial numbers, which can be fully or partly sequenced (incriment of 1 between consecutive elements):
 	getSerialnoRanges <- function(x){
-		d <- diff(x)
+		d <- diff(c(x))
 		starts <- c(1, which(d != 1)+1)
 		ends <- c(which(d != 1), length(x))
 		cbind(x[starts], x[ends])
@@ -525,9 +525,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			return(NULL)
 		}
 		serialno <- getSerialnoRanges(serialno)
-		serialnoRanges <- apply(serialno, 1, paste, collapse="-")
-		serialnoStrings <- paste0("serialno", "_", serialnoRanges)
-		serialnoString <- paste("serialno", serialnoRanges, sep="_", collapse="_")
+		serialnoStrings <- apply(serialno, 1, paste, collapse="-")
+		serialnoStrings <- paste0("serialno", "_", serialnoStrings)
+		#serialnoString <- paste("serialno", serialnoRanges, sep="_", collapse="_")
 		if(length(tsn)){
 			tsnString <- paste("tsn", tsn, sep="_")
 		}
@@ -535,7 +535,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			tsnString <- NULL
 		}
 		
-		projectName <- paste(c(filebase, serialnoString, tsnString, "year", year[1]), collapse="_")
+		serialnoRangeString <- paste("serialno", range(serialno), "-", collapse="_")
+		projectName <- paste(c(filebase, serialnoRangeString, tsnString, "year", year[1]), collapse="_")
 		projectName <- gsub("__", "_", projectName)
 		# Abbreviate:
 		projectName <- abbrevWords(projectName, abbrev=abbrev, sub=-1)

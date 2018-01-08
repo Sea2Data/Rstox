@@ -97,7 +97,6 @@ matrix2multipolygon <- function(x){
 #' @export
 #' @importFrom sp disaggregate
 #' @importFrom rgeos readWKT
-#' @importFrom methods slot
 #' @rdname polyArea
 #' 
 multipolygon2matrix <- function(multipolygon, drop=TRUE, data.frame.out=FALSE){
