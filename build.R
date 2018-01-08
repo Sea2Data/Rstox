@@ -27,7 +27,9 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		write("", READMEfile, append=TRUE)
 		write("# Install Rstox:", READMEfile, append=TRUE)
 		# Get the version string, the name of the Rstox tar file, the ftp root and, finally, the ftp directory and full path to the Rstox tar file:
-		versionString <- paste0("Rstox_", version)
+		# Changed added to make the package name identical to the name of the GitHub release:
+		#versionString <- paste0("Rstox_", version)
+		versionString <- paste0("Rstox", if(version>"1.7.1") "-" else "_", version)
 		tarName <- paste0(versionString, ".tar.gz")
 		ftpRoot <- "ftp://ftp.imr.no/StoX/Download/Rstox"
 		if(betaAlpha==3){
@@ -158,10 +160,10 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 				imports[atversion[i]] <- paste0(imports[atversion[i]], " (>= ", version[i], ")")
 			}
 		}
-		
 		return(imports)
 	}
 	########## End of functions ##########
+	
 	
 	# Clear the installed package:
 	try(lapply(.libPaths(), function(xx) remove.packages(pkgName, xx)), silent=TRUE)
@@ -179,8 +181,13 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		unlink(NAMESPACEfile, recursive=TRUE, force=TRUE)
 	onLoadFile = file.path(buildDir, "R", "onLoad.R")
 	onAttachFile = file.path(buildDir, "R", "onAttach.R")
-	thisExportDir <- file.path(exportDir, paste(pkgName, version, sep="_"))
+	
+	# Changed added to make the package name identical to the name of the GitHub release:
+	#thisExportDir <- file.path(exportDir, paste(pkgName, version, sep="_"))
+	thisExportDir <- file.path(exportDir, paste(pkgName, version, sep=if(version>"1.7.1") "-" else "_"))
+	suppressWarnings(dir.create(thisExportDir))
 	READMEfile <- file.path(buildDir, "README")
+	
 	READMEfileExport <- file.path(thisExportDir, "README")
 	NEWSfile <- file.path(buildDir, "NEWS")
 	
@@ -279,13 +286,17 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	##### Create platform independent bundle of source package: #####
 	dir.create(thisExportDir, recursive=TRUE)
 	pkgFileVer <- build(buildDir, path=thisExportDir)
+	# To comply with GitHub, rename to using hyphen (whereas build() hardcodes using "_"):
+	versionString <- paste0("Rstox", if(version>"1.7.1") "-" else "_", version, ".tar.gz")
+	pkgFileVerHyphen <- file.path(thisExportDir, versionString)
+	file.rename(pkgFileVer, pkgFileVerHyphen)
 	
 	##### Unload the package: #####
 	unload(buildDir)
 	##########
 	
 	##### Install local source package by utils (independent of dev-tools), and check that it loads: #####
-	install.packages(pkgFileVer, repos=NULL, type="source", lib=.libPaths()[1])
+	install.packages(pkgFileVerHyphen, repos=NULL, type="source", lib=.libPaths()[1])
 	library(Rstox)
 	##########
 }
