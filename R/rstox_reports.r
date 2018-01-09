@@ -903,7 +903,6 @@ factorNAfirst <- function(x){
 	### #value <- if(is.character(x) || all(is.nax)) "-" else min(x, na.rm=TRUE) - 1
 	### #x[is.nax] <- value
 	### #x
-	
 	if(is.numeric(x)){
 		levels <- seq(min(x, na.rm=TRUE), max(x, na.rm=TRUE), by=median(diff(sort(unique(x))), na.rm=TRUE))
 		if(any(is.na(x))){
@@ -920,7 +919,7 @@ factorNAfirst <- function(x){
 	
 	levels <- sort(levels, na.last=FALSE)
 	
-	factor(x, levels=levels, exclude=FALSE)
+	factor(x, levels=levels, exclude=NULL)
 }
 
 

@@ -552,7 +552,7 @@ Added notes about 64 bit R on Windows in the README file.
 
 
 
-########## Version 1.7.1 (2017-12-01) ##########
+########## Version 1.7.2 (2017-12-01) ##########
 
 Fixed bug in getNMDdata(), where serialno = c(start, end) was not interpreted as start : end, as expected from the documentation. From Rstox 1.8 on serialno is a vector of all the serialnumbers to download data from.
 
@@ -561,6 +561,8 @@ Fixed bug in getNMDdata(), where there was no restriction on file name when mult
 Removed the main title of plotNASCDistribution(), in order to avoid diffs during automatic testing.
 
 Changed name of Rstox_1.7.2.tar.gz to Rstox-1.7.2.tar.gz to comply with the releases from GitHub.
+
+Fixed bug in factorNAfirst(), where exclude=FALSE removed zeros. Changed to exclude=NULL.
 
 
 
@@ -591,3 +593,5 @@ Fixed bug in getNMDdata(), where there was no restriction on file name when mult
 Removed the main title of plotNASCDistribution(), in order to avoid diffs during automatic testing.
 
 Changed name of Rstox_1.7.2.tar.gz to Rstox-1.7.2.tar.gz to comply with the releases from GitHub.
+
+Fixed bug in factorNAfirst(), where exclude=FALSE removed zeros. Changed to exclude=NULL.

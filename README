@@ -1,4 +1,4 @@
-# Rstox version: 1.7.2 (latest alpha, 2018-01-08)
+# Rstox version: 1.7.2 (latest alpha, 2018-01-09)
 # R version: 3.4.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -41,4 +41,16 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox-1.7.
 
 
 # Release notes:
+
+# 1. Fixed bug in getNMDdata(), where serialno = c(start, end) was not interpreted as start : end, as expected from the documentation. From Rstox 1.8 on serialno is a vector of all the serialnumbers to download data from.
+
+# 2. Fixed bug in getNMDdata(), where there was no restriction on file name when multiple serialno-ranges were requested. From Rstox 1.8 on, only the first and last serialno is included in the file name, irrespective of sub intervals in serialno.
+
+# 3. Removed the main title of plotNASCDistribution(), in order to avoid diffs during automatic testing.
+
+# 4. Changed name of Rstox_1.7.2.tar.gz to Rstox-1.7.2.tar.gz to comply with the releases from GitHub.
+
+# 5. Fixed bug in factorNAfirst(), where exclude=FALSE removed zeros. Changed to exclude=NULL.
+
+
 
