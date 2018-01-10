@@ -751,6 +751,16 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 	unlink(project)
 	return(out)
 }
+#'
+#' @export
+#' @rdname createProject
+#'
+generateRScripts <- function(projectName){
+	project <- openProject(projectName, out="project")
+	project$getRModel()$generateRTrigger()
+	project$getRModelReport()$generateRTrigger()
+	project
+}
 
 
 #*********************************************

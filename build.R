@@ -27,7 +27,9 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		write("", READMEfile, append=TRUE)
 		write("# Install Rstox:", READMEfile, append=TRUE)
 		# Get the version string, the name of the Rstox tar file, the ftp root and, finally, the ftp directory and full path to the Rstox tar file:
-		versionString <- paste0("Rstox_", version)
+		# Changed added to make the package name identical to the name of the GitHub release:
+		#versionString <- paste0("Rstox_", version)
+		versionString <- paste("Rstox", version, sep="_")
 		tarName <- paste0(versionString, ".tar.gz")
 		ftpRoot <- "ftp://ftp.imr.no/StoX/Download/Rstox"
 		if(betaAlpha==3){
@@ -102,30 +104,12 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		write(thisl, READMEfile, append=TRUE)
 	}
 	
-	# Function used for extracting the imports in Rstox, in order to inform about these in the README file. This will not be needed once the package is on CRAN:
-	#getImports <- function(buildDir){
-	#	# Read the NAMESPACE file and get the package dependencies:
-	#	buildDirList <- list.files(buildDir, recursive=TRUE, full.names=TRUE)
-	#	NAMESPACE <- readLines(buildDirList[basename(buildDirList) == "NAMESPACE"])
-	#	atImports <- grep("import", NAMESPACE)
-	#	imports <- NAMESPACE[atImports]
-	#	imports <- sapply(strsplit(imports, "(", fixed=TRUE), "[", 2)
-	#	imports <- sapply(strsplit(imports, ")", fixed=TRUE), "[", 1)
-	#	imports <- unique(sapply(strsplit(imports, ",", fixed=TRUE), "[", 1))
-	#
-	#	importsPresent <- intersect(imports, installed.packages()[,"Package"])
-	#	imports <- setdiff(imports, importsPresent[installed.packages()[importsPresent,"Priority"] %in% "base"])
-	#	imports <- sort(imports)
-	#
-	#	return(imports)
-	#}
+	# Functions used for extracting the imports in Rstox, in order to inform about these in the README file. This will not be needed once the package is on CRAN:
 	discardBasePackages <- function(x){
 		inst <- installed.packages()
 		Base <- inst[, "Package"][inst[,"Priority"] %in% c("base", "recommended")]
 		sort(setdiff(x, Base))
 	}
-	
-	
 	getImports <- function(buildDir, version=list()){
 		# Read the NAMESPACE file and get the package dependencies:
 		buildDirList <- list.files(buildDir, recursive=TRUE, full.names=TRUE)
@@ -158,10 +142,10 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 				imports[atversion[i]] <- paste0(imports[atversion[i]], " (>= ", version[i], ")")
 			}
 		}
-		
 		return(imports)
 	}
 	########## End of functions ##########
+	
 	
 	# Clear the installed package:
 	try(lapply(.libPaths(), function(xx) remove.packages(pkgName, xx)), silent=TRUE)
@@ -179,8 +163,13 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 		unlink(NAMESPACEfile, recursive=TRUE, force=TRUE)
 	onLoadFile = file.path(buildDir, "R", "onLoad.R")
 	onAttachFile = file.path(buildDir, "R", "onAttach.R")
+	
+	# Changed added to make the package name identical to the name of the GitHub release:
+	#thisExportDir <- file.path(exportDir, paste(pkgName, version, sep="_"))
 	thisExportDir <- file.path(exportDir, paste(pkgName, version, sep="_"))
+	suppressWarnings(dir.create(thisExportDir))
 	READMEfile <- file.path(buildDir, "README")
+	
 	READMEfileExport <- file.path(thisExportDir, "README")
 	NEWSfile <- file.path(buildDir, "NEWS")
 	
@@ -279,13 +268,17 @@ buildRstox <- function(buildDir, pkgName="Rstox", version="1.0", Rversion="3.3.1
 	##### Create platform independent bundle of source package: #####
 	dir.create(thisExportDir, recursive=TRUE)
 	pkgFileVer <- build(buildDir, path=thisExportDir)
+	# To comply with GitHub, rename to using hyphen (whereas build() hardcodes using "_"):
+	versionString <- paste0("Rstox_", version, ".tar.gz")
+	pkgFileVerHyphen <- file.path(thisExportDir, versionString)
+	file.rename(pkgFileVer, pkgFileVerHyphen)
 	
 	##### Unload the package: #####
 	unload(buildDir)
 	##########
 	
 	##### Install local source package by utils (independent of dev-tools), and check that it loads: #####
-	install.packages(pkgFileVer, repos=NULL, type="source", lib=.libPaths()[1])
+	install.packages(pkgFileVerHyphen, repos=NULL, type="source", lib=.libPaths()[1])
 	library(Rstox)
 	##########
 }
@@ -319,7 +312,10 @@ dir <- "~/Documents/Produktivt/Prosjekt/R-packages/Rstox/Rstox"
 #buildRstox(dir, version="1.7", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=TRUE, check=FALSE)
 
 # Build 1.7.1:
-buildRstox(dir, version="1.7.1", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
+#buildRstox(dir, version="1.7.1", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
+
+# Build 1.7.2:
+buildRstox(dir, version="1.7.2", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
 
 # Build 1.8:
-#buildRstox(dir, version="1.7.1", Rversion="3.4.2", pckversion=list(data.table="1.10.4-3"), official=FALSE, check=FALSE)
+#buildRstox(dir, version="1.8", Rversion="3.4.3", pckversion=list(data.table="1.10.4-3"), official=TRUE, check=FALSE)

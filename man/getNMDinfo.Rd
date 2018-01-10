@@ -46,7 +46,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{shipname}{Specifies the ship name (see 'cruise' and 'year').}
 
-\item{serialno}{The serial number range within which to download data.}
+\item{serialno}{A vector of the requested serial numbers.}
 
 \item{tsn}{The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.}
 
