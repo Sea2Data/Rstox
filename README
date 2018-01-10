@@ -1,5 +1,5 @@
-# Rstox version: 1.7.2 (latest alpha, 2018-01-10)
-# R version: 3.4.2
+# Rstox version: 1.8 (latest beta, 2018-01-10)
+# R version: 3.4.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
 
@@ -8,11 +8,11 @@ dep.pck <- c("data.table", "ggplot2", "pbapply", "rgdal", "rgeos", "rJava", "sp"
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
-install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.7.2/Rstox_1.7.2.tar.gz", repos=NULL)
+install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.8.tar.gz", repos=NULL)
 
 # Alternatively, install the latest development version from GitHub.
 # Note that this does not guarantee a stable version.
-# For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.7.2 as described above.
+# For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox as described above.
 # Install from github using the devtools package:
 # devtools::install_github("Sea2Data/Rstox", ref="develop")
 
@@ -42,15 +42,30 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.7.
 
 # Release notes:
 
-# 1. Fixed bug in getNMDdata(), where serialno = c(start, end) was not interpreted as start : end, as expected from the documentation. From Rstox 1.8 on serialno is a vector of all the serialnumbers to download data from.
+# 1. Fixed bug in plotAbundance_AcousticTrawl() and plotAbundance_SweptAreaLength(), where missing values were shown as the lowest value minus 1. Now these are shown as NA to the left of the plot (using the new funciton factorNAfirst()).
 
-# 2. Fixed bug in getNMDdata(), where there was no restriction on file name when multiple serialno-ranges were requested. From Rstox 1.8 on, only the first and last serialno is included in the file name, irrespective of sub intervals in serialno.
+# 2. Replaced the funciton wkt2MULTIPOLYGON() by matrix2multipolygon(), and added the reversed funciton multipolygon2matrix(). See ?polyArea for use of these funciotns.
 
-# 3. Removed the main title of plotNASCDistribution(), in order to avoid diffs during automatic testing.
+# 3. Fixed unwanted removal of points in plotAbundance() when CV values were outside of the ylim. Now lines will still show. Also added the option of maxcv=TRUE, which adjusts the upper ylim to the maximum CV if above 1.
 
-# 4. Changed name of Rstox_1.7.2.tar.gz to Rstox-1.7.2.tar.gz to comply with the releases from GitHub.
+# 4. Moved warnings due to no unknown or no known ages from distributeAbundance() to imputeByAge().
 
-# 5. Fixed bug in factorNAfirst(), where exclude=FALSE removed zeros. Changed to exclude=NULL.
+# 5. Changed rownames of the output from imputeByAge() to the same as the names of the bootstrap runs.
 
+# 6. Removed bug in reportAbundanceAtLevel(), where grp2 was left out form the output when plotOutput=TRUE,
 
+# 7. Fixed bug in reportAbundance_SweptAreaTotal() where the column SpecCat was missing.
 
+# 8. Fixed bug in imputeByAge() where no unknown ages resulted in a different output from distributeAbundance(). 
+
+# 9. Added notes about 64 bit R on Windows in the README file.
+
+# 10. Fixed bug in getNMDdata(), where serialno = c(start, end) was not interpreted as start : end, as expected from the documentation. From Rstox 1.8 on serialno is a vector of all the serialnumbers to download data from.
+
+# 11. Fixed bug in getNMDdata(), where there was no restriction on file name when multiple serialno-ranges were requested. From Rstox 1.8 on, only the first and last serialno is included in the file name, irrespective of sub intervals in serialno.
+
+# 12. Removed the main title of plotNASCDistribution(), in order to avoid diffs during automatic testing.
+
+# 13. Changed name of Rstox_1.7.2.tar.gz to Rstox-1.7.2.tar.gz to comply with the releases from GitHub.
+
+# 14. Fixed bug in factorNAfirst(), where exclude=FALSE removed zeros. Changed to exclude=NULL.
