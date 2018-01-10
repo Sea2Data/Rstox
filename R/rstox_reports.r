@@ -315,9 +315,9 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
 	#seedM.out <- lapply(out, "[[", "seedM")	
 		
 	# imputeSummary.out <- t(as.data.frame(imputeSummary.out))
-	# Using do.call("rbind", imputeSummary.out) did not result in a data frame on which the $ operator works. Instead we use data.table::rbindlist:
+	# Using do.call("rbind", imputeSummary.out) did not result in a data frame on which the $ operator works. Instead we use data.table::rbindlist, but convert back to data frame:
 	#imputeSummary.out <- do.call("rbind", imputeSummary.out)
-	imputeSummary.out <- data.table::rbindlist(imputeSummary.out)
+	imputeSummary.out <- as.data.frame(data.table::rbindlist(imputeSummary.out))
 	#colnames(msg.out) <- c("Aged", "NotAged", "ImputedAtStation", "ImputedAtStrata", "ImputedAtSurvey", "NotImputed")
 	#colnames(imputeSummary.out) <- c("NumAged", "NumNotAged", "NumUsed", "NumNoMatch", "NumImputedAtStation", "NumImputedAtStratum", "NumImputedAtSurvey")
 	#rownames(imputeSummary.out) <- paste0("Iter", seq_len(nboot))
@@ -545,7 +545,7 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 		{
 			# Changed to not show the project name, in order to avoid diffs between identical plots during automatic version testing:
 			#out <- hist(getVar(agg, "Value"), breaks=20, freq=FALSE, xlab="NASC transect means", ylab="Relative frequency", main=projectName)
-			out <- hist(getVar(agg, "Value"), breaks=20, freq=FALSE, xlab="NASC transect means", ylab="Relative frequency", main=projectName)
+			out <- hist(getVar(agg, "Value"), breaks=20, freq=FALSE, xlab="NASC transect means", ylab="Relative frequency", main="")
 			# Change introduced in the output from getResampledNASCDistr(), which form 2017-11-03 returns a list of elements NASC and seed:
 			#d <- density(projectEnv$resampledNASC)
 			d <- density(if(is.list(projectEnv$resampledNASC)) projectEnv$resampledNASC$NASC else projectEnv$resampledNASC)

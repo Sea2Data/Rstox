@@ -552,7 +552,7 @@ Added notes about 64 bit R on Windows in the README file.
 
 
 
-########## Version 1.7.2 (2017-12-01) ##########
+########## Version 1.7.2 (2017-12-21) ##########
 
 Fixed bug in getNMDdata(), where serialno = c(start, end) was not interpreted as start : end, as expected from the documentation. From Rstox 1.8 on serialno is a vector of all the serialnumbers to download data from.
 
@@ -566,7 +566,7 @@ Fixed bug in factorNAfirst(), where exclude=FALSE removed zeros. Changed to excl
 
 
 
-########## Version 1.8 (2017-12-21) ##########
+########## Version 1.8 (2018-01-10) ##########
 
 Fixed bug in plotAbundance_AcousticTrawl() and plotAbundance_SweptAreaLength(), where missing values were shown as the lowest value minus 1. Now these are shown as NA to the left of the plot (using the new funciton factorNAfirst()).
 
