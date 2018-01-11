@@ -535,7 +535,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			tsnString <- NULL
 		}
 		
-		serialnoRangeString <- paste("serialno", range(serialno), "-", collapse="_")
+		serialnoRangeString <- paste0("serialno_", paste(range(serialno), collapse="-"), "_")
 		projectName <- paste(c(filebase, serialnoRangeString, tsnString, "year", year[1]), collapse="_")
 		projectName <- gsub("__", "_", projectName)
 		# Abbreviate:
