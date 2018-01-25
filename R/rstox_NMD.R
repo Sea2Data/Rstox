@@ -519,10 +519,18 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	########################################
 	########## (1) Serial number: ##########
 	########################################
+	maxSerialno <- 99999
+	if(length(serialno)==0 && length(year)){
+		serialno <- seq(1, maxSerialno)
+	}
 	if(length(serialno)){
 		if(length(year)==0){
 			warning("'year' must be given when serial number is requested")
 			return(NULL)
+		}
+		if(any(serialno > maxSerialno)){
+			serialno <- serialno[serialno <= maxSerialno]
+			warning("Too large serialno will occupy a large amount of memory")
 		}
 		serialno <- getSerialnoRanges(serialno)
 		serialnoStrings <- apply(serialno, 1, paste, collapse="-")

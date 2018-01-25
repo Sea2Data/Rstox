@@ -595,3 +595,20 @@ Removed the main title of plotNASCDistribution(), in order to avoid diffs during
 Changed name of Rstox_1.7.2.tar.gz to Rstox-1.7.2.tar.gz to comply with the releases from GitHub.
 
 Fixed bug in factorNAfirst(), where exclude=FALSE removed zeros. Changed to exclude=NULL.
+
+
+########## Version 1.8.1 (2018-01-25) ##########
+
+Removed the function baseline2ECA(), which is covered by baseline2eca().
+
+Added the option of downloading all seralno from a year if serialno is not set.
+
+Added the (unfinished) function surveyPlanner() which will be used to generate parallel or zigzag transects.
+
+Added the function plotStratum() for plotting the output from surveyPlanner().
+
+Added the functions getProjString(), projectMatrixList(), spatial2matrixList(), matrixList2multipolygon(), multipolygon2spatial(), isSpatial(), isMatrixList(), isMultipolygon(), matrixListLevel(), rapplyKeepDataFrames() as utility functions for conversion to and from spatial objects, multipolygons, and lists of matrices, all containing polygons and other spatial data.
+
+Added the functions geo2xy() for conversion to and from geographic and Cartesian coordinates, polyAreaOld() which is the old polyArea(), and getMatrixList(), getMultipolygon() and getSpatial() for getting a list of matrices, a mutipolygon wkt string or a spatial object respectively.
+
+Mapped the new funcitons getMultipolygon() and getMatrixList() to the old funcitons matrix2multipolygon() multipolygon2matrix() for backwards compatibility.

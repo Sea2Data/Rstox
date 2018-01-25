@@ -2,53 +2,71 @@
 % Please edit documentation in R/rstox_spatial.r
 \name{polyArea}
 \alias{polyArea}
+\alias{geo2xy}
+\alias{polyAreaOld}
+\alias{getMatrixList}
+\alias{getMultipolygon}
+\alias{getSpatial}
 \alias{matrix2multipolygon}
 \alias{multipolygon2matrix}
-\title{Polygon area}
+\title{Get polygon area and convert to or from geographic and Cartesian coordinates.}
 \usage{
-polyArea(x)
+polyArea(x, par = list(proj = "laea", units = "kmi", lon_0 = NA, lat_0 = NA,
+  x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"), input = "longlat", ...)
 
-matrix2multipolygon(x)
+geo2xy(x, par = list(proj = "aeqd", units = "kmi", lon_0 = NA, lat_0 = NA, x_0
+  = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"), inv = FALSE,
+  data.frame.out = FALSE, ...)
 
-multipolygon2matrix(multipolygon, drop = TRUE, data.frame.out = FALSE)
+polyAreaOld(x)
+
+getMatrixList(x, drop = TRUE, data.frame.out = FALSE)
+
+getMultipolygon(x, drop = TRUE, data.frame.out = FALSE)
+
+getSpatial(x)
+
+matrix2multipolygon(x, drop = TRUE, data.frame.out = FALSE)
+
+multipolygon2matrix(x, drop = TRUE, data.frame.out = FALSE)
 }
 \arguments{
 \item{x}{Either a two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".}
 
-\item{multipolygon}{A multipolygon string.}
+\item{data.frame.out}{Logical: If TRUE convert the matrices to data frames with columns x and y.}
 
 \item{drop}{Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.}
 
-\item{data.frame.out}{Logical: If TRUE convert the matrices to data frames with columns x and y.}
+\item{multipolygon}{A multipolygon string.}
 }
 \value{
 \code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
 }
 \description{
-Calculate area of wkt polygon with az.eq.are projection / adapted origo. The helper function \code{matrix2multipolygon} converts a two column matrix or a list of two column matrices to a wkt string.
+\code{polyArea} calculates the area of a multipolygon. \cr \cr
+\code{geo2xy} converts from geographic to or from Cartesian coordinates or the inverse. \cr \cr
+\code{polyAreaOld} to be deleted. \cr \cr
+\code{getMatrixList} converts the input to a list of matrices. \cr \cr
+\code{getMultipolygon} converts the input to a multipolygon wkt string. \cr \cr
+\code{getSpatial} converts the input to a Spatial object. \cr \cr
+\code{matrix2multipolygon} identical to \code{getMultipolygon}. \cr \cr
+\code{multipolygon2matrix} identical to \code{getMatrixList}. \cr \cr
 }
 \examples{
-library(rgeos)
-p1 <- cbind(x=c(4, 15, 15, 4, 4), y=c(55, 56, 59, 59, 55))
-s11 <- cbind(x=c(7, 12, 12, 7, 7), y=c(56, 57, 58, 58, 56))
-s12 <- cbind(x=c(7, 14, 5, 7), y=c(56, 57, 58, 56))
-p2 <- cbind(x=20 + c(4, 15, 15, 4, 4), y=c(55, 56, 59, 59, 55))
-s2 <- cbind(x=20 + c(7, 12, 12, 7, 7), y=c(56, 56, 58, 58, 56))
-x <- list(
-	list(p1, s11, s12),
-	list(p2, s2))
-matrix2multipolygon(x)
-multipolygon <- matrix2multipolygon(x)
-plot(readWKT(multipolygon), col='black', pbg='white')
-polyArea(x)
-# Convert back to a list of matrices:
-multipolygon2matrix(multipolygon)
-# Output from multipolygon2matrix() are rotated counter clockwise:
-y <- multipolygon2matrix(multipolygon)
-all.equal(x, y)
-x1 <- x[[1]][[1]]
-y1 <- y[[1]][[1]]
-orderCols12 <- function(x) x[order(x[,1], x[,2]), ]
-all.equal(orderCols12(x1), orderCols12(y1))
+projectName <- "Test_Rstox"
+g <- getBaseline(projectName, input="proc", proc=NULL, drop=FALSE)
+# Get the stratum polygons:
+multipolygon <- g$processData$stratumpolygon$Polygon
+# Get stratum area in square nautical miles:
+lapply(g$processData$stratumpolygon$Polygon, polyArea)
+# Get cartesian locations using Azimuthal Equidistant projection (preserving distance):
+###proj <- getProjString(multipolygon)
+###xy <- lapply(g$processData$stratumpolygon$Polygon, geo2xy)
+###xlim=range(unlist(lapply(xy, "[", , "x")))
+###ylim=range(unlist(lapply(xy, "[", , "y")))
+###plot(NULL, xlim=xlim, ylim=ylim)
+###lapply(xy, lines, col='black', pbg='white')
+###lapply(xy, polyArea, input="xy")
 
 }
+\keyword{internal}
