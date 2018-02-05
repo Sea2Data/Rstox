@@ -16,7 +16,7 @@ polyArea(x, par = list(proj = "laea", units = "kmi", lon_0 = NA, lat_0 = NA,
 
 geo2xy(x, par = list(proj = "aeqd", units = "kmi", lon_0 = NA, lat_0 = NA, x_0
   = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"), inv = FALSE,
-  data.frame.out = FALSE, ...)
+  data.frame.out = FALSE, add = FALSE, ...)
 
 polyAreaOld(x)
 
@@ -43,7 +43,7 @@ multipolygon2matrix(x, drop = TRUE, data.frame.out = FALSE)
 \code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
 }
 \description{
-\code{polyArea} calculates the area of a multipolygon. \cr \cr
+\code{polyArea} calculates the area in nautical mile squared of a multipolygon. \cr \cr
 \code{geo2xy} converts from geographic to or from Cartesian coordinates or the inverse. \cr \cr
 \code{polyAreaOld} to be deleted. \cr \cr
 \code{getMatrixList} converts the input to a list of matrices. \cr \cr

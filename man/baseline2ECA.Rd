@@ -9,7 +9,7 @@ baseline2eca(projectName, biotic = "BioticCovData",
   spatial = NULL)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), or a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{biotic}{The process from which the biotic data are extracted, conventionally the BioticCovData process.}
 

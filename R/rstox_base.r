@@ -769,7 +769,7 @@ generateRScripts <- function(projectName){
 #'
 #' Updates a project with the files located in the "input" directory. Used in updateProject().
 #'
-#' @param projectName   	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in StoX_data_types in the environment "RstoxEnv". Get these by get("StoX_data_types", envir=get("RstoxEnv"))). These could be given as directories, in which case all files in those directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If files has length 0 (default), the files present in the project directory are used, if already existing (requires to answer "y" when asked to overwrite the project if ow=NULL, or alternatively to set ow=TRUE).
 #'
 #' @return A project object
@@ -857,7 +857,7 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' \code{runBaseline} runs a StoX baseline model possibily overriding parameters. \cr \cr
 #' \code{getBaseline} returns input and output data from the StoX baseline model. \cr \cr
 #' 
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param startProcess	The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
 #' @param endProcess	The name or number of the end process in the list of processes in the model.
 #' @param reset			Logical; if TRUE rerun the baseline model even if it has been run previously.
@@ -1069,7 +1069,7 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 #' 
 #' Gets the indices of processes in the baseline model, where both process name and function name are accepted. The process WriteProcessData is ignored.
 #' 
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param proc			A string vector naming processes/function to find.
 #'
 #' @return Index number of the process.
@@ -1153,7 +1153,7 @@ getProcess <- function(projectName, proc="all"){
 #' \code{getBaselineParameters} Gets either original, java or last used baseline parameters \cr \cr
 #' \code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment nor in the project file). \cr \cr
 #' 
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param project   	The project Java object.
 #' @param msg			Logical; if TRUE print old and new parameters.
 #' @param parlist		List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE. New parameters can be set by setBaselineParameters() but not removed in the current version.
@@ -1832,7 +1832,7 @@ is.empty <- function(x){
 #' \code{saveRImage} (Old function, kept for backwards compatibility) Saves the contents of the projectData environment of the project (RestoEnv[[projectName]]$projectData). \cr \cr
 #' \code{loadEnv} (Old function, kept for backwards compatibility) Loads previously saved data to the projectData environment of the project (RestoEnv[[projectName]]$projectData). \cr \cr
 #' 
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param var   for \code{setProjectData}, a project data object to be assigned to the projectData environment of the project, and for \code{getProjectData}, \code{saveProjectData} and \code{loadProjectData}, a vector of project data names to get from, save to file from, or load from file to the projectData environment, respectively.
 #' @param name			Only used in setProjectData(). The name of the project data object (such as \code{lastParameters}) to assign \code{var} to in the projectData environment of the project (overriding the name of the object \code{var}). If a specific list element inside \code{name} should be set, specify this in '...'.
 #' @param ow			Logical: if TRUE overvrite objects existing in the projectData environment of the project.
@@ -2125,8 +2125,10 @@ parString2data.frame <- function(string){
 #' Download a zipped StoX project to a specified project path.
 #'
 #' @param URL			The URL of the zipped project.
-#' @param projectPath	The local path to the project to be downloaded.
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param projectRoot	The root directory of the project in which to save the downloaded files (set this if you wish to place the files in a project specified by its name, and not in the default root directory).
 #' @param cleanup		Logical: if FALSE, the downloaded zip file is not deleted.
+#' @param ow,msg		See \code{\link{getow}}.
 #'
 #' @export
 #' @keywords internal

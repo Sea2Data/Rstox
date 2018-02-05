@@ -117,7 +117,9 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 				codes <- as.matrix_full(codes)
 				dates <- unique(dates)
 			}
-			out <- cbind(nation=unname(x$nation$.attrs), platformType=unname(x$platformType$.attrs), codes, dates)
+			# Column added on 2018-01-29 on request from Edvin:
+			platformNumber <- x$.attrs["platformNumber"]
+			out <- cbind(nation=unname(x$nation$.attrs), platformNumber=platformNumber, platformType=unname(x$platformType$.attrs), codes, dates)
 		}
 		# Drop elements with length 1, indicating time stamps or similar:
 		x <- x[sapply(x, length)>1]

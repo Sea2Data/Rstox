@@ -41,7 +41,7 @@ getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
   Stratum, bioticMethod = PSU ~ Stratum, ...)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{bootstrapMethod}{The method to use for the bootstrap. Currently implemented are given in the following table:
 \tabular{rrr}{

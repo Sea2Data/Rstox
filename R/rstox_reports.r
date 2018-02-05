@@ -219,7 +219,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #' 
 #' Impute missing data within the bootstrap data object
 #' 
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param seed			The seed for the random number generator (used for reproducibility)
 #' @param cores			An integer giving the number of cores to run the bootstrapping over.
 #' @param saveInd		Logical: if TRUE save the imputing indices.
@@ -468,7 +468,7 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' Probability densities, component density, are plotted (so that the histogram has a total area of one).
 #' Plot is exported to a tif- or png-file
 #'
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param format		The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.
 #' @param filetag			A character string to append to the file name (before file extension).
 #' @param ...			Parameters passed on from other functions.
@@ -571,7 +571,7 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 #' 
 #' Plots boxplot of bootstrap results together with Coefficient of Variation (CV).
 #' 
-#' @param projectName   	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param bootstrapMethod	The bootstrap method used to generate the data.
 #' @param var				A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values). For plotAbundance_SweptAreaTotal() \code{var} is hard coded to "Count"
 #' @param unit				A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).
@@ -935,7 +935,7 @@ factorNAfirst <- function(x){
 #' \code{reportAbundance_SweptAreaTotal} returns summary statistics generated from bootstrap replicates for projects with only total catch.
 #' \code{reportAbundanceAtLevel} is used in \code{reportAbundance_AcousticTrawl} and \code{reportAbundance_SweptAreaLength} for generating the report for each level "bootstra" or "bootstrapImpute".
 #' 
-#' @param projectName		The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param bootstrapMethod	The method used when bootstrapping (see \code{\link{runBootstrap}}). This option selects different versions of functions such as \code{\link{reportAbundance}}}}. Note: Currently (Rstox_1.7) the report is equal for bootstrapMethod = "AcousticTrawl" and "SweptAreaLength".
 #' @param var				A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).
 #' @param unit				A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).
@@ -1179,7 +1179,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 #' \code{getPlots} calls all or a subset of the plotting functions in Rstox (name starting with plot). \cr \cr
 #' \code{getReports} calls all or a subset of the report functions in Rstox (name starting with report). \cr \cr
 #'
-#' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param out			A string vector giving the plot or report functions to run. See getRstoxEnv()$keywords for available keywords.
 #' @param options		A string vector holding the parameters passed on to the plotting functions. These parameters overrides identically named parameters in '...'. The parameters must be formatted as R expressions (as typed into an R console), and separated by semicolons (";"). See examples below:
 #' \describe{
@@ -1231,7 +1231,7 @@ getReports <- function(projectName, out="all", options="", ...){
 #' \code{runFunsRstox} Runs all functions starting with the input parameter \code{string}. \cr \cr
 #' \code{getFunsRstox} Gets all functions starting with the input parameter \code{string}. \cr \cr
 #'
-#' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param string		A string giving the first characters of the functions to run, such as "plot" or "report".
 #' @param out			A string vector giving the plot or report functions to run. See getRstoxEnv()$keywords for available keywords.
 #' @param options		A string vector holding the parameters passed on to the plotting functions. These parameters overrides identically named parameters in '...'. The parameters must be formatted as R expressions (as typed into an R console), and separated by semicolons (";"). See examples below:

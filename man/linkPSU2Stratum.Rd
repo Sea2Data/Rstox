@@ -13,7 +13,7 @@ checkNumPSUsInStratum(projectName)
 \arguments{
 \item{x}{A data frame with with one row per PSU, to which Stratum information should be added.}
 
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{psustratum}{A data frame linking PSUs to stratum IDs. Should have the columns 'Stratum' and 'PSU' or 'SampleUnit'. Read from the project if missing.}
 

@@ -11,7 +11,7 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
   parameters = list(), sorted = TRUE)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{assignments}{Trawl assignment from baseline.}
 

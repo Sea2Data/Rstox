@@ -24,7 +24,7 @@ plotAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
 factorNAfirst(x)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{bootstrapMethod}{The bootstrap method used to generate the data.}
 

@@ -4,7 +4,7 @@
 #' 
 #' This function reads data from a baseline run and converts to a list of data used by the ECA model in the Reca package.
 #' 
-#' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), or a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param biotic		The process from which the biotic data are extracted, conventionally the BioticCovData process.
 #' @param landing		The process from which the landing data are extracted, conventionally the LandingCovData process.
 #' @param temporal		Optional definition of the temporal covariate (not yet implemented).
@@ -219,7 +219,26 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		names(stratumNeighbourList) <- stratumNeighbour[,1]
 		stratumNeighbourList <- lapply(stratumNeighbourList, function(xx) as.numeric(unlist(strsplit(xx, ","))))
 		# Extract only the areas present in the data:
-		stratumNeighbourList <- stratumNeighbour[covariateLink$spatial[,2],]
+		# 2018-02-01 Fixed bug when extracting only the spatial areas present in the project, where before the indices covariateLink$spatial[,2] were selected, but now we do a match:
+		#stratumNeighbourList <- stratumNeighbour[covariateLink$spatial[,2],]
+		stratumNeighbourList <- stratumNeighbour[stratumNeighbour[,1] %in% covariateLink$spatial[,2],,drop=FALSE]
+		# Change introduced on 2018-02-01: 
+		# Remove also the neighbours that are not present:
+		extractPresentAreasFromCommaSeparated <- function(x, valid){
+			if(is.character(x)){
+				x <- as.numeric(strsplit(x, ",")[[1]])
+				x <- intersect(x, valid)
+				paste(x, collapse=",")
+			}
+			else{
+				warning("The input must be a string of comma separated integers")
+				x
+			}
+		}
+		stratumNeighbourList[,2] <- sapply(stratumNeighbourList[,2], extractPresentAreasFromCommaSeparated, covariateLink$spatial[,2])
+		if(any(nchar(stratumNeighbourList[,2])==0)){
+			warning(paste0("Some strata have no neighbours present in the data (stratum ", paste(which(nchar(stratumNeighbourList[,2])==0), collapse=", "), ") Please add neighbors to these strata. The present neighbours are the following: ", paste(covariateLink$spatial[,2], collapse=",")))
+		}
 		#############################################
 		
 		# Return all data in a list

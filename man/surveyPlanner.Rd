@@ -3,24 +3,93 @@
 \name{surveyPlanner}
 \alias{surveyPlanner}
 \alias{plotStratum}
-\title{Get polygon area and convert to or from geographic and Cartesian coordinates.}
+\title{Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).}
 \usage{
-surveyPlanner(projectName, type = c("p", "ze", "z"), bearing = "N",
-  hours = 240, knots = 10, nmi = NULL, speed = NULL, seed = 0,
-  dt = 1/60)
+surveyPlanner(projectName, shapefiles = NULL, type = "Parallel",
+  bearing = "N", retour = FALSE, hours = 240, t0 = NULL, knots = 10,
+  speed = NULL, nmi = NULL, seed = 0, dt = 1/60, plot = FALSE,
+  margin = NULL, shapenames)
 
-plotStratum(stratum, transect = NULL, centroid = NULL,
-  transport_alpha = 0.1)
+plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
+  transport_alpha = 0.1, google = FALSE, margin = 0.5,
+  aspectratio = NULL, xlab = "Longitude", ylab = "Latitude")
 }
 \arguments{
-\item{x}{Either a two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
-\item{multipolygon}{A multipolygon string.}
+\item{shapefiles}{A list of shape files or a directory holding the shape files, from which the polygon borders are read.}
 
-\item{drop}{Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.}
+\item{type}{The type of the transects, repeated to the number of stratums. See details for possible values. Case insensitive.}
 
-\item{data.frame.out}{Logical: If TRUE convert the matrices to data frames with columns x and y.}
+\item{bearing}{The survey bearing of each transect, either given by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", or as angles counter clockwise from EAST on degrees.}
+
+\item{retour}{Logical: If TRUE continue with the transects back to the start point of the stratum.}
+
+\item{hours}{The time to spend in the stratum, given in hours.}
+
+\item{t0}{The start time of the survey, set to Sys.time() by default.}
+
+\item{knots}{The speed to use in the stratum, given in knots.}
+
+\item{speed}{The speed to use in the stratum, given in meters per second.}
+
+\item{nmi}{The distance to travel in the stratum in nautical miles.}
+
+\item{seed}{The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.}
+
+\item{dt}{The density of points populating the stratum polygons. The first element denotes the density in degrees to use for the geographical coordinates (Longitude, Latitude), whilst the second element if present denotes the density in nautical miles to use for the Cartesian coordinates before converting back to geographical coordinates. The first element preserves the stratum borders when converting to Cartesian coordinates, whilst the second elements preserves the shortest travel distance of the transects when converting back to geographical coordinates (inducing curved lines in geographical coordinates).}
+
+\item{plot}{Deprecated: Plots the transects in Cartesian coordintes. Use \code{\link{plotStratum}} instead().}
+
+\item{margin}{The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since the forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.}
+
+\item{shapenames}{A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.}
+
+\item{x}{The output from \code{\link{surveyPlanner}}.}
+
+\item{zoom}{The zoom to use for google maps}
+
+\item{transect}{Logical: If TRUE, plot the transects.}
+
+\item{centroid}{Logical: If TRUE, plot the centroid of the strata.}
+
+\item{transport_alpha}{The transparency to use for the transport paths.}
+
+\item{google}{Logical: If TRUE download Google maps.}
+
+\item{aspectratio}{The aspect ratio of the plot, adjusted automatically by default.}
+
+\item{xlab}{The x label for the plot.}
+
+\item{ylab}{The y label for the plot.}
+}
+\value{
+\code{surveyPlanner} returns a list of the following elements: 
+\describe{
+\item{"Parallel"}{"Parallel transects"}
+\item{"EqAngZZ"}{"Equal angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
+\item{"EqSpZZ"}{"Equal space zigzag sampler, Strindberg and Buckland (2004)"}
+\item{"AdjAngZZ"}{"Adjusted angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
+\item{"RectEnclZZ"}{"Rectangular enclosure zigzag sampler, Harbitz and Holmin (2018)"}
+\item{"CurvEnclZZ"}{"Curved enclosure zigzag sampler (not implemented), Harbitz and Holmin (2018)"}
+}
+
+\code{surveyPlanner} returns a list of the following elements: 
+\describe{
+\item{"transects"}{"A data frame with the geographic and Cartesian transect coordinates for all strata, along with start, mid and stop time and sailed distance"}
+\item{"totalSailedDist"}{"A data fram with total, transect, transport and input (nmi) sailed distance, also given in percent of 'nmi'."}
+\item{"lonlat"}{"The input stratum polygons (Longitude, Latitude) in a list with one matrix per stratum"}
+\item{"parameters"}{"A list of parameters for each stratum: type, bearing, retour, hours, knots, nmi, speed, seed"}
+\item{"proj"}{"The projection string used to convert from (Longitude, Latitude) to (x, y)"}
+\item{"area"}{"The area og each polygon in square nautical miles"}
+\item{"centroid"}{"The centroid of the strata, used in the projection"}
+\item{"strata"}{"The stratum names"}
+}
 }
 \description{
-Get polygon area and convert to or from geographic and Cartesian coordinates.
+Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).
+}
+\details{
+Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443
+The following types are implemented:
 }

@@ -5,7 +5,7 @@
 #' This function is used in bootstrapParallel().
 #'
 #' @param i				The boostrap iteration number.
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param assignments	Trawl assignment from baseline.
 #' @param strata		The strata of the survey.
 #' @param psuNASC		MeanNASC from baseline.
@@ -88,7 +88,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 #'
 #' Resample (bootstrap) trawl stations based on survey (Cruise) number and station numbers (SerialNo) to estimate uncertainty in estimates.
 #'
-#' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param assignments	Trawl assignment from baseline.
 #' @param psuNASC		MeanNASC from baseline.
 #' @param stratumNASC	Strata NASC estimates from getNASCDistr(baseline).
@@ -221,7 +221,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #'
 #' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (bootstrapMethod="AcousticTrawl"), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 #'
-#' @param projectName  					The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param bootstrapMethod				The method to use for the bootstrap. Currently implemented are given in the following table:
 #' \tabular{rrr}{
 #'   bootstrapMethod \tab Description
@@ -543,7 +543,7 @@ getBootstrapMethod <- function(bootstrapMethod="AcousticTrawl", acousticMethod=P
 #'
 #' Calculates mean, variance, coefficient of variation and 90 % confidence bounds based on Jolly, G. M., & Hampton, I. (1990). A stratified random transect design for acoustic surveys of fish stocks. Canadian Journal of Fisheries and Aquatic Sciences, 47(7), 1282-1291.
 #'
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param proc			The process which returns the acoustic density on which the variance should be estimated.
 #' @param ignore.case	Logical: If TRUE ignore case in species category SpecCat.
 #' @param na.rm			Logical: If FALSE return NA for all variance and mean statistics in the presence of NA in at lesat one stratum.
@@ -693,7 +693,7 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 #' \code{checkNumPSUsInStratum} Checks for numner of PSUs >= 2 in each stratum, which is a requirement for variance estimation, and should possibly be a requirement for the bootstrapping when one of the methods is PSU~Stratum.
 #'
 #' @param x				A data frame with with one row per PSU, to which Stratum information should be added.
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param psustratum	A data frame linking PSUs to stratum IDs. Should have the columns 'Stratum' and 'PSU' or 'SampleUnit'. Read from the project if missing.
 #' @param StratumArea	A data frame providing the area of each stratum. Should have the columns 'Area' and 'PolygonKey' or 'Stratum'. Read from the project if missing.
 #' @param list.out		Logical: If TRUE, split the data frame into a list per species category SpecCat.
