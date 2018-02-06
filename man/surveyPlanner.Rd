@@ -21,7 +21,7 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 
 \item{type}{The type of the transects, repeated to the number of stratums. See details for possible values. Case insensitive.}
 
-\item{bearing}{The survey bearing of each transect, either given by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", or as angles counter clockwise from EAST on degrees.}
+\item{bearing}{The survey bearing of each transect, either given by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", or as angles counter clockwise from EAST on degrees, or as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates.}
 
 \item{retour}{Logical: If TRUE continue with the transects back to the start point of the stratum.}
 

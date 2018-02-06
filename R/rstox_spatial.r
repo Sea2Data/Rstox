@@ -141,13 +141,21 @@ getMultipolygon <- function(x, drop=TRUE, data.frame.out=FALSE){
 #'
 #' @export
 #' @importFrom rgeos readWKT
+#' @importFrom sp SpatialPolygons Polygons Polygon
 #' @keywords internal
 #' @rdname polyArea
 #' 
 getSpatial <- function(x){
 	if(isMatrixList(x)){
-		x <- matrixList2multipolygon(x)
-		x <- rgeos::readWKT(x)
+		#x <- matrixList2multipolygon(x)
+		#x <- rgeos::readWKT(x)
+		if(matrixListLevel(x)==1){
+			x <- sp::SpatialPolygons(list(sp::Polygons(list(sp::Polygon(x)), ID=1)))
+		}
+		else{
+			x <- lapply(seq_along(x), function(i) sp::Polygons(list(sp::Polygon(x[[i]])), ID=i))
+			x <- sp::SpatialPolygons(x)
+		}
 	}
 	else if(isMultipolygon(x)){
 		x <- rgeos::readWKT(x)
@@ -271,7 +279,7 @@ spatial2matrixList <- function(x, drop=TRUE, data.frame.out=FALSE){
 		x
 	}
 	
-	# Function for extracting the coordinates of one multipolygon:
+	# Function for extracting the coordinates of spatialPolygon:
 	getCoordsMultipolygon <- function(y, data.frame.out){
 		out <- lapply(y@Polygons, slot, "coords")
 		applyDataFrame(out, data.frame.out)
@@ -290,7 +298,7 @@ spatial2matrixList <- function(x, drop=TRUE, data.frame.out=FALSE){
 		###}
 		###out
 	}
-	# Function for extracting the coordinates of spatialPoints:
+	# Function for extracting the coordinates of spatialLines:
 	getCoordsSpatialLines <- function(y, data.frame.out){
 		out <- lapply(y@Lines, slot, "coords")
 		applyDataFrame(out, data.frame.out)
@@ -323,7 +331,7 @@ spatial2matrixList <- function(x, drop=TRUE, data.frame.out=FALSE){
 	if(drop){
 		# Drop when only one multipolygon:
 		if(length(out)==1){
-			out <- out[[1]]
+			out <- lapply(out, "[[", 1)
 		}
 		# Drop when only one polygon:
 		if(length(out)==1){
@@ -452,7 +460,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param projectName   	The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param shapefiles		A list of shape files or a directory holding the shape files, from which the polygon borders are read.
 #' @param type				The type of the transects, repeated to the number of stratums. See details for possible values. Case insensitive.
-#' @param bearing			The survey bearing of each transect, either given by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", or as angles counter clockwise from EAST on degrees.
+#' @param bearing			The survey bearing of each transect, either given by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", or as angles counter clockwise from EAST on degrees, or as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates.
 #' @param retour			Logical: If TRUE continue with the transects back to the start point of the stratum.
 #' @param hours				The time to spend in the stratum, given in hours.
 #' @param knots				The speed to use in the stratum, given in knots.
@@ -583,8 +591,18 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 	}
 	
 	# Function for calculating the bearing of a survey:
-	getBearing <- function(bearing, deg=TRUE){
+	getBearing <- function(bearing, deg=TRUE, data=NULL){
 		if(is.character(bearing)){
+			# If the data is given as a list of stratum polygons, and bearing="along" or "across", populate the polygon with points and get the angles from the first or second PCA, respectively:
+			if(tolower(bearing) %in% c("along", "across")){
+				ind <- which(tolower(bearing) == c("along", "across"))
+				# Get the PCAs:
+				ev <- lapply(data, function(x) eigen(cov(populatePath(x, N=1e3))))
+				# Get the angles:
+				angles <- sapply(ev, function(x) atan(x$vectors[2,ind] / x$vectors[1,ind])) * 180/pi
+				return(angles)
+			}
+			
 			# Interpret strings as degrees:
 			strings <- c("N", "NW", "W", "WS", "S", "SE", "E", "NE")
 			angles <- c(90, 135, 180, 225, 270, 315, 0, 45) * pi/180
@@ -960,8 +978,7 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 		# Get the parameters of the current stratum:
 		parameters <- lapply(parameters, "[", stratum)
 		
-		# Get bearing of the stratum, and rotate into a cartesian coordinate system having x axis aloing this bearing:
-		parameters$bearing <- getBearing(parameters$bearing)
+		# Rotate into a cartesian coordinate system having x axis aloing this bearing:
 		xyRotated <- rotate2d(xy[[stratum]], parameters$bearing, data.frame.out=TRUE)
 		
 		# Get corners of the bounding box of the polygon (a slight value added to the y to ensure intersection with the polygon):
@@ -1099,6 +1116,9 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 	
 	parameters <- list(type=type, bearing=bearing, retour=retour, hours=hours, knots=knots, nmi=nmi, speed=speed, seed=seed, t0=t0)
 	suppressWarnings(parameters <- lapply(parameters, rep, length.out=nstrata))
+	# Get bearing of the stratum:
+	parameters$bearing <- getBearing(parameters$bearing, data=lonlat)
+	
 	
 	projList <- getProjString(proj="aeqd", x=lonlatAll[,c("Longitude", "Latitude")], list.out=TRUE)
 	centroid <- data.frame(Longitude=projList$lon_0, Latitude=projList$lat_0)
@@ -1391,4 +1411,12 @@ TransectMatrix2ListOfSpatialLines <- function(x, coordNames=c("x", "y")){
 	out <- Stratum2ListOfSpatialLines(out, coordNames=coordNames)
 	out
 }
+
+
+
+
+
+
+
+
 

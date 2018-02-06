@@ -167,7 +167,8 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		# Aggregate the rundvekt by covariates:
 		landingAggregated <- by(landing$rundvekt, as.data.frame(covariateMatrixLanding, stringsAsFactors=FALSE), sum)
 		# Combine into a data frame with covariates and the rundvekt in the last column:
-		landingAggregated <- cbind(expand.grid(dimnames(landingAggregated)), rundvekt=c(landingAggregated))
+		# Convert the dimnames to integer
+		landingAggregated <- cbind(expand.grid(lapply(dimnames(landingAggregated), as.integer)), rundvekt=c(landingAggregated))
 		# Discard empty covariate combinations:
 		landingAggregated <- landingAggregated[!is.na(landingAggregated$rundvekt),]
 		# Order by the covariates
