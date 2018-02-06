@@ -46,7 +46,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.8.
 
 # 2. Added the option of downloading all seralno from a year if serialno is not set.
 
-# 3. Added the (unfinished) function surveyPlanner() which will be used to generate parallel or zigzag transects.
+# 3. Added the function surveyPlanner() used to generate parallel or zigzag transects.
 
 # 4. Added the function plotStratum() for plotting the output from surveyPlanner().
 
@@ -57,3 +57,5 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.8.
 # 7. Mapped the new funcitons getMultipolygon() and getMatrixList() to the old funcitons matrix2multipolygon() multipolygon2matrix() for backwards compatibility.
 
 # 8. Fixed bug in baseline2eca(), where the stratumNeighbour in the output was not created using matching but simple indexing of the strata present in the resources$covariateLink. Also now the neighbors of each present stratum is matched with the present strata.
+
+# 9. Other minor bug fixes.

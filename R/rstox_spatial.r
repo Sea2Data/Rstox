@@ -330,9 +330,7 @@ spatial2matrixList <- function(x, drop=TRUE, data.frame.out=FALSE){
 	}
 	if(drop){
 		# Drop when only one multipolygon:
-		if(length(out)==1){
-			out <- lapply(out, "[[", 1)
-		}
+		out <- lapply(out, function(x) if(length(x)==1) x[[1]] else x)
 		# Drop when only one polygon:
 		if(length(out)==1){
 			out <- out[[1]]
@@ -471,6 +469,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param plot				Deprecated: Plots the transects in Cartesian coordintes. Use \code{\link{plotStratum}} instead().
 #' @param t0				The start time of the survey, set to Sys.time() by default.
 #' @param shapenames		A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.
+#' @param equalEffort		Logical: If TRUE, assign effort proportional to the area of each stratum.
 #' @param x					The output from \code{\link{surveyPlanner}}.
 #' @param transect			Logical: If TRUE, plot the transects.
 #' @param centroid			Logical: If TRUE, plot the centroid of the strata.
@@ -516,7 +515,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @importFrom rgdal readOGR
 #' @rdname surveyPlanner
 #' 
-surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing="N", retour=FALSE, hours=240, t0=NULL, knots=10, speed=NULL, nmi=NULL, seed=0, dt=1/60, plot=FALSE, margin=NULL, shapenames) {
+surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing="N", retour=FALSE, hours=240, t0=NULL, knots=10, speed=NULL, nmi=NULL, seed=0, dt=1/60, plot=FALSE, margin=NULL, shapenames=list(Longitude="long", Latitude="lat", Stratum="id"), equalEffort=FALSE) {
 	
 	# Function used for populating a path with points of constant distance 'dt':
 	populatePath <- function(xy, N=100, dt=NULL, list.out=FALSE, addInfo=TRUE){
@@ -591,27 +590,34 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 	}
 	
 	# Function for calculating the bearing of a survey:
-	getBearing <- function(bearing, deg=TRUE, data=NULL){
+	getBearing <- function(bearing, deg=TRUE, data=NULL, proj=NULL){
 		if(is.character(bearing)){
 			# If the data is given as a list of stratum polygons, and bearing="along" or "across", populate the polygon with points and get the angles from the first or second PCA, respectively:
-			if(tolower(bearing) %in% c("along", "across")){
+			if(tolower(bearing[1]) %in% c("along", "across")){
 				ind <- which(tolower(bearing) == c("along", "across"))
-				# Get the PCAs:
+				# Get the PCAs in xy (not lonlat):
+				data <- lapply(data, geo2xy, data.frame.out=TRUE, par=proj)
 				ev <- lapply(data, function(x) eigen(cov(populatePath(x, N=1e3))))
 				# Get the angles:
-				angles <- sapply(ev, function(x) atan(x$vectors[2,ind] / x$vectors[1,ind])) * 180/pi
+				angles <- sapply(ev, function(x) atan(x$vectors[2,ind] / x$vectors[1,ind]))
 				return(angles)
 			}
-			
-			# Interpret strings as degrees:
-			strings <- c("N", "NW", "W", "WS", "S", "SE", "E", "NE")
-			angles <- c(90, 135, 180, 225, 270, 315, 0, 45) * pi/180
-			hit <- which(tolower(strings) == tolower(bearing))
-			if(length(hit)){
-				return(angles[hit])
-			}
 			else{
-				warning(paste0("'bearing not matching any of'", paste(strings, collapse=", ")))
+				getPredefined <- function(bearing){
+					# Interpret strings as degrees:
+					strings <- c("N", "NW", "W", "WS", "S", "SE", "E", "NE")
+					angles <- c(90, 135, 180, 225, 270, 315, 0, 45) * pi/180
+					hit <- which(tolower(strings) == tolower(bearing))
+					if(length(hit)){
+						return(angles[hit])
+					}
+					else{
+						warning(paste0("'bearing not matching any of'", paste(strings, collapse=", ")))
+						return(bearing)
+					}
+				}
+			
+				bearing <- unlist(lapply(bearing, getPredefined))
 				return(bearing)
 			}
 		}
@@ -647,7 +653,7 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 	
 			# Find intersection point between the line and the polygon:
 			intersectsFirst <- rgeos::gIntersection(poly, spatialLinesEnd)
-			if(length(intersectsFirst)==0){
+			if(length(intersectsFirst)<3){
 				intersects@coords <- intersects@coords[FALSE,]
 				return(intersects)
 			}
@@ -687,6 +693,7 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 	
 	# Function for selecting the first point of each list element, and generating zigzag grid by merging consecutive points:
 	parallel2zigzag <- function(x){
+		oldNames <- names(x)
 		# Get the first element of each line, requiring that the data have been linked by alternate direction using linkClosest() first:
 		start <- data.table::rbindlist(lapply(x, utils::head, 1))
 		# Generate the indices used to split the data into line segments:
@@ -697,6 +704,7 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 		# Select the line segments and split to one list per segment:
 		start <- start[ind,]
 		start <- split(start, transecind)
+		names(start) <- oldNames[-length(oldNames)]
 		start
 	}
 	
@@ -795,6 +803,54 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 		out
 	}
 	
+	# Various internal functions for spatial data which are in use now or in the future.
+	splitByCol <- function(x, col, prefix=""){
+		if(isTRUE(prefix)){
+			prefix <- col
+		}
+		out <- split(x, x[[col]])
+		names(out) <- paste0(prefix, names(out))
+		out
+	}
+	splitByTwoCols <- function(x, cols, prefix=""){
+		prefix <- rep(prefix, length.out=2)
+		if(isTRUE(prefix)){
+			prefix <- cols
+		}
+		out <- splitByCol(x, cols[1], prefix=prefix[1])
+		out <- lapply(out, splitByCol, cols[2], prefix=prefix[2])
+		out
+	}
+	splitByThreeCols <- function(x, cols, prefix=""){
+		prefix <- rep(prefix, length.out=3)
+		if(isTRUE(prefix)){
+			prefix <- cols
+		}
+		out <- splitByCol(x, cols[1], prefix=prefix[1])
+		out <- lapply(out, splitByTwoCols, cols[2:3], prefix=prefix[2:3])
+		out
+	}
+	matrixList2Lines <- function(x, ID="ID", coordNames=c("x", "y")){
+		sp::Lines(lapply(x, function(y) sp::Line(data.matrix(y[,coordNames]))), ID=ID)
+	}
+	Transect2SpatialLines <- function(x, coordNames=c("x", "y"), prefix="ID"){
+		IDs <- names(x)
+		if(length(IDs)==0){
+			IDs <- paste0(prefix, seq_along(x))
+		}
+		sp::SpatialLines(lapply(seq_along(x), function(i) matrixList2Lines(x[[i]], ID=IDs[i], coordNames=coordNames)))
+	}
+	Stratum2ListOfSpatialLines <- function(x, coordNames=c("x", "y")){
+		out <- lapply(x, Transect2SpatialLines, coordNames=coordNames)
+		names(out) <- names(x)
+		out
+	}
+	TransectMatrix2ListOfSpatialLines <- function(x, coordNames=c("x", "y")){
+		out <- splitByThreeCols(x, c("Stratum", "Transect", "Segment"), prefix=TRUE)
+		out <- Stratum2ListOfSpatialLines(out, coordNames=coordNames)
+		out
+	}
+	
 	############################################################
 	########## Function for generating the transects ###########
 	############ in one direction (tour or retour): ############
@@ -838,6 +894,7 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 		# Get intersection points between the grid and the polygon borders:
 		intersects <- rgeos::gIntersection(spatialLinesPolygon, spatialLinesGrid, byid=TRUE)
 		intersectsCoordsList <- getIntersectsCoordsList(intersects)
+		#ind_xGrid <- as.numeric(names(intersectsCoordsList))
 	
 	   	intersectsCoordsList <- orderTransectsByXY(intersectsCoordsList, down=downRandom)
 		intersectsCoordsList <- linkClosest(intersectsCoordsList)
@@ -852,6 +909,10 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 			temp <- addEndTransects(temp, spatialLinesPolygon)
 			# Split the transects into a list again:
 			intersectsCoordsList <- coords2coordsList(temp@coords)
+			# remove the last value since the last element of intersectsCoordsList was removed in the 
+			#ind_xGrid <- ind_xGrid[-length(ind_xGrid)]
+			xGrid_EqSpZZ <- sapply(sapply(intersectsCoordsList, "[", 1, 1), function(x) which.min(abs(x-xGrid)))
+			#xGrid_EqSpZZ <- findInterval(sapply(intersectsCoordsList, "[", 1, 1), xGrid)
 		}
 		
 		# The transects may intersect with the stratum polygon borders more than once, so we need to intersect again and split transects into subtransects when intersecting more than twice (two intersectiins at the borders):
@@ -864,6 +925,20 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 		
 		intersects <- rgeos::gIntersection(spatialLinesPolygon, spatialLinesTransects, byid=TRUE)
 		intersectsCoordsList <- getIntersectsCoordsList(intersects)
+		
+		# Assure that the new intersects are between the relevant grid lines:
+		if(type == "EqSpZZ"){
+			selectInsidexGrid <- function(ind, xGrid, margin=0.01){
+				bin <- xGrid_EqSpZZ[ind]
+				width <- xGrid[bin + 1] - xGrid[bin]
+				valid <- xGrid[bin] - margin * width <= intersectsCoordsList[[ind]][,1] & intersectsCoordsList[[ind]][,1] <= xGrid[bin + 1] + margin * width
+				intersectsCoordsList[[ind]][valid, , drop=FALSE]
+			}
+			intersectsCoordsList <- lapply(seq_along(intersectsCoordsList), selectInsidexGrid, xGrid=xGrid)
+		}
+		
+		
+		
 		
 		# Do not use dornrandom here, since we have achieved the randomness in the direction of the first line using this variable above:
 		intersectsCoordsList <- orderTransectsByXY(intersectsCoordsList)
@@ -1071,7 +1146,8 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 		layer <- tools::file_path_sans_ext(basename(shapefiles[1]))
 		shape <- rgdal::readOGR(dsn=dsn, layer=layer)
 		shape <- ggplot2::fortify(shape)
-		lonlatAll <- data.frame(Longitude=shape$long, Latitude=shape$lat, Stratum=shape$id)
+		#lonlatAll <- data.frame(Longitude=shape$long, Latitude=shape$lat, Stratum=shape$id)
+		lonlatAll <- data.frame(Longitude=shape[[shapenames$Longitude]], Latitude=shape[[shapenames$Latitude]], Stratum=shape[[shapenames$Stratum]])
 		lonlat <- split(lonlatAll, lonlatAll$Stratum)
 		lonlat <- lapply(lonlat, "[", c("Longitude", "Latitude"))
 		strata <- unique(lonlatAll$Stratum)
@@ -1093,6 +1169,7 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 		# Create a single data frame version of the strata polygons, with stratum as the third column, and get a common projection definition using the centroid of the system:
 		lonlatAll <- data.table::rbindlist(lonlat, idcol="Stratum")
 	}
+	proj <- getProjString(proj="aeqd", x=lonlatAll[,c("Longitude", "Latitude")])
 	
 		
 	# Draw seeds for the transects:
@@ -1113,19 +1190,27 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 	if(length(nmi)==0){
 		nmi <- hours * knots
 	}
-	
+	# Get bearing of the stratum:
+	bearing <- getBearing(bearing, data=lonlat, proj=proj)
+	# Check for valid type:
+	implementedTypes <- c("Parallel", "RectEnclZZ", "EqSpZZ")
+	type <- implementedTypes[match(tolower(type), tolower(implementedTypes))]
+	if(is.na(type)){
+		warning(paste0("type not matching any of the implemented types (", implementedTypes, "). Parallel chosen"))
+		type <- "Parallel"
+	}
 	parameters <- list(type=type, bearing=bearing, retour=retour, hours=hours, knots=knots, nmi=nmi, speed=speed, seed=seed, t0=t0)
 	suppressWarnings(parameters <- lapply(parameters, rep, length.out=nstrata))
-	# Get bearing of the stratum:
-	parameters$bearing <- getBearing(parameters$bearing, data=lonlat)
 	
 	
 	projList <- getProjString(proj="aeqd", x=lonlatAll[,c("Longitude", "Latitude")], list.out=TRUE)
 	centroid <- data.frame(Longitude=projList$lon_0, Latitude=projList$lat_0)
-	proj <- getProjString(proj="aeqd", x=lonlatAll[,c("Longitude", "Latitude")])
 	
 	# Get the stratum areas:
 	area <- unlist(lapply(lonlat, polyArea))
+	if(equalEffort){
+		parameters$nmi <- sum(parameters$nmi) * area / sum(area)
+	}
 	
 	# Populate the stratum polygon borders with denser points, in order to preserve the geographic coordinate definition when converting to Cartesian coordinates (i.e., follow a latitude if two points are on the same latitude. If given only by two points, the azimuthal equal distance projection will follow the great circle, which in general will not coincide with the intended equal latitude path):
 	lonlatPopulated <- lapply(lonlat, populatePath, dt=dt[1], addInfo=FALSE)
@@ -1164,10 +1249,7 @@ surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing
 #' @rdname surveyPlanner
 #' 
 plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha=0.1, google=FALSE, margin=0.5, aspectratio=NULL, xlab="Longitude", ylab="Latitude"){
-	library(rgdal)
-	library(ggmap)
-	library(ggplot2)
-	
+	# Get the range in geographic coordinates:
 	rangelonlat <- cbind(range(x$transects$lon_start), range(x$transects$lat_start))
 	if(length(centroid)==0){
 		# centroid <- unlist(x$centroid)
@@ -1175,46 +1257,35 @@ plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha
 	}
 	#location <- colMeans(x[, c("Longitude", "Latitude")])
 	
+	# Get the data from the map package or alternatively from Google:
 	if(google){
-		gmap <- get_map(location=centroid, zoom=zoom, maptype="terrain", source="google", col="bw")
+		gmap <- ggmap::get_map(location=centroid, zoom=zoom, maptype="terrain", source="google", col="bw")
+		# Initiate the plot:
+		p <- ggmap::ggmap(gmap)
 	}
 	else{
+		# get the map and set the limits and aspect ratio:
 		gmap <- map_data("world")
-	}
-	
-	if(google){
-		p <- ggmap(gmap)
-	}
-	else{
 		spanlonlat <- apply(rangelonlat, 2, diff)
 		fact <- c(-1, 1) * (1 + margin)
 		xlim <- centroid[1] + fact * spanlonlat[1] / 2
 		ylim <- centroid[2] + fact * spanlonlat[2] / 2
-		
+		# Adjust the aspect ratio by latitude:
 		aspectratio <- 1 / cos(centroid[2] * pi/180)
-	
-		p <- ggplot() + geom_polygon(data=gmap, aes(x=long, y=lat, group=group)) + coord_fixed(aspectratio, xlim=xlim, ylim=ylim)# + xlim(xlim) + ylim(ylim)
+		# Initiate the plot:
+		p <- ggplot() + geom_polygon(data=gmap, aes(x=long, y=lat, group=group)) + coord_fixed(aspectratio, xlim=xlim, ylim=ylim)
 	}
 	
-	#p <- ggmap(gmap) + #ggplot(x, aes(x = Longitude, y = Latitude)) +
-		#geom_polygon(data=x, aes(x=Longitude, y=Latitude, fill=Stratum, group=Stratum), colour="black", alpha=0.3, inherit.aes=FALSE)# + 
-		p <- p + geom_polygon(data=x$lonlat, aes(x=Longitude, y=Latitude, fill=Stratum, group=Stratum), colour="black", alpha=0.3, inherit.aes=FALSE)# + 
-		#geom_point(data=x, aes(x=Longitude, y=Latitude, fill=Stratum, group=Stratum), shape="*")
+	# Add the strata:
+	p <- p + geom_polygon(data=x$lonlat, aes(x=Longitude, y=Latitude, fill=Stratum, group=Stratum), colour="black", alpha=0.3, inherit.aes=FALSE)
 	
-	#if(length(centroid)){
-	#	p <- p + 
-	#		geom_point(data=centroid, aes(x=Longitude, y=Latitude))
-	#}
-	#
 	
-	# Add stratum entry and exit points:
+	# Add transects:
 	if(length(transect)){
 		p <- p + 
-			# geom_path(data=x$transects, aes(x=lon_start, y=lat_start, group=Stratum, colour=interaction(Stratum, Retour), alpha=1 - Transport), show.legend=FALSE) + 
 			geom_segment(data=x$transects, aes(x=lon_start, y=lat_start, xend=lon_stop, yend=lat_stop, group=Stratum, colour=interaction(Stratum, Retour), alpha=1 - Transport), show.legend=FALSE) + 
 			scale_alpha(range = c(transport_alpha, 1)) + 
 			scale_colour_discrete(guide=FALSE)# + 
-			#coord_map("azequidistant", orientation = c(centroid$Latitude, centroid$Longitude, 0))
 	}
 	
 	# Add labels:
@@ -1356,67 +1427,4 @@ writeTransectsNC <- function(x, projectName, ...){
 	
 	filename
 }
-
-
-
-
-
-	
-splitByCol <- function(x, col, prefix=""){
-	if(isTRUE(prefix)){
-		prefix <- col
-	}
-	out <- split(x, x[[col]])
-	names(out) <- paste0(prefix, names(out))
-	out
-}
-splitByTwoCols <- function(x, cols, prefix=""){
-	prefix <- rep(prefix, length.out=2)
-	if(isTRUE(prefix)){
-		prefix <- cols
-	}
-	out <- splitByCol(x, cols[1], prefix=prefix[1])
-	out <- lapply(out, splitByCol, cols[2], prefix=prefix[2])
-	out
-}
-splitByThreeCols <- function(x, cols, prefix=""){
-	prefix <- rep(prefix, length.out=3)
-	if(isTRUE(prefix)){
-		prefix <- cols
-	}
-	out <- splitByCol(x, cols[1], prefix=prefix[1])
-	out <- lapply(out, splitByTwoCols, cols[2:3], prefix=prefix[2:3])
-	out
-}
-
-matrixList2Lines <- function(x, ID="ID", coordNames=c("x", "y")){
-	Lines(lapply(x, function(y) Line(data.matrix(y[,coordNames]))), ID=ID)
-}
-Transect2SpatialLines <- function(x, coordNames=c("x", "y"), prefix="ID"){
-	IDs <- names(x)
-	if(length(IDs)==0){
-		IDs <- paste0(prefix, seq_along(x))
-	}
-	SpatialLines(lapply(seq_along(x), function(i) matrixList2Lines(x[[i]], ID=IDs[i], coordNames=coordNames)))
-}
-Stratum2ListOfSpatialLines <- function(x, coordNames=c("x", "y")){
-	out <- lapply(x, Transect2SpatialLines, coordNames=coordNames)
-	names(out) <- names(x)
-	out
-}
-
-
-TransectMatrix2ListOfSpatialLines <- function(x, coordNames=c("x", "y")){
-	out <- splitByThreeCols(x, c("Stratum", "Transect", "Segment"), prefix=TRUE)
-	out <- Stratum2ListOfSpatialLines(out, coordNames=coordNames)
-	out
-}
-
-
-
-
-
-
-
-
 

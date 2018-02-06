@@ -603,7 +603,7 @@ Removed the function baseline2ECA(), which is covered by baseline2eca().
 
 Added the option of downloading all seralno from a year if serialno is not set.
 
-Added the (unfinished) function surveyPlanner() which will be used to generate parallel or zigzag transects.
+Added the function surveyPlanner() used to generate parallel or zigzag transects.
 
 Added the function plotStratum() for plotting the output from surveyPlanner().
 
@@ -614,3 +614,5 @@ Added the functions geo2xy() for conversion to and from geographic and Cartesian
 Mapped the new funcitons getMultipolygon() and getMatrixList() to the old funcitons matrix2multipolygon() multipolygon2matrix() for backwards compatibility.
 
 Fixed bug in baseline2eca(), where the stratumNeighbour in the output was not created using matching but simple indexing of the strata present in the resources$covariateLink. Also now the neighbors of each present stratum is matched with the present strata.
+
+Other minor bug fixes.

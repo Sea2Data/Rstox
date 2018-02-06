@@ -8,7 +8,8 @@
 surveyPlanner(projectName, shapefiles = NULL, type = "Parallel",
   bearing = "N", retour = FALSE, hours = 240, t0 = NULL, knots = 10,
   speed = NULL, nmi = NULL, seed = 0, dt = 1/60, plot = FALSE,
-  margin = NULL, shapenames)
+  margin = NULL, shapenames = list(Longitude = "long", Latitude = "lat",
+  Stratum = "id"), equalEffort = FALSE)
 
 plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
   transport_alpha = 0.1, google = FALSE, margin = 0.5,
@@ -44,6 +45,8 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 \item{margin}{The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since the forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.}
 
 \item{shapenames}{A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.}
+
+\item{equalEffort}{Logical: If TRUE, assign effort proportional to the area of each stratum.}
 
 \item{x}{The output from \code{\link{surveyPlanner}}.}
 

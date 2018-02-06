@@ -96,6 +96,7 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		names(biotic) <- tolower(names(biotic))
 	
 		# Detect whether temporal is defined with seasons, and add year and season and remove temporal in the process data:
+		# This caused error with cod and could be solved with Jira STOX-153:
 		if(any(baselineOutput$out$LandingCovData$Season %in% TRUE)){
 			baselineOutput$proc$season <- baselineOutput$proc$temporal
 			years <- range(biotic$year, landing$year)

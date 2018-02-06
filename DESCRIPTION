@@ -28,3 +28,4 @@ Imports:
 		rJava,
 		sp,
 		XML
+Suggests: ggmap
