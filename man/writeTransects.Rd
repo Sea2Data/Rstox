@@ -15,10 +15,11 @@ writeTransectsMaxSea(x, projectName, dir = NULL, item.type = 257,
 writeTransectsINFO(x, projectName, dir = NULL, digits = 2,
   byStratum = TRUE)
 
-writeTransectsTRACK(x, projectName, dir = NULL, byStratum = TRUE, ...)
+writeTransectsTRACK(x, projectName, dir = NULL, digits = 5,
+  byStratum = TRUE, ...)
 
-writeTransects(x, projectName, dir = NULL, byStratum = TRUE, cols = NULL,
-  keepTransport = FALSE, text = "", ext = "txt", ...)
+writeTransects(x, projectName, dir = NULL, digits = 5, byStratum = TRUE,
+  cols = NULL, keepTransport = TRUE, text = "", ext = "txt", ...)
 
 getTransectFileName(x, projectName, text = "", ext = "txt", dir = NULL,
   byStratum = TRUE)

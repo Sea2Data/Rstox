@@ -2153,7 +2153,8 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 			temp <- getow(ow, projectPath, onlyone=TRUE, msg=msg)
 			# Return from the funciton if not overwriting:
 			if(temp$jumpToNext){
-				return()
+				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:
+				return(list(status=FALSE))
 			}
 		}
 	}
@@ -2175,7 +2176,8 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 			temp <- getow(ow, projectPath, onlyone=TRUE, msg=msg)
 			# Return from the funciton if not overwriting:
 			if(temp$jumpToNext){
-				return()
+				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:
+				return(list(status=FALSE))
 			}
 		}
 	}

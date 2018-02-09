@@ -1382,7 +1382,7 @@ writeTransectsINFO <- function(x, projectName, dir=NULL, digits=2, byStratum=TRU
 		LonDeg <- floor(this$lon_start)
 		LatMin <- round(60*(this$lat_start  - LatDeg), digits=digits)
 		LonMin <- round(60*(this$lon_start - LonDeg), digits=digits)
-		lonlat <- data.frame(LonDeg=LonDeg, LonMin=LonMin, LatDeg=LatDeg, LatMin=LatMin)
+		lonlat <- data.frame(LatDeg=LatDeg, LatMin=LatMin, LonDeg=LonDeg, LonMin=LonMin)
 		
 		# wWrite to the file:
 	    capture.output( cat("\n", format(c(date()), width=20, justify = "left")), file=filename)
@@ -1412,7 +1412,7 @@ writeTransectsINFO <- function(x, projectName, dir=NULL, digits=2, byStratum=TRU
 #' @export
 #' @rdname writeTransects
 #' 
-writeTransectsTRACK <- function(x, projectName, dir=NULL, byStratum=TRUE, ...){
+writeTransectsTRACK <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, ...){
 	
 	# Function for writing one stratum:
 	writeTransectsTRACK_OneStratum <- function(stratumInd, x, ...){
@@ -1422,7 +1422,7 @@ writeTransectsTRACK <- function(x, projectName, dir=NULL, byStratum=TRUE, ...){
 		# Select the current stratum:
 		this <- x$transects[[stratumInd]]
 		
-		out <- data.frame(Line=1, Longitude=this$lon_start, Latitude=this$lat_start)
+		out <- data.frame(Line=1, Longitude=round(this$lon_start, digits=digits), Latitude=round(this$lat_start, digits=digits))
 		write.csv(out, file=filename, row.names=FALSE, ...)
 	}
 	
@@ -1442,7 +1442,7 @@ writeTransectsTRACK <- function(x, projectName, dir=NULL, byStratum=TRUE, ...){
 #' @importFrom data.table fwrite
 #' @rdname writeTransects
 #' 
-writeTransects <- function(x, projectName, dir=NULL, byStratum=TRUE, cols=NULL, keepTransport=FALSE, text="", ext="txt", ...){
+writeTransects <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, cols=NULL, keepTransport=TRUE, text="", ext="txt", ...){
 	
 	# Function for writing one stratum:
 	writeTransects_OneStratum <- function(stratumInd, x, cols, keepTransport, ext, units, ...){
@@ -1456,6 +1456,8 @@ writeTransects <- function(x, projectName, dir=NULL, byStratum=TRUE, cols=NULL, 
 			this <- this[this$Transport==0, , drop=FALSE]
 		}
 		this <- this[, cols, drop=FALSE]
+		numericCols <- sapply(this, is.numeric)
+		this[,numericCols] <- round(this[,numericCols], digits=digits)
 		
 		# Write the data:
 		if(ext=="nc"){
@@ -1504,6 +1506,9 @@ writeTransects <- function(x, projectName, dir=NULL, byStratum=TRUE, cols=NULL, 
 	}
 	else if(tolower(cols)=="all"){
 		cols <- colnames(x$transects)
+	}
+	if(!keepTransport){
+		cols <- cols[cols != "Transport"]
 	}
 	
 	units <- allunits[match(allcols, cols)]
