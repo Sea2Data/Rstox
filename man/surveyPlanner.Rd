@@ -2,14 +2,17 @@
 % Please edit documentation in R/rstox_spatial.r
 \name{surveyPlanner}
 \alias{surveyPlanner}
+\alias{getSailedDist}
 \alias{plotStratum}
 \title{Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).}
 \usage{
-surveyPlanner(projectName, shapefiles = NULL, type = "Parallel",
-  bearing = "N", retour = FALSE, hours = 240, t0 = NULL, knots = 10,
-  speed = NULL, nmi = NULL, seed = 0, dt = 1/60, plot = FALSE,
+surveyPlanner(projectName, type = "Parallel", bearing = "N", rev = FALSE,
+  retour = FALSE, toursFirst = FALSE, hours = 240, t0 = NULL,
+  knots = 10, nmi = NULL, seed = 0, dt = 1/60, plot = FALSE,
   margin = NULL, shapenames = list(Longitude = "long", Latitude = "lat",
-  Stratum = "id"), equalEffort = FALSE)
+  Stratum = "id"), equalEffort = FALSE, byStratum = TRUE)
+
+getSailedDist(x, nmi = NULL, byStratum = TRUE)
 
 plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
   transport_alpha = 0.1, google = FALSE, margin = 0.5,
@@ -18,21 +21,19 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
-\item{shapefiles}{A list of shape files or a directory holding the shape files, from which the polygon borders are read.}
-
 \item{type}{The type of the transects, repeated to the number of stratums. See details for possible values. Case insensitive.}
 
-\item{bearing}{The survey bearing of each transect, either given by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", or as angles counter clockwise from EAST on degrees, or as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates.}
+\item{bearing}{The survey bearing of each transect, given in one of 4 ways: (1) by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", (2) as angles counter clockwise from EAST on degrees, (3) as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates, or (4) as a data frame with columns "lon_start", "lon_stop", "lat_start", "lat_stop" defining the angles between a start and end point for each stratum.}
 
 \item{retour}{Logical: If TRUE continue with the transects back to the start point of the stratum.}
+
+\item{toursFirst}{Logical: If TRUE do all tours first followed by the retours (only effective if retour is TRUE).}
 
 \item{hours}{The time to spend in the stratum, given in hours.}
 
 \item{t0}{The start time of the survey, set to Sys.time() by default.}
 
 \item{knots}{The speed to use in the stratum, given in knots.}
-
-\item{speed}{The speed to use in the stratum, given in meters per second.}
 
 \item{nmi}{The distance to travel in the stratum in nautical miles.}
 
@@ -82,7 +83,7 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 \item{"transects"}{"A data frame with the geographic and Cartesian transect coordinates for all strata, along with start, mid and stop time and sailed distance"}
 \item{"totalSailedDist"}{"A data fram with total, transect, transport and input (nmi) sailed distance, also given in percent of 'nmi'."}
 \item{"lonlat"}{"The input stratum polygons (Longitude, Latitude) in a list with one matrix per stratum"}
-\item{"parameters"}{"A list of parameters for each stratum: type, bearing, retour, hours, knots, nmi, speed, seed"}
+\item{"parameters"}{"A list of parameters for each stratum: type, bearing, retour, hours, knots, nmi, seed"}
 \item{"proj"}{"The projection string used to convert from (Longitude, Latitude) to (x, y)"}
 \item{"area"}{"The area og each polygon in square nautical miles"}
 \item{"centroid"}{"The centroid of the strata, used in the projection"}

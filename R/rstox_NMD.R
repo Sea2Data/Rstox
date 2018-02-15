@@ -35,6 +35,7 @@
 #' @param model					The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (not yet implemented). Show available templates with createProject().
 #' @param ow 					Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.
 #' @param return.URL			Logical: If TRUE, return the URL of the files to download.
+#' @param run					Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).
 #' @param ...		 			Same as parlist, but can be specified separately (not in a list but as separate inputs).
 #' @param URL					The URL(s) to the xml data.
 #' @param list.out				Logical: If TRUE, convert the XML data to a list (time consuming).
@@ -293,7 +294,7 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, ...){
+getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, ...){
 	
 	##### Internal functions: #####
 	# Function for converting a vector of serial numbers, which can be fully or partly sequenced (incriment of 1 between consecutive elements):
@@ -330,9 +331,12 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		gsub("//", "/", projectPaths)
 	}
 	# Function for downloading a stox project in a surveytimeseries:
-	getSurveyTimeSeriesStoXProjects <- function(sts, stsInfo, projectParts, dir, cleanup=TRUE, downloadtype="?format=zip", abbrev=FALSE, ow=NULL){
+	getSurveyTimeSeriesStoXProjects <- function(sts, stsInfo, projectParts, dir, cleanup=TRUE, downloadtype="?format=zip", abbrev=FALSE, ow=NULL, run=TRUE){
 		# Set original and abbreviated project names:
 		projectPaths <- unlist(lapply(projectParts, abbrevPath, abbrev=abbrev))
+		if(!run){
+			return(projectPaths)
+		}
 		projectPathsOrig <- unlist(lapply(projectParts, abbrevPath, abbrev=FALSE))
 		
 		# The number of stox projects:
@@ -420,6 +424,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		if(ver==1){
 			# Pick out the first element of 'csInfo', since a list is always returned from getNMDinfo():
 			#cruiseURL <- apply(csInfo[[1]][,c("Cruise", "ShipName"), drop=FALSE], 1, searchNMDCruise, datatype=datatype[1])
+			cat("Searching for cruises...\n")
 			cruiseURL <- t(apply(csInfo[,c("Cruise", "ShipName"), drop=FALSE], 1, searchNMDCruise, datatype=datatype))
 			#cruiseURL <- sapply(datatype, function(xx) sub(datatype[1], xx, cruiseURL))
 			#if(length(dim(cruiseURL))==0){
@@ -437,10 +442,13 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		if(isTRUE(subdir)) name else if(is.character(subdir)) subdir else NULL
 	}
 	# Function for downloading cruises:
-	getCruises <- function(projectParts, cruiseMatrixSplit, StoX_data_types, model="StationLengthDistTemplate", ow=NULL, abbrev=FALSE, ...){
+	getCruises <- function(projectParts, cruiseMatrixSplit, StoX_data_types, model="StationLengthDistTemplate", ow=NULL, abbrev=FALSE, run=TRUE, ...){
 		
 		# Get project names and create the projects:
 		projectPaths <- unlist(lapply(projectParts, abbrevPath, abbrev=abbrev))
+		if(!run){
+			return(projectPaths)
+		}
 		projectPathsOrig <- unlist(lapply(projectParts, abbrevPath, abbrev=FALSE))
 		# projectPaths <- unlist(lapply(projectPaths, createProject, model=model, ow=ow, ...)) # Here we should implement some way of setting ow=TRUE interactively at first prompt
 		##### temp <- unlist(lapply(projectPaths, createProject, model=model, ow=ow, ...)) # Here we should implement some way of setting ow=TRUE interactively at first prompt
@@ -550,6 +558,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		projectName <- gsub("__", "_", projectName)
 		# Abbreviate:
 		projectName <- abbrevWords(projectName, abbrev=abbrev, sub=-1)
+		if(!run){
+			return(projectName)
+		}
 		# Set the directory of the project specfied by serial number:
 		projectPath <- createProject(projectName, dir=dir, model=model, ow=ow, ...)
 	
@@ -598,7 +609,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		stsInfo <- stsInfo[subset, , drop=FALSE]
 	
 		# Download and unzip all StoX projects of the survey time series:
-		projectNames <- getSurveyTimeSeriesStoXProjects(sts=sts, stsInfo=stsInfo, projectParts=projectParts, dir=dir, cleanup=cleanup, ow=ow, abbrev=abbrev, downloadtype="?format=zip")
+		projectNames <- getSurveyTimeSeriesStoXProjects(sts=sts, stsInfo=stsInfo, projectParts=projectParts, dir=dir, cleanup=cleanup, ow=ow, abbrev=abbrev, downloadtype="?format=zip", run=run)
 		
 		###lapply(stsInfo[,"sampleTime"], getSurveyTimeSeriesStoXProject, sts=sts, dir=dir, cleanup=cleanup, downloadtype="?format=zip")
 		return(projectNames)
@@ -732,7 +743,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	}
 	
 	# Download the cruises:
-	projectNames <- getCruises(projectParts, cruiseMatrixSplit, StoX_data_types, model=model, ow=ow, abbrev=abbrev, ...)
+	projectNames <- getCruises(projectParts, cruiseMatrixSplit, StoX_data_types, model=model, ow=ow, abbrev=abbrev, run=run, ...)
 	###########################################
 	
 		

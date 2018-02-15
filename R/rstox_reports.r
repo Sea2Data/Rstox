@@ -1357,3 +1357,96 @@ getFunsRstox <- function(string, out="all"){
 	return(outFuns)
 }
 
+
+#*********************************************
+#*********************************************
+#' Generate species matrix with biotic stations as rows and station information and the species present in the \code{ref} file as columns. One matrix generated per variable \code{var}.
+#'
+#' @param projectName						The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param ref								The path to a file linking species to species categories, specifically named by \code{specVar} or \code{specVar.ref} and \code{catVar}. The file must be a CSV (comma separated) file with UTF-8 encoding.
+#' @param specVar,specVar.bio,specVar.ref	Names of the species columns in the data and in the \code{ref} file. When only specifying \code{specVar}, a common column name is assumed.
+#' @param catVar							The name of the species category column in the \code{ref} file.
+#' @param bioticProc						The process from which the biotic data should be extracted from the project.
+#' @param stationVar						The names of the columns of the biotic data identifying the biotic stations. These columns will be concatenated.
+#' @param var								The names of the columns for which the species matrices should be generated.
+#' @param na.as								The value to use for missing data (e.g., species categories that are not present in a station).
+#' @param drop.out							Logical: If TRUE (default) unlist if only one variable is given in \code{var}.
+#' @param close								Logical: If TRUE (default) close the project after reading the data.
+#' @param ...								Parameters passed on to getBaseline(), e.g. for changing the baseline parameters (adding filters).
+
+#' 
+#' @return A list of matrices (dropped to a matrix if only one variable is specified in \code{var}) with stations as rows and station information and the species present in the \code{ref} file as columns.
+#'
+#' @export
+#' @keywords internal
+#' @rdname aggregateBySpeciesCategory
+#' 
+aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", stationVar=c("cruise", "serialno"), var=c("weight", "count"), na.as=0, drop.out=TRUE, close=TRUE, msg=FALSE, ...){
+	# Function used for converting a matrix into a data frame and appending the rownames as the first column:
+	createTempDataFrame <- function(x){
+		out <- data.frame(stationVar=rownames(x), as.data.frame(x))
+		names(out) <- c(stationVar, colnames(x))
+		out
+	}
+	# Add concatination of 
+	appendStationFirst <- function(x, stationVar=c("cruise", "serialno")){
+		Station <- do.call(paste, x[stationVar])
+		cbind(Station=Station, x)
+	}
+	
+	# Read the ref file:
+	ref <- read.csv2(ref, stringsAsFactors=FALSE)
+	ref[[specVar]] <- tolower(ref[[specVar]])
+	# Test whether the specVar and catVar are present in the ref file:
+	if(!all(c(specVar.ref, catVar) %in% names(ref))){
+		stop("All of 'specVar.ref' (possibly specified commonly for the biotic data and the ref file by 'specVar') and 'catVar' must be present in the 'ref' file")
+	}
+	
+	# Get the project output:
+	if(msg){
+		cat("Generating species matrix for project ", projectName, "\n")
+	}
+	g <- getBaseline(projectName, input=NULL, proc=bioticProc, ...)
+	closeProject(projectName)
+	
+	# Merge station and catch data from the bioticProc, but keep all stations through all = TRUE:
+	out <- g$FilterBiotic_BioticData_FishStation.txt
+	out <- appendStationFirst(out, stationVar=stationVar)
+	data <- g$FilterBiotic_BioticData_CatchSample.txt
+	data <- appendStationFirst(data, stationVar=stationVar)
+	availableVars <- names(data)
+	
+	if(!specVar.bio %in% names(data)){
+		stop("'specVar.bio' (possibly specified commonly for the biotic data and the ref file by 'specVar') must be present in the biotic data of the project")
+	}
+
+	# Convert to lower case for the species, as per protocol of StoX.
+	data[[specVar]] <- tolower(data[[specVar]])
+	# Remove any columns named by 'catVar':
+	data <- data[, names(data) != catVar]
+	# Append the ref file to the data, and keep all species in the reference file:
+	data <- merge(data, ref, by=specVar, all.y=TRUE)
+	# Get only the the variables specified by 'var':
+	if(!all(var %in% names(data))){
+		var <- intersect(var, availableVars)
+		warning(paste0(if(length(var)==0) "None" else "Not all", " of the variables given by 'var' are present in the data. Available columns are ", paste(availableVars, collapse=", ")))
+	}
+	data <- data[, c("Station", catVar, var)]
+	
+	# Group by catVar:
+	temp <- lapply(var, function(v) tapply(data[, v], data[, c("Station", catVar)], sum, na.rm=TRUE))
+	# Convert into a data frame and merge by 'stationVar':
+	#temp <- lapply(temp, createTempDataFrame)
+	temp <- lapply(temp, function(x) data.frame(Station=rownames(x), as.data.frame(x)))
+	# replace NA:
+	temp <- lapply(temp, function(x) {x[is.na(x)] <- na.as; x})
+	
+	# Merge with the station data:
+	temp <- lapply(temp, function(x) merge(out, x, by="Station", all.x=TRUE))
+	names(temp) <- var
+	if(drop.out && length(temp)==1){
+		temp <- temp[[1]]
+	}
+	
+	return(temp)
+}

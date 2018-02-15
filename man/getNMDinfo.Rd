@@ -15,7 +15,7 @@ getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
   group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
   ver = 1, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, ...)
+  return.URL = FALSE, run = TRUE, ...)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
   quiet = TRUE)
@@ -71,6 +71,8 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{ow}{Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.}
 
 \item{return.URL}{Logical: If TRUE, return the URL of the files to download.}
+
+\item{run}{Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
