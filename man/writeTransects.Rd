@@ -60,5 +60,5 @@ The file names.
 \code{writeTransectsToMAxSea} writes the transects of all strata to separate .asc files for import in MaxSea. \cr \cr
 \code{writeTransectsINFO} writes the transects of all strata to separate hunam readable .txt files. \cr \cr
 \code{writeTransectsCSV} writes the transects of all strata to separate csv files files. \cr \cr
-\code{writeTransects} writes the data to CSV or NetCDF files. Only a selection of the columns are saved by default (override this by \code{cols}): The transect secifications ("Stratum", "Transect", "Segment", "Transport", "Retour"), the start and stop position, time and distance ("lon_start", "lon_stop", "lat_start", "lat_stop", "time_start", "time_stop", "dist_start", "dist_stop", "segmentLengths"). By default only transects and not transport stretches are saved (override this by \code{keepTransport}). \cr \cr
+\code{writeTransects} writes the data to CSV or NetCDF files. Only a selection of the columns are saved by default (override this by \code{cols}): The transect secifications ("stratum", "transect", "segment", "transport", "retour"), the start and stop position, time and distance ("lon_start", "lon_stop", "lat_start", "lat_stop", "time_start", "time_stop", "dist_start", "dist_stop", "segmentLengths"). By default only transects and not transport stretches are saved (override this by \code{keepTransport}). \cr \cr
 }

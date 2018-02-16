@@ -1,4 +1,4 @@
-# Rstox version: 1.8.1 (latest alpha, 2018-02-15)
+# Rstox version: 1.8.1 (latest alpha, 2018-02-16)
 # R version: 3.4.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -61,3 +61,5 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.8.
 # 9. Other minor bug fixes.
 
 # 10. Added the parameter 'run' in getNMDdata(), which if set to FALSE only generates the project names, and does not download data and generate projects.
+
+# 11. Added the function aggregateBySpeciesCategory() which generates a species matrix with biotic stations as rows and station information and the species present in a reference file as columns.

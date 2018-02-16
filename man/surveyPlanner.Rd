@@ -2,21 +2,26 @@
 % Please edit documentation in R/rstox_spatial.r
 \name{surveyPlanner}
 \alias{surveyPlanner}
+\alias{modifyStratum}
 \alias{getSailedDist}
 \alias{plotStratum}
 \title{Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).}
 \usage{
-surveyPlanner(projectName, type = "Parallel", bearing = "N", rev = FALSE,
-  retour = FALSE, toursFirst = FALSE, hours = 240, t0 = NULL,
-  knots = 10, nmi = NULL, seed = 0, dt = 1/60, plot = FALSE,
-  margin = NULL, shapenames = list(Longitude = "long", Latitude = "lat",
-  Stratum = "id"), equalEffort = FALSE, byStratum = TRUE)
+surveyPlanner(projectName, parameters = NULL, type = "Parallel",
+  bearing = "N", rev = FALSE, retour = FALSE, toursFirst = FALSE,
+  hours = 240, t0 = NULL, knots = 10, nmi = NULL, seed = 0,
+  dt = 1/60, plot = FALSE, margin = NULL, shapenames = list(longitude =
+  "long", latitude = "lat", stratum = "id"), equalEffort = FALSE,
+  byStratum = TRUE)
 
-getSailedDist(x, nmi = NULL, byStratum = TRUE)
+modifyStratum(x, stratum = NULL, var = NULL, value = NULL)
+
+getSailedDist(x, nmi = NULL, area = NULL, byStratum = TRUE,
+  nmi.out = TRUE)
 
 plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
   transport_alpha = 0.1, google = FALSE, margin = 0.5,
-  aspectratio = NULL, xlab = "Longitude", ylab = "Latitude")
+  aspectratio = NULL, xlab = "longitude", ylab = "latitude")
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -39,7 +44,7 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 
 \item{seed}{The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.}
 
-\item{dt}{The density of points populating the stratum polygons. The first element denotes the density in degrees to use for the geographical coordinates (Longitude, Latitude), whilst the second element if present denotes the density in nautical miles to use for the Cartesian coordinates before converting back to geographical coordinates. The first element preserves the stratum borders when converting to Cartesian coordinates, whilst the second elements preserves the shortest travel distance of the transects when converting back to geographical coordinates (inducing curved lines in geographical coordinates).}
+\item{dt}{The density of points populating the stratum polygons. The first element denotes the density in degrees to use for the geographical coordinates (longitude, latitude), whilst the second element if present denotes the density in nautical miles to use for the Cartesian coordinates before converting back to geographical coordinates. The first element preserves the stratum borders when converting to Cartesian coordinates, whilst the second elements preserves the shortest travel distance of the transects when converting back to geographical coordinates (inducing curved lines in geographical coordinates).}
 
 \item{plot}{Deprecated: Plots the transects in Cartesian coordintes. Use \code{\link{plotStratum}} instead().}
 
@@ -82,9 +87,9 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 \describe{
 \item{"transects"}{"A data frame with the geographic and Cartesian transect coordinates for all strata, along with start, mid and stop time and sailed distance"}
 \item{"totalSailedDist"}{"A data fram with total, transect, transport and input (nmi) sailed distance, also given in percent of 'nmi'."}
-\item{"lonlat"}{"The input stratum polygons (Longitude, Latitude) in a list with one matrix per stratum"}
+\item{"lonlat"}{"The input stratum polygons (longitude, latitude) in a list with one matrix per stratum"}
 \item{"parameters"}{"A list of parameters for each stratum: type, bearing, retour, hours, knots, nmi, seed"}
-\item{"proj"}{"The projection string used to convert from (Longitude, Latitude) to (x, y)"}
+\item{"proj"}{"The projection string used to convert from (longitude, latitude) to (x, y)"}
 \item{"area"}{"The area og each polygon in square nautical miles"}
 \item{"centroid"}{"The centroid of the strata, used in the projection"}
 \item{"strata"}{"The stratum names"}
