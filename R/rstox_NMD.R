@@ -70,7 +70,7 @@
 #' g9[grep("torsk", g9$synonym.name, ignore.case=TRUE),]
 #' 
 #' # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
-#' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.6.R.
+#' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
 #' 
 #' @export
 #' @rdname getNMDinfo
@@ -341,8 +341,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		
 		# The number of stox projects:
 		nsts <- length(projectParts)
-		# Store the project names and the status of the downloads:
-		status = double(nsts)
+		# Store the project names and the success of the downloads:
+		success = logical(nsts)
 		
 		# Run through the projects and download:
 		for(i in seq_len(nsts)){
@@ -353,56 +353,12 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			URL = paste0(URL, downloadtype)
 			#projectPaths[i] <- file.path(dir, paste0(abbrevWords(sts), "_", stsInfo[i,"sampleTime"]))
 			
-			# Overwriting or not?:
-			#if(file.exists(projectPaths[i])){
-			#	if(length(ow)==0){
-			#		ans <- readline(paste0("Project \"", projectPaths[i], "\" already exists. Overwrite?\n", paste(c("\"y\": ", "\"n\": ", "\"ya\":", "\"na\":"), c("Yes", "No", "Yes to all remaining", "No to all remaining"), collapse="\n"), "\n"))
-			#		if(ans=="ya"){
-			#			cat("Overwriting:", projectPaths[i], "\n")
-			#			ow <- TRUE
-			#		}
-			#		else if(ans=="na"){
-			#			cat("Not overwriting:", projectPaths[i], "\n")
-			#			ow <- FALSE
-			#			next
-			#		}
-			#		else if(ans=="y"){
-			#			cat("Overwriting:", projectPaths[i], "\n")
-			#		}
-			#		else{
-			#			cat("Not overwriting:", projectPaths[i], "\n")
-			#			next
-			#		}
-			#	}
-			#	else if(!ow){
-			#		cat("Not overwriting:", projectPaths[i], "\n")
-			#		next
-			#	}
-			#	else if(ow){
-			#		cat("Overwriting:", projectPaths[i], "\n")
-			#	}
-			#}
-			
-			status[i] <- downloadProjectZip(URL=URL, projectName=projectPaths[i], cleanup=cleanup, msg=msg, ow=ow)$status
-			### # Define the path to the downloaded zip file:
-			### zipPath <- paste0(projectPaths[i], ".zip")
-			### # Added mode="wb" to make the zip openable on Windows:
-			### status[i] <- download.file(URL, zipPath, mode="wb")
-			### 
-			### # Delete the existing project if the conditional expression above did not exit the function:
-			### unzipFile <- file.path(dirname(zipPath), dirname(unzip(zipPath, list=TRUE)[1,1]))
-			### unzipped <- unzip(zipPath, exdir=dirname(zipPath))
-			### # Change name to projectPaths[i]:
-			### unlink(projectPaths[i], recursive=TRUE)
-			### file.rename(unzipFile, projectPaths[i]) 
-			### if(cleanup){
-			### 	unlink(zipPath)
-			### }
+			success[i] <- downloadProjectZip(URL=URL, projectName=projectPaths[i], cleanup=cleanup, msg=msg, ow=ow)$success
 		}
 		
 		# Warning if any downloads failed:
-		if(any(status!=0)){
-			warning(paste0("Downloading failed for the following Survey Timeseries: ", paste(projectPathsOrig[status==1], collapse=", ")))
+		if(any(!success)){
+			warning(paste0("Downloading failed for the following Survey Timeseries:\n\t", paste(projectPathsOrig[!success], collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
 		}
 		
 		# Report project names if abbreviated:
@@ -454,7 +410,10 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		##### temp <- unlist(lapply(projectPaths, createProject, model=model, ow=ow, ...)) # Here we should implement some way of setting ow=TRUE interactively at first prompt
 		
 		temp <- createProject(projectPaths, model=model, ow=ow, ...)
-		toWrite <- which(!is.na(temp))
+		suppressWarnings(toWrite <- which(!is.na(temp)))
+		if(length(toWrite)==0){
+			return()
+		}
 		projectPaths <- projectPaths[toWrite]
 		projectPathsOrig <- projectPathsOrig[toWrite]
 	
@@ -470,6 +429,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		}
 		for(i in toWrite){
 			xmlfiles <- matrix(NA, nrow=nrow(cruiseMatrixSplit[[i]]), ncol=length(StoX_data_types))
+			colnames(xmlfiles) <- paste0("file_", StoX_data_types)
 			for(j in seq_along(StoX_data_types)){
 				for(k in seq_len(nrow(cruiseMatrixSplit[[i]]))){
 					# Print a dot if the floor of the new value exceeds the old value:
@@ -483,13 +443,26 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 						}
 					# Get the current URL:
 					URL <- cruiseMatrixSplit[[i]][k, StoX_data_types[j]]
-					# Use the naming convention that NMD uses, which is 'datatype'_cruiseNumber_'cruiseNumber'_'ShipName'
-					cruise_shipname <- paste(NMD_data_types[j], "cruiseNumber", cruiseMatrixSplit[[i]][k,"Cruise"], cruiseMatrixSplit[[i]][k,"ShipName"], sep="_")
-					xmlfiles[k,j] <- file.path(projectPaths[i], "input", StoX_data_types[j], paste0(cruise_shipname, ".xml"))
-					suppressWarnings(downloadXML(URL, msg=FALSE, list.out=FALSE, file=xmlfiles[k,j]))
+					if(!is.na(URL)){
+						# Use the naming convention that NMD uses, which is 'datatype'_cruiseNumber_'cruiseNumber'_'ShipName'
+						cruise_shipname <- paste(NMD_data_types[j], "cruiseNumber", cruiseMatrixSplit[[i]][k,"Cruise"], cruiseMatrixSplit[[i]][k,"ShipName"], sep="_")
+						xmlfiles[k,j] <- file.path(projectPaths[i], "input", StoX_data_types[j], paste0(cruise_shipname, ".xml"))
+						suppressWarnings(downloadXML(URL, msg=FALSE, list.out=FALSE, file=xmlfiles[k,j]))
+					}
 				}
-			cruiseMatrixSplit[[i]] <- cbind(cruiseMatrixSplit[[i]], xmlfiles)
 			}
+			# Check whether the files were downloaded. This could have been done by use of the output from download.file (0 for sucsess and positive for failure), but instead we check the existence of the files, and the size:
+			valid <- !is.na(xmlfiles)
+			URLs <- cruiseMatrixSplit[[i]][, StoX_data_types][valid]
+			browser()
+			success <- file.exists(xmlfiles[valid]) & (file.info(xmlfiles[valid])$size > 0) %in% TRUE
+			# Warning if any downloads failed:
+			if(any(!success)){
+				#warning(paste0("Downloading failed for the following files:\n", paste(URLs[!success], collapse="\n\t")))
+				warning(paste0("Downloading failed for the following files:\n\t", paste(URLs[!success], collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
+			}
+			
+			cruiseMatrixSplit[[i]] <- cbind(cruiseMatrixSplit[[i]], xmlfiles)
 		}
 		
 		# Report project names if abbreviated:
@@ -502,7 +475,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 				)
 			)
 		}
-		
+			
+		# Update the projects (linking to the downloaded files) and return the paths:
 		lapply(projectPaths, updateProject)
 		return(projectPaths)
 	}
@@ -540,7 +514,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		}
 		if(any(serialno > maxSerialno)){
 			serialno <- serialno[serialno <= maxSerialno]
-			warning("Too large serialno will occupy a large amount of memory")
+			warning(paste0("Maximum serialno is ", maxSerialno))
 		}
 		serialno <- getSerialnoRanges(serialno)
 		serialnoStrings <- apply(serialno, 1, paste, collapse="-")
@@ -570,6 +544,14 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			xmlfiles[i] <- file.path(projectPath, "input", "biotic", paste0(serialnoStrings[i], ".xml"))
 			downloadXML(URL, msg=msg, list.out=FALSE, file=xmlfiles[i])
 		}
+		
+		# Check whether the files were downloaded. This could have been done by use of the output from download.file (0 for sucsess and positive for failure), but instead we check the existence of the files, and the size:
+		success <- file.exists(xmlfiles) & (file.info(xmlfiles)$size > 0) %in% TRUE
+		# Warning if any downloads failed:
+		if(any(!success)){
+			warning(paste0("Downloading failed for the following files:\n", paste(xmlfiles[!success], collapse="\n\t")))
+		}
+		
 		updateProject(projectName)
 		return(projectName)
 	}
@@ -668,6 +650,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	###########################################
 	# Split into groups:
 	if(length(group)==0){
+		# All data in one project if 'group' is empty:
 		cruiseMatrixSplit <- list(cruiseMatrix)
 		
 		# Wrap in a list to indicate the numer of projects to generate:
@@ -691,13 +674,16 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			}
 		}
 		if(tolower(substr(group, 1, 1))=="y"){
-			splitvec <- paste("year", cruiseMatrix[,"year"], sep="_")
+			splitnames <- cruiseMatrix[,"year"]
+			splitvec <- paste("year", splitnames, sep="_")
 		}
 		else{
-			splitvec <- paste("Cruise", cruiseMatrix[,"Cruise"], sep="_")
+			splitnames <- cruiseMatrix[,"Cruise"]
+			splitvec <- paste("Cruise", splitnames, sep="_")
 		}
 		# This adds the 'splitvec' as names of the 'cruiseMatrixSplit':
 		cruiseMatrixSplit <- split(cruiseMatrix, splitvec)
+		names(cruiseMatrixSplit) <- splitnames
 		
 		# Discard cells with no data:
 		cruiseMatrixSplit <- cruiseMatrixSplit[sapply(cruiseMatrixSplit, function(xx) any(!is.na(xx[, StoX_data_types])))]
@@ -731,7 +717,14 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		subset = seq_len(nprojects)
 	}
 	else{
-		subset = subset[subset>=1 & subset<=nprojects]
+		# Check whether the subset is a year or cruise code:
+		if(all(nchar(subset) > 3) && any(subset %in% names(cruiseMatrixSplit))){
+			subset <- which(subset == names(cruiseMatrixSplit))
+		}
+		# Otherwise, restrict 'subset' to the range of projects:
+		else{
+			subset = subset[subset>=1 & subset<=nprojects]
+		}
 	}
 	cruiseMatrixSplit <- cruiseMatrixSplit[subset]
 	projectParts <- projectParts[subset]

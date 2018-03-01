@@ -2153,12 +2153,13 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 			temp <- getow(ow, projectPath, onlyone=TRUE, msg=msg)
 			# Return from the funciton if not overwriting:
 			if(temp$jumpToNext){
-				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:
-				return(list(status=FALSE))
+				# Added appropriate return value as per notice from Ibrahim on 2018-02-05 (changed from FALSE to 1 (see the Value section of ?download.file) on 2018-03-01):
+				return(list(success = FALSE))
 			}
 		}
 	}
-	status <- download.file(URL, zipPath, mode="wb")
+	# Download the file and record whether it was a success or failure by a logical variable for clearity (and not as an integer as returned by download.file()):
+	success <- download.file(URL, zipPath, mode="wb") == 0
 
 	# Get the path of the unzipped file:
 	ziplist <- unzip(zipPath, list=TRUE)[,1]
@@ -2177,7 +2178,7 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 			# Return from the funciton if not overwriting:
 			if(temp$jumpToNext){
 				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:
-				return(list(status=FALSE))
+				return(list(success = FALSE))
 			}
 		}
 	}
@@ -2194,8 +2195,8 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 	if(cleanup){
 		unlink(zipPath)
 	}
-	# Return download status:
-	list(status=status, projectPath=projectPath)
+	# Return download success:
+	list(success=success, projectPath=projectPath)
 }
 
 

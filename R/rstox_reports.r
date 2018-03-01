@@ -1422,8 +1422,10 @@ aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specV
 
 	# Convert to lower case for the species, as per protocol of StoX.
 	data[[specVar]] <- tolower(data[[specVar]])
-	# Remove any columns named by 'catVar':
-	data <- data[, names(data) != catVar]
+	# Remove any columns named by 'catVar', but only if specVar != catVar:
+	if(specVar != catVar){
+		data <- data[, names(data) != catVar]
+	}
 	# Append the ref file to the data, and keep all species in the reference file:
 	data <- merge(data, ref, by=specVar, all.y=TRUE)
 	# Get only the the variables specified by 'var':

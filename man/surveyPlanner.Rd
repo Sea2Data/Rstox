@@ -2,8 +2,6 @@
 % Please edit documentation in R/rstox_spatial.r
 \name{surveyPlanner}
 \alias{surveyPlanner}
-\alias{modifyStratum}
-\alias{getSailedDist}
 \alias{plotStratum}
 \title{Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).}
 \usage{
@@ -14,11 +12,6 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   "long", latitude = "lat", stratum = "id"), equalEffort = FALSE,
   byStratum = TRUE)
 
-modifyStratum(x, stratum = NULL, var = NULL, value = NULL)
-
-getSailedDist(x, nmi = NULL, area = NULL, byStratum = TRUE,
-  nmi.out = TRUE)
-
 plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
   transport_alpha = 0.1, google = FALSE, margin = 0.5,
   aspectratio = NULL, xlab = "longitude", ylab = "latitude")
@@ -26,13 +19,17 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
+\item{parameters}{Optional named list of parameters overriding the inputs "type", "bearing", "retour", "hours", "knots", "nmi", "seed" or "t0". This list is returned from \code{surveyPlanner} (located in the element $parameters), and can be useful when changing say the 'nmi' in the last strata given time lost due to weather in the first strata. See examples.}
+
 \item{type}{The type of the transects, repeated to the number of stratums. See details for possible values. Case insensitive.}
 
 \item{bearing}{The survey bearing of each transect, given in one of 4 ways: (1) by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", (2) as angles counter clockwise from EAST on degrees, (3) as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates, or (4) as a data frame with columns "lon_start", "lon_stop", "lat_start", "lat_stop" defining the angles between a start and end point for each stratum.}
 
-\item{retour}{Logical: If TRUE continue with the transects back to the start point of the stratum.}
+\item{rev}{Logical: If TRUE, the bearing calculated by the funciton when bearing = "along" or "across" is reversed, i.e., going from East to West instead of West to East.}
 
-\item{toursFirst}{Logical: If TRUE do all tours first followed by the retours (only effective if retour is TRUE).}
+\item{retour}{Logical: If TRUE, continue with the transects back to the start point of the stratum.}
+
+\item{toursFirst}{Logical: If TRUE, do all tours first followed by the retours (only effective if retour is TRUE).}
 
 \item{hours}{The time to spend in the stratum, given in hours.}
 
@@ -54,6 +51,8 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 
 \item{equalEffort}{Logical: If TRUE, assign effort proportional to the area of each stratum.}
 
+\item{byStratum}{Logical: If FALSE, include the transport between strata in the total traveled distance given in $Survey of the output.}
+
 \item{x}{The output from \code{\link{surveyPlanner}}.}
 
 \item{zoom}{The zoom to use for google maps}
@@ -64,7 +63,7 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 
 \item{transport_alpha}{The transparency to use for the transport paths.}
 
-\item{google}{Logical: If TRUE download Google maps.}
+\item{google}{Logical: If TRUE, download Google maps.}
 
 \item{aspectratio}{The aspect ratio of the plot, adjusted automatically by default.}
 
@@ -94,6 +93,8 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 \item{"centroid"}{"The centroid of the strata, used in the projection"}
 \item{"strata"}{"The stratum names"}
 }
+
+\code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
 }
 \description{
 Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).
@@ -101,4 +102,37 @@ Get polygon area and convert to or from geographic and Cartesian coordinates. Th
 \details{
 Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443
 The following types are implemented:
+}
+\examples{
+# Generate parallel transects with equal effort in each stratum (proportional to area):
+projectName <- "Test_Rstox"
+system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel",  
+    bearing="N", nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+
+# Zigzag with equal coverage probability:
+system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ",  
+    bearing="N", nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+
+# The parallel survey use 23.39 percent of sailing distance for transport between transects, 
+# whereas the zigzag survey use 10.76 percent.
+Parallel$Survey
+Zigzag$Survey
+
+# Plot the different survay plans:
+dev.new()
+plotStratum(Parallel)
+dev.new()
+plotStratum(Zigzag)
+
+# Reduce effort in the last three strata, e.g. due to lost time due to bad weather in stratum 1:
+# Note that the line parameters$nmi <- NULL is required blow to effectively change the 'hours'.
+# The 'nmi', when specified, har precedence over 'hours'.
+parameters <- Parallel$parameters
+parameters$hours[2:4] <- parameters$hours[2:4] - 50
+parameters$nmi <- NULL
+system.time(Parallel2 <- surveyPlanner(projectName=projectName, parameters=parameters))
+
+dev.new()
+plotStratum(Parallel2)
+
 }

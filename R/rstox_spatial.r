@@ -456,25 +456,28 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library). 
 #'
 #' @param projectName   	The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param parameters		Optional named list of parameters overriding the inputs "type", "bearing", "retour", "hours", "knots", "nmi", "seed" or "t0". This list is returned from \code{surveyPlanner} (located in the element $parameters), and can be useful when changing say the 'nmi' in the last strata given time lost due to weather in the first strata. See examples.
 #' @param type				The type of the transects, repeated to the number of stratums. See details for possible values. Case insensitive.
 #' @param bearing			The survey bearing of each transect, given in one of 4 ways: (1) by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", (2) as angles counter clockwise from EAST on degrees, (3) as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates, or (4) as a data frame with columns "lon_start", "lon_stop", "lat_start", "lat_stop" defining the angles between a start and end point for each stratum.
-#' @param retour			Logical: If TRUE continue with the transects back to the start point of the stratum.
-#' @param toursFirst		Logical: If TRUE do all tours first followed by the retours (only effective if retour is TRUE).
+#' @param rev				Logical: If TRUE, the bearing calculated by the funciton when bearing = "along" or "across" is reversed, i.e., going from East to West instead of West to East.
+#' @param retour			Logical: If TRUE, continue with the transects back to the start point of the stratum.
+#' @param toursFirst		Logical: If TRUE, do all tours first followed by the retours (only effective if retour is TRUE).
 #' @param hours				The time to spend in the stratum, given in hours.
+#' @param t0				The start time of the survey, set to Sys.time() by default.
 #' @param knots				The speed to use in the stratum, given in knots.
 #' @param nmi				The distance to travel in the stratum in nautical miles.
 #' @param seed				The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.
 #' @param dt				The density of points populating the stratum polygons. The first element denotes the density in degrees to use for the geographical coordinates (longitude, latitude), whilst the second element if present denotes the density in nautical miles to use for the Cartesian coordinates before converting back to geographical coordinates. The first element preserves the stratum borders when converting to Cartesian coordinates, whilst the second elements preserves the shortest travel distance of the transects when converting back to geographical coordinates (inducing curved lines in geographical coordinates). 
 #' @param plot				Deprecated: Plots the transects in Cartesian coordintes. Use \code{\link{plotStratum}} instead().
-#' @param t0				The start time of the survey, set to Sys.time() by default.
 #' @param shapenames		A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.
 #' @param equalEffort		Logical: If TRUE, assign effort proportional to the area of each stratum.
+#' @param byStratum			Logical: If FALSE, include the transport between strata in the total traveled distance given in $Survey of the output.
 #' @param x					The output from \code{\link{surveyPlanner}}.
 #' @param transect			Logical: If TRUE, plot the transects.
 #' @param centroid			Logical: If TRUE, plot the centroid of the strata.
 #' @param transport_alpha	The transparency to use for the transport paths.
 #' @param margin			The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since the forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.
-#' @param google			Logical: If TRUE download Google maps.
+#' @param google			Logical: If TRUE, download Google maps.
 #' @param zoom				The zoom to use for google maps
 #' @param aspectratio		The aspect ratio of the plot, adjusted automatically by default.
 #' @param xlab				The x label for the plot.
@@ -503,6 +506,40 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #'	\item{"centroid"}{"The centroid of the strata, used in the projection"}
 #'	\item{"strata"}{"The stratum names"}
 #' }
+#'
+#' @return \code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
+#'
+#' @examples
+#' # Generate parallel transects with equal effort in each stratum (proportional to area):
+#' projectName <- "Test_Rstox"
+#' system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel",  
+#'     bearing="N", nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+#' 
+#' # Zigzag with equal coverage probability:
+#' system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ",  
+#'     bearing="N", nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+#' 
+#' # The parallel survey use 23.39 percent of sailing distance for transport between transects, 
+#' # whereas the zigzag survey use 10.76 percent.
+#' Parallel$Survey
+#' Zigzag$Survey
+#' 
+#' # Plot the different survay plans:
+#' dev.new()
+#' plotStratum(Parallel)
+#' dev.new()
+#' plotStratum(Zigzag)
+#' 
+#' # Reduce effort in the last three strata, e.g. due to lost time due to bad weather in stratum 1:
+#' # Note that the line parameters$nmi <- NULL is required blow to effectively change the 'hours'.
+#' # The 'nmi', when specified, har precedence over 'hours'.
+#' parameters <- Parallel$parameters
+#' parameters$hours[2:4] <- parameters$hours[2:4] - 50
+#' parameters$nmi <- NULL
+#' system.time(Parallel2 <- surveyPlanner(projectName=projectName, parameters=parameters))
+#' 
+#' dev.new()
+#' plotStratum(Parallel2)
 #'
 #' @export
 #' @importFrom sp Lines Line SpatialLines
@@ -889,6 +926,11 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		out <- Stratum2ListOfSpatialLines(out, coordNames=coordNames)
 		out
 	}
+	getCentroid <- function(x, proj="aeqd", lonlatnames=c("longitude", "latitude")){
+		projList <- getProjString(proj=proj, x=x[, lonlatnames], list.out=TRUE)
+		centroid <- data.frame(lon_centroid=projList$lon_0, lat_centroid=projList$lat_0)
+		centroid
+	}
 	
 	# Function used for linking strata, by incerting the start positions of the strata to the end position of the previous:
 	linkStrata <- function(x){
@@ -899,6 +941,50 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		x[stratumOrderStart, replaceCols] <- x[stratumOrderStart + 1, atCols]
 	
 		x
+	}
+	
+	# Function for extracting the total sailed distance:
+	getSailedDist <- function(x, nmi=NULL, area=NULL, byStratum=TRUE, nmi.out=TRUE){
+		getSailedDist_OneStratum <- function(x){
+			data.frame(
+				transect=sum(x$segmentLengths[x$transport==0], na.rm=TRUE), 
+				transport=sum(x$segmentLengths[x$transport==1], na.rm=TRUE), 
+				total=sum(x$segmentLengths, na.rm=TRUE))
+		}
+	
+		# If a data frame, split into strata (if byStratum):
+		if(is.data.frame(x)){
+			x <- split(x, if(byStratum) x$stratum else 1)
+		}
+		# Otherwise merge to one stratum if !byStratum:
+		else if(length(x)>1 && !byStratum){
+			x <- list(as.data.frame(data.table::rbindlist(x)))
+		}
+	
+		# Get sailed distances from each stratum
+		out <- lapply(x, getSailedDist_OneStratum)
+		out <- as.data.frame(data.table::rbindlist(out))
+	
+		# Add in percent if reference sailed distance nmi is given:
+		if(length(nmi)){
+			if(nmi.out){
+				out <- cbind(out, nmi=nmi)
+			}
+			else{
+				out <- cbind(out)
+			}
+			outPercent <- round(out / nmi * 100, digits=2)
+			colnames(outPercent) <- paste0(colnames(outPercent), "_percent")
+			out <- cbind(out, outPercent)
+		}
+		if(length(area)){
+			out <- cbind(area=area, coverage=out$transect / sqrt(area), out)
+		}
+	
+	
+		rownames(out) <- if(nrow(out)==1) "Survey" else paste0("Stratum ", rownames(out))
+	
+		out
 	}
 	############################################################
 	############################################################
@@ -1191,8 +1277,8 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	# Read the the stratum polygons from a folder of shape files or from a StoX project:
 	if(all(isProject(projectName))){
 		# Get the baseline output and number of strata:
-		g <- getBaseline(projectName, endProcess="ReadProcessData", endProcess="ReadProcessData", input="proc", proc=NULL, drop=FALSE)
-		strata <- g$processData$stratumpolygon$stratum
+		g <- getBaseline(projectName, endProcess="ReadProcessData", input="proc", proc=NULL, drop=FALSE)
+		strata <- g$processData$stratumpolygon$Stratum
 		nstrata <- length(strata)
 	
 		# Get the strata polygons in geographic coordinates (longitude, latitude) in a list named with the strata names:
@@ -1203,7 +1289,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		#lonlat <- lapply(lonlat, function(x) {x$latitude <- -x$latitude; x})
 		
 		# Create a single data frame version of the strata polygons, with stratum as the third column, and get a common projection definition using the centroid of the system:
-		lonlatAll <- data.table::rbindlist(lonlat, idcol="stratum")
+		lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
 	}
 	else if(all(file.exists(projectName))){
 		if(length(projectName) == 1 && isTRUE(file.info(projectName)$isdir)){
@@ -1220,6 +1306,10 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		strata <- unique(lonlatAll$stratum)
 		nstrata <- length(strata)
 	}
+	else{
+		warning("'projectName' is not a project or shapefiles/folder of shapefiles")
+		return()
+	}
 	
 	Input$lonlat <- lonlat
 	Input$lonlatAll <- lonlatAll
@@ -1231,6 +1321,11 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	if(length(parameters)==0 || !is.list(parameters)){
 		parameters <- list()
 	}
+	else if(is.list(parameters) && "parameters" %in% names(parameters)){
+		parameters <- parameters$parameters
+	}
+	
+	# Treat parameters:	
 	if("Straum" %in% names(parameters)){
 		parameters <- parameters$Straum
 	}
@@ -1265,7 +1360,12 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	}
 	# Get the total traveled length in nautical miles:
 	if(length(parameters$nmi)==0){
-		parameters$nmi <- parameters$hours * parameters$knots
+		if(length(nmi)){
+			parameters$nmi <- nmi
+		}
+		else{
+			parameters$nmi <- parameters$hours * parameters$knots
+		}
 	}
 	# Add seed to the parameters:
 	if(length(parameters$seed)==0){
@@ -1291,16 +1391,19 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	suppressWarnings(parameters <- lapply(parameters, rep, length.out=nstrata))
 	##########
 		
+	# Extract the centroids of the surcey and the strata:
+	centroid <- getCentroid(lonlatAll)
+	stratum_centroid <- do.call(rbind, lapply(lonlat, getCentroid))
 	
-	# Extract the centroid:
-	projList <- getProjString(proj="aeqd", x=lonlatAll[,c("longitude", "latitude")], list.out=TRUE)
-	centroid <- data.frame(lon_centroid=projList$lon_0, lat_centroid=projList$lat_0)
-	
+	###projList <- getProjString(proj="aeqd", x=lonlatAll[,c("longitude", "latitude")], list.out=TRUE)
+	###centroid <- data.frame(lon_centroid=projList$lon_0, lat_centroid=projList$lat_0)
+	###
 	# Get the stratum areas:
 	area <- unlist(lapply(lonlat, polyArea))
 	if(equalEffort){
 		parameters$nmi <- sum(parameters$nmi) * area / sum(area)
-		parameters$hours <- sum(parameters$hours) * area / sum(area)
+		###parameters$hours <- sum(parameters$hours) * area / sum(area)
+		parameters$hours <- parameters$nmi / parameters$knots
 	}
 	
 	# Populate the stratum polygon borders with denser points, in order to preserve the geographic coordinate definition when converting to Cartesian coordinates (i.e., follow a latitude if two points are on the same latitude. If given only by two points, the azimuthal equal distance projection will follow the great circle, which in general will not coincide with the intended equal latitude path):
@@ -1355,7 +1458,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	totalSailedDist <- getSailedDist(Transect, nmi=parameters$nmi, area=area, nmi.out=FALSE, byStratum=TRUE)
 	totalSailedDist1 <- getSailedDist(Transect, nmi=sum(parameters$nmi), area=sum(area), nmi.out=FALSE, byStratum=FALSE)
 	
-	Stratum <- data.frame(stratum=strata, parameters[parameterNames], totalSailedDist)
+	Stratum <- data.frame(stratum=strata, stratum_centroid, parameters[parameterNames], totalSailedDist)
 	rownames(Stratum) <- Stratum$stratum
 	
 	Survey <- data.frame(centroid, nmi=sum(parameters$nmi), totalSailedDist1, proj=proj)
@@ -1369,65 +1472,8 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		Transect = Transect, 
 		Stratum = Stratum, 
 		Survey = Survey, 
+		parameters = parameters, 
 		Input = Input)
-}
-#' 
-#' @export
-#' @import data.table
-#' @rdname surveyPlanner
-#' 
-modifyStratum <- function(x, stratum=NULL, var=NULL, value=NULL){
-	for(i in seq_along(stratum)){
-		x[stratum[i], var[i]] <- value[i]
-	}
-	x
-}
-#' 
-#' @export
-#' @import data.table
-#' @rdname surveyPlanner
-#' 
-getSailedDist <- function(x, nmi=NULL, area=NULL, byStratum=TRUE, nmi.out=TRUE){
-	getSailedDist_OneStratum <- function(x){
-		data.frame(
-			transect=sum(x$segmentLengths[x$transport==0], na.rm=TRUE), 
-			transport=sum(x$segmentLengths[x$transport==1], na.rm=TRUE), 
-			total=sum(x$segmentLengths, na.rm=TRUE))
-	}
-	
-	# If a data frame, split into strata (if byStratum):
-	if(is.data.frame(x)){
-		x <- split(x, if(byStratum) x$stratum else 1)
-	}
-	# Otherwise merge to one stratum if !byStratum:
-	else if(length(x)>1 && !byStratum){
-		x <- list(as.data.frame(data.table::rbindlist(x)))
-	}
-	
-	# Get sailed distances from each stratum
-	out <- lapply(x, getSailedDist_OneStratum)
-	out <- as.data.frame(data.table::rbindlist(out))
-	
-	# Add in percent if reference sailed distance nmi is given:
-	if(length(nmi)){
-		if(nmi.out){
-			out <- cbind(out, nmi=nmi)
-		}
-		else{
-			out <- cbind(out)
-		}
-		outPercent <- round(out / nmi * 100, digits=2)
-		colnames(outPercent) <- paste0(colnames(outPercent), "_percent")
-		out <- cbind(out, outPercent)
-	}
-	if(length(area)){
-		out <- cbind(area=area, coverage=out$transect / sqrt(area), out)
-	}
-	
-	
-	rownames(out) <- if(nrow(out)==1) "Survey" else paste0("Stratum ", rownames(out))
-	
-	out
 }
 #' 
 #' @export
@@ -1436,7 +1482,8 @@ getSailedDist <- function(x, nmi=NULL, area=NULL, byStratum=TRUE, nmi.out=TRUE){
 #' 
 plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha=0.1, google=FALSE, margin=0.5, aspectratio=NULL, xlab="longitude", ylab="latitude"){
 	# Get the range in geographic coordinates:
-	rangelonlat <- cbind(range(x$Transect$lon_start), range(x$Transect$lat_start))
+	#rangelonlat <- cbind(range(x$Transect$lon_start), range(x$Transect$lat_start))
+	rangelonlat <- cbind(range(x$Input$lonlatAll$longitude), range(x$Input$lonlatAll$latitude))
 	if(length(centroid)==0){
 		# centroid <- unlist(x$centroid)
 		centroid <- apply(rangelonlat, 2, mean)
@@ -1459,19 +1506,24 @@ plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha
 		# Adjust the aspect ratio by latitude:
 		aspectratio <- 1 / cos(centroid[2] * pi/180)
 		# Initiate the plot:
-		p <- ggplot() + geom_polygon(data=gmap, aes(x=long, y=lat, group=group)) + coord_fixed(aspectratio, xlim=xlim, ylim=ylim)
+		p <- ggplot() + geom_polygon(data=gmap, aes_string(x="long", y="lat", group="group")) + coord_fixed(aspectratio, xlim=xlim, ylim=ylim)
 	}
 	
 	# Add the strata:
-	p <- p + geom_polygon(data=x$Input$lonlatAll, aes(x=longitude, y=latitude, fill=stratum, group=stratum), colour="black", alpha=0.3, inherit.aes=FALSE)
+	p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", fill="stratum", group="stratum"), colour="black", alpha=0.3, inherit.aes=FALSE)
 	
 	
 	# Add transects:
 	if(length(transect)){
 		# Use the retour as line type:
 		hasRetour <- length(unique(x$Transect$retour))
+		# Convert to factor:
+		x$Transect$stratum <- as.factor(x$Transect$stratum)
+		x$Transect$retour <- as.factor(x$Transect$retour)
+		x$Transect$alpha <- 1 - x$Transect$transport
+		
 		p <- p + 
-			geom_segment(data=x$Transect, aes(x=lon_start, y=lat_start, xend=lon_stop, yend=lat_stop, group=stratum, colour=as.factor(stratum), alpha = 1 - transport, linetype=as.factor(retour)), show.legend=TRUE) + 
+			geom_segment(data=x$Transect, aes_string(x="lon_start", y="lat_start", xend="lon_stop", yend="lat_stop", group="stratum", colour="stratum", alpha="alpha", linetype="retour"), show.legend=TRUE) + 
 			scale_alpha(range = c(transport_alpha, 1), guide=FALSE) + 
 			scale_colour_discrete(guide=FALSE) + 
 			if(hasRetour) scale_linetype(name="retour") else scale_linetype(guide=FALSE) 
@@ -1479,6 +1531,10 @@ plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha
 	
 	# Add labels:
 	p <- p + xlab(xlab) + ylab(ylab)
+	
+	# Add stratum names:
+	p <- p + geom_text(data=x$Stratum, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"))
+	#annotate("text", x=x$Stratum$lon_centroid, y=x$Stratum$lat_centroid, label=x$Stratum$stratum, alpha=0.5, col=)
 	
 	# Run the plot
 	print(p)
@@ -1513,7 +1569,6 @@ plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha
 #' @rdname writeTransects
 #' 
 writeTransectsMaxSea <- function(x, projectName, dir=NULL, item.type=257, item.id=20, item.col=1, north="N", east="E", digits=3, byStratum=TRUE, ...){
-	
 	# Function for writing one stratum:
 	writeTransectsToMAxSea_OneStratum <- function(stratumInd, x, item.type=257, item.id=20, item.col=1, north="N", east="E", digits=3, ...){
 		# Extract the file name from the names of the input:
@@ -1560,7 +1615,6 @@ writeTransectsMaxSea <- function(x, projectName, dir=NULL, item.type=257, item.i
 #' @rdname writeTransects
 #' 
 writeTransectsINFO <- function(x, projectName, dir=NULL, digits=2, byStratum=TRUE){
-	
 	# Function for writing one stratum:
 	writeTransectsINFO_OneStratum <- function(stratumInd, x, digits=2){
 		# Extract the file name from the names of the input:
@@ -1608,7 +1662,6 @@ writeTransectsINFO <- function(x, projectName, dir=NULL, digits=2, byStratum=TRU
 #' @rdname writeTransects
 #' 
 writeTransectsTRACK <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, ...){
-	
 	# Function for writing one stratum:
 	writeTransectsTRACK_OneStratum <- function(stratumInd, x, ...){
 		# Extract the file name from the names of the input:
@@ -1638,7 +1691,7 @@ writeTransectsTRACK <- function(x, projectName, dir=NULL, digits=5, byStratum=TR
 #' @rdname writeTransects
 #' 
 writeTransectsGPX <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE){
-	
+	# Function for writing one stratum:
 	writeTransectsGPX__OneStratum <- function(stratumInd, x){
 		# Extract the file name from the names of the input:
 		filename <- names(x$transects)[stratumInd]
@@ -1647,7 +1700,8 @@ writeTransectsGPX <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE
 		this <- x$transects[[stratumInd]]
 		
 		out <- data.frame(wp=seq_len(nrow(this)), Long=round(this$lon_start, digits=digits), Lat=round(this$lat_start, digits=digits))
-		writeGPX(out, file=filename)
+		# Use the suggested pgirmess package:
+		pgirmess::writeGPX(out, file=filename)
 	}
 
 	# Split into strata (if byStratum==TRUE), and set the files names as names of the list:

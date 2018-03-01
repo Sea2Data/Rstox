@@ -115,7 +115,7 @@ g9[tolower(g9$synonym.name) == "torsk", ]
 g9[grep("torsk", g9$synonym.name, ignore.case=TRUE),]
 
 # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
-# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.6.R.
+# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
 
 }
 \keyword{NMD-API}

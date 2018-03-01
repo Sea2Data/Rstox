@@ -620,3 +620,7 @@ Other minor bug fixes.
 Added the parameter 'run' in getNMDdata(), which if set to FALSE only generates the project names, and does not download data and generate projects.
 
 Added the function aggregateBySpeciesCategory() which generates a species matrix with biotic stations as rows and station information and the species present in a reference file as columns.
+
+Added a check for missing not downloaded with getNMDdata().
+
+Added support for using year or cruise code as 'subset' in getNMDdata().
