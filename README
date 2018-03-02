@@ -67,3 +67,5 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.8.
 # 12. Added a check for missing not downloaded with getNMDdata().
 
 # 13. Added support for using year or cruise code as 'subset' in getNMDdata().
+
+# 14. Changed so that all matrix like reference data downloaded using getNMDinfo() are represented as data.frame with numeric values wherever possible (when no NAs induced using as.numeric()).

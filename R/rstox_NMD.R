@@ -312,6 +312,10 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, ...){
 	
 	##### Internal functions: #####
+	downloadFailedWarning <- function(x){
+		warning(paste0("Downloading failed for the following Survey Timeseries:\n\t", paste(x, collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
+	}
+	
 	# Function for converting a vector of serial numbers, which can be fully or partly sequenced (incriment of 1 between consecutive elements):
 	getSerialnoRanges <- function(x){
 		d <- diff(c(x))
@@ -373,7 +377,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		
 		# Warning if any downloads failed:
 		if(any(!success)){
-			warning(paste0("Downloading failed for the following Survey Timeseries:\n\t", paste(projectPathsOrig[!success], collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
+			downloadFailedWarning(projectPathsOrig[!success])
+			#warning(paste0("Downloading failed for the following Survey Timeseries:\n\t", paste(projectPathsOrig[!success], collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
 		}
 		
 		# Report project names if abbreviated:
@@ -472,8 +477,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			success <- file.exists(xmlfiles[valid]) & (file.info(xmlfiles[valid])$size > 0) %in% TRUE
 			# Warning if any downloads failed:
 			if(any(!success)){
+				downloadFailedWarning(URLs[!success])
 				#warning(paste0("Downloading failed for the following files:\n", paste(URLs[!success], collapse="\n\t")))
-				warning(paste0("Downloading failed for the following files:\n\t", paste(URLs[!success], collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
+				#warning(paste0("Downloading failed for the following files:\n\t", paste(URLs[!success], collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
 			}
 			
 			cruiseMatrixSplit[[i]] <- cbind(cruiseMatrixSplit[[i]], xmlfiles)
@@ -563,7 +569,11 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		success <- file.exists(xmlfiles) & (file.info(xmlfiles)$size > 0) %in% TRUE
 		# Warning if any downloads failed:
 		if(any(!success)){
-			warning(paste0("Downloading failed for the following files:\n", paste(xmlfiles[!success], collapse="\n\t")))
+			downloadFailedWarning(xmlfiles[!success])
+			#warning(paste0("Downloading failed for the following files:\n", paste(xmlfiles[!success], collapse="\n\t")))
+			#warning(paste0("Downloading failed for the following files:\n\t", paste(xmlfiles[!success], collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
+			
+			
 		}
 		
 		updateProject(projectName)
