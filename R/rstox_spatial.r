@@ -467,7 +467,8 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param knots				The speed to use in the stratum, given in knots.
 #' @param nmi				The distance to travel in the stratum in nautical miles.
 #' @param seed				The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.
-#' @param dt				The density of points populating the stratum polygons. The first element denotes the density in degrees to use for the geographical coordinates (longitude, latitude), whilst the second element if present denotes the density in nautical miles to use for the Cartesian coordinates before converting back to geographical coordinates. The first element preserves the stratum borders when converting to Cartesian coordinates, whilst the second elements preserves the shortest travel distance of the transects when converting back to geographical coordinates (inducing curved lines in geographical coordinates). 
+#' @param angsep			The separation in degrees of points populating the stratum polygons (geographical coordinates longitude, latitude). Low values preserve the stratum borders when converting to Cartesian coordinates. 
+#' @param distsep			The separation in nautical miles of points populating the transects in Cartesian coordinates before converting back to geographical coordinates. When given, this parameter preserves the shortest travel distance (great-circle distances) of the transects (inducing curved lines in geographical coordinates). 
 #' @param plot				Deprecated: Plots the transects in Cartesian coordintes. Use \code{\link{plotStratum}} instead().
 #' @param shapenames		A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.
 #' @param equalEffort		Logical: If TRUE, assign effort proportional to the area of each stratum.
@@ -512,34 +513,46 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @examples
 #' # Generate parallel transects with equal effort in each stratum (proportional to area):
 #' projectName <- "Test_Rstox"
-#' system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel",  
-#'     bearing="N", nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+#' system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
+#'     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+#' dev.new()
+#' plotStratum(Parallel)
 #' 
 #' # Zigzag with equal coverage probability:
-#' system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ",  
-#'     bearing="N", nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+#' system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
+#'     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+#' dev.new()
+#' plotStratum(Zigzag)
 #' 
 #' # The parallel survey use 23.39 percent of sailing distance for transport between transects, 
 #' # whereas the zigzag survey use 10.76 percent.
 #' Parallel$Survey
 #' Zigzag$Survey
 #' 
-#' # Plot the different survay plans:
-#' dev.new()
-#' plotStratum(Parallel)
-#' dev.new()
-#' plotStratum(Zigzag)
-#' 
 #' # Reduce effort in the last three strata, e.g. due to lost time due to bad weather in stratum 1:
-#' # Note that the line parameters$nmi <- NULL is required blow to effectively change the 'hours'.
-#' # The 'nmi', when specified, har precedence over 'hours'.
-#' parameters <- Parallel$parameters
-#' parameters$hours[2:4] <- parameters$hours[2:4] - 50
-#' parameters$nmi <- NULL
-#' system.time(Parallel2 <- surveyPlanner(projectName=projectName, parameters=parameters))
-#' 
+#' # Note that the parameter 'nmi' must be NULL (default) to effectively change the 'hours', since
+#' # 'nmi', when specified, har precedence over 'hours'. 
+#' # Also, the parameter 'equalEffort' must be FALSE (default) since TRUE implies recalculating
+#' # the distance to traveled in each stratum so that this distance is proportional to stratum area:
+#' hours <- Parallel$parameters$hours
+#' hours[2:4] <- hours[2:4] - 50
+#' system.time(Parallel2 <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
+#'     knots=10, seed=0, hours=hours))
 #' dev.new()
 #' plotStratum(Parallel2)
+#' 
+#' # Tour-retour zigzag in stratum 1 and 3:
+#' system.time(Zigzag2 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
+#'     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE)))
+#' dev.new()
+#' plotStratum(Zigzag2)
+#' 
+#' # Populate the transects with points separated by 10 nmi specified by the 'distsep' parameter, 
+#' # for visualizing the true track along the great-circle:
+#' system.time(Zigzag3 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
+#'     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE), distsep=10))
+#' dev.new()
+#' plotStratum(Zigzag3)
 #'
 #' @export
 #' @importFrom sp Lines Line SpatialLines
@@ -551,7 +564,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @importFrom rgdal readOGR
 #' @rdname surveyPlanner
 #' 
-surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, dt=1/60, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE) {
+surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, angsep=1/6, distsep=NULL, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE) {
 #surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, dt=1/60, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE) {
 	
 	############################################################
@@ -1150,10 +1163,10 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			intersectsCoordsList <- c(intersectsCoordsList, getTransectsOneDirection(xGrid=xGrid, corners=corners, spatialLinesPolygon=spatialLinesPolygon, seed=seed, type=type, retour=TRUE))
 		}
 		
-		# If 'dt' is given as a two element vector, the second element indicates populating the transects with points of distance dt[2]:
-		if(length(dt)>1){
+		# If 'distsep' is given as a two element vector, the second element indicates populating the transects with points of distance dt[2]:
+		if(length(distsep)){
 			for(i in seq_along(intersectsCoordsList)){
-				intersectsCoordsList[[i]] <- populatePath(intersectsCoordsList[[i]], dt=dt[2], addInfo=FALSE)
+				intersectsCoordsList[[i]] <- populatePath(intersectsCoordsList[[i]], dt=distsep, addInfo=FALSE)
 			}
 		}
 		
@@ -1271,7 +1284,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	# Define the stratum specific parameters:
 	parameterNames <- c("type", "bearing", "retour", "hours", "knots", "nmi", "seed", "t0")
 	# Save the input parameters for reference. These are included in the output:
-	Input <- list(projectName=projectName, rev=rev, toursFirst=toursFirst, dt=dt, plot=plot, margin=margin, shapenames=shapenames, equalEffort=equalEffort, byStratum=byStratum)
+	Input <- list(projectName=projectName, rev=rev, toursFirst=toursFirst, distsep=distsep, angsep=angsep, plot=plot, margin=margin, shapenames=shapenames, equalEffort=equalEffort, byStratum=byStratum)
 		
 		
 	# Read the the stratum polygons from a folder of shape files or from a StoX project:
@@ -1407,7 +1420,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	}
 	
 	# Populate the stratum polygon borders with denser points, in order to preserve the geographic coordinate definition when converting to Cartesian coordinates (i.e., follow a latitude if two points are on the same latitude. If given only by two points, the azimuthal equal distance projection will follow the great circle, which in general will not coincide with the intended equal latitude path):
-	lonlatPopulated <- lapply(lonlat, populatePath, dt=dt[1], addInfo=FALSE)
+	lonlatPopulated <- lapply(lonlat, populatePath, dt=angsep, addInfo=FALSE)
 	Input$lonlatPopulated <- lonlatPopulated
 	
 	# Convert to Cartesian:
@@ -1516,7 +1529,7 @@ plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha
 	# Add transects:
 	if(length(transect)){
 		# Use the retour as line type:
-		hasRetour <- length(unique(x$Transect$retour))
+		hasRetour <- length(unique(x$Transect$retour)) > 1
 		# Convert to factor:
 		x$Transect$stratum <- as.factor(x$Transect$stratum)
 		x$Transect$retour <- as.factor(x$Transect$retour)

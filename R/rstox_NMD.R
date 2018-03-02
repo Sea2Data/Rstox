@@ -79,7 +79,7 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 	###############################
 	##### Internal functions>>> #####
 	# Function used for extracting a data frame of the cruises used in a cruise series:
-	getCruiseSeriesCruises <- function(x, URLbase, name="Cruises"){
+	getCruiseSeriesCruises <- function(x, URLbase, name="Cruises", msg=FALSE){
 		this <- downloadXML(paste(URLbase, x, sep="/"), msg=msg)$Sample
 		# Get years and repeat by the number of cruises for each year
 		years <- unname(sapply(this, "[[", ".attrs"))
@@ -151,6 +151,13 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 		allMatrix[cbind(rowInd, match(allNames, allUniqueNames))] <- all
 		cbind(Ind=Ind, allMatrix)
 	}
+	# Convert to a data frame:
+	asNumericDataFrame <- function(data){
+		data <- as.data.frame(data, stringsAsFactors=FALSE)
+		# Convert all numeric columns to numeric, identified by no NAs when converting:
+		suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x)))) as.numeric(x) else x))
+		data <- as.data.frame(data, stringsAsFactors=FALSE)
+	}
 	##### <<<Internal functions #####
 	###############################
 	
@@ -210,7 +217,7 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 		}
 		if(recursive){
 			namesdata <- data
-			data <- lapply(data, getCruiseSeriesCruises, URLbase=URLbase)
+			data <- lapply(data, getCruiseSeriesCruises, URLbase=URLbase, msg=msg)
 			names(data) <- namesdata
 		}
 	}
@@ -258,6 +265,8 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 			if(length(data)){
 				# Remove elements with length 1, indicating time stamps and the like:
 				data <- data[sapply(data, length)>1]
+				
+				# 
 				if("element" %in% names(data)){
 					if("text" %in% names(data[[1]])){
 						data <- sapply(data[names(data)=="element"], "[[", "text")
@@ -265,12 +274,14 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 					else{
 						data <- as.matrix_full(data[names(data)=="element"])
 					}
+					data <- asNumericDataFrame(data)
 				}
 				# Special case for platform:
 				else if("platform" %in% names(data)){
 					data <- platformExtract(data)
 					if(vesseltype){
 						data <- as.matrix_full(lapply(data, head, 1))
+						data <- asNumericDataFrame(data)
 					}
 				}
 				# Special case for taxa:
@@ -278,11 +289,15 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 					attrs <- gettaxaMatrix(data, name=".attrs")
 					synonyms <- gettaxaMatrix(data, name="taxaSynonyms")
 					data <- merge(attrs, synonyms)
+					data <- asNumericDataFrame(data)
 				}
 				# Else do a basic simplification:
 				else if(is.list(data[[1]])){
 					data <- t(Reduce(cbind, data))
+					data <- asNumericDataFrame(data)
 				}
+				
+				
 			}
 		}
 	}
@@ -454,7 +469,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			# Check whether the files were downloaded. This could have been done by use of the output from download.file (0 for sucsess and positive for failure), but instead we check the existence of the files, and the size:
 			valid <- !is.na(xmlfiles)
 			URLs <- cruiseMatrixSplit[[i]][, StoX_data_types][valid]
-			browser()
 			success <- file.exists(xmlfiles[valid]) & (file.info(xmlfiles[valid])$size > 0) %in% TRUE
 			# Warning if any downloads failed:
 			if(any(!success)){
@@ -585,7 +599,18 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			subset = seq_len(nprojects)
 		}
 		else{
-			subset = subset[subset>=1 & subset<=nprojects]
+			if(all(nchar(subset) > 3) && any(subset %in% stsInfo[, "sampleTime"])){
+				subset <- which(subset == stsInfo[, "sampleTime"])
+			}
+			# Otherwise, restrict 'subset' to the range of projects:
+			else{
+				subset = subset[subset>=1 & subset<=nprojects]
+			}
+			if(length(subset)==0){
+				warning("The value of 'subset' excluded all years")
+				return(NULL)
+			}
+			#subset = subset[subset>=1 & subset<=nprojects]
 		}
 		projectParts <- projectParts[subset]
 		stsInfo <- stsInfo[subset, , drop=FALSE]
@@ -683,7 +708,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		}
 		# This adds the 'splitvec' as names of the 'cruiseMatrixSplit':
 		cruiseMatrixSplit <- split(cruiseMatrix, splitvec)
-		names(cruiseMatrixSplit) <- splitnames
+		names(cruiseMatrixSplit) <- unique(splitnames)
 		
 		# Discard cells with no data:
 		cruiseMatrixSplit <- cruiseMatrixSplit[sapply(cruiseMatrixSplit, function(xx) any(!is.na(xx[, StoX_data_types])))]
@@ -724,6 +749,10 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		# Otherwise, restrict 'subset' to the range of projects:
 		else{
 			subset = subset[subset>=1 & subset<=nprojects]
+		}
+		if(length(subset)==0){
+			warning("The value of 'subset' excluded all projects")
+			return(NULL)
 		}
 	}
 	cruiseMatrixSplit <- cruiseMatrixSplit[subset]

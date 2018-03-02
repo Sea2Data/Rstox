@@ -45,7 +45,5 @@ projectName <- "Test_Rstox"
 getPlots(projectName)
 # Get all reports:
 getReports(projectName)
-# Get a specific plot:
-getPlots(projectName, out="plotNASCDistribution")
 
 }

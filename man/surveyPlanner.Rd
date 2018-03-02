@@ -8,9 +8,9 @@
 surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   bearing = "N", rev = FALSE, retour = FALSE, toursFirst = FALSE,
   hours = 240, t0 = NULL, knots = 10, nmi = NULL, seed = 0,
-  dt = 1/60, plot = FALSE, margin = NULL, shapenames = list(longitude =
-  "long", latitude = "lat", stratum = "id"), equalEffort = FALSE,
-  byStratum = TRUE)
+  angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
+  shapenames = list(longitude = "long", latitude = "lat", stratum = "id"),
+  equalEffort = FALSE, byStratum = TRUE)
 
 plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
   transport_alpha = 0.1, google = FALSE, margin = 0.5,
@@ -41,7 +41,9 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 
 \item{seed}{The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.}
 
-\item{dt}{The density of points populating the stratum polygons. The first element denotes the density in degrees to use for the geographical coordinates (longitude, latitude), whilst the second element if present denotes the density in nautical miles to use for the Cartesian coordinates before converting back to geographical coordinates. The first element preserves the stratum borders when converting to Cartesian coordinates, whilst the second elements preserves the shortest travel distance of the transects when converting back to geographical coordinates (inducing curved lines in geographical coordinates).}
+\item{angsep}{The separation in degrees of points populating the stratum polygons (geographical coordinates longitude, latitude). Low values preserve the stratum borders when converting to Cartesian coordinates.}
+
+\item{distsep}{The separation in nautical miles of points populating the transects in Cartesian coordinates before converting back to geographical coordinates. When given, this parameter preserves the shortest travel distance (great-circle distances) of the transects (inducing curved lines in geographical coordinates).}
 
 \item{plot}{Deprecated: Plots the transects in Cartesian coordintes. Use \code{\link{plotStratum}} instead().}
 
@@ -106,33 +108,45 @@ The following types are implemented:
 \examples{
 # Generate parallel transects with equal effort in each stratum (proportional to area):
 projectName <- "Test_Rstox"
-system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel",  
-    bearing="N", nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
+    nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+dev.new()
+plotStratum(Parallel)
 
 # Zigzag with equal coverage probability:
-system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ",  
-    bearing="N", nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
+    nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+dev.new()
+plotStratum(Zigzag)
 
 # The parallel survey use 23.39 percent of sailing distance for transport between transects, 
 # whereas the zigzag survey use 10.76 percent.
 Parallel$Survey
 Zigzag$Survey
 
-# Plot the different survay plans:
-dev.new()
-plotStratum(Parallel)
-dev.new()
-plotStratum(Zigzag)
-
 # Reduce effort in the last three strata, e.g. due to lost time due to bad weather in stratum 1:
-# Note that the line parameters$nmi <- NULL is required blow to effectively change the 'hours'.
-# The 'nmi', when specified, har precedence over 'hours'.
-parameters <- Parallel$parameters
-parameters$hours[2:4] <- parameters$hours[2:4] - 50
-parameters$nmi <- NULL
-system.time(Parallel2 <- surveyPlanner(projectName=projectName, parameters=parameters))
-
+# Note that the parameter 'nmi' must be NULL (default) to effectively change the 'hours', since
+# 'nmi', when specified, har precedence over 'hours'. 
+# Also, the parameter 'equalEffort' must be FALSE (default) since TRUE implies recalculating
+# the distance to traveled in each stratum so that this distance is proportional to stratum area:
+hours <- Parallel$parameters$hours
+hours[2:4] <- hours[2:4] - 50
+system.time(Parallel2 <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
+    knots=10, seed=0, hours=hours))
 dev.new()
 plotStratum(Parallel2)
+
+# Tour-retour zigzag in stratum 1 and 3:
+system.time(Zigzag2 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
+    nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE)))
+dev.new()
+plotStratum(Zigzag2)
+
+# Populate the transects with points separated by 10 nmi specified by the 'distsep' parameter, 
+# for visualizing the true track along the great-circle:
+system.time(Zigzag3 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
+    nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE), distsep=10))
+dev.new()
+plotStratum(Zigzag3)
 
 }

@@ -561,7 +561,7 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 	
 	out$filename <- filename
 	out <- c(out, d)
-	out
+	invisible(out)
 }
 
 
@@ -1206,8 +1206,6 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 #' getPlots(projectName)
 #' # Get all reports:
 #' getReports(projectName)
-#' # Get a specific plot:
-#' getPlots(projectName, out="plotNASCDistribution")
 #'
 #' @export
 #' @rdname getPlots

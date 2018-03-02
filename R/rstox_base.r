@@ -895,7 +895,6 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #'
 runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("project", "baseline", "report", "name"), msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
 	# Open the project (avoiding generating multiple identical project which demands memory in Java):
-	#browser()
 	#projectName <- getProjectPaths(projectName)$projectName
 	# If reset==TRUE allow for the warning in getProject():
 	if(length(projectName)){
@@ -1712,20 +1711,20 @@ getProjectDataEnv <- function(projectName){
 as.matrix_full <- function(x){
 	# Scan for the field names:
 	if(length(colnames(x[[1]]))==0){
-	x <- lapply(x, t)
+		x <- lapply(x, t)
 	}
 	unames <- unique(unlist(lapply(x, colnames)))
 	# Get elements that have all fields, and use the first one to define the order of the field names:
 	fullLength <- sapply(x, length) == length(unames)
 	if(any(fullLength)){
-	unames <- colnames(x[[which(fullLength)[1]]])
+		unames <- colnames(x[[which(fullLength)[1]]])
 	}
 	# Fill inn the data:
 	for(i in seq_along(x)){
-	one <- rep(NA, length(unames))
-	names(one) <- unames
-	one[colnames(x[[i]])] <- x[[i]]
-	x[[i]] <- one
+		one <- rep(NA, length(unames))
+		names(one) <- unames
+		one[colnames(x[[i]])] <- x[[i]]
+		x[[i]] <- one
 	}
 	out <- matrix(unlist(x, use.names=FALSE), ncol=length(unames), byrow=TRUE)
 	rownames(out) <- NULL

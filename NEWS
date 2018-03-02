@@ -624,3 +624,5 @@ Added the function aggregateBySpeciesCategory() which generates a species matrix
 Added a check for missing not downloaded with getNMDdata().
 
 Added support for using year or cruise code as 'subset' in getNMDdata().
+
+Changed so that all matrix like reference data downloaded using getNMDinfo() are represented as data.frame with numeric values wherever possible (when no NAs induced using as.numeric()).

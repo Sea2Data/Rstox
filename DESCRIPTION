@@ -29,4 +29,5 @@ Imports:
 		sp,
 		XML
 Suggests: ggmap,
-    ncdf4
+    ncdf4,
+    pgirmess
