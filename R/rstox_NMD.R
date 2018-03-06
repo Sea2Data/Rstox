@@ -309,11 +309,11 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, ...){
+getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, ...){
 	
 	##### Internal functions: #####
-	downloadFailedWarning <- function(x){
-		warning(paste0("Downloading failed for the following Survey Timeseries:\n\t", paste(x, collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
+	downloadFailedWarning <- function(x, type=c("file", "sts")){
+		warning(paste0("Downloading failed for the following ", if(type[1]=="file") "files" else "Survey Timeseries", ":\n\t", paste(x, collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
 	}
 	
 	# Function for converting a vector of serial numbers, which can be fully or partly sequenced (incriment of 1 between consecutive elements):
@@ -377,7 +377,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		
 		# Warning if any downloads failed:
 		if(any(!success)){
-			downloadFailedWarning(projectPathsOrig[!success])
+			downloadFailedWarning(projectPathsOrig[!success], type="sts")
 			#warning(paste0("Downloading failed for the following Survey Timeseries:\n\t", paste(projectPathsOrig[!success], collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
 		}
 		
@@ -467,7 +467,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 						# Use the naming convention that NMD uses, which is 'datatype'_cruiseNumber_'cruiseNumber'_'ShipName'
 						cruise_shipname <- paste(NMD_data_types[j], "cruiseNumber", cruiseMatrixSplit[[i]][k,"Cruise"], cruiseMatrixSplit[[i]][k,"ShipName"], sep="_")
 						xmlfiles[k,j] <- file.path(projectPaths[i], "input", StoX_data_types[j], paste0(cruise_shipname, ".xml"))
-						suppressWarnings(downloadXML(URL, msg=FALSE, list.out=FALSE, file=xmlfiles[k,j]))
+						suppressWarnings(downloadXML(URL, msg=FALSE, list.out=FALSE, file=xmlfiles[k,j], timeout=timeout))
 					}
 				}
 			}
@@ -562,7 +562,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		for(i in seq_along(xmlfiles)){
 			URL <- getURLBySerialno(serialno=serialno[i,], year=year[1], tsn=tsn, API=API, ver=ver)
 			xmlfiles[i] <- file.path(projectPath, "input", "biotic", paste0(serialnoStrings[i], ".xml"))
-			downloadXML(URL, msg=msg, list.out=FALSE, file=xmlfiles[i])
+			downloadXML(URL, msg=msg, list.out=FALSE, file=xmlfiles[i], timeout=timeout)
 		}
 		
 		# Check whether the files were downloaded. This could have been done by use of the output from download.file (0 for sucsess and positive for failure), but instead we check the existence of the files, and the size:
@@ -792,10 +792,10 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 #' @export
 #' @rdname getNMDinfo
 #' 
-downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE){
+downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE, method="auto", timeout=NULL){
 	URL <- URLencode(URL)
 	if(msg){
-		cat(URL, "\n")
+		cat("Downloading", URL, "\n")
 	}
 	failed <- FALSE
 	if(msg){
@@ -806,7 +806,17 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE){
 	if(length(file)==0){
 		file <- tempfile()
 	}
-	tryCatch(download.file(URL, destfile=file, quiet=quiet), error=function(...) failed<<-TRUE)
+	# Set the timeout if given and on windows, in which case method needs to be "internal":
+	if(.Platform$OS.type == "windows" && length(timeout)){
+		old_timeout <- getOption("timeout")
+		method <- "internal"
+		options(timeout=timeout)
+	}
+	tryCatch(download.file(URL, destfile=file, quiet=quiet, method=method), error=function(...) failed<<-TRUE)
+	# Reset timeout:
+	if(.Platform$OS.type == "windows" && length(timeout)){
+		options(timeout=old_timeout)
+	}
 	if(failed){
 		warning(paste("Non-existent URL", URLdecode(URL)))
 		return(NULL)

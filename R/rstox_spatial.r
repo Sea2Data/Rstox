@@ -559,7 +559,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @importFrom rgeos gIntersection
 #' @import ggplot2
 #' @import data.table
-#' @importFrom tools file_path_sans_ext
+#' @importFrom tools file_path_sans_ext file_ext
 #' @importFrom utils head tail
 #' @importFrom rgdal readOGR
 #' @rdname surveyPlanner
@@ -1308,16 +1308,30 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		if(length(projectName) == 1 && isTRUE(file.info(projectName)$isdir)){
 			projectName <- list.files(projectName, full.names=TRUE)
 		}
-		dsn <- dirname(path.expand(projectName[1]))
-		layer <- tools::file_path_sans_ext(basename(projectName[1]))
-		shape <- rgdal::readOGR(dsn=dsn, layer=layer)
-		shape <- ggplot2::fortify(shape)
-		#lonlatAll <- data.frame(longitude=shape$long, latitude=shape$lat, stratum=shape$id)
-		lonlatAll <- data.frame(longitude=shape[[shapenames$longitude]], latitude=shape[[shapenames$latitude]], stratum=shape[[shapenames$stratum]])
-		lonlat <- split(lonlatAll, lonlatAll$stratum)
-		lonlat <- lapply(lonlat, "[", c("longitude", "latitude"))
-		strata <- unique(lonlatAll$stratum)
+		
+		if(any(tolower(tools::file_ext(projectName)) == "shp")){
+			dsn <- dirname(path.expand(projectName[1]))
+			layer <- tools::file_path_sans_ext(basename(projectName[1]))
+			shape <- rgdal::readOGR(dsn=dsn, layer=layer)
+			shape <- ggplot2::fortify(shape)
+			#lonlatAll <- data.frame(longitude=shape$long, latitude=shape$lat, stratum=shape$id)
+			lonlatAll <- data.frame(longitude=shape[[shapenames$longitude]], latitude=shape[[shapenames$latitude]], stratum=shape[[shapenames$stratum]])
+			lonlat <- split(lonlatAll, lonlatAll$stratum)
+			lonlat <- lapply(lonlat, "[", c("longitude", "latitude"))
+			strata <- unique(lonlatAll$stratum)
+		}
+		else{
+			shape <- read.table(projectName[1], sep="\t", stringsAsFactors=FALSE)
+			strata <- shape[,1]
+			lonlat <- lapply(shape[,2], getMatrixList)
+			lonlat <- lapply(lonlat, as.data.frame, col.names=c("longitude", "latitude"))
+			lonlat <- lapply(lonlat, setNames, c("longitude", "latitude"))
+			names(lonlat) <- strata
+			lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
+		}
+		
 		nstrata <- length(strata)
+	
 	}
 	else{
 		warning("'projectName' is not a project or shapefiles/folder of shapefiles")

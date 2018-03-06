@@ -1,4 +1,4 @@
-# Rstox version: 1.8.1 (latest alpha, 2018-03-02)
+# Rstox version: 1.8.1 (latest alpha, 2018-03-05)
 # R version: 3.4.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:

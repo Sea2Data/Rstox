@@ -15,10 +15,10 @@ getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
   group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
   ver = 1, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, run = TRUE, ...)
+  return.URL = FALSE, run = TRUE, timeout = NULL, ...)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
-  quiet = TRUE)
+  quiet = TRUE, method = "auto", timeout = NULL)
 }
 \arguments{
 \item{type}{A character string naming the type of information to return for the specifications given in 'spec'. Possible values are shown in the list below. Any reference data can be requested, and the names of the possible reference data are returned by running getNMDinfo():
