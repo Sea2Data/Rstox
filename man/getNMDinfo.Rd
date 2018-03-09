@@ -74,6 +74,8 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{run}{Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).}
 
+\item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal".}
+
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
 \item{URL}{The URL(s) to the xml data.}
@@ -83,6 +85,8 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{file}{The path to a the file to which the data are saved.}
 
 \item{quiet}{Used in download.file().}
+
+\item{method}{The download method. See \code{\link{download.file}}.}
 }
 \description{
 \code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr 

@@ -41,6 +41,8 @@
 #' @param list.out				Logical: If TRUE, convert the XML data to a list (time consuming).
 #' @param file					The path to a the file to which the data are saved.
 #' @param quiet					Used in download.file().
+#' @param method				The download method. See \code{\link{download.file}}.
+#' @param timeout				If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal".
 #'
 #' @details
 #' If non-standard characters are not shown as expected, it might be an issue of locale encoding. 
@@ -313,7 +315,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	
 	##### Internal functions: #####
 	downloadFailedWarning <- function(x, type=c("file", "sts")){
-		warning(paste0("Downloading failed for the following ", if(type[1]=="file") "files" else "Survey Timeseries", ":\n\t", paste(x, collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
+		#warning(paste0("Downloading failed for the following ", if(type[1]=="file") "files" else "Survey Timeseries", ":\n\t", paste(x, collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
+		warning(paste0("Downloading failed for the following ", if(type[1]=="file") "files" else "Survey Timeseries", ":\n\t", paste(x, collapse="\n\t")))
 	}
 	
 	# Function for converting a vector of serial numbers, which can be fully or partly sequenced (incriment of 1 between consecutive elements):

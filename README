@@ -1,4 +1,4 @@
-# Rstox version: 1.8.1 (latest alpha, 2018-03-05)
+# Rstox version: 1.8.1 (latest alpha, 2018-03-09)
 # R version: 3.4.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -16,7 +16,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.8.
 # Install from github using the devtools package:
 # devtools::install_github("Sea2Data/Rstox", ref="develop")
 
-# R should be installed as the 64 bit version (and 64 bit version ONLY for Windows 10).
+# R should be installed as the 64 bit version (and 64 bit version ONLY for Windows 10. To do this, uncheck the box "32-bit Files" when selecting components to install. If you are re-intalling an R that has both 32 and 64 bit, you will need to uninstall R first).
 # On Windows systems with adminstrator requirements, it is recommended to install R in C:/users/<user>/documents/R.
 
 # Note that 64 bit Java is required to run Rstox

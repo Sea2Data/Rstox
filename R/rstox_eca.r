@@ -216,31 +216,45 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		############################################
 		##### (9) Adjacent strata definitions: #####
 		############################################
+		# Get the stratum neighbours and convert to a list named with the strata names, and convert each element into a vector of stratum names:
 		stratumNeighbour <- baselineOutput$proc$stratumneighbour
 		stratumNeighbourList <- as.list(stratumNeighbour[,2])
 		names(stratumNeighbourList) <- stratumNeighbour[,1]
 		stratumNeighbourList <- lapply(stratumNeighbourList, function(xx) as.numeric(unlist(strsplit(xx, ","))))
-		# Extract only the areas present in the data:
-		# 2018-02-01 Fixed bug when extracting only the spatial areas present in the project, where before the indices covariateLink$spatial[,2] were selected, but now we do a match:
-		#stratumNeighbourList <- stratumNeighbour[covariateLink$spatial[,2],]
-		stratumNeighbourList <- stratumNeighbour[stratumNeighbour[,1] %in% covariateLink$spatial[,2],,drop=FALSE]
-		# Change introduced on 2018-02-01: 
+		
+		# Extract only the strata present in the data:
+		stratumNeighbourList <- stratumNeighbourList[names(stratumNeighbourList) %in% covariateLink$spatial[,2]]
+		
 		# Remove also the neighbours that are not present:
-		extractPresentAreasFromCommaSeparated <- function(x, valid){
-			if(is.character(x)){
-				x <- as.numeric(strsplit(x, ",")[[1]])
-				x <- intersect(x, valid)
-				paste(x, collapse=",")
-			}
-			else{
-				warning("The input must be a string of comma separated integers")
-				x
-			}
+		stratumNeighbourList <- lapply(stratumNeighbourList, function(x) x[x %in% names(stratumNeighbourList)])
+		numNeighbours <- sapply(stratumNeighbourList, length)
+		if(any(numNeighbours==0)){
+			warning(paste0("Some strata have no neighbours present in the data (stratum ", paste(names(stratumNeighbourList)[numNeighbours==0], collapse=", "), ") Please add neighbors to these strata. The present neighbours are:\n", paste(covariateLink$spatial[,2], collapse=", ")))
 		}
-		stratumNeighbourList[,2] <- sapply(stratumNeighbourList[,2], extractPresentAreasFromCommaSeparated, covariateLink$spatial[,2])
-		if(any(nchar(stratumNeighbourList[,2])==0)){
-			warning(paste0("Some strata have no neighbours present in the data (stratum ", paste(which(nchar(stratumNeighbourList[,2])==0), collapse=", "), ") Please add neighbors to these strata. The present neighbours are the following: ", paste(covariateLink$spatial[,2], collapse=",")))
-		}
+		
+		
+		
+		### # Extract only the areas present in the data:
+		### # 2018-02-01 Fixed bug when extracting only the spatial areas present in the project, where before the indices covariateLink$spatial[,2] were selected, but now we do a match:
+		### #stratumNeighbourList <- stratumNeighbour[covariateLink$spatial[,2],]
+		### stratumNeighbourList <- stratumNeighbour[stratumNeighbour[,1] %in% covariateLink$spatial[,2],,drop=FALSE]
+		### # Change introduced on 2018-02-01: 
+		### # Remove also the neighbours that are not present:
+		### extractPresentAreasFromCommaSeparated <- function(x, valid){
+		### 	if(is.character(x)){
+		### 		x <- as.numeric(strsplit(x, ",")[[1]])
+		### 		x <- intersect(x, valid)
+		### 		paste(x, collapse=",")
+		### 	}
+		### 	else{
+		### 		warning("The input must be a string of comma separated integers")
+		### 		x
+		### 	}
+		### }
+		### stratumNeighbourList[,2] <- sapply(stratumNeighbourList[,2], extractPresentAreasFromCommaSeparated, covariateLink$spatial[,2])
+		### if(any(nchar(stratumNeighbourList[,2])==0)){
+		### 	warning(paste0("Some strata have no neighbours present in the data (stratum ", paste(which(nchar(stratumNeighbourList[,2])==0), collapse=", "), ") Please add neighbors to these strata. The present neighbours are the following: ", paste(covariateLink$spatial[,2], collapse=",")))
+		### }
 		#############################################
 		
 		# Return all data in a list
