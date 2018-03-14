@@ -12,7 +12,11 @@ getRstoxDef(name)
 
 initiateRstoxEnv()
 }
+\arguments{
+\item{name}{The name of the Rstox definition to retrieve.}
+}
 \description{
 \code{getRstoxEnv} initiates the RstoxEnv environment if not existing.
+\code{getRstoxDef} gets an Rstox definition.
 }
 \keyword{internal}

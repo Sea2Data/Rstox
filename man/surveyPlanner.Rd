@@ -10,7 +10,7 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   hours = 240, t0 = NULL, knots = 10, nmi = NULL, seed = 0,
   angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
   shapenames = list(longitude = "long", latitude = "lat", stratum = "id"),
-  equalEffort = FALSE, byStratum = TRUE)
+  equalEffort = FALSE, byStratum = TRUE, strata = "all")
 
 plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
   transport_alpha = 0.1, google = FALSE, margin = 0.5,

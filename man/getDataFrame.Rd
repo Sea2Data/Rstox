@@ -15,7 +15,7 @@ getDataFrame1(baseline, processName = NULL, functionName = NULL,
 
 getDataFrameAtLevel(level, storage, data)
 
-getProcessDataTableAsDataFrame(baseline, tableName)
+getProcessDataTableAsDataFrame(projectName, tableName)
 }
 \arguments{
 \item{baseline}{A StoX baseline object}
@@ -31,6 +31,8 @@ getProcessDataTableAsDataFrame(baseline, tableName)
 \item{storage}{The StoX storage object}
 
 \item{data}{The StoX data}
+
+\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 
 \item{tableName}{Supported processdata tables: TRAWLASSIGNMENT, DISTANCEASSIGNMENT, PSUASSIGNMENT, DISTANCEPSU, PSUSTRATUM, STRATUMPOLYGON}
 }

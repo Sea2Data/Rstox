@@ -11,22 +11,23 @@
 \usage{
 writeTransectsMaxSea(x, projectName, dir = NULL, item.type = 257,
   item.id = 20, item.col = 1, north = "N", east = "E", digits = 3,
-  byStratum = TRUE, ...)
+  prefix = "", suffix = "", filenames = NULL, ...)
 
-writeTransectsINFO(x, projectName, dir = NULL, digits = 2,
-  byStratum = TRUE)
+writeTransectsINFO(x, projectName, dir = NULL, digits = 2, prefix = "",
+  suffix = "", filenames = NULL)
 
-writeTransectsTRACK(x, projectName, dir = NULL, digits = 5,
-  byStratum = TRUE, ...)
+writeTransectsTRACK(x, projectName, dir = NULL, digits = 5, prefix = "",
+  suffix = "", filenames = NULL, ...)
 
-writeTransectsGPX(x, projectName, dir = NULL, digits = 5,
-  byStratum = TRUE)
+writeTransectsGPX(x, projectName, dir = NULL, digits = 5, prefix = "",
+  suffix = "", filenames = NULL)
 
 writeTransects(x, projectName, dir = NULL, digits = 5, byStratum = TRUE,
-  cols = NULL, keepTransport = TRUE, text = "", ext = "txt", ...)
+  cols = NULL, keepTransport = TRUE, prefix = "", suffix = "",
+  filenames = NULL, ext = "txt", ...)
 
-getTransectFileName(x, projectName, text = "", ext = "txt", dir = NULL,
-  byStratum = TRUE)
+getTransectFileName(x, projectName, prefix = "", suffix = "", ext = "txt",
+  dir = NULL, byStratum = TRUE)
 }
 \arguments{
 \item{x}{The output from \code{\link{surveyPlanner}}.}
@@ -41,17 +42,17 @@ getTransectFileName(x, projectName, text = "", ext = "txt", dir = NULL,
 
 \item{digits}{Precision to use in the reports.}
 
-\item{byStratum}{Logical: If TRUE, create one file per stratum.}
-
 \item{...}{Parameters passed to \code{\link[utils]{write.table}}, \code{\link[utils]{write.csv}} and \code{\link[data.table]{fwrite}}. For \code{writeTransects} thie \code{...} contains the important variables \code{sep} specifying the separator used in CSV files, and \code{dateTimeAs} which defines how to save the time in \code{\link[data.table]{fwrite}}.}
+
+\item{byStratum}{Logical: If TRUE, create one file per stratum.}
 
 \item{cols}{The columns to write to file for \code{writeTransects}.}
 
 \item{keepTransport}{Logical: If TRUE, save also the transport stretches to the file.}
 
-\item{text}{A text to add to the files before the file extension.}
-
 \item{ext}{The file extension. For \code{writeTransects} \code{ext} = "nc" implies writing NetCDF files, and otherwise a CSV files are written.}
+
+\item{text}{A text to add to the files before the file extension.}
 }
 \value{
 The file names.

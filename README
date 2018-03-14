@@ -1,4 +1,4 @@
-# Rstox version: 1.8.1 (latest alpha, 2018-03-09)
+# Rstox version: 1.8.1 (latest alpha, 2018-03-14)
 # R version: 3.4.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -69,3 +69,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.8.
 # 13. Added support for using year or cruise code as 'subset' in getNMDdata().
 
 # 14. Changed so that all matrix like reference data downloaded using getNMDinfo() are represented as data.frame with numeric values wherever possible (when no NAs induced using as.numeric()).
+
+# 15. Added the parameter modelType in the functions runBaseline(), getBaseline(), getProcess() and getBaselineParameters().
+
+# 16. Fixed bug in getBaseline(), where data with incomplete comments (e.g., 'Ersfjorden-pumper 80 tonn til "Sklinnabanken') resulted in rows being dropped from the data.

@@ -626,3 +626,7 @@ Added a check for missing not downloaded with getNMDdata().
 Added support for using year or cruise code as 'subset' in getNMDdata().
 
 Changed so that all matrix like reference data downloaded using getNMDinfo() are represented as data.frame with numeric values wherever possible (when no NAs induced using as.numeric()).
+
+Added the parameter modelType in the functions runBaseline(), getBaseline(), getProcess() and getBaselineParameters().
+
+Fixed bug in getBaseline(), where data with incomplete comments (e.g., 'Ersfjorden-pumper 80 tonn til "Sklinnabanken') resulted in rows being dropped from the data.

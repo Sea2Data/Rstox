@@ -300,7 +300,7 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
 	# Baseline and biotic assignments:
 	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
-	assignments <- getBioticAssignments(baseline=baseline)
+	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Acoustic data:
 	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keept this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
@@ -344,7 +344,7 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
 	# Baseline and biotic assignments:
 	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
-	assignments <- getBioticAssignments(baseline=baseline)
+	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Run bootstrap:
 	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)

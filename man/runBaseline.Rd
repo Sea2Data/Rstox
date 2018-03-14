@@ -7,12 +7,12 @@
 \usage{
 runBaseline(projectName, startProcess = 1, endProcess = Inf,
   reset = FALSE, save = FALSE, out = c("project", "baseline", "report",
-  "name"), msg = TRUE, exportCSV = FALSE, warningLevel = 0,
-  parlist = list(), ...)
+  "name"), modelType = "baseline", msg = TRUE, exportCSV = FALSE,
+  warningLevel = 0, parlist = list(), ...)
 
 getBaseline(projectName, input = c("par", "proc"), proc = "all",
-  drop = TRUE, msg = TRUE, startProcess = 1, endProcess = Inf,
-  reset = FALSE, save = FALSE, parlist = list(), ...)
+  drop = TRUE, modelType = "baseline", msg = TRUE, startProcess = 1,
+  endProcess = Inf, reset = FALSE, save = FALSE, parlist = list(), ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -25,7 +25,9 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 
 \item{save}{Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.}
 
-\item{out}{The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object).}
+\item{out}{The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object). First element used.}
+
+\item{modelType}{The type of model to run, currently one of "baseline" and "report" (the latter referring to "baseline report"). First element used.}
 
 \item{msg}{Logical: if TRUE print information about the progress of reading the data.}
 

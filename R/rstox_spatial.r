@@ -564,7 +564,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @importFrom rgdal readOGR
 #' @rdname surveyPlanner
 #' 
-surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, angsep=1/6, distsep=NULL, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE) {
+surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, angsep=1/6, distsep=NULL, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE, strata="all") {
 #surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, dt=1/60, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE) {
 	
 	############################################################
@@ -687,15 +687,18 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		}
 		else{
 			if(deg){
-				angles <- bearing*pi/180
+				angles <- bearing * pi/180
 			}
 			else{
 				angles <- bearing
 			}
 		}
-		if(rev){
-			angles <- angles + pi
-		}
+		#if(rev){
+		#	angles <- angles + pi
+		#}
+		rev <- rep(as.numeric(rev), length.out=length(angles))
+		angles <- angles + rev * pi
+		
 		angles
 	}
 	
@@ -1231,18 +1234,23 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		# If margin is given, iterate to obtain transects with total track length deviating at most by 'margin' relative to the input track length (margin = 0.05 implies between 19  and 21 hours, say):
 		temp <- getTransectsByArea(nmi_rest=nmi_rest, area=area[stratum], fac=fac, corners=corners, xyRotated=xyRotated, type=parameters$type, bearing=parameters$bearing, seed=parameters$seed, knots=parameters$knots, retour=parameters$retour, plot=plot)
 		
+		numIter <- 1
 		if(length(margin) && is.numeric(margin)){
 			# Set the totalSailedDist, margin to use, and the last value for 'rest' and 'nmi_rest':
 			totalSailedDist <- 0
-			margin <- parameters$nmi * margin
+			margin_nmi <- parameters$nmi * margin
 			last_rest <- Inf
 			last_nmi_rest <- Inf
 			lastTemp <- NULL
 			# Iterate to get a calculated tracklength within the margins
-			while(abs(parameters$nmi - totalSailedDist) > margin){
+			while(abs(parameters$nmi - totalSailedDist) > margin_nmi){
 				temp <- getTransectsByArea(nmi_rest=nmi_rest, area=area[stratum], fac=fac, corners=corners, xyRotated=xyRotated, type=parameters$type, bearing=parameters$bearing, seed=parameters$seed, knots=parameters$knots, retour=parameters$retour, plot=plot)
+				
+				totalSailedDist1 <- getDistTime(temp$coords, t0=as.POSIXlt("2018-04-05 19:56:39 GMT", tz="GMT"), byStratum=FALSE)
+				totalSailedDist <- sum(totalSailedDist1$segmentLengths, na.rm=TRUE)
+				
 				# Update the tracklength and rest tracklength:
-				totalSailedDist <- temp$totalSailedDist
+				#totalSailedDist <- temp$Survey$total
 				rest <- parameters$nmi - totalSailedDist
 				# If increasing in rest value, break the loop and rerun with the previous settings:
 				if(abs(last_rest) < abs(rest)){
@@ -1257,7 +1265,10 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 				lastTemp <- temp
 				# Set new nmi_rest to use:
 				nmi_rest <- nmi_rest + rest
+				
+				numIter <- numIter + 1
 			}
+			cat("Number of iterations to achieve total sailed distance within ", margin, " of the requested nmi in stratum ", parameters$stratum, " (", parameters$nmi, "):", numIter, "\n", sep="")
 		}
 		
 		# Get x,y coordinates of the transects:
@@ -1291,12 +1302,11 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	if(all(isProject(projectName))){
 		# Get the baseline output and number of strata:
 		g <- getBaseline(projectName, endProcess="ReadProcessData", input="proc", proc=NULL, drop=FALSE)
-		strata <- g$processData$stratumpolygon$Stratum
-		nstrata <- length(strata)
-	
+		strataNames <- g$processData$stratumpolygon$Stratum
+		
 		# Get the strata polygons in geographic coordinates (longitude, latitude) in a list named with the strata names:
 		lonlat <- lapply(g$processData$stratumpolygon$Polygon, getMatrixList, data.frame.out=TRUE)
-		names(lonlat) <- strata
+		names(lonlat) <- strataNames
 		lonlat <- lapply(lonlat, "colnames<-", c("longitude", "latitude"))
 		# Test of southern hemisphere:
 		#lonlat <- lapply(lonlat, function(x) {x$latitude <- -x$latitude; x})
@@ -1318,25 +1328,35 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			lonlatAll <- data.frame(longitude=shape[[shapenames$longitude]], latitude=shape[[shapenames$latitude]], stratum=shape[[shapenames$stratum]])
 			lonlat <- split(lonlatAll, lonlatAll$stratum)
 			lonlat <- lapply(lonlat, "[", c("longitude", "latitude"))
-			strata <- unique(lonlatAll$stratum)
+			strataNames <- unique(lonlatAll$stratum)
 		}
 		else{
 			shape <- read.table(projectName[1], sep="\t", stringsAsFactors=FALSE)
-			strata <- shape[,1]
+			strataNames <- shape[,1]
 			lonlat <- lapply(shape[,2], getMatrixList)
 			lonlat <- lapply(lonlat, as.data.frame, col.names=c("longitude", "latitude"))
 			lonlat <- lapply(lonlat, setNames, c("longitude", "latitude"))
-			names(lonlat) <- strata
+			names(lonlat) <- strataNames
 			lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
 		}
-		
-		nstrata <- length(strata)
-	
 	}
 	else{
 		warning("'projectName' is not a project or shapefiles/folder of shapefiles")
 		return()
 	}
+	
+	# Include all or a subset of the strata:
+	if(identical(strata, "all")){
+		strata <- seq_along(strata)
+	}
+	else if(!all(strata < 0)){
+		strata <- strata[strata >= 1 & strata <= length(lonlat)]
+	}
+	lonlat <- lonlat[strata]
+	strataNames <- strataNames[strata]
+	nstrata <- length(lonlat)
+	
+	lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
 	
 	Input$lonlat <- lonlat
 	Input$lonlatAll <- lonlatAll
@@ -1397,9 +1417,9 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	# Add seed to the parameters:
 	if(length(parameters$seed)==0){
 		# Draw seeds for the transects:
-		if(length(seed)!=nstrata){
-			set.seed(seed)
-			seed <- getSeedV(seed, nstrata)
+		if(length(seed) < nstrata){
+			set.seed(seed[1])
+			seed <- getSeedV(seed[1], nstrata)
 		}
 		# Add to the parameters list:
 		parameters$seed <- seed
@@ -1432,6 +1452,9 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		###parameters$hours <- sum(parameters$hours) * area / sum(area)
 		parameters$hours <- parameters$nmi / parameters$knots
 	}
+	
+	# Convert parameters to a data frame and add stratum:
+	parameters <- as.data.frame(c(list(stratum=strataNames), parameters))
 	
 	# Populate the stratum polygon borders with denser points, in order to preserve the geographic coordinate definition when converting to Cartesian coordinates (i.e., follow a latitude if two points are on the same latitude. If given only by two points, the azimuthal equal distance projection will follow the great circle, which in general will not coincide with the intended equal latitude path):
 	lonlatPopulated <- lapply(lonlat, populatePath, dt=angsep, addInfo=FALSE)
@@ -1485,7 +1508,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	totalSailedDist <- getSailedDist(Transect, nmi=parameters$nmi, area=area, nmi.out=FALSE, byStratum=TRUE)
 	totalSailedDist1 <- getSailedDist(Transect, nmi=sum(parameters$nmi), area=sum(area), nmi.out=FALSE, byStratum=FALSE)
 	
-	Stratum <- data.frame(stratum=strata, stratum_centroid, parameters[parameterNames], totalSailedDist)
+	Stratum <- data.frame(stratum=strataNames, stratum_centroid, parameters[parameterNames], totalSailedDist)
 	rownames(Stratum) <- Stratum$stratum
 	
 	Survey <- data.frame(centroid, nmi=sum(parameters$nmi), totalSailedDist1, proj=proj)
@@ -1565,6 +1588,8 @@ plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha
 	
 	# Run the plot
 	print(p)
+	
+	return(p)
 }
 
 
@@ -1595,44 +1620,47 @@ plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha
 #' @export
 #' @rdname writeTransects
 #' 
-writeTransectsMaxSea <- function(x, projectName, dir=NULL, item.type=257, item.id=20, item.col=1, north="N", east="E", digits=3, byStratum=TRUE, ...){
+writeTransectsMaxSea <- function(x, projectName, dir=NULL, item.type=257, item.id=20, item.col=1, north="N", east="E", digits=3, prefix="", suffix="", filenames=NULL, ...){
 	# Function for writing one stratum:
 	writeTransectsToMAxSea_OneStratum <- function(stratumInd, x, item.type=257, item.id=20, item.col=1, north="N", east="E", digits=3, ...){
 		# Extract the file name from the names of the input:
-		filename <- names(x$transects)[stratumInd]
+		filename <- names(x$Transect)[stratumInd]
 		
 		# Select the current stratum:
-		this <- x$transects[[stratumInd]]
+		Transect <- x$Transect[[stratumInd]]
 		
 		# Create a matrix suited for loading in MaxSea:
-		numrow <- nrow(this)
+		numrow <- nrow(Transect)
 		out <- cbind(
 			rep(item.type, numrow),
 			rep(item.id, numrow),
 			rep(item.col, numrow),
-			round(this$abs_lat_start, digits=digits),
-			this$NorthSouth, 
+			round(Transect$abs_lat_start, digits=digits),
+			Transect$NorthSouth, 
 			#rep(north, numrow),
-			round(this$abs_lon_start, digits=digits),
-			this$EastWest)
+			round(Transect$abs_lon_start, digits=digits),
+			Transect$EastWest)
 			
 		# Write to the .asc file:
 	    write.table(out, file=filename, row.names=FALSE, col.names=FALSE, sep=",", quote=FALSE, ...)
 	}
 	
-	# Split into strata (if byStratum==TRUE), and set the files names as names of the list:
-	filenames <- getTransectFileName(x=x, projectName=projectName, text="", ext="asc", dir=dir, byStratum=byStratum)
+	# Split into strata, and set the files names as names of the list:
+	if(length(filenames)==0){
+		filenames <- getTransectFileName(x=x, projectName=projectName, prefix=prefix, suffix=suffix, ext="asc", dir=dir, byStratum=TRUE)
+	}
 	
 	# Add columns NorthSouth and EastWest, and abs_lat_start and abs_lon_start to the transects, for writing:
-	x$transects$NorthSouth <- c("N", "S")[as.numeric(x$transects$lat_start > 0) + 1]
-	x$transects$EastWest <- c("E", "W")[as.numeric(x$transects$lon_start > 0) + 1]
-	x$transects$abs_lat_start <- x$transects$lat_start
-	x$transects$abs_lon_start <- x$transects$lon_start
+	x$Transect$NorthSouth <- c("N", "S")[as.numeric(x$Transect$lat_start > 0) + 1]
+	x$Transect$EastWest <- c("E", "W")[as.numeric(x$Transect$lon_start > 0) + 1]
+	x$Transect$abs_lat_start <- x$Transect$lat_start
+	x$Transect$abs_lon_start <- x$Transect$lon_start
 	
-	x$transects <- split(x$transects, if(byStratum) x$transects$stratum else 1)
-	names(x$transects) <- filenames
+	#x$Transect <- split(x$Transect, if(byStratum) x$Transect$stratum else 1)
+	x$Transect <- split(x$Transect, x$Transect$stratum)
+	names(x$Transect) <- filenames
 	# Write the files:
-	lapply(seq_along(x$transects), writeTransectsToMAxSea_OneStratum, x=x, item.type=item.type, item.id=item.id, item.col=item.col, north=north, east=east, digits=digits, ...)
+	lapply(seq_along(x$Transect), writeTransectsToMAxSea_OneStratum, x=x, item.type=item.type, item.id=item.id, item.col=item.col, north=north, east=east, digits=digits, ...)
 	
 	# Return the file names
 	filenames
@@ -1641,29 +1669,33 @@ writeTransectsMaxSea <- function(x, projectName, dir=NULL, item.type=257, item.i
 #' @export
 #' @rdname writeTransects
 #' 
-writeTransectsINFO <- function(x, projectName, dir=NULL, digits=2, byStratum=TRUE){
+writeTransectsINFO <- function(x, projectName, dir=NULL, digits=2, prefix="", suffix="", filenames=NULL){
 	# Function for writing one stratum:
 	writeTransectsINFO_OneStratum <- function(stratumInd, x, digits=2){
 		# Extract the file name from the names of the input:
-		filename <- names(x$transects)[stratumInd]
+		filename <- names(x$Transect)[stratumInd]
+		
+		# Select the current stratum:
+		Transect <- x$Transect[[stratumInd]]
+		Stratum <- x$Stratum[[stratumInd]]
+		parameters <- x$parameters[[stratumInd]]
 		
 		# Get the total travelled distance and the survey coverage:
-		dist <- x$totalSailedDist$total[stratumInd]
-	    area.nm2 <- x$area[stratumInd]
+		dist <- Stratum$total
+	    area.nm2 <- Stratum$area
 	    Sur.cov <- dist / sqrt(area.nm2)
 		
 		# Select the current stratum:
-		this <- x$transects[[stratumInd]]
-		LatDeg <- floor(this$lat_start)
-		LonDeg <- floor(this$lon_start)
-		LatMin <- round(60*(this$lat_start  - LatDeg), digits=digits)
-		LonMin <- round(60*(this$lon_start - LonDeg), digits=digits)
+		LatDeg <- floor(Transect$lat_start)
+		LonDeg <- floor(Transect$lon_start)
+		LatMin <- round(60*(Transect$lat_start  - LatDeg), digits=digits)
+		LonMin <- round(60*(Transect$lon_start - LonDeg), digits=digits)
 		lonlat <- data.frame(LatDeg=LatDeg, LatMin=LatMin, LonDeg=LonDeg, LonMin=LonMin)
 		
 		# wWrite to the file:
 	    capture.output( cat("\n", format(c(date()), width=20, justify = "left")), file=filename)
-	    capture.output( cat("\n", "Stratum (Cruise region) ", format(x$strata[stratumInd], width=7, justify="right")), file=filename, append=TRUE)
-	    capture.output( cat("\n", "Speed and time available", format(c(paste(x$parameters$knots[stratumInd], "knots"), paste(x$parameters$hours[stratumInd], "h")), width=7, justify="right")), file=filename, append=TRUE)
+	    capture.output( cat("\n", "Stratum (Cruise region) ", format(Stratum$stratum, width=7, justify="right")), file=filename, append=TRUE)
+	    capture.output( cat("\n", "Speed and time available", format(c(paste(parameters$knots, "knots"), paste(parameters$hours, "h")), width=7, justify="right")), file=filename, append=TRUE)
 	    capture.output( cat("\n", "Stratum area (n.mi2)    ", format(area.nm2, width=7, justify="right")), file=filename, append=TRUE)
 	    capture.output( cat("\n", "Sailing distance (n.mi) ", format(dist, width=7, justify="right")), file=filename, append=TRUE)
 	    capture.output( cat("\n", "Survey coverage         ", format(Sur.cov, width=7, justify="right")), file=filename, append=TRUE)
@@ -1673,13 +1705,17 @@ writeTransectsINFO <- function(x, projectName, dir=NULL, digits=2, byStratum=TRU
 	    capture.output( cat("\n", " "), lonlat, file=filename, append=TRUE) 
 	}
 	
-	# Split into strata (if byStratum==TRUE), and set the files names as names of the list:
-	filenames <- getTransectFileName(x=x, projectName=projectName, text="INFO", ext="txt", dir=dir, byStratum=byStratum)
+	# Split into strata, and set the files names as names of the list:
+	if(length(filenames)==0){
+		filenames <- getTransectFileName(x=x, projectName=projectName, prefix=prefix, suffix=if(nchar(suffix)==0) "INFO" else suffix, ext="txt", dir=dir, byStratum=TRUE)
+	}
 	
-	x$transects <- split(x$transects, if(byStratum) x$transects$stratum else 1)
-	names(x$transects) <- filenames
+	x$Transect <- split(x$Transect, x$Transect$stratum)
+	x$Stratum <- split(x$Stratum, x$Stratum$stratum)
+	x$parameters <- split(x$parameters, x$parameters$stratum)
+	names(x$Transect) <- filenames
 	# Write the files:
-	lapply(seq_along(x$transects), writeTransectsINFO_OneStratum, x=x, digits=digits)
+	lapply(seq_along(x$Transect), writeTransectsINFO_OneStratum, x=x, digits=digits)
 	
 	# Return the file names
 	filenames
@@ -1688,26 +1724,28 @@ writeTransectsINFO <- function(x, projectName, dir=NULL, digits=2, byStratum=TRU
 #' @export
 #' @rdname writeTransects
 #' 
-writeTransectsTRACK <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, ...){
+writeTransectsTRACK <- function(x, projectName, dir=NULL, digits=5, prefix="", suffix="", filenames=NULL, ...){
 	# Function for writing one stratum:
 	writeTransectsTRACK_OneStratum <- function(stratumInd, x, ...){
 		# Extract the file name from the names of the input:
-		filename <- names(x$transects)[stratumInd]
+		filename <- names(x$Transect)[stratumInd]
 		
 		# Select the current stratum:
-		this <- x$transects[[stratumInd]]
+		Transect <- x$Transect[[stratumInd]]
 		
-		out <- data.frame(Line=1, longitude=round(this$lon_start, digits=digits), latitude=round(this$lat_start, digits=digits))
+		out <- data.frame(Line=1, longitude=round(Transect$lon_start, digits=digits), latitude=round(Transect$lat_start, digits=digits))
 		write.csv(out, file=filename, row.names=FALSE, ...)
 	}
 	
-	# Split into strata (if byStratum==TRUE), and set the files names as names of the list:
-	filenames <- getTransectFileName(x=x, projectName=projectName, text="TRACK", ext="txt", dir=dir, byStratum=byStratum)
+	# Split into strata, and set the files names as names of the list:
+	if(length(filenames)==0){
+		filenames <- getTransectFileName(x=x, projectName=projectName, prefix=prefix, suffix=if(nchar(suffix)==0) "TRACK" else suffix, ext="txt", dir=dir, byStratum=TRUE)
+	}
 	
-	x$transects <- split(x$transects, if(byStratum) x$transects$stratum else 1)
-	names(x$transects) <- filenames
+	x$Transect <- split(x$Transect, x$Transect$stratum)
+	names(x$Transect) <- filenames
 	# Write the files:
-	lapply(seq_along(x$transects), writeTransectsTRACK_OneStratum, x=x, ...)
+	lapply(seq_along(x$Transect), writeTransectsTRACK_OneStratum, x=x, ...)
 	
 	# Return the file names
 	filenames
@@ -1717,27 +1755,29 @@ writeTransectsTRACK <- function(x, projectName, dir=NULL, digits=5, byStratum=TR
 #' @importFrom data.table fwrite
 #' @rdname writeTransects
 #' 
-writeTransectsGPX <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE){
+writeTransectsGPX <- function(x, projectName, dir=NULL, digits=5, prefix="", suffix="", filenames=NULL){
 	# Function for writing one stratum:
 	writeTransectsGPX__OneStratum <- function(stratumInd, x){
 		# Extract the file name from the names of the input:
-		filename <- names(x$transects)[stratumInd]
+		filename <- names(x$Transect)[stratumInd]
 		
 		# Select the current stratum:
-		this <- x$transects[[stratumInd]]
+		Transect <- x$Transect[[stratumInd]]
 		
-		out <- data.frame(wp=seq_len(nrow(this)), Long=round(this$lon_start, digits=digits), Lat=round(this$lat_start, digits=digits))
+		out <- data.frame(wp=seq_len(nrow(Transect)), Long=round(Transect$lon_start, digits=digits), Lat=round(Transect$lat_start, digits=digits))
 		# Use the suggested pgirmess package:
 		pgirmess::writeGPX(out, file=filename)
 	}
 
-	# Split into strata (if byStratum==TRUE), and set the files names as names of the list:
-	filenames <- getTransectFileName(x=x, projectName=projectName, text="", ext="gpx", dir=dir, byStratum=byStratum)
+	# Split into strata, and set the files names as names of the list:
+	if(length(filenames)==0){
+		filenames <- getTransectFileName(x=x, projectName=projectName, prefix=prefix, suffix=suffix, ext="gpx", dir=dir, byStratum=TRUE)
+	}
 	
-	x$transects <- split(x$transects, if(byStratum) x$transects$stratum else 1)
-	names(x$transects) <- filenames
+	x$Transect <- split(x$Transect, x$Transect$stratum)
+	names(x$Transect) <- filenames
 	# Write the files:
-	lapply(seq_along(x$transects), writeTransectsGPX__OneStratum, x=x)
+	lapply(seq_along(x$Transect), writeTransectsGPX__OneStratum, x=x)
 	
 	# Return the file names
 	filenames
@@ -1747,84 +1787,92 @@ writeTransectsGPX <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE
 #' @importFrom data.table fwrite
 #' @rdname writeTransects
 #' 
-writeTransects <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, cols=NULL, keepTransport=TRUE, text="", ext="txt", ...){
+writeTransects <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, cols=NULL, keepTransport=TRUE, prefix="", suffix="", filenames=NULL, ext="txt", ...){
 	
 	# Function for writing one stratum:
 	writeTransects_OneStratum <- function(stratumInd, x, cols, keepTransport, ext, units, ...){
 		# Extract the file name from the names of the input:
-		filename <- names(x$transects)[stratumInd]
+		filename <- names(x$Transect)[stratumInd]
 		# Select the current stratum:
-		this <- x$transects[[stratumInd]]
+		Transect <- x$Transect[[stratumInd]]
 		
 		# Select the appropriate columns, and only the transect rows (not transport):
 		if(!keepTransport){
-			this <- this[this$transport==0, , drop=FALSE]
+			Transect <- Transect[Transect$transport==0, , drop=FALSE]
 		}
-		this <- this[, cols, drop=FALSE]
-		numericCols <- sapply(this, is.numeric)
-		this[,numericCols] <- round(this[,numericCols], digits=digits)
+		Transect <- Transect[, cols, drop=FALSE]
+		numericCols <- sapply(Transect, is.numeric)
+		Transect[,numericCols] <- round(Transect[,numericCols], digits=digits)
 		
 		# Write the data:
 		if(ext=="nc"){
 			library(ncdf4)
 			# Define the variables with Length and dimension state:
-			L <- nrow(this)
+			L <- nrow(Transect)
 			dimState <- ncdim_def(name="Row", units="count", vals=seq_len(L))
 			ncvars <- lapply(seq_along(cols), function(i) ncvar_def(cols[i], units=units[i], dim=dimState))
-	      	# Create the NetCDF file:
+			
+			# Create the NetCDF file:
 			ncnew <- nc_create(filename, ncvars)
 			# Write the variables to the file:
-			lapply(seq_along(cols), function(i) ncvar_put(nc=ncnew, varid=cols[i], vals=this[[cols[i]]], start=1, count=L))
-			# Close the file:
+			lapply(seq_along(cols), function(i) ncvar_put(nc=ncnew, varid=cols[i], vals=Transect[[cols[i]]], start=1, count=L))
+			
+			ncatt_put(nc=ncnew, varid=0, attname="UNIX epoch time", "1970-01-01 00:00:00")
+			
+	      	# Close the file:
 			nc_close(ncnew)
 		}
 		else{
-			data.table::fwrite(this, filename, ...)
+			data.table::fwrite(Transect, filename, ...)
 		}
 	}
 	
 	# Define units of all present columns_
 	allcols <- c(
-		"stratum", "transect", "segment", "transport", "retour", 
-		"lon_start", "lon_mid", "lon_stop", "lat_start", "lat_mid", "lat_stop", 
-		"x_start", "y_start", "x_mid", "y_mid", "x_stop", "y_stop", 
-		"time_start", "time_stop", "time_mid", 
+		"stratum", "transect", "segment", "transport", "retour", "type", 
+		"lon_start", "lon_stop", "lon_mid", "lat_start", "lat_stop", "lat_mid", 
+		"knots", 
+		"x_start", "x_stop", "x_mid", "y_start", "y_stop", "y_mid", 
 		"dist_start", "dist_stop", "dist_mid", 
+		"time_start", "time_stop", "time_mid", 
 		"segmentLengths")
 	allunits <- c(
-		"String", "Integer", "Integer", "Integer", "Logical", 
+		"String", "Integer", "Integer", "Integer", "Logical", "String", 
 		rep("Decimal degrees", 6), 
+		"Knots", 
 		rep("Nautical miles", 6), 
-		rep("UNIX time", 3), 
 		rep("Nautical miles", 3), 
+		rep("UNIX time", 3), 
 		"Nautical miles")
 	
 	# Define the columns to keep:
 	if(!length(cols)){
 		cols <- c(
-			"stratum", "transect", "segment", "transport", "retour", 
+			"stratum", "transect", "segment", "transport", "retour", "type", "knots", 
 			"lon_start", "lon_stop", "lat_start", "lat_stop", 
-			"time_start", "time_stop", 
 			"dist_start", "dist_stop", 
+			"time_start", "time_stop", 
 			"segmentLengths"
 		)
 	}
 	else if(tolower(cols)=="all"){
-		cols <- colnames(x$transects)
+		cols <- colnames(x$Transect)
 	}
 	if(!keepTransport){
 		cols <- cols[cols != "transport"]
 	}
 	
-	units <- allunits[match(allcols, cols)]
+	units <- allunits[match(cols, allcols)]
 				 
 	# Split into strata (if byStratum==TRUE), and set the files names as names of the list:
-	filenames <- getTransectFileName(x=x, projectName=projectName, text=text, ext=ext, dir=dir, byStratum=byStratum)
+	if(length(filenames)==0){
+		filenames <- getTransectFileName(x=x, projectName=projectName, prefix=prefix, suffix=suffix, ext=ext, dir=dir, byStratum=byStratum)
+	}
 	
-	x$transects <- split(x$transects, if(byStratum) x$transects$stratum else 1)
-	names(x$transects) <- filenames
+	x$Transect <- split(x$Transect, if(byStratum) x$Transect$stratum else 1)
+	names(x$Transect) <- filenames
 	# Write the files:
-	lapply(seq_along(x$transects), writeTransects_OneStratum, x=x, cols=cols, keepTransport=keepTransport, ext=ext, units=units, ...)
+	lapply(seq_along(x$Transect), writeTransects_OneStratum, x=x, cols=cols, keepTransport=keepTransport, ext=ext, units=units, ...)
 	
 	# Return the file names
 	filenames
@@ -1833,7 +1881,7 @@ writeTransects <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, c
 #' @export
 #' @rdname writeTransects
 #' 
-getTransectFileName <- function(x, projectName, text="", ext="txt", dir=NULL, byStratum=TRUE){
+getTransectFileName <- function(x, projectName, prefix="", suffix="", ext="txt", dir=NULL, byStratum=TRUE){
 	# If 'dir' is not given, use the report dir of the project:
 	if(length(dir)==0){
 		dir <- getProjectPaths(projectName)$RReportDir
@@ -1851,9 +1899,12 @@ getTransectFileName <- function(x, projectName, text="", ext="txt", dir=NULL, by
 	}
 	# Set the path(s) containing transect type and possibly stratum:
 	Transects <- paste0("Transects_", type)
-	stratum <- paste0("_Stratum_", unique(x$strata))
-	if(nchar(text)){
-		text <- paste0("_", text)
+	stratum <- paste0("_Stratum_", unique(x$Stratum$stratum))
+	if(nchar(prefix)){
+		prefix <- paste0(prefix, "_")
 	}
-	file.path(dir, paste0(Transects, if(byStratum) stratum, text, ".", ext))
+	if(nchar(suffix)){
+		suffix <- paste0("_", suffix)
+	}
+	file.path(dir, paste0(prefix, Transects, if(byStratum) stratum, suffix, ".", ext))
 }
