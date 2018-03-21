@@ -5,7 +5,7 @@
 \title{Download a zipped StoX project to a specified project path.}
 \usage{
 downloadProjectZip(URL, projectName = NULL, projectRoot = NULL,
-  cleanup = TRUE, ow = TRUE, msg = TRUE)
+  cleanup = TRUE, ow = TRUE, msg = TRUE, onlyone = TRUE)
 }
 \arguments{
 \item{URL}{The URL of the zipped project.}
@@ -17,6 +17,8 @@ downloadProjectZip(URL, projectName = NULL, projectRoot = NULL,
 \item{cleanup}{Logical: if FALSE, the downloaded zip file is not deleted.}
 
 \item{ow, msg}{See \code{\link{getow}}.}
+
+\item{onlyone}{Logical: If TRUE, only one project is checked (no for loop).}
 }
 \description{
 Download a zipped StoX project to a specified project path.

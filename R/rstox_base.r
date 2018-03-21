@@ -2251,12 +2251,13 @@ parString2data.frame <- function(string){
 #' @param projectRoot	The root directory of the project in which to save the downloaded files (set this if you wish to place the files in a project specified by its name, and not in the default root directory).
 #' @param cleanup		Logical: if FALSE, the downloaded zip file is not deleted.
 #' @param ow,msg		See \code{\link{getow}}.
+#' @param onlyone   	Logical: If TRUE, only one project is checked (no for loop).
 #'
 #' @export
 #' @keywords internal
 #' @rdname downloadProjectZip
 #'
-downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=TRUE, ow=TRUE, msg=TRUE){
+downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=TRUE, ow=TRUE, msg=TRUE, onlyone=TRUE){
 	# Get the project path. If 'projectName' is not given, set this to a temporary name, and use the project name stored in the zip file. If the project path is given in 'projectName', all is good:
 	if(length(projectName)==0){
 		projectPath <- getProjectPaths(projectName="temporaryZipDownload", projectRoot=projectRoot)$projectPath
@@ -2272,7 +2273,7 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 	# Treat overwriting before downloading if the projectName was given:
 	if(length(projectName)){
 		if(file.exists(projectPath)){
-			temp <- getow(ow, projectPath, onlyone=TRUE, msg=msg)
+			temp <- getow(ow, projectPath, onlyone=onlyone, msg=msg)
 			# Return from the funciton if not overwriting:
 			if(temp$jumpToNext){
 				# Added appropriate return value as per notice from Ibrahim on 2018-02-05 (changed from FALSE to 1 (see the Value section of ?download.file) on 2018-03-01):
@@ -2296,7 +2297,7 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 		projectPath <- unzipPath
 		# Treat overwriting:
 		if(file.exists(projectPath)){
-			temp <- getow(ow, projectPath, onlyone=TRUE, msg=msg)
+			temp <- getow(ow, projectPath, onlyone=onlyone, msg=msg)
 			# Return from the funciton if not overwriting:
 			if(temp$jumpToNext){
 				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:

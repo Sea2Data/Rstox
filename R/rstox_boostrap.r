@@ -253,7 +253,8 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #'
 #' @examples
 #' \dontrun{
-#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")}
+#' projectName <- "Test_Rstox"
+#' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")
 #'
 #' @importFrom stats terms as.formula
 #'

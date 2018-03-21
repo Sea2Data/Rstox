@@ -1040,7 +1040,7 @@ reportAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL
 #' @keywords internal
 #' @rdname reportAbundance
 #' 
-reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE){
+reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, digits=6){
 	# Read the saved data from the R model. In older versions the user loaded the file "rmodel.RData" separately, but in the current code the environment "RstoxEnv" is declared on load of Rstox, and all relevant outputs are assigned to this environment:
 	projectEnv <- loadProjectData(projectName=projectName, var=level)
 	varInd <- abbrMatch(var[1], c("Abundance", "weight"), ignore.case=TRUE)
@@ -1127,6 +1127,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	# Before, as.numeric() was added in as.data.frame() for some reason, but as.data.frame() should convert numerics to numeric properly:
 	#out <- as.data.frame(lapply(out, as.numeric))
 	out <- as.data.frame(out)
+	# Order the rows:
 	orderFact1 <- if(length(grp1) && length(out[[grp1]])) out[[grp1]] else integer(nrow(out))
 	orderFact2 <- if(length(grp2) && length(out[[grp2]])) out[[grp2]] else integer(nrow(out))
 	out <- out[order(orderFact2, orderFact1, na.last=FALSE),]
@@ -1155,6 +1156,13 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 		filename <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_")), ".txt")
 		moveToTrash(filename)
 		writeLines(paste(names(plottingUnit), unlist(plottingUnit), sep=": "), con=filename)
+		
+		# Set significant digits in the printed file:
+		#suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
+		print(out)
+		#options(scipen=999)
+		areNumeric <- sapply(out, is.numeric)
+		out[areNumeric] <- lapply(out[areNumeric], signif, digits=digits)
 		suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
 	}
 	else{

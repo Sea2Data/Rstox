@@ -113,6 +113,17 @@ system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel", 
 dev.new()
 plotStratum(Parallel)
 
+# Running surveyPlanner() on a project takes some time, since the project has to be opened and the process data read to obtain the strata. A quicker way is to specify the strata definitions directly, either as the path to a file such as file.path(dirname(getProjectPaths()$projectRoot), "polygon", "norwegian_sea2014.txt"), or as a folder or vector of paths to shapefiles:
+# This produces a different strata system than that in the Test_Rstox project:
+system.time(Parallel <- surveyPlanner(projectName=file.path(dirname(getProjectPaths()$projectRoot), "polygon", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
+    nmi=2000, knots=10, seed=0, equalEffort=TRUE))
+dev.new()
+plotStratum(Parallel)
+
+# Write the transects to one csv file (to write one file per stratum use byStratum=TRUE). Use ext="nc" to write to a NetCDF4 file. Use 'dir' to specify the directory in which to place the file(s) (otherwise the files are placed in the R Report directory of the project):
+filename <- writeTransects(Parallel, projectName=projectName, byStratum=FALSE)
+filename
+
 # Zigzag with equal coverage probability:
 system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))

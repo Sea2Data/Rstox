@@ -95,9 +95,4 @@ list with (1) the abundance by length in the orginal model, (2) the abundance by
 \details{
 Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (bootstrapMethod="AcousticTrawl"), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 }
-\examples{
-\dontrun{
-boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")}
-
-}
 \keyword{internal}

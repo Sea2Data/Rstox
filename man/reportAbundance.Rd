@@ -26,7 +26,7 @@ reportAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
 
 reportAbundanceAtLevel(projectName, var = "Abundance", unit = NULL,
   baseunit = NULL, level = "bootstrapImpute", grp1 = "age", grp2 = NULL,
-  numberscale = 1e+06, plotOutput = FALSE, write = FALSE)
+  numberscale = 1e+06, plotOutput = FALSE, write = FALSE, digits = 6)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

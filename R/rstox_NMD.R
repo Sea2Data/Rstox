@@ -123,6 +123,7 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 			# Column added on 2018-01-29 on request from Edvin:
 			platformNumber <- x$.attrs["platformNumber"]
 			out <- cbind(nation=unname(x$nation$.attrs), platformNumber=platformNumber, platformType=unname(x$platformType$.attrs), codes, dates)
+			out <- as.data.frame(out)
 		}
 		# Drop elements with length 1, indicating time stamps or similar:
 		x <- x[sapply(x, length)>1]
@@ -282,7 +283,15 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 				else if("platform" %in% names(data)){
 					data <- platformExtract(data)
 					if(vesseltype){
-						data <- as.matrix_full(lapply(data, head, 1))
+						# Changed to extracting all info from the latest velidTo:
+						extractLatestValidTo <- function(data){
+							latestVslidTo <- tail(sort(data$validTo), 1)
+							equalToLatestVslidTo <- data$validTo==latestVslidTo
+							as.data.frame(t(apply(data[equalToLatestVslidTo,], 2, function(x) head(x[!is.na(x)], 1))))
+						}
+						data <- lapply(data, extractLatestValidTo)
+						data <- as.matrix_full(data)
+						#data <- as.matrix_full(lapply(data, head, 1))
 						data <- asNumericDataFrame(data)
 					}
 				}
@@ -375,6 +384,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			URL = paste0(URL, downloadtype)
 			#projectPaths[i] <- file.path(dir, paste0(abbrevWords(sts), "_", stsInfo[i,"sampleTime"]))
 			
+			# The following using onlyone=nsts==1 did not work, since typing "ya" did not continue the loop:
+			#success[i] <- downloadProjectZip(URL=URL, projectName=projectPaths[i], cleanup=cleanup, msg=msg, ow=ow, onlyone=nsts==1)$success
 			success[i] <- downloadProjectZip(URL=URL, projectName=projectPaths[i], cleanup=cleanup, msg=msg, ow=ow)$success
 		}
 		
