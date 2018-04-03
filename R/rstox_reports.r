@@ -1161,8 +1161,8 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 		#suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
 		print(out)
 		#options(scipen=999)
-		areNumeric <- sapply(out, is.numeric)
-		out[areNumeric] <- lapply(out[areNumeric], signif, digits=digits)
+		#areNumeric <- sapply(out, is.numeric)
+		#out[areNumeric] <- lapply(out[areNumeric], signif, digits=digits)
 		suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
 	}
 	else{
