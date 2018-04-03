@@ -38,7 +38,7 @@
 #' @importFrom rgeos gArea
 #' @rdname polyArea
 #' 
-polyArea <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), input="longlat", ...) {
+polyArea_test <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), input="longlat", ...) {
 	# Convert to xy if given in longlat:
 	if(input=="longlat"){
 		x <- geo2xy(x, par=par, inv=FALSE, ...)
@@ -81,7 +81,7 @@ geo2xy <- function(x, par=list(proj="aeqd", units="kmi", lon_0=NA, lat_0=NA, x_0
 #' @importFrom sp CRS spTransform proj4string
 #' @rdname polyArea
 #' 
-polyAreaOld <- function(x) {
+polyArea <- function(x) {
 	# We need rgdal when AreaMethod=Acurate in StratumArea!!!!
 	###if(is.numeric(x)){
 	###	x <- paste0("MULTIPOLYGON(((", paste(apply(x, 1, paste, collapse=" "), collapse=", "), ")))")
