@@ -246,15 +246,18 @@ getDataFrameAtLevel <- function(level, storage, data) {
 	
 	# A grave error was found when reading all data from 2016 (all serialno), where serial number were missing in e.g., FishStation versus CatchSample. This was tracked to the read.csv() of getDataFrameAtLevel(), where uncompleted quotes resulted in removed lines. The solution was to add the parameter quote=NULL:
 	#out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8")
-	out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL)
-	# Interpret true/false as TRUE/FALSE (move along the columns of 'out'):
-	for(i in seq_along(out)){
-		if(length(out[[i]])>0 && head(out[[i]], 1) %in% c("true", "false")){
-		 	out[[i]] <- as.logical(out[[i]])
-		}
-	}
-	out
+	### out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL)
+	### # Interpret true/false as TRUE/FALSE (move along the columns of 'out'):
+	### for(i in seq_along(out)){
+	### 	if(length(out[[i]])>0 && head(out[[i]], 1) %in% c("true", "false")){
+	### 	 	out[[i]] <- as.logical(out[[i]])
+	### 	}
+	### }
+	### out
 	#apply(out, 2, function(xx) if(head(xx, 1) %in% c("true", "false")) as.logical(xx) else xx)
+	
+	# Added the funciton readBaselineFiles() for use in this function and as a separate utility:
+	readBaselineFiles(textConnection(s))
 }
 #' 
 #' @export

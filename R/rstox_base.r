@@ -1160,7 +1160,7 @@ matchModeltype <- function(modelType){
 	# Small funciton for matching the input model type string with the valid model types:
 	validModelTypes <- c("Baseline", "Baseline Report")
 	validModelTypes_RstoxNames <- c("baseline", "report")
-	hit <- which(validModelTypes_RstoxNames %in% modelType[1])
+	hit <- which(validModelTypes_RstoxNames %in% tolower(modelType[1]))
 	if(length(hit)==0){
 		stop(paste0("Invalid value of 'modelType'. The following model types implemented ", paste(validModelTypes_RstoxNames, collapse=", ")))
 	}
@@ -2575,3 +2575,43 @@ getPrecisionLevel <- function(projectName){
 	project$getPrecisionLevel()
 }
 
+
+#*********************************************
+#*********************************************
+#' Function for reading output files from StoX (Baseline or Baseline report)
+#'
+#' @param files	The files to read.
+#'
+#' @value The content of the files in a list named with the process names and possibly names of multiple tables for each process.
+#'
+#' @export
+#' @keywords internal
+#' @rdname readBaselineFiles
+#'
+readBaselineFiles <- function(files){
+	# Function for converting string to logical:
+	string2logical <- function(x){
+		if(length(x)>0 && any(x %in% c("true", "false"))){
+		 	x <- as.logical(x)
+		}
+		x
+	}
+	
+	# Read the files:
+	out <- lapply(files, function(x) read.csv(x, sep="\t", stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL))
+	for(i in seq_along(out)){
+		out[[i]] <- lapply(out[[i]], string2logical)
+		out[[i]] <- as.data.frame(out[[i]], stringsAsFactors=FALSE)
+	}
+	
+	# Get the names of the processes and data frames:
+	files_split <- strsplit(basename(files), "_")
+	dataFrameNames <- sapply(lapply(files_split, "[", -1), paste, collapse="_")
+	processNames <- sapply(files_split, "[", 2)
+	
+	# Set the names of the data frames:
+	names(out) <- dataFrameNames
+	out <- split(out, processNames)
+	out <- lapply(out, function(x) if(length(x)==1) x[[1]] else x)
+	out
+}
