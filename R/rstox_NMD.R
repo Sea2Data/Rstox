@@ -21,7 +21,7 @@
 #' @param simplify				Logical: if TRUE simplify the data into matrices instead of complicated lists in some cases like taxa.
 #' @param cruise				Either the code of a cruise, such as "2015116", or the full or short name of a cruise series or survey time series. In the current version, if given as a cruise code, the parameter 'shipname' must be given as well, based on which the path to the cruise is searched for by functionallity provided by NMD. For cruises prior to the year 1995 several vessels can be linked to the same cruise code, and as of version 2 the user will by default be asked to specify which vessel(s) to specify the vessels when this occurs, instead of having to specify the cruise initially.
 #' @param year					Used in conjunction with 'shipname' to get all cruises from one or more years from a specific ship.
-#' @param shipname				Specifies the ship name (see 'cruise' and 'year').
+#' @param shipname				Specifies the ship name WITHOUT call signal, e.g., "G.O.Sars" and not "G.O.Sars_LMEL" (see 'cruise' and 'year').
 #' @param serialno				A vector of the requested serial numbers.
 #' @param tsn					The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.
 #' @param datatype				The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datatype=NULL (default) returns all possible data.

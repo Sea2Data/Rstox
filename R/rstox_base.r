@@ -2580,7 +2580,7 @@ getPrecisionLevel <- function(projectName){
 #*********************************************
 #' Function for reading output files from StoX (Baseline or Baseline report)
 #'
-#' @param files	The files to read.
+#' @param x	The files to read.
 #'
 #' @value The content of the files in a list named with the process names and possibly names of multiple tables for each process.
 #'
@@ -2588,30 +2588,38 @@ getPrecisionLevel <- function(projectName){
 #' @keywords internal
 #' @rdname readBaselineFiles
 #'
-readBaselineFiles <- function(files){
+readBaselineFiles <- function(x){
 	# Function for converting string to logical:
-	string2logical <- function(x){
-		if(length(x)>0 && any(x %in% c("true", "false"))){
-		 	x <- as.logical(x)
+	string2logical <- function(y){
+		string2logicalOne <- function(z){
+			if(length(z)>0 && any(z %in% c("true", "false"))){
+			 	z <- as.logical(z)
+			}
+			z
 		}
-		x
+		as.data.frame(lapply(y, string2logicalOne), stringsAsFactors=FALSE)
 	}
 	
 	# Read the files:
-	out <- lapply(files, function(x) read.csv(x, sep="\t", stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL))
-	for(i in seq_along(out)){
-		out[[i]] <- lapply(out[[i]], string2logical)
-		out[[i]] <- as.data.frame(out[[i]], stringsAsFactors=FALSE)
+	if("textConnection" %in% class(x)){
+		out <- read.csv(x, sep="\t", stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL)
+		out <- string2logical(out)
 	}
+	else{
+		out <- lapply(x, function(y) read.csv(y, sep="\t", stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL))
+		for(i in seq_along(out)){
+			out[[i]] <- string2logical(out[[i]])
+		}
 	
-	# Get the names of the processes and data frames:
-	files_split <- strsplit(basename(files), "_")
-	dataFrameNames <- sapply(lapply(files_split, "[", -1), paste, collapse="_")
-	processNames <- sapply(files_split, "[", 2)
+		# Get the names of the processes and data frames:
+		x_split <- strsplit(basename(x), "_")
+		dataFrameNames <- sapply(lapply(x_split, "[", -1), paste, collapse="_")
+		processNames <- sapply(x_split, "[", 2)
 	
-	# Set the names of the data frames:
-	names(out) <- dataFrameNames
-	out <- split(out, processNames)
-	out <- lapply(out, function(x) if(length(x)==1) x[[1]] else x)
+		# Set the names of the data frames:
+		names(out) <- dataFrameNames
+		out <- split(out, processNames)
+		out <- lapply(out, function(y) if(length(y)==1) y[[1]] else y)
+	}
 	out
 }
