@@ -2589,6 +2589,11 @@ getPrecisionLevel <- function(projectName){
 #' @rdname readBaselineFiles
 #'
 readBaselineFiles <- function(x){
+	# Return NULL if no files are given:
+	if(length(x)){
+		return(NULL)
+	}
+	
 	# Function for converting string to logical:
 	string2logical <- function(y){
 		string2logicalOne <- function(z){
