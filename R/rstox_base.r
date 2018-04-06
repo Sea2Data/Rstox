@@ -2590,7 +2590,7 @@ getPrecisionLevel <- function(projectName){
 #'
 readBaselineFiles <- function(x){
 	# Return NULL if no files are given:
-	if(length(x)){
+	if(length(x)==0){
 		return(NULL)
 	}
 	
