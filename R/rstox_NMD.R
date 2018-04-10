@@ -409,13 +409,13 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		invisible(projectPaths)
 	}
 	# Function for extracting URLs to a list of cruises. The conversion from the names given by 'datatype' to the names given by 'StoX_data_types' is needed to save the data in the StoX directory structure:
-	getCruiseStrings <- function(csInfo, datatype, StoX_data_types, ver){
+	getCruiseStrings <- function(csInfo, datatype, StoX_data_types, ver, API="http://tomcat7.imr.no:8080/apis/nmdapi"){
 		# Use the search function in version 1:
 		if(ver==1){
 			# Pick out the first element of 'csInfo', since a list is always returned from getNMDinfo():
 			#cruiseURL <- apply(csInfo[[1]][,c("Cruise", "ShipName"), drop=FALSE], 1, searchNMDCruise, datatype=datatype[1])
 			cat("Searching for cruises...\n")
-			cruiseURL <- t(apply(csInfo[,c("Cruise", "ShipName"), drop=FALSE], 1, searchNMDCruise, datatype=datatype))
+			cruiseURL <- t(apply(csInfo[,c("Cruise", "ShipName"), drop=FALSE], 1, searchNMDCruise, datatype=datatype, ver=ver, API=API))
 			#cruiseURL <- sapply(datatype, function(xx) sub(datatype[1], xx, cruiseURL))
 			#if(length(dim(cruiseURL))==0){
 			#	dim(cruiseURL) <- c(1, length(cruiseURL))
@@ -655,7 +655,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		cs <- getNMDinfo(c("cs", cruise))
 		csInfo <- cs[[1]]
 		cs <- names(cs)
-		cruiseMatrix <- getCruiseStrings(csInfo, datatype, StoX_data_types, ver)
+		cruiseMatrix <- getCruiseStrings(csInfo=csInfo, datatype=datatype, StoX_data_types=StoX_data_types, ver=ver, API=API)
 		# Discard any filebase, which is a prefix on the StoX project name:
 		filebase <- NULL
 		# Set the name of the cruise series, which will be used in the project names, appended suffixes of year and ship name:
@@ -681,7 +681,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			cruiseMatrix <- NULL
 		}
 		else{
-			cruiseMatrix <- getCruiseStrings(data.frame(Cruise=cruise, ShipName=shipname), datatype, StoX_data_types, ver)
+			cruiseMatrix <- getCruiseStrings(data.frame(Cruise=cruise, ShipName=shipname), datatype=datatype, StoX_data_types=StoX_data_types, ver=ver, API=API)
 			yearbase <- cruiseMatrix[,StoX_data_types]
 			yearbase <- yearbase[!is.na(yearbase)]
 			if(length(yearbase)==0){

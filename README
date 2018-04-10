@@ -1,4 +1,4 @@
-# Rstox version: 1.8.1 (latest alpha, 2018-04-06)
+# Rstox version: 1.8.1 (latest alpha, 2018-04-10)
 # R version: 3.4.3
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -36,7 +36,8 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.8.
 # 	sudo ln -s $(/usr/libexec/java_home)/jre/lib/server/libjvm.dylib /usr/local/lib
 # 	sudo R CMD javareconf
 # Open R (close and then open if already open) and install rJava:
-# 	install.packages('rJava', type='source')
+# 	install.packages('rJava', type="binary")
+# If this fails, try installing from source instead using install.packages('rJava', type='source')
 # Then the installed Rstox should work.
 
 
