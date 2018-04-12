@@ -2619,7 +2619,8 @@ readBaselineFiles <- function(x){
 		# Get the names of the processes and data frames:
 		x_split <- strsplit(basename(x), "_")
 		dataFrameNames <- sapply(lapply(x_split, "[", -1), paste, collapse="_")
-		processNames <- sapply(x_split, function(y) paste(y[seq(2, length(y)-2)], sep="_"))
+		# processNames <- sapply(x_split, function(y) paste(y[seq(2, max(2, length(y)-2))], collapse="_"))
+		processNames <- sapply(x_split, "[", 2)
 	
 		# Set the names of the data frames:
 		names(out) <- dataFrameNames
