@@ -1091,6 +1091,7 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 #' getProcess("Test_Rstox", c("SuperIndAbundance", "StratumArea"))
 #'
 #' @export
+#' @rdname getProcess
 #' @keywords internal
 #'
 getProcess <- function(projectName, proc="all", modelType="baseline"){
@@ -1154,6 +1155,7 @@ getProcess <- function(projectName, proc="all", modelType="baseline"){
 }
 #'
 #' @export
+#' @rdname getProcess
 #' @keywords internal
 #'
 matchModeltype <- function(modelType){
@@ -1837,7 +1839,10 @@ as.matrix_full <- function(x){
 	for(i in seq_along(x)){
 		one <- rep(NA, length(unames))
 		names(one) <- unames
-		one[colnames(x[[i]])] <- x[[i]]
+		temp <- unlist(x[[i]])
+		one[colnames(temp)] <- temp
+		
+		#one[colnames(x[[i]])] <- x[[i]]
 		x[[i]] <- one
 	}
 	out <- matrix(unlist(x, use.names=FALSE), ncol=length(unames), byrow=TRUE)

@@ -55,6 +55,8 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 
 \item{byStratum}{Logical: If FALSE, include the transport between strata in the total traveled distance given in $Survey of the output.}
 
+\item{strata}{Specification of the strata to include, either given as the string "all", implying all strata to be used, og a index vector as given to "[]" (negative values may be used to exclude specific strata).}
+
 \item{x}{The output from \code{\link{surveyPlanner}}.}
 
 \item{zoom}{The zoom to use for google maps}
@@ -113,14 +115,21 @@ system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel", 
 dev.new()
 plotStratum(Parallel)
 
-# Running surveyPlanner() on a project takes some time, since the project has to be opened and the process data read to obtain the strata. A quicker way is to specify the strata definitions directly, either as the path to a file such as file.path(dirname(getProjectPaths()$projectRoot), "polygon", "norwegian_sea2014.txt"), or as a folder or vector of paths to shapefiles:
+# Running surveyPlanner() on a project takes some time, since the project has to be opened and
+# the process data read to obtain the strata. A quicker way is to specify the strata definitions 
+# directly, either as the path to a file such as 
+# file.path(dirname(getProjectPaths()$projectRoot), "polygon", "norwegian_sea2014.txt"), 
+# or as a folder or vector of paths to shapefiles:
 # This produces a different strata system than that in the Test_Rstox project:
-system.time(Parallel <- surveyPlanner(projectName=file.path(dirname(getProjectPaths()$projectRoot), "polygon", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
+system.time(Parallel <- surveyPlanner(projectName=file.path(dirname(getProjectPaths()$projectRoot),
+     "polygon", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 dev.new()
 plotStratum(Parallel)
 
-# Write the transects to one csv file (to write one file per stratum use byStratum=TRUE). Use ext="nc" to write to a NetCDF4 file. Use 'dir' to specify the directory in which to place the file(s) (otherwise the files are placed in the R Report directory of the project):
+# Write the transects to one csv file (to write one file per stratum use byStratum=TRUE). 
+# Use ext="nc" to write to a NetCDF4 file. Use 'dir' to specify the directory in which to place 
+# the file(s) (otherwise the files are placed in the R Report directory of the project):
 filename <- writeTransects(Parallel, projectName=projectName, byStratum=FALSE)
 filename
 
@@ -159,5 +168,10 @@ system.time(Zigzag3 <- surveyPlanner(projectName=projectName, type="RectEnclZZ",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE), distsep=10))
 dev.new()
 plotStratum(Zigzag3)
+
+# Write the transects to a NetCDF4 file in the output folder of the project (alternatively specify
+# the directory using 'dir', or the filenames using 'filenames'. Also use 'prefix' or 'suffix' 
+# to add info to the file names):
+writeTransects(Zigzag3, projectName, ext="nc")
 
 }

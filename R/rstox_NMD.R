@@ -285,9 +285,12 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 					if(vesseltype){
 						# Changed to extracting all info from the latest velidTo:
 						extractLatestValidTo <- function(data){
-							latestVslidTo <- tail(sort(data$validTo), 1)
-							equalToLatestVslidTo <- data$validTo==latestVslidTo
-							as.data.frame(t(apply(data[equalToLatestVslidTo,], 2, function(x) head(x[!is.na(x)], 1))))
+							if(length(data$validTo)==0){
+								return(head(data, 1))
+							}
+							latestValidTo <- tail(sort(data$validTo), 1)
+							equalToLatestValidTo <- data$validTo==latestValidTo
+							as.data.frame(t(apply(data[equalToLatestValidTo,], 2, function(x) head(x[!is.na(x)], 1))))
 						}
 						data <- lapply(data, extractLatestValidTo)
 						data <- as.matrix_full(data)
