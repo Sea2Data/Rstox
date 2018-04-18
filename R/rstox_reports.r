@@ -219,7 +219,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #' 
 #' Impute missing data within the bootstrap data object
 #' 
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param seed			The seed for the random number generator (used for reproducibility)
 #' @param cores			An integer giving the number of cores to run the bootstrapping over.
 #' @param saveInd		Logical: if TRUE save the imputing indices.
@@ -468,7 +468,7 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' Probability densities, component density, are plotted (so that the histogram has a total area of one).
 #' Plot is exported to a tif- or png-file
 #'
-#' @param projectName   The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param format		The file format of the saved plot, given as a string naming the function to use for saving the plot (such as bmp, jpeg, png, tiff), with \code{filename} as its first argument. Arguments fo the functions are given as \code{...}. Dimensions are defaulted to width=5000, height=3000, resolution to 500 dpi. If \code{format} has length 0, the plot is shown in the graphics window, and not saved to file.
 #' @param filetag			A character string to append to the file name (before file extension).
 #' @param ...			Parameters passed on from other functions.
@@ -561,7 +561,7 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 	
 	out$filename <- filename
 	out <- c(out, d)
-	out
+	invisible(out)
 }
 
 
@@ -571,7 +571,7 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 #' 
 #' Plots boxplot of bootstrap results together with Coefficient of Variation (CV).
 #' 
-#' @param projectName   	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param bootstrapMethod	The bootstrap method used to generate the data.
 #' @param var				A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values). For plotAbundance_SweptAreaTotal() \code{var} is hard coded to "Count"
 #' @param unit				A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).
@@ -935,7 +935,7 @@ factorNAfirst <- function(x){
 #' \code{reportAbundance_SweptAreaTotal} returns summary statistics generated from bootstrap replicates for projects with only total catch.
 #' \code{reportAbundanceAtLevel} is used in \code{reportAbundance_AcousticTrawl} and \code{reportAbundance_SweptAreaLength} for generating the report for each level "bootstra" or "bootstrapImpute".
 #' 
-#' @param projectName		The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param bootstrapMethod	The method used when bootstrapping (see \code{\link{runBootstrap}}). This option selects different versions of functions such as \code{\link{reportAbundance}}}}. Note: Currently (Rstox_1.7) the report is equal for bootstrapMethod = "AcousticTrawl" and "SweptAreaLength".
 #' @param var				A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).
 #' @param unit				A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).
@@ -1040,7 +1040,7 @@ reportAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL
 #' @keywords internal
 #' @rdname reportAbundance
 #' 
-reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE){
+reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, digits=6){
 	# Read the saved data from the R model. In older versions the user loaded the file "rmodel.RData" separately, but in the current code the environment "RstoxEnv" is declared on load of Rstox, and all relevant outputs are assigned to this environment:
 	projectEnv <- loadProjectData(projectName=projectName, var=level)
 	varInd <- abbrMatch(var[1], c("Abundance", "weight"), ignore.case=TRUE)
@@ -1127,6 +1127,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	# Before, as.numeric() was added in as.data.frame() for some reason, but as.data.frame() should convert numerics to numeric properly:
 	#out <- as.data.frame(lapply(out, as.numeric))
 	out <- as.data.frame(out)
+	# Order the rows:
 	orderFact1 <- if(length(grp1) && length(out[[grp1]])) out[[grp1]] else integer(nrow(out))
 	orderFact2 <- if(length(grp2) && length(out[[grp2]])) out[[grp2]] else integer(nrow(out))
 	out <- out[order(orderFact2, orderFact1, na.last=FALSE),]
@@ -1155,6 +1156,13 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 		filename <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_")), ".txt")
 		moveToTrash(filename)
 		writeLines(paste(names(plottingUnit), unlist(plottingUnit), sep=": "), con=filename)
+		
+		# Set significant digits in the printed file:
+		#suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
+		print(out)
+		#options(scipen=999)
+		#areNumeric <- sapply(out, is.numeric)
+		#out[areNumeric] <- lapply(out[areNumeric], signif, digits=digits)
 		suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
 	}
 	else{
@@ -1179,7 +1187,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 #' \code{getPlots} calls all or a subset of the plotting functions in Rstox (name starting with plot). \cr \cr
 #' \code{getReports} calls all or a subset of the report functions in Rstox (name starting with report). \cr \cr
 #'
-#' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param out			A string vector giving the plot or report functions to run. See getRstoxEnv()$keywords for available keywords.
 #' @param options		A string vector holding the parameters passed on to the plotting functions. These parameters overrides identically named parameters in '...'. The parameters must be formatted as R expressions (as typed into an R console), and separated by semicolons (";"). See examples below:
 #' \describe{
@@ -1206,8 +1214,6 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 #' getPlots(projectName)
 #' # Get all reports:
 #' getReports(projectName)
-#' # Get a specific plot:
-#' getPlots(projectName, out="plotNASCDistribution")
 #'
 #' @export
 #' @rdname getPlots
@@ -1231,7 +1237,7 @@ getReports <- function(projectName, out="all", options="", ...){
 #' \code{runFunsRstox} Runs all functions starting with the input parameter \code{string}. \cr \cr
 #' \code{getFunsRstox} Gets all functions starting with the input parameter \code{string}. \cr \cr
 #'
-#' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param string		A string giving the first characters of the functions to run, such as "plot" or "report".
 #' @param out			A string vector giving the plot or report functions to run. See getRstoxEnv()$keywords for available keywords.
 #' @param options		A string vector holding the parameters passed on to the plotting functions. These parameters overrides identically named parameters in '...'. The parameters must be formatted as R expressions (as typed into an R console), and separated by semicolons (";"). See examples below:
@@ -1357,3 +1363,98 @@ getFunsRstox <- function(string, out="all"){
 	return(outFuns)
 }
 
+
+#*********************************************
+#*********************************************
+#' Generate species matrix with biotic stations as rows and station information and the species present in the \code{ref} file as columns. One matrix generated per variable \code{var}.
+#'
+#' @param projectName						The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param ref								The path to a file linking species to species categories, specifically named by \code{specVar} or \code{specVar.ref} and \code{catVar}. The file must be a CSV (comma separated) file with UTF-8 encoding.
+#' @param specVar,specVar.bio,specVar.ref	Names of the species columns in the data and in the \code{ref} file. When only specifying \code{specVar}, a common column name is assumed.
+#' @param catVar							The name of the species category column in the \code{ref} file.
+#' @param bioticProc						The process from which the biotic data should be extracted from the project.
+#' @param stationVar						The names of the columns of the biotic data identifying the biotic stations. These columns will be concatenated.
+#' @param var								The names of the columns for which the species matrices should be generated.
+#' @param na.as								The value to use for missing data (e.g., species categories that are not present in a station).
+#' @param drop.out							Logical: If TRUE (default) unlist if only one variable is given in \code{var}.
+#' @param close								Logical: If TRUE (default) close the project after reading the data.
+#' @param ...								Parameters passed on to getBaseline(), e.g. for changing the baseline parameters (adding filters).
+
+#' 
+#' @return A list of matrices (dropped to a matrix if only one variable is specified in \code{var}) with stations as rows and station information and the species present in the \code{ref} file as columns.
+#'
+#' @export
+#' @keywords internal
+#' @rdname aggregateBySpeciesCategory
+#' 
+aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", stationVar=c("cruise", "serialno"), var=c("weight", "count"), na.as=0, drop.out=TRUE, close=TRUE, msg=FALSE, ...){
+	# Function used for converting a matrix into a data frame and appending the rownames as the first column:
+	createTempDataFrame <- function(x){
+		out <- data.frame(stationVar=rownames(x), as.data.frame(x))
+		names(out) <- c(stationVar, colnames(x))
+		out
+	}
+	# Add concatination of 
+	appendStationFirst <- function(x, stationVar=c("cruise", "serialno")){
+		Station <- do.call(paste, x[stationVar])
+		cbind(Station=Station, x)
+	}
+	
+	# Read the ref file:
+	ref <- read.csv2(ref, stringsAsFactors=FALSE)
+	ref[[specVar]] <- tolower(ref[[specVar]])
+	# Test whether the specVar and catVar are present in the ref file:
+	if(!all(c(specVar.ref, catVar) %in% names(ref))){
+		stop("All of 'specVar.ref' (possibly specified commonly for the biotic data and the ref file by 'specVar') and 'catVar' must be present in the 'ref' file")
+	}
+	
+	# Get the project output:
+	if(msg){
+		cat("Generating species matrix for project ", projectName, "\n")
+	}
+	g <- getBaseline(projectName, input=NULL, proc=bioticProc, ...)
+	closeProject(projectName)
+	
+	# Merge station and catch data from the bioticProc, but keep all stations through all = TRUE:
+	out <- g$FilterBiotic_BioticData_FishStation.txt
+	out <- appendStationFirst(out, stationVar=stationVar)
+	data <- g$FilterBiotic_BioticData_CatchSample.txt
+	data <- appendStationFirst(data, stationVar=stationVar)
+	availableVars <- names(data)
+	
+	if(!specVar.bio %in% names(data)){
+		stop("'specVar.bio' (possibly specified commonly for the biotic data and the ref file by 'specVar') must be present in the biotic data of the project")
+	}
+
+	# Convert to lower case for the species, as per protocol of StoX.
+	data[[specVar]] <- tolower(data[[specVar]])
+	# Remove any columns named by 'catVar', but only if specVar != catVar:
+	if(specVar != catVar){
+		data <- data[, names(data) != catVar]
+	}
+	# Append the ref file to the data, and keep all species in the reference file:
+	data <- merge(data, ref, by=specVar, all.y=TRUE)
+	# Get only the the variables specified by 'var':
+	if(!all(var %in% names(data))){
+		var <- intersect(var, availableVars)
+		warning(paste0(if(length(var)==0) "None" else "Not all", " of the variables given by 'var' are present in the data. Available columns are ", paste(availableVars, collapse=", ")))
+	}
+	data <- data[, c("Station", catVar, var)]
+	
+	# Group by catVar:
+	temp <- lapply(var, function(v) tapply(data[, v], data[, c("Station", catVar)], sum, na.rm=TRUE))
+	# Convert into a data frame and merge by 'stationVar':
+	#temp <- lapply(temp, createTempDataFrame)
+	temp <- lapply(temp, function(x) data.frame(Station=rownames(x), as.data.frame(x)))
+	# replace NA:
+	temp <- lapply(temp, function(x) {x[is.na(x)] <- na.as; x})
+	
+	# Merge with the station data:
+	temp <- lapply(temp, function(x) merge(out, x, by="Station", all.x=TRUE))
+	names(temp) <- var
+	if(drop.out && length(temp)==1){
+		temp <- temp[[1]]
+	}
+	
+	return(temp)
+}

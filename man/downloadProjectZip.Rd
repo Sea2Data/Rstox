@@ -5,14 +5,20 @@
 \title{Download a zipped StoX project to a specified project path.}
 \usage{
 downloadProjectZip(URL, projectName = NULL, projectRoot = NULL,
-  cleanup = TRUE, ow = TRUE, msg = TRUE)
+  cleanup = TRUE, ow = TRUE, msg = TRUE, onlyone = TRUE)
 }
 \arguments{
 \item{URL}{The URL of the zipped project.}
 
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
+
+\item{projectRoot}{The root directory of the project in which to save the downloaded files (set this if you wish to place the files in a project specified by its name, and not in the default root directory).}
+
 \item{cleanup}{Logical: if FALSE, the downloaded zip file is not deleted.}
 
-\item{projectPath}{The local path to the project to be downloaded.}
+\item{ow, msg}{See \code{\link{getow}}.}
+
+\item{onlyone}{Logical: If TRUE, only one project is checked (no for loop).}
 }
 \description{
 Download a zipped StoX project to a specified project path.

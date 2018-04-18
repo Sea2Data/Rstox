@@ -10,7 +10,7 @@ getPlots(projectName, out = "all", options = "", ...)
 getReports(projectName, out = "all", options = "", ...)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{out}{A string vector giving the plot or report functions to run. See getRstoxEnv()$keywords for available keywords.}
 
@@ -45,7 +45,5 @@ projectName <- "Test_Rstox"
 getPlots(projectName)
 # Get all reports:
 getReports(projectName)
-# Get a specific plot:
-getPlots(projectName, out="plotNASCDistribution")
 
 }

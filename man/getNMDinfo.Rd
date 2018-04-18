@@ -15,10 +15,10 @@ getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
   group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
   ver = 1, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, ...)
+  return.URL = FALSE, run = TRUE, timeout = NULL, ...)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
-  quiet = TRUE)
+  quiet = TRUE, method = "auto", timeout = NULL)
 }
 \arguments{
 \item{type}{A character string naming the type of information to return for the specifications given in 'spec'. Possible values are shown in the list below. Any reference data can be requested, and the names of the possible reference data are returned by running getNMDinfo():
@@ -44,7 +44,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{year}{Used in conjunction with 'shipname' to get all cruises from one or more years from a specific ship.}
 
-\item{shipname}{Specifies the ship name (see 'cruise' and 'year').}
+\item{shipname}{Specifies the ship name WITHOUT call signal, e.g., "G.O.Sars" and not "G.O.Sars_LMEL" (see 'cruise' and 'year').}
 
 \item{serialno}{A vector of the requested serial numbers.}
 
@@ -72,6 +72,10 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{return.URL}{Logical: If TRUE, return the URL of the files to download.}
 
+\item{run}{Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).}
+
+\item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal".}
+
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
 \item{URL}{The URL(s) to the xml data.}
@@ -81,6 +85,8 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{file}{The path to a the file to which the data are saved.}
 
 \item{quiet}{Used in download.file().}
+
+\item{method}{The download method. See \code{\link{download.file}}.}
 }
 \description{
 \code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr 
@@ -113,7 +119,7 @@ g9[tolower(g9$synonym.name) == "torsk", ]
 g9[grep("torsk", g9$synonym.name, ignore.case=TRUE),]
 
 # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
-# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.6.R.
+# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
 
 }
 \keyword{NMD-API}
