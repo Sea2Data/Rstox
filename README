@@ -43,3 +43,38 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.9.tar.gz", repos=
 
 # Release notes:
 
+# 1. Removed the function baseline2ECA(), which is covered by baseline2eca().
+
+# 2. Added the option of downloading all seralno from a year if serialno is not set.
+
+# 3. Added the function surveyPlanner() used to generate parallel or zigzag transects.
+
+# 4. Added the function plotStratum() for plotting the output from surveyPlanner().
+
+# 5. Added the functions getProjString(), projectMatrixList(), spatial2matrixList(), matrixList2multipolygon(), multipolygon2spatial(), isSpatial(), isMatrixList(), isMultipolygon(), matrixListLevel(), rapplyKeepDataFrames() as utility functions for conversion to and from spatial objects, multipolygons, and lists of matrices, all containing polygons and other spatial data.
+
+# 6. Added the functions geo2xy() for conversion to and from geographic and Cartesian coordinates, polyAreaOld() which is the old polyArea(), and getMatrixList(), getMultipolygon() and getSpatial() for getting a list of matrices, a mutipolygon wkt string or a spatial object respectively.
+
+# 7. Mapped the new funcitons getMultipolygon() and getMatrixList() to the old funcitons matrix2multipolygon() multipolygon2matrix() for backwards compatibility.
+
+# 8. Fixed bug in baseline2eca(), where the stratumNeighbour in the output was not created using matching but simple indexing of the strata present in the resources$covariateLink. Also now the neighbors of each present stratum is matched with the present strata.
+
+# 9. Other minor bug fixes.
+
+# 10. Added the parameter 'run' in getNMDdata(), which if set to FALSE only generates the project names, and does not download data and generate projects.
+
+# 11. Added the function aggregateBySpeciesCategory() which generates a species matrix with biotic stations as rows and station information and the species present in a reference file as columns.
+
+# 12. Added a check for missing not downloaded with getNMDdata().
+
+# 13. Added support for using year or cruise code as 'subset' in getNMDdata().
+
+# 14. Changed so that all matrix-like reference data downloaded using getNMDinfo() are represented as data.frame with numeric values wherever possible (when no NAs induced using as.numeric()).
+
+# 15. Added the parameter modelType in the functions runBaseline(), getBaseline(), getProcess() and getBaselineParameters().
+
+# 16. Fixed bug in getBaseline(), where data with incomplete comments (e.g., 'Ersfjorden-pumper 80 tonn til "Sklinnabanken') resulted in rows being dropped from the data.
+
+# 17. Added "platformNumber" in getNMDinfo("v") and getNMDinfo("platform"), and changed the extraction of platforms when type="v" to all info of the latest 'validTo' value. When the 'validTo' is missing, the first row is returned, assuming there is only one row for these entries.
+
+# 18. Added the function readBaselineFiles().
