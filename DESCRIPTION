@@ -1,6 +1,6 @@
 Package: Rstox
 Title: Running Stox functionality independently in R
-Version: 1.8
+Version: 1.8.1
 Authors@R: c(
   person("Arne Johannes", "Holmin", role = c("aut","cre"), email = "arnejh@imr.no"),
   person("Edvin", "Fuglebakk", role = "ctb"),
@@ -28,3 +28,6 @@ Imports:
 		rJava,
 		sp,
 		XML
+Suggests: ggmap,
+    ncdf4,
+    pgirmess

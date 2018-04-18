@@ -11,16 +11,17 @@
 setBaselineParameters(projectName, msg = FALSE, parlist = list(),
   save = c("last", "java"), ...)
 
-readBaselineParametersJava(projectName, keepMissing = FALSE)
+readBaselineParametersJava(projectName, out = "baseline",
+  keepMissing = FALSE)
 
 readBaselineParameters(projectName, rver = "1")
 
-getBaselineParameters(projectName)
+getBaselineParameters(projectName, out = "all")
 
 modifyBaselineParameters(parameters, parlist = list(), ...)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{msg}{Logical; if TRUE print old and new parameters.}
 
@@ -42,7 +43,7 @@ The original parameters
 \description{
 \code{setBaselineParameters} Sets baseline parameters in memory to new values specified in \code{parlist} or \code{...}. \cr \cr
 \code{readBaselineParametersJava} Reads the baseline parameters from the Java memory. \cr \cr
-\code{readBaselineParameters} Depricated, use \code{readBaselineParametersJava} instead: Reads the baseline parameters from the project.xml file \cr \cr
+\code{readBaselineParameters} Depricated and no longer maintained, use \code{readBaselineParametersJava} instead: Reads the baseline parameters from the project.xml file \cr \cr
 \code{getBaselineParameters} Gets either original, java or last used baseline parameters \cr \cr
 \code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment nor in the project file). \cr \cr
 }

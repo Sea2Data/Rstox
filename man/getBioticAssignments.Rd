@@ -4,10 +4,10 @@
 \alias{getBioticAssignments}
 \title{Get joined table of trawl assignments, psu and stratum}
 \usage{
-getBioticAssignments(baseline)
+getBioticAssignments(projectName)
 }
 \arguments{
-\item{baseline}{A StoX Java baseline object.}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
 }
 \value{
 Dataframe with trawl assignments merged with psu and stratum

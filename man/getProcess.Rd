@@ -2,14 +2,19 @@
 % Please edit documentation in R/rstox_base.r
 \name{getProcess}
 \alias{getProcess}
+\alias{matchModeltype}
 \title{Get process indices.}
 \usage{
-getProcess(projectName, proc = "all")
+getProcess(projectName, proc = "all", modelType = "baseline")
+
+matchModeltype(modelType)
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{proc}{A string vector naming processes/function to find.}
+
+\item{modelType}{The type of model to run, currently one of "baseline" and "report" (the latter referring to "baseline report"). First element used.}
 }
 \value{
 Index number of the process.

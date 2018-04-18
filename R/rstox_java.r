@@ -148,6 +148,7 @@ jBoolean <- function(i) {
 #' \code{getProcessDataTableAsDataFrame} gets a joined table with meanNASC, psu, stratum, and area. Reads transect data, strata and area information from baseline Java object and merges them into one data frame.
 #' 
 #' @param baseline		A StoX baseline object
+#' @param projectName  	The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).
 #' @param processName	The name of the process to extract data by, such as "ReadBioticXML"
 #' @param functionName	The name of the function to extract data by, such as "ReadBioticXML"
 #' @param tableName		Supported processdata tables: TRAWLASSIGNMENT, DISTANCEASSIGNMENT, PSUASSIGNMENT, DISTANCEPSU, PSUSTRATUM, STRATUMPOLYGON
@@ -242,25 +243,33 @@ getDataFrameAtLevel <- function(level, storage, data) {
 	} 
 	s <- storage$asTable(data, jInt(level))
 	#out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=F)
-	out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=F, na.strings="-", encoding="UTF-8")
-	# Interpret true/false as TRUE/FALSE (move along the columns of 'out'):
-	for(i in seq_along(out)){
-		if(length(out[[i]])>0 && head(out[[i]], 1) %in% c("true", "false")){
-		 	out[[i]] <- as.logical(out[[i]])
-		}
-	}
-	out
+	
+	# A grave error was found when reading all data from 2016 (all serialno), where serial number were missing in e.g., FishStation versus CatchSample. This was tracked to the read.csv() of getDataFrameAtLevel(), where uncompleted quotes resulted in removed lines. The solution was to add the parameter quote=NULL:
+	#out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8")
+	### out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL)
+	### # Interpret true/false as TRUE/FALSE (move along the columns of 'out'):
+	### for(i in seq_along(out)){
+	### 	if(length(out[[i]])>0 && head(out[[i]], 1) %in% c("true", "false")){
+	### 	 	out[[i]] <- as.logical(out[[i]])
+	### 	}
+	### }
+	### out
 	#apply(out, 2, function(xx) if(head(xx, 1) %in% c("true", "false")) as.logical(xx) else xx)
+	
+	# Added the funciton readBaselineFiles() for use in this function and as a separate utility:
+	readBaselineFiles(textConnection(s))
 }
 #' 
 #' @export
 #' @keywords internal
 #' @rdname getDataFrame
 #' 
-getProcessDataTableAsDataFrame <- function(baseline, tableName) {
-	s <- baseline$getProject()$getProcessData()$asTable(tableName)
+getProcessDataTableAsDataFrame <- function(projectName, tableName) {
+	# Get the project object:
+	project <- openProject(projectName, out="project")
+	s <- project$getProcessData()$asTable(tableName)
 	if(nchar(s)>0){
-		out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=F, na.strings="-", encoding="UTF-8")
+		out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8")
 		# Interpret true/false as TRUE/FALSE:
 		for(i in seq_along(out)){
 			if(length(out[[i]])>0 && head(out[[i]], 1) %in% c("true", "false")){

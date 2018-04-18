@@ -86,7 +86,7 @@ A project object
 \code{createProject} returns the path to the StoX project directory. \cr \cr
 \code{openProject} returns the object specified in 'out'. \cr \cr
 \code{reopenProject} returns the object specified in 'out'. \cr \cr
-\code{getProject} returns the project object. \cr \cr
+\code{getProject} returns the requested object (one of the project object, the baseline, object, the baseline report object, ot the project name). If the project is not open, NULL is returned. \cr \cr
 \code{updateProject} returns TRUE for success and FALSE for no XML files linked to reading functions. \cr \cr
 \code{saveProject} returns the project object. \cr \cr
 \code{closeProject} returns TRUE if the project was open and FALSE if not. \cr \cr

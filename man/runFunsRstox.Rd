@@ -11,7 +11,7 @@ runFunsRstox(projectName, string, out = "all", options = "",
 getFunsRstox(string, out = "all")
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from getBaseline() or runBaseline()), og a project object (as returned from open).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{string}{A string giving the first characters of the functions to run, such as "plot" or "report".}
 
