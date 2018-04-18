@@ -381,7 +381,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		# Run through the projects and download:
 		for(i in seq_len(nsts)){
 			# Create the project directory:
-			dir.create(dirname(projectPaths[i]), recursive=TRUE)
+			suppressWarnings(dir.create(dirname(projectPaths[i]), recursive=TRUE))
 			URL <- URLencode(paste(API, "surveytimeseries", paste0("v", ver), sts, "samples", stsInfo[i,"sampleTime"], sep="/"))
 			# Add download type:
 			URL = paste0(URL, downloadtype)

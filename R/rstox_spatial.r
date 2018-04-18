@@ -2,9 +2,8 @@
 #*********************************************
 #' Get polygon area and convert to or from geographic and Cartesian coordinates.
 #'
-#' \code{polyArea} calculates the area in nautical mile squared of a multipolygon. \cr \cr
+#' \code{polyArea} calculates the area in nautical mile squared of a multipolygon (for one stratum). \cr \cr
 #' \code{geo2xy} converts from geographic to or from Cartesian coordinates or the inverse. \cr \cr
-#' \code{polyAreaOld} to be deleted. \cr \cr
 #' \code{getMatrixList} converts the input to a list of matrices. \cr \cr
 #' \code{getMultipolygon} converts the input to a multipolygon wkt string. \cr \cr
 #' \code{getSpatial} converts the input to a Spatial object. \cr \cr
@@ -12,9 +11,13 @@
 #' \code{multipolygon2matrix} identical to \code{getMatrixList}. \cr \cr
 #' 
 #' @param x					Either a two column matrix of x and y coordinates, indicating only one polygon, or a list of such matrices, indicating several polygons. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. \code{wkt} cal also be a wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))".
-#' @param multipolygon		A multipolygon string.
-#' @param drop				Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.
+#' @param requireClosed		Logical: If TRUE (default) require polygons to be closed in the sense that the last point should equal the first. Set this to FALSE to allow adding the first point as the last point.
+#' @param par				A list of proj4 parameters.
+#' @param ...				Further proj4 parameters overriding those in \code{par}.
+#' @param longlat			Logical: If TRUE (default) the input to polyArea_test is longitude, latitude.
+#' @param inv				Logical: If TRUE, do the inverse conversion in rgdal::project().
 #' @param data.frame.out	Logical: If TRUE convert the matrices to data frames with columns x and y.
+#' @param drop				Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.
 #' 
 #' @return \code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
 #'
@@ -33,14 +36,41 @@
 #' ###plot(NULL, xlim=xlim, ylim=ylim)
 #' ###lapply(xy, lines, col='black', pbg='white')
 #' ###lapply(xy, polyArea, input="xy")
+#' 
+#' @export
+#' @importFrom rgeos readWKT gArea
+#' @importFrom sp CRS spTransform proj4string
+#' @rdname polyArea
+#' 
+polyArea <- function(x, requireClosed=TRUE) {
+	# We need rgdal when AreaMethod=Acurate in StratumArea!!!!
+	###if(is.numeric(x)){
+	###	x <- paste0("MULTIPOLYGON(((", paste(apply(x, 1, paste, collapse=" "), collapse=", "), ")))")
+	###}
+	#write(x, "~/Desktop/Aktuelt/test1.txt")
+	x <- matrix2multipolygon(x, requireClosed=requireClosed)
+	#write(x, "~/Desktop/Aktuelt/test3.txt")
+	
+	p <- rgeos::readWKT(x)
+	# Define projection for the wkt
+	sp::proj4string(p) <- sp::CRS("+proj=longlat +ellps=WGS84")	
+	# define the proj4 definition of Lambert Azimuthal Equal Area (laea) CRS with origo in wkt center:
+	# Units: international nautical miles:
+	laea.CRS<-CRS(paste0("+proj=laea +lat_0=",p@polygons[[1]]@labpt[2]," +lon_0=",p@polygons[[1]]@labpt[1],
+		" +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=kmi +no_defs"))
+	# project data points from longlat to given laea
+	p1 <- sp::spTransform(p, laea.CRS)
+	sum(rgeos::gArea(p1, byid=T)) # Returns area
+	# The result is very near compared known online geodesic planimeters (+- 0.001 naut.m)
+}
 #'
 #' @export
 #' @importFrom rgeos gArea
 #' @rdname polyArea
 #' 
-polyArea_test <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), input="longlat", ...) {
+polyArea_test <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), longlat=TRUE, ...) {
 	# Convert to xy if given in longlat:
-	if(input=="longlat"){
+	if(longlat){
 		x <- geo2xy(x, par=par, inv=FALSE, ...)
 	}
 	# Get the spatial object and use gArea() to get the area:
@@ -50,11 +80,12 @@ polyArea_test <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, lat_0=
 }
 #' 
 #' @export
+#' @keywords internal
 #' @rdname polyArea
 #' 
-geo2xy <- function(x, par=list(proj="aeqd", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), inv=FALSE, data.frame.out=FALSE, add=FALSE, ...){
+geo2xy <- function(x, par=list(proj="aeqd", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), inv=FALSE, data.frame.out=FALSE, ...){
 	# Get projection string:
-	par <- getProjString(par=par, ..., x=x)
+	par <- getProjString(par=par, ..., x=x, requireClosed=FALSE)
 	
 	# Convert to a list of matrices and run the project() function on all elements:
 	#out <- x[ ,c("x", "y"), drop=FALSE]
@@ -68,36 +99,12 @@ geo2xy <- function(x, par=list(proj="aeqd", units="kmi", lon_0=NA, lat_0=NA, x_0
 	#if(ncol(x)>2){
 	#	out <- cbind(out, x[, -(1:2)])
 	#}
-	if(add){
-		out <- cbind(out, x)
-	}
+	#if(add){
+	#	out <- cbind(out, x)
+	#}
 	
 	attr(out, "proj") <- par
 	out
-}
-#' 
-#' @export
-#' @importFrom rgeos readWKT gArea
-#' @importFrom sp CRS spTransform proj4string
-#' @rdname polyArea
-#' 
-polyArea <- function(x) {
-	# We need rgdal when AreaMethod=Acurate in StratumArea!!!!
-	###if(is.numeric(x)){
-	###	x <- paste0("MULTIPOLYGON(((", paste(apply(x, 1, paste, collapse=" "), collapse=", "), ")))")
-	###}
-	x <- matrix2multipolygon(x)
-	p <- rgeos::readWKT(x)
-	# Define projection for the wkt
-	sp::proj4string(p) <- sp::CRS("+proj=longlat +ellps=WGS84")	
-	# define the proj4 definition of Lambert Azimuthal Equal Area (laea) CRS with origo in wkt center:
-	# Units: international nautical miles:
-	laea.CRS<-CRS(paste0("+proj=laea +lat_0=",p@polygons[[1]]@labpt[2]," +lon_0=",p@polygons[[1]]@labpt[1],
-		" +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=kmi +no_defs"))
-	# project data points from longlat to given laea
-	p1 <- sp::spTransform(p, laea.CRS)
-	sum(rgeos::gArea(p1, byid=T)) # Returns area
-	# The result is very near compared known online geodesic planimeters (+- 0.001 naut.m)
 }
 #' 
 #' @export
@@ -125,13 +132,13 @@ getMatrixList <- function(x, drop=TRUE, data.frame.out=FALSE){
 #' @keywords internal
 #' @rdname polyArea
 #' 
-getMultipolygon <- function(x, drop=TRUE, data.frame.out=FALSE){
+getMultipolygon <- function(x, drop=TRUE, data.frame.out=FALSE, requireClosed=TRUE){
 	if(isSpatial(x)){
 		x <- spatial2matrixList(x, drop=drop, data.frame.out=data.frame.out)
-		x <- matrixList2multipolygon(x)
+		x <- matrixList2multipolygon(x, requireClosed=requireClosed)
 	}
 	else if(isMatrixList(x)){
-		x <- matrixList2multipolygon(x)
+		x <- matrixList2multipolygon(x, requireClosed=requireClosed)
 	}
 	else if(!isMultipolygon(x)){
 		warning("Unrecognized input by isSpatial(), isMatrixList() or isMultipolygon(). Returned unaltered")
@@ -192,12 +199,14 @@ multipolygon2matrix <- getMatrixList
 #' \code{matrixListLevel} determines the number of levels in a list of matrices, where 1 denotes a matrix, 2 denotes a list of matrices, and 3 denotes a list of lists of matrices. \cr \cr
 #' \code{rapplyKeepDataFrames} lapplies the funciton \code{FUN} throughout the first two levels of a list but not into any data frames. \cr \cr
 #' 
-#' @param x					One of three onjects depending on the funciton: (1) a two column matrix of x and y coordinates, indicating only one polygon, or a list (of lists) of such matrices, indicating several polygons in a multipolygon. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. (2) A wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))". (3) A spatial object.
-#' @param drop				Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.
-#' @param data.frame.out	Logical: If TRUE convert the matrices to data frames with columns x and y.
 #' @param par				A list of proj4 parameters.
 #' @param ...				Further proj4 parameters overriding those in \code{par}.
+#' @param x					One of three onjects depending on the funciton: (1) a two column matrix of x and y coordinates, indicating only one polygon, or a list (of lists) of such matrices, indicating several polygons in a multipolygon. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. (2) A wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))". (3) A spatial object.
+#' @param list.out			Logical: If TRUE the projection info is returned as a list instead of a concatenate string.
+#' @param requireClosed		Logical: If TRUE (default) require polygons to be closed in the sense that the last point should equal the first. Set this to FALSE to allow adding the first point as the last point.
 #' @param inv				Logical: If TRUE, do the inverse conversion in rgdal::project().
+#' @param data.frame.out	Logical: If TRUE convert the matrices to data frames with columns x and y.
+#' @param drop				Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.
 #' @param FUN				The funciton to apply to the elements in \code{rapplyKeepDataFrames}.
 #'
 #' @export
@@ -205,7 +214,10 @@ multipolygon2matrix <- getMatrixList
 #' @keywords internal
 #' @rdname getProjString
 #' 
-getProjString <- function(par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), ..., x=NULL, list.out=FALSE){
+getProjString <- function(par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), ..., x=NULL, list.out=FALSE, requireClosed=TRUE){
+	
+	# NOTE: There is a difference between how rgeos::gCentroid calculates the centroid for a closed polyogn and a line string (in which case the center of mass of the mere points is calculated, as per the reply to the issue on this page: https://stackoverflow.com/questions/35720614/gcentroid-rgeos-r-vs-actual-centroid-in-python)
+	
 	#if(length(x) && is.character(attr(x, "proj"))){
 	#	return(attr(x, "proj"))
 	#}
@@ -226,7 +238,7 @@ getProjString <- function(par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA,
 		#getCoordsPolygon <- function(x){
 		#	do.call(rbind, lapply(p, function(x) x@polygons[[1]]@Polygons[[1]]@coords))
 		#}
-		p <- getMultipolygon(x)
+		p <- getMultipolygon(x, requireClosed=requireClosed)
 		#if(is.list(p)){
 		#	p <- getCoordsPolygon(p)
 		#}
@@ -345,7 +357,7 @@ spatial2matrixList <- function(x, drop=TRUE, data.frame.out=FALSE){
 #' @importFrom utils head tail
 #' @rdname getProjString
 #' 
-matrixList2multipolygon <- function(x){
+matrixList2multipolygon <- function(x, requireClosed=TRUE){
 	# Merge to pairs of x, y:
 	mergeToPairs <- function(x){
 		x <- apply(x, 1, paste, collapse=" ")
@@ -356,16 +368,38 @@ matrixList2multipolygon <- function(x){
 	addParantheseis <- function(x){
 		paste0("(", paste0(x, collapse=", "), ")")
 	}
+	
 	isConnected <- all(utils::head(x, 1) == utils::tail(x, 1))
+	
+	# Try to append the start point as end point in the polygon if requireClosed=FALSE:
+	#write(x, "test2.txt")
+	#if(requireClosed){
+	if(!requireClosed){
+		x <- rbind(x, utils::head(x, 1))
+		isConnected <- TRUE
+	}
+	if(!isConnected){
+		warning("Points do not form a closed polygon. Use requireClosed=FALSE to add the first point as the last point.")
+	}
+	
+	# Convert to text string of pairs:
 	x <- rapplyKeepDataFrames(x, mergeToPairs)
-	if(isConnected){
-		x <- lapply(x, addParantheseis)
-		x <- addParantheseis(x)
-		x <- paste0("MULTIPOLYGON", x)
-	}
-	else{
-		x <- paste0("LINESTRING", x)
-	}
+	
+	x <- lapply(x, addParantheseis)
+	x <- addParantheseis(x)
+	x <- paste0("MULTIPOLYGON", x)
+	write(x, "test.txt")
+	
+	### if(isConnected){
+	### 	x <- lapply(x, addParantheseis)
+	### 	x <- addParantheseis(x)
+	### 	x <- paste0("MULTIPOLYGON", x)
+	### 	write(x, "test.txt")
+	### }
+	### else{
+	### 	warning("Points do not form a closed polygon. LINESTRING returned instead of MULTIPOLYGON. Use requireClosed=FALSE to add the first point as the last point.")
+	### 	x <- paste0("LINESTRING", x)
+	### }
 	return(x)
 }
 #'
@@ -462,10 +496,9 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param rev				Logical: If TRUE, the bearing calculated by the funciton when bearing = "along" or "across" is reversed, i.e., going from East to West instead of West to East.
 #' @param retour			Logical: If TRUE, continue with the transects back to the start point of the stratum.
 #' @param toursFirst		Logical: If TRUE, do all tours first followed by the retours (only effective if retour is TRUE).
-#' @param hours				The time to spend in the stratum, given in hours.
+#' @param hours,nmi			The time/traveled distance to spend in each stratum, given in hours/nautical miles (repeated to the number of strata), where \code{nmi} has precedence over \code{hours}. If given as a list of one element, these are interpreted as the hours/nmi for the entire survey, in which case selecting only a subset of the strata using \code{strata} will increase the effort in each of the remaining strata.
 #' @param t0				The start time of the survey, set to Sys.time() by default.
 #' @param knots				The speed to use in the stratum, given in knots.
-#' @param nmi				The distance to travel in the stratum in nautical miles.
 #' @param seed				The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.
 #' @param angsep			The separation in degrees of points populating the stratum polygons (geographical coordinates longitude, latitude). Low values preserve the stratum borders when converting to Cartesian coordinates. 
 #' @param distsep			The separation in nautical miles of points populating the transects in Cartesian coordinates before converting back to geographical coordinates. When given, this parameter preserves the shortest travel distance (great-circle distances) of the transects (inducing curved lines in geographical coordinates). 
@@ -581,14 +614,11 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @export
 #' @importFrom sp Lines Line SpatialLines
 #' @importFrom rgeos gIntersection
-#' @import ggplot2
 #' @import data.table
-#' @importFrom tools file_path_sans_ext file_ext
 #' @importFrom utils head tail
-#' @importFrom rgdal readOGR
 #' @rdname surveyPlanner
 #' 
-surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, angsep=1/6, distsep=NULL, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE, strata="all") {
+surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, nmi=NULL, t0=NULL, knots=10, seed=0, angsep=1/6, distsep=NULL, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE, strata="all") {
 #surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, dt=1/60, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE) {
 	
 	############################################################
@@ -967,7 +997,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		out
 	}
 	getCentroid <- function(x, proj="aeqd", lonlatnames=c("longitude", "latitude")){
-		projList <- getProjString(proj=proj, x=x[, lonlatnames], list.out=TRUE)
+		projList <- getProjString(proj=proj, x=x[, lonlatnames], list.out=TRUE, requireClosed=FALSE)
 		centroid <- data.frame(lon_centroid=projList$lon_0, lat_centroid=projList$lat_0)
 		centroid
 	}
@@ -1292,7 +1322,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 				
 				numIter <- numIter + 1
 			}
-			cat("Number of iterations to achieve total sailed distance within ", margin, " of the requested nmi in stratum ", parameters$stratum, " (", parameters$nmi, "):", numIter, "\n", sep="")
+			cat("Number of iterations to achieve total sailed distance within ", margin, " of the requested nmi in stratum ", parameters$stratum, " (", parameters$nmi, "): ", numIter, "\n", sep="")
 		}
 		
 		# Get x,y coordinates of the transects:
@@ -1316,6 +1346,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	############################################################
 	############################################################
 	
+	
 	# Define the stratum specific parameters:
 	parameterNames <- c("type", "bearing", "retour", "hours", "knots", "nmi", "seed", "t0")
 	# Save the input parameters for reference. These are included in the output:
@@ -1323,51 +1354,57 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		
 		
 	# Read the the stratum polygons from a folder of shape files or from a StoX project:
-	if(all(isProject(projectName))){
-		# Get the baseline output and number of strata:
-		g <- getBaseline(projectName, endProcess="ReadProcessData", input="proc", proc=NULL, drop=FALSE)
-		strataNames <- g$processData$stratumpolygon$Stratum
-		
-		# Get the strata polygons in geographic coordinates (longitude, latitude) in a list named with the strata names:
-		lonlat <- lapply(g$processData$stratumpolygon$Polygon, getMatrixList, data.frame.out=TRUE)
-		names(lonlat) <- strataNames
-		lonlat <- lapply(lonlat, "colnames<-", c("longitude", "latitude"))
-		# Test of southern hemisphere:
-		#lonlat <- lapply(lonlat, function(x) {x$latitude <- -x$latitude; x})
-		
-		# Create a single data frame version of the strata polygons, with stratum as the third column, and get a common projection definition using the centroid of the system:
-		lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
-	}
-	else if(all(file.exists(projectName))){
-		if(length(projectName) == 1 && isTRUE(file.info(projectName)$isdir)){
-			projectName <- list.files(projectName, full.names=TRUE)
-		}
-		
-		if(any(tolower(tools::file_ext(projectName)) == "shp")){
-			dsn <- dirname(path.expand(projectName[1]))
-			layer <- tools::file_path_sans_ext(basename(projectName[1]))
-			shape <- rgdal::readOGR(dsn=dsn, layer=layer)
-			shape <- ggplot2::fortify(shape)
-			#lonlatAll <- data.frame(longitude=shape$long, latitude=shape$lat, stratum=shape$id)
-			lonlatAll <- data.frame(longitude=shape[[shapenames$longitude]], latitude=shape[[shapenames$latitude]], stratum=shape[[shapenames$stratum]])
-			lonlat <- split(lonlatAll, lonlatAll$stratum)
-			lonlat <- lapply(lonlat, "[", c("longitude", "latitude"))
-			strataNames <- unique(lonlatAll$stratum)
-		}
-		else{
-			shape <- read.table(projectName[1], sep="\t", stringsAsFactors=FALSE)
-			strataNames <- shape[,1]
-			lonlat <- lapply(shape[,2], getMatrixList)
-			lonlat <- lapply(lonlat, as.data.frame, col.names=c("longitude", "latitude"))
-			lonlat <- lapply(lonlat, setNames, c("longitude", "latitude"))
-			names(lonlat) <- strataNames
-			lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
-		}
-	}
-	else{
-		warning("'projectName' is not a project or shapefiles/folder of shapefiles")
-		return()
-	}
+	temp <- readStrataPolygons(projectName)
+	lonlatAll <- temp$lonlatAll
+	lonlat <- temp$lonlat
+	strataNames <- temp$strataNames
+	
+	
+							#if(all(isProject(projectName))){
+							#	# Get the baseline output and number of strata:
+							#	g <- getBaseline(projectName, endProcess="ReadProcessData", input="proc", proc=NULL, drop=FALSE)
+							#	strataNames <- g$processData$stratumpolygon$Stratum
+		                    #
+							#	# Get the strata polygons in geographic coordinates (longitude, latitude) in a list named with the strata names:
+							#	lonlat <- lapply(g$processData$stratumpolygon$Polygon, getMatrixList, data.frame.out=TRUE)
+							#	names(lonlat) <- strataNames
+							#	lonlat <- lapply(lonlat, "colnames<-", c("longitude", "latitude"))
+							#	# Test of southern hemisphere:
+							#	#lonlat <- lapply(lonlat, function(x) {x$latitude <- -x$latitude; x})
+		                    #
+							#	# Create a single data frame version of the strata polygons, with stratum as the third column, and get a common projection definition using the centroid of the system:
+							#	lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
+							#}
+							#else if(all(file.exists(projectName))){
+							#	if(length(projectName) == 1 && isTRUE(file.info(projectName)$isdir)){
+							#		projectName <- list.files(projectName, full.names=TRUE)
+							#	}
+		                    #
+							#	if(any(tolower(tools::file_ext(projectName)) == "shp")){
+							#		dsn <- dirname(path.expand(projectName[1]))
+							#		layer <- tools::file_path_sans_ext(basename(projectName[1]))
+							#		shape <- rgdal::readOGR(dsn=dsn, layer=layer)
+							#		shape <- ggplot2::fortify(shape)
+							#		#lonlatAll <- data.frame(longitude=shape$long, latitude=shape$lat, stratum=shape$id)
+							#		lonlatAll <- data.frame(longitude=shape[[shapenames$longitude]], latitude=shape[[shapenames$latitude]], stratum=shape[[shapenames$stratum]])
+							#		lonlat <- split(lonlatAll, lonlatAll$stratum)
+							#		lonlat <- lapply(lonlat, "[", c("longitude", "latitude"))
+							#		strataNames <- unique(lonlatAll$stratum)
+							#	}
+							#	else{
+							#		shape <- read.table(projectName[1], sep="\t", stringsAsFactors=FALSE)
+							#		strataNames <- shape[,1]
+							#		lonlat <- lapply(shape[,2], getMatrixList)
+							#		lonlat <- lapply(lonlat, as.data.frame, col.names=c("longitude", "latitude"))
+							#		lonlat <- lapply(lonlat, setNames, c("longitude", "latitude"))
+							#		names(lonlat) <- strataNames
+							#		lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
+							#	}
+							#}
+							#else{
+							#	warning("'projectName' is not a project or shapefiles/folder of shapefiles")
+							#	return()
+							#}
 	
 	# Include all or a subset of the strata:
 	if(identical(strata, "all")){
@@ -1382,11 +1419,11 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	
 	lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
 	
-	Input$lonlat <- lonlat
-	Input$lonlatAll <- lonlatAll
+	Input$lonlat_stratum <- lonlat
+	Input$lonlatAll_stratum <- lonlatAll
 	
 	# Get the projection to use, centered at the centroid of the total survey area (using rgeos::gCentroid()):
-	proj <- getProjString(proj="aeqd", x=lonlatAll[,c("longitude", "latitude")])
+	proj <- getProjString(proj="aeqd", x=lonlatAll[,c("longitude", "latitude")], requireClosed=FALSE)
 	
 	##### Generate the parameters, one value per stratum: #####
 	if(length(parameters)==0 || !is.list(parameters)){
@@ -1425,6 +1462,9 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	if(length(parameters$hours)==0){
 		parameters$hours <- hours
 	}
+	if(is.list(parameters$hours)){
+		parameters$hours <- rep(parameters$hours[[1]]/nstrata, length.out=nstrata)
+	}
 	# Add knots to the parameters:
 	if(length(parameters$knots)==0){
 		parameters$knots <- knots
@@ -1438,6 +1478,10 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			parameters$nmi <- parameters$hours * parameters$knots
 		}
 	}
+	if(is.list(parameters$nmi)){
+		parameters$nmi <- rep(parameters$nmi[[1]]/nstrata, length.out=nstrata)
+	}
+	
 	# Add seed to the parameters:
 	if(length(parameters$seed)==0){
 		# Draw seeds for the transects:
@@ -1459,7 +1503,8 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		parameters$t0 <- t0
 	}
 	# Repeat the parameters to length equal to the number of strata
-	suppressWarnings(parameters <- lapply(parameters, rep, length.out=nstrata))
+	#suppressWarnings(parameters <- lapply(parameters, function(x) if(is.list(x)) rep(x[[1]]/nstrata, length.out=nstrata) else rep(x, length.out=nstrata)))
+	suppressWarnings(parameters <- lapply(parameters, rep,  length.out=nstrata))
 	##########
 		
 	# Extract the centroids of the surcey and the strata:
@@ -1482,11 +1527,11 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	
 	# Populate the stratum polygon borders with denser points, in order to preserve the geographic coordinate definition when converting to Cartesian coordinates (i.e., follow a latitude if two points are on the same latitude. If given only by two points, the azimuthal equal distance projection will follow the great circle, which in general will not coincide with the intended equal latitude path):
 	lonlatPopulated <- lapply(lonlat, populatePath, dt=angsep, addInfo=FALSE)
-	Input$lonlatPopulated <- lonlatPopulated
+	Input$lonlatPopulated_stratum <- lonlatPopulated
 	
 	# Convert to Cartesian:
 	xy <- lapply(lonlatPopulated, geo2xy, data.frame.out=TRUE, par=proj)
-	Input$xy <- xy
+	Input$xy_stratum <- xy
 	
 	#########################################
 	##### Get transects for all strata: #####
@@ -1614,6 +1659,62 @@ plotStratum <- function(x, zoom=4, transect=TRUE, centroid=NULL, transport_alpha
 	print(p)
 	
 	return(p)
+}
+#' 
+#' @export
+#' @importFrom rgdal readOGR
+#' @import ggplot2
+#' @importFrom tools file_path_sans_ext file_ext
+#' @rdname surveyPlanner
+#' 
+readStrataPolygons <- function(projectName){
+	if(all(isProject(projectName))){
+		# Get the baseline output and number of strata:
+		g <- getBaseline(projectName, endProcess="ReadProcessData", input="proc", proc=NULL, drop=FALSE)
+		strataNames <- g$processData$stratumpolygon$Stratum
+	
+		# Get the strata polygons in geographic coordinates (longitude, latitude) in a list named with the strata names:
+		lonlat <- lapply(g$processData$stratumpolygon$Polygon, getMatrixList, data.frame.out=TRUE)
+		names(lonlat) <- strataNames
+		lonlat <- lapply(lonlat, "colnames<-", c("longitude", "latitude"))
+		# Test of southern hemisphere:
+		#lonlat <- lapply(lonlat, function(x) {x$latitude <- -x$latitude; x})
+	
+		# Create a single data frame version of the strata polygons, with stratum as the third column, and get a common projection definition using the centroid of the system:
+		lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
+	}
+	else if(all(file.exists(projectName))){
+		if(length(projectName) == 1 && isTRUE(file.info(projectName)$isdir)){
+			projectName <- list.files(projectName, full.names=TRUE)
+		}
+	
+		if(any(tolower(tools::file_ext(projectName)) == "shp")){
+			dsn <- dirname(path.expand(projectName[1]))
+			layer <- tools::file_path_sans_ext(basename(projectName[1]))
+			shape <- rgdal::readOGR(dsn=dsn, layer=layer)
+			shape <- ggplot2::fortify(shape)
+			#lonlatAll <- data.frame(longitude=shape$long, latitude=shape$lat, stratum=shape$id)
+			lonlatAll <- data.frame(longitude=shape[[shapenames$longitude]], latitude=shape[[shapenames$latitude]], stratum=shape[[shapenames$stratum]])
+			lonlat <- split(lonlatAll, lonlatAll$stratum)
+			lonlat <- lapply(lonlat, "[", c("longitude", "latitude"))
+			strataNames <- unique(lonlatAll$stratum)
+		}
+		else{
+			shape <- read.table(projectName[1], sep="\t", stringsAsFactors=FALSE)
+			strataNames <- shape[,1]
+			lonlat <- lapply(shape[,2], getMatrixList)
+			lonlat <- lapply(lonlat, as.data.frame, col.names=c("longitude", "latitude"))
+			lonlat <- lapply(lonlat, setNames, c("longitude", "latitude"))
+			names(lonlat) <- strataNames
+			lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
+		}
+	}
+	else{
+		warning("'projectName' is not a project or shapefiles/folder of shapefiles")
+		return()
+	}
+	
+	return(list(lonlat=lonlat, lonlatAll=lonlatAll, strataNames=strataNames))
 }
 
 

@@ -15,7 +15,7 @@
 \usage{
 getProjString(par = list(proj = "laea", units = "kmi", lon_0 = NA, lat_0 = NA,
   x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"), ..., x = NULL,
-  list.out = FALSE)
+  list.out = FALSE, requireClosed = TRUE)
 
 projectMatrixList(x, par = list(proj = "laea", units = "kmi", lon_0 = NA,
   lat_0 = NA, x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"),
@@ -23,7 +23,7 @@ projectMatrixList(x, par = list(proj = "laea", units = "kmi", lon_0 = NA,
 
 spatial2matrixList(x, drop = TRUE, data.frame.out = FALSE)
 
-matrixList2multipolygon(x)
+matrixList2multipolygon(x, requireClosed = TRUE)
 
 multipolygon2spatial(x)
 
@@ -43,6 +43,10 @@ rapplyKeepDataFrames(x, FUN, ...)
 \item{...}{Further proj4 parameters overriding those in \code{par}.}
 
 \item{x}{One of three onjects depending on the funciton: (1) a two column matrix of x and y coordinates, indicating only one polygon, or a list (of lists) of such matrices, indicating several polygons in a multipolygon. If a list of lists of two column matrices are given, the first matrix of each list is the polygon, and the following are subtractions. (2) A wkt string such as "MULTIPOLYGON(((4 55, 15 56, 15 59, 4 59, 4 55)))". (3) A spatial object.}
+
+\item{list.out}{Logical: If TRUE the projection info is returned as a list instead of a concatenate string.}
+
+\item{requireClosed}{Logical: If TRUE (default) require polygons to be closed in the sense that the last point should equal the first. Set this to FALSE to allow adding the first point as the last point.}
 
 \item{inv}{Logical: If TRUE, do the inverse conversion in rgdal::project().}
 

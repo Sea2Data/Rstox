@@ -3,11 +3,12 @@
 \name{surveyPlanner}
 \alias{surveyPlanner}
 \alias{plotStratum}
+\alias{readStrataPolygons}
 \title{Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).}
 \usage{
 surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   bearing = "N", rev = FALSE, retour = FALSE, toursFirst = FALSE,
-  hours = 240, t0 = NULL, knots = 10, nmi = NULL, seed = 0,
+  hours = 240, nmi = NULL, t0 = NULL, knots = 10, seed = 0,
   angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
   shapenames = list(longitude = "long", latitude = "lat", stratum = "id"),
   equalEffort = FALSE, byStratum = TRUE, strata = "all")
@@ -15,6 +16,8 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
 plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
   transport_alpha = 0.1, google = FALSE, margin = 0.5,
   aspectratio = NULL, xlab = "longitude", ylab = "latitude")
+
+readStrataPolygons(projectName)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -31,13 +34,11 @@ plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
 
 \item{toursFirst}{Logical: If TRUE, do all tours first followed by the retours (only effective if retour is TRUE).}
 
-\item{hours}{The time to spend in the stratum, given in hours.}
+\item{hours, nmi}{The time/traveled distance to spend in each stratum, given in hours/nautical miles (repeated to the number of strata), where \code{nmi} has precedence over \code{hours}. If given as a list of one element, these are interpreted as the hours/nmi for the entire survey, in which case selecting only a subset of the strata using \code{strata} will increase the effort in each of the remaining strata.}
 
 \item{t0}{The start time of the survey, set to Sys.time() by default.}
 
 \item{knots}{The speed to use in the stratum, given in knots.}
-
-\item{nmi}{The distance to travel in the stratum in nautical miles.}
 
 \item{seed}{The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.}
 

@@ -114,10 +114,10 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	##### 1. Initiate Rstox, get templates and project name, root and directory (full path): #####
 	##############################################################################################
 	# If an URL to a zip file is given in 'projectName', assume the URL points to a zipped StoX project and download the project:
-	if(length(files)==1 && isProjectZipURL(files)){
+	if(length(files)==1 && isURL(files, zip=TRUE)){
 		return(downloadProjectZip(URL=files, projectName=projectName, projectRoot=dir, cleanup=TRUE, ow=ow)$projectPath)
 	}
-	if(length(projectName)==1 && isProjectZipURL(projectName)){
+	if(length(projectName)==1 && isURL(projectName, zip=TRUE)){
 		return(downloadProjectZip(URL=projectName, projectRoot=dir, cleanup=TRUE, ow=ow)$projectPath)
 	}
 	
@@ -702,6 +702,12 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 			warning(paste0("No acoustic, biotic or landing XML files detected (using the characteristic strings ", paste(paste0("'", getRstoxDef("StoX_data_type_keys"), "'"), collapse=", "), " as identifyers for the file types ", paste(paste0("'", getRstoxDef("StoX_data_types"), "'"), collapse=", ") , ") "))
 			out <- list()
 		}
+		
+		# Add a warning if any files are URLs:
+		if(any(isURL(unlist(out)))){
+			warning("The function readXMLfiles() can presently not read URLs directly. Please use pr <- getNMDdata() followed by getBaseline(pr) to read URLs")
+		}
+		
 		return(out)
 	}
 	capitalizeFirstLetter <- function(x){
@@ -2337,10 +2343,21 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 #' @export
 #' @keywords internal
 #'
-isProjectZipURL <- function(URL){
+isURL <- function(URL, zip=FALSE){
 	# Detect hhtp or ftp AND zip:
-	sapply(gregexpr("http|ftp", URL), function(x) any(x>0)) & sapply(gregexpr("zip", URL), function(x) any(x>0))
+	out <- sapply(gregexpr("http|ftp", URL), function(x) any(x>0))
+	
+	# Detect hhtp or ftp AND zip:
+	if(zip){
+		out <- out & sapply(gregexpr("zip", URL), function(x) any(x>0))
+	}
+	
+	out
 }
+#isProjectZipURL <- function(URL){
+#	# Detect hhtp or ftp AND zip:
+#	sapply(gregexpr("http|ftp", URL), function(x) any(x>0)) & sapply(gregexpr("zip", URL), function(x) any(x>0))
+#}
 
 
 #*********************************************
