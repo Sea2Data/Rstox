@@ -1830,7 +1830,7 @@ getProjectDataEnv <- function(projectName){
 #' @export
 #' @keywords internal
 #' 
-as.matrix_full <- function(x){
+as.matrix_full <- function(x, stringsAsFactors=FALSE){
 	# Scan for the field names:
 	if(length(colnames(x[[1]]))==0){
 		x <- lapply(x, t)
@@ -1843,10 +1843,25 @@ as.matrix_full <- function(x){
 	}
 	# Fill inn the data:
 	for(i in seq_along(x)){
+		# Declare NAs in which to fill in the data:
 		one <- rep(NA, length(unames))
 		names(one) <- unames
-		temp <- unlist(x[[i]])
-		one[colnames(temp)] <- temp
+		# Create a temp object holding the data of positive length:
+		temp <- x[[i]]
+		if(!is.list(temp)){
+			tempnames <- colnames(temp)
+			temp <- as.list(temp)
+			names(temp) <- tempnames
+		}
+		positiveLength <- sapply(x[[i]], function(y) length(unlist(y, use.names=FALSE))) > 0
+		temp <- temp[positiveLength]
+		# Store tha names of the variables and if given as a factor, convert to character:
+		tempnames <- names(temp)
+		if(is.factor(unlist(temp)) && !stringsAsFactors){
+			temp <- as.character(unlist(temp))
+		}
+		# Insert to the NAs:
+		one[tempnames] <- unlist(temp)
 		
 		#one[colnames(x[[i]])] <- x[[i]]
 		x[[i]] <- one

@@ -114,9 +114,9 @@ g7 <- getNMDinfo("missiontype")
 g8 <- getNMDinfo("person")
 g9 <- getNMDinfo("taxa")
 # Get the tsn code of torsk:
-g9[tolower(g9$synonym.name) == "torsk", ]
+data[data$Norwegian=="torsk",]
 # And all names containing "torsk":
-g9[grep("torsk", g9$synonym.name, ignore.case=TRUE),]
+data[grep("torsk", data$Norwegian, ignore.case=TRUE),]
 
 # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
 # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.

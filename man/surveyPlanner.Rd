@@ -11,11 +11,12 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   hours = 240, nmi = NULL, t0 = NULL, knots = 10, seed = 0,
   angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
   shapenames = list(longitude = "long", latitude = "lat", stratum = "id"),
-  equalEffort = FALSE, byStratum = TRUE, strata = "all")
+  equalEffort = FALSE, byStratum = TRUE, strata = "all",
+  cruise = "surveyPlanner", keepTransport = TRUE)
 
-plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
-  transport_alpha = 0.1, google = FALSE, margin = 0.5,
-  aspectratio = NULL, xlab = "longitude", ylab = "latitude")
+plotStratum(x, transect = TRUE, centroid = NULL, transport_alpha = 0.1,
+  google = FALSE, margin = 0.5, zoom = 4, aspectratio = NULL,
+  xlab = "longitude", ylab = "latitude", xlim = NULL, ylim = NULL)
 
 readStrataPolygons(projectName)
 }
@@ -58,9 +59,11 @@ readStrataPolygons(projectName)
 
 \item{strata}{Specification of the strata to include, either given as the string "all", implying all strata to be used, og a index vector as given to "[]" (negative values may be used to exclude specific strata).}
 
-\item{x}{The output from \code{\link{surveyPlanner}}.}
+\item{cruise}{A string or numeric giving the cruise name/code.}
 
-\item{zoom}{The zoom to use for google maps}
+\item{keepTransport}{Logical: If FALSE, remove transport stretches in the Transect output.}
+
+\item{x}{The output from \code{\link{surveyPlanner}}.}
 
 \item{transect}{Logical: If TRUE, plot the transects.}
 
@@ -69,6 +72,8 @@ readStrataPolygons(projectName)
 \item{transport_alpha}{The transparency to use for the transport paths.}
 
 \item{google}{Logical: If TRUE, download Google maps.}
+
+\item{zoom}{The zoom to use for google maps}
 
 \item{aspectratio}{The aspect ratio of the plot, adjusted automatically by default.}
 

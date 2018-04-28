@@ -94,7 +94,6 @@ Fixed bug with encoding occurring on Windows when rCurl was used for downloading
 
 
 
-########## Version 1.4.2 ##########
 
 New output folder structure, now placing RData files in output/r/data and plots and report files in output/r/report.
 
@@ -200,31 +199,9 @@ Updated baseline2eca(), which now returns the data 'biotic', 'landing', covariat
 
 ########## Version 1.5.3 (2017-03-02) ##########
 
-Added the function readXMLfiles() for reading XML-files (creating a temporary StoX project).
-
-Rstox can now create and open projects located elsewhere than the default workspace, using the full path as the input projectName.
-
-Added encoding="UTF-8" in getProcessDataTableAsDataFrame() and getDataFrameAtLevel() (used by getBaseline()) preventing misrepresented nordic characters (æ, ø, å).
-
-Added the option 'tsn' in getNMDdata(), specifying a species by the tsn (species) code. Run g <- getNMDinfo("taxa") for a matrix of tsn codes and species names.
-
-Changed treatment of 'acousticMethod' and 'bioticMethod' in runBootstrap(). The two existing methods are currently (a) one which bootstraps acoustic PSUs and trawl stations within stratum, and (b) one which only bootstraps trawl stations within stratum. Previously the trawl stations were denoted by "EDSU", but a more precice notation is "PSU", which also includes possible grouping of trawl stations into one PSU which should be included in the bootstrapping as a whole (not as single trawl stations). The preferred notation indicating the existing bootstrap methods is now PSU~Stratum, whereas EDSU~Stratum is still accepted, with a deprecation-warning.
-
-Added the option 'simplify' in getNMDinfo(), which converts the data into matrices that are easier to access. Also added case insentitive support for the reference data type.
-
-Added the function getProject() for use in saveProject() and openProject(). This function searches for the project Java object in R memory. Also added isProject() and reopenProject()
-
-Removed the paramters startProcess and endProcess in bootstrapOneIteration() and bootstrapParallel().
-
-Added the function getProjectPaths() to return all useful paths of a project. 
-
-Added the function getRstoxEnv() using initiateRstoxEnv(), which should be used when retrieving data from the RstoxEnv environment or the environment of a project. When writing to the environment of a project, allways do temp <- getRstoxEnv() first to ensure that the RstoxEnv environment exists.
-
-Updated baseline2eca(), which now returns the data 'biotic', 'landing', covariate matrices realted to these two, and various resource objects.
 
 
-
-########## Version 1.6 (2017-01-27) ##########
+########## Version 1.6 (2017-01-27) (All changes from version 1.5) ##########
 
 Added the function readXMLfiles() for reading XML-files (creating a temporary StoX project).
 
@@ -398,7 +375,7 @@ Fixed bug in openProject() where the function readBaselineParameters() was used 
 
 
 
-########## Version 1.7 (2017-11-30) ##########
+########## Version 1.7 (2017-11-30) (All changes from version 1.6) ##########
 
 Fixed bug in openProject() where the function readBaselineParameters() was used to read the parameters directly from the project.xml file, as opposed to reading the parameters from the project Java object. As a result, changes to parameters made by StoX when opening av project were not picked up. From Rstox_1.6.5 the function readBaselineParametersJava() is used instead.
 
@@ -566,7 +543,7 @@ Fixed bug in factorNAfirst(), where exclude=FALSE removed zeros. Changed to excl
 
 
 
-########## Version 1.8 (2018-01-10) ##########
+########## Version 1.8 (2018-01-10) (All changes from version 1.7) ##########
 
 Fixed bug in plotAbundance_AcousticTrawl() and plotAbundance_SweptAreaLength(), where missing values were shown as the lowest value minus 1. Now these are shown as NA to the left of the plot (using the new funciton factorNAfirst()).
 
@@ -636,7 +613,7 @@ Added "platformNumber" in getNMDinfo("v") and getNMDinfo("platform"), and change
 Added the function readBaselineFiles().
 
 
-########## Version 1.9 (2018-04-18) ##########
+########## Version 1.9 (2018-04-18) (All changes from version 1.8) ##########
 
 Removed the function baseline2ECA(), which is covered by baseline2eca().
 
@@ -673,3 +650,12 @@ Fixed bug in getBaseline(), where data with incomplete comments (e.g., 'Ersfjord
 Added "platformNumber" in getNMDinfo("v") and getNMDinfo("platform"), and changed the extraction of platforms when type="v" to all info of the latest 'validTo' value. When the 'validTo' is missing, the first row is returned, assuming there is only one row for these entries.
 
 Added the function readBaselineFiles().
+
+
+########## Version 1.9.1 (2018-04-19) ##########
+
+Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
+
+Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
+
+Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns.

@@ -4,7 +4,7 @@
 \alias{as.matrix_full}
 \title{Convert list to matrix and generate missing values}
 \usage{
-as.matrix_full(x)
+as.matrix_full(x, stringsAsFactors = FALSE)
 }
 \arguments{
 \item{x}{A list of vectors of one dimension with column names or names.}

@@ -67,9 +67,9 @@
 #' g8 <- getNMDinfo("person")
 #' g9 <- getNMDinfo("taxa")
 #' # Get the tsn code of torsk:
-#' g9[tolower(g9$synonym.name) == "torsk", ]
+#' data[data$Norwegian=="torsk",]
 #' # And all names containing "torsk":
-#' g9[grep("torsk", g9$synonym.name, ignore.case=TRUE),]
+#' data[grep("torsk", data$Norwegian, ignore.case=TRUE),]
 #' 
 #' # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
 #' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
@@ -123,7 +123,7 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 			# Column added on 2018-01-29 on request from Edvin:
 			platformNumber <- x$.attrs["platformNumber"]
 			out <- cbind(nation=unname(x$nation$.attrs), platformNumber=platformNumber, platformType=unname(x$platformType$.attrs), codes, dates)
-			out <- as.data.frame(out)
+			out <- as.data.frame(out, stringsAsFactors=FALSE)
 		}
 		# Drop elements with length 1, indicating time stamps or similar:
 		x <- x[sapply(x, length)>1]
@@ -149,7 +149,7 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 		# Get the unique names 
 		allUniqueNames <- unique(allNames)
 		# Create a matrix of NAs to be filled with the data using the indices 'rowInd' and names 'allNames':
-		allMatrix <- as.data.frame(array(NA, dim=c(max(rowInd), length(allUniqueNames))))
+		allMatrix <- as.data.frame(array(NA, dim=c(max(rowInd), length(allUniqueNames))), stringsAsFactors=FALSE)
 		names(allMatrix) <- allUniqueNames
 		allMatrix[cbind(rowInd, match(allNames, allUniqueNames))] <- all
 		cbind(Ind=Ind, allMatrix)
@@ -225,7 +225,7 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 		}
 	}
 	# Get the list of survey time series with StoX projets for each series:
-	else if(type[1] %in% c("sts", "sureveytimeseries")){
+	else if(type[1] %in% c("sts", "surveytimeseries")){
 		URLbase <- paste(API, "surveytimeseries", paste0("v", ver), sep="/")
 		# Get the list of survey time series. The survey time series name can be given exactly as the second element of 'type':
 		if(length(type)==2){
@@ -249,7 +249,7 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 	else{
 		# Get the available reference data types:
 		URLbase <- paste(API, "reference", paste0("v", ver), sep="/")
-		# Get the list of cruise series:
+		# Get the list of references:
 		ref <- downloadXML(URLbase, msg=msg)
 		ref <- unname(sapply(ref[names(ref)=="element"], "[[", "text"))
 		if(length(type)==0){
@@ -304,6 +304,30 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 					synonyms <- gettaxaMatrix(data, name="taxaSynonyms")
 					data <- merge(attrs, synonyms)
 					data <- asNumericDataFrame(data)
+					
+					# Convert to one row per species, with the scientific, norwegian, english and russian name as columns:
+					# system.time(data <- getNMDinfo("taxa"))
+					# Extract the preferred:
+					data <- data[data$synonym.preferred==1, ]
+
+					# Get the first row of each 'Ind':
+					out <- data[!duplicated(data$Ind), !names(data) %in% c("synonym.language", "synonym.name", "synonym.preferred")]
+					# Make sure that 'Ind' are the row indices:
+					out <- out[order(out$Ind), ]
+
+					# Get all present values of 'synonym.language':
+					synonym.language <- unique(data$synonym.language)
+					# Create a data frame of NAs for the synonym.language, and insert present values into this data frame:
+					synonym.name <- as.data.frame(array("", dim=c(nrow(out), length(synonym.language))), stringsAsFactors=FALSE)
+					names(synonym.name) <- synonym.language
+					
+					for(this in synonym.language){
+						y <- data[data$synonym.language == this, ]
+						synonym.name[y$Ind, this] <- y[, "synonym.name"]
+					}
+
+					# Insert the columns of scientific, norwegian, english and russian names:
+					data <- cbind(out[, c("Ind", "tsn")], synonym.name, out[, !names(out) %in% c("Ind", "tsn")])
 				}
 				# Else do a basic simplification:
 				else if(is.list(data[[1]])){
