@@ -613,6 +613,10 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' # to add info to the file names):
 #' writeTransects(Zigzag3, projectName, ext="nc")
 #'
+#' @seealso
+#'
+#'	See ?writeTransects for writing the transects to verious files.
+#'
 #' @export
 #' @importFrom sp Lines Line SpatialLines
 #' @importFrom rgeos gIntersection
@@ -1371,6 +1375,13 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	if(identical(strata, "all")){
 		strata <- seq_along(strataNames)
 	}
+	else if(is.character(strata)){
+		temp <- match(strata, strataNames)
+		if(any(is.na(temp))){
+			warning(paste0("The following stratum names specified in 'strata' were not found: ", paste(strata[is.na(temp)], collapse=", ")))
+		}
+		strata <- temp[!is.na(temp)]
+	}
 	else if(!all(strata < 0)){
 		strata <- strata[strata >= 1 & strata <= length(lonlat)]
 	}
@@ -1709,6 +1720,7 @@ readStrataPolygons <- function(projectName){
 #' \code{writeTransectsINFO} writes the transects of all strata to separate hunam readable .txt files. \cr \cr
 #' \code{writeTransectsCSV} writes the transects of all strata to separate csv files files. \cr \cr
 #' \code{writeTransects} writes the data to CSV or NetCDF files. Only a selection of the columns are saved by default (override this by \code{cols}): The transect secifications ("stratum", "transect", "segment", "transport", "retour"), the start and stop position, time and distance ("lon_start", "lon_stop", "lat_start", "lat_stop", "time_start", "time_stop", "dist_start", "dist_stop", "segmentLengths"). By default only transects and not transport stretches are saved (override this by \code{keepTransport}). \cr \cr
+#' \code{writeTransectsGPX} writes the data to the GPS exchange format. \cr \cr
 #' 
 #' @param x								The output from \code{\link{surveyPlanner}}.
 #' @param projectName   				The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).

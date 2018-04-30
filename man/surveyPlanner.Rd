@@ -181,3 +181,6 @@ plotStratum(Zigzag3)
 writeTransects(Zigzag3, projectName, ext="nc")
 
 }
+\seealso{
+See ?writeTransects for writing the transects to verious files.
+}
