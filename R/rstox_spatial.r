@@ -1620,7 +1620,7 @@ plotStratum <- function(x, transect=TRUE, centroid=NULL, transport_alpha=0.1, go
 	
 	
 	# Add transects:
-	if(length(transect)){
+	if(isTRUE(transect)){
 		# Use the retour as line type:
 		hasRetour <- length(unique(x$Transect$retour)) > 1
 		# Convert to factor:
