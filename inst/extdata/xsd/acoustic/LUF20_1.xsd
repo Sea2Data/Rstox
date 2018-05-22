@@ -1,0 +1,61 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="echosounder_dataset" type="echosounder_datasetType"/>
+  <xs:complexType name="saType">
+    <xs:simpleContent>
+      <xs:extension base="xs:float">
+        <xs:attribute type="xs:byte" name="ch" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="sa_by_acocatType">
+    <xs:sequence>
+      <xs:element type="saType" name="sa" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:byte" name="acocat" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="ch_typeType">
+    <xs:sequence>
+      <xs:element type="sa_by_acocatType" name="sa_by_acocat" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="type" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="frequencyType">
+    <xs:sequence>
+      <xs:element type="xs:float" name="threshold"/>
+      <xs:element type="xs:byte" name="num_pel_ch" minOccurs="0"/>
+      <xs:element type="xs:float" name="upper_interpret_depth"/>
+      <xs:element type="xs:float" name="upper_integrator_depth"/>
+      <xs:element type="xs:float" name="bubble_corr"/>
+      <xs:element type="ch_typeType" name="ch_type" minOccurs="0"/>
+    </xs:sequence>
+    <xs:attribute type="xs:int" name="freq" use="required"/>
+    <xs:attribute type="xs:byte" name="transceiver" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="distanceType">
+    <xs:sequence>
+      <xs:element type="xs:float" name="integrator_dist"/>
+      <xs:element type="xs:float" name="pel_ch_thickness" minOccurs="0"/>
+      <xs:element type="xs:float" name="lat_start"/>
+      <xs:element type="xs:float" name="lon_start"/>
+      <xs:element type="xs:string" name="lon_stop"/>
+      <xs:element type="frequencyType" name="frequency"/>
+    </xs:sequence>
+    <xs:attribute type="xs:float" name="log_start" use="required"/>
+    <xs:attribute type="xs:string" name="start_time" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="distance_listType">
+    <xs:sequence>
+      <xs:element type="distanceType" name="distance" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="echosounder_datasetType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="report_time"/>
+      <xs:element type="xs:string" name="lsss_version"/>
+      <xs:element type="xs:short" name="nation"/>
+      <xs:element type="xs:byte" name="platform"/>
+      <xs:element type="xs:short" name="cruise"/>
+      <xs:element type="distance_listType" name="distance_list"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

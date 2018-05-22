@@ -42,7 +42,7 @@
 #' @param file					The path to a the file to which the data are saved.
 #' @param quiet					Used in download.file().
 #' @param method				The download method. See \code{\link{download.file}}.
-#' @param timeout				If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal".
+#' @param timeout				If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}). 
 #'
 #' @details
 #' If non-standard characters are not shown as expected, it might be an issue of locale encoding. 
@@ -67,9 +67,9 @@
 #' g8 <- getNMDinfo("person")
 #' g9 <- getNMDinfo("taxa")
 #' # Get the tsn code of torsk:
-#' data[data$Norwegian=="torsk",]
+#' g9[g9$Norwegian=="torsk",]
 #' # And all names containing "torsk":
-#' data[grep("torsk", data$Norwegian, ignore.case=TRUE),]
+#' g9[grep("torsk", g9$Norwegian, ignore.case=TRUE),]
 #' 
 #' # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
 #' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.

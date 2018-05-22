@@ -124,13 +124,14 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		lengthmeters <- c(1, 5, 10, 30, 50, 0.5, 0.1)/1000
 		biotic$lengthunitmeters <- lengthmeters[match(biotic$lengthunit, lengthcode)]
 	
+		# This section was removed with approval from Hanne and David. It was included for historical reasons, and the freqency column was supported in prevoius ECA versions, but we decided that there is no need for compressing the input data in this way anymore, given the assiciated complication of the input data:
 		# (2e) Aggregate by lines without weight, but with equal length:
-		duplines = duplicated(biotic[,c("serialno","length","weight")]) & is.na(biotic$age)
-		if(any(duplines)){
-			frequency = by(biotic$frequency, paste(biotic$serialno, biotic$length), sum)
-			biotic = biotic[!duplines,]
-			biotic$frequency = frequency
-		}
+		#duplines = duplicated(biotic[,c("serialno", "length", "weight")]) & is.na(biotic$age)
+		#if(any(duplines)){
+		#	frequency = by(biotic$frequency, paste(biotic$serialno, biotic$length), sum)
+		#	biotic = biotic[!duplines,]
+		#	biotic$frequency = frequency
+		#}
 		############################################################
 	
 		#######################################################

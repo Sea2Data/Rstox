@@ -61,7 +61,7 @@ getPSUNASC <- function(baseline){
 #' @rdname getPSUNASC
 #'
 aggPSUNASC <- function(psuNASC){
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
+	# The functions J and .jnew and other functions in the rJava package needs initialization:
 	Rstox.init()
 	Functions <- J("no.imr.stox.functions.utils.Functions")
 	# psuNASC contains the column PSU (AJ 2016-08-31):

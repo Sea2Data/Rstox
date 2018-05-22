@@ -277,7 +277,7 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 	bioticMethod <- temp$bioticMethod
 	
 	# Apply the bootstrap:
-	if(!bootstrapMethod %in% getRstoxDef("model_types")){
+	if(!bootstrapMethod %in% getRstoxDef("project_types")){
 		stop("Invalid bootstrap type.")
 	}
 	bootstrapFun <- paste("runBootstrap", bootstrapMethod, sep="_")

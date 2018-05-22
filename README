@@ -1,5 +1,5 @@
-# Rstox version: 1.9.1 (latest alpha, 2018-05-04)
-# R version: 3.4.3
+# Rstox version: 1.9.1 (latest alpha, 2018-05-15)
+# R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
 
@@ -48,5 +48,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # 2. Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
 
 # 3. Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns.
+
+# 4. Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting transects, whereas transect=NULL did. In the new version all values other than TRUE suppresses plotting transects.
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS

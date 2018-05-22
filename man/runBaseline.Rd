@@ -6,9 +6,9 @@
 \title{Run a StoX baseline model}
 \usage{
 runBaseline(projectName, startProcess = 1, endProcess = Inf,
-  reset = FALSE, save = FALSE, out = c("project", "baseline", "report",
-  "name"), modelType = "baseline", msg = TRUE, exportCSV = FALSE,
-  warningLevel = 0, parlist = list(), ...)
+  reset = FALSE, save = FALSE, out = c("project", "baseline",
+  "baseline-report", "name"), modelType = "baseline", msg = TRUE,
+  exportCSV = FALSE, warningLevel = 0, parlist = list(), ...)
 
 getBaseline(projectName, input = c("par", "proc"), proc = "all",
   drop = TRUE, modelType = "baseline", msg = TRUE, startProcess = 1,

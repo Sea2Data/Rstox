@@ -12,7 +12,7 @@ setBaselineParameters(projectName, msg = FALSE, parlist = list(),
   save = c("last", "java"), ...)
 
 readBaselineParametersJava(projectName, out = "baseline",
-  keepMissing = FALSE)
+  keepMissing = TRUE)
 
 readBaselineParameters(projectName, rver = "1")
 
@@ -30,6 +30,8 @@ modifyBaselineParameters(parameters, parlist = list(), ...)
 \item{save}{A string naming the types of parameter to save ("java" implies saving the parameters to Java memory and to RstoxEnv[[projectName]]$javaParameters, whereas "last" implies saving the parameters to RstoxEnv[[projectName]]$javaParameters and to the projectData which are saved along with bootstrap and impute data). If save=TRUE, save is set to c("java", "last").}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
+
+\item{keepMissing}{Logical: If FALSE discard empty parameters of processes when reading the parameters from the Java memory.}
 
 \item{rver}{The version of the stox library.}
 

@@ -4,7 +4,7 @@
 \alias{surveyPlanner}
 \alias{plotStratum}
 \alias{readStrataPolygons}
-\title{Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).}
+\title{Plan an acoustic-trawl survey.}
 \usage{
 surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   bearing = "N", rev = FALSE, retour = FALSE, toursFirst = FALSE,
@@ -37,7 +37,7 @@ readStrataPolygons(projectName)
 
 \item{hours, nmi}{The time/traveled distance to spend in each stratum, given in hours/nautical miles (repeated to the number of strata), where \code{nmi} has precedence over \code{hours}. If given as a list of one element, these are interpreted as the hours/nmi for the entire survey, in which case selecting only a subset of the strata using \code{strata} will increase the effort in each of the remaining strata.}
 
-\item{t0}{The start time of the survey, set to Sys.time() by default.}
+\item{t0}{The start time of the survey, set to Sys.time() formatted to UTC by default. A as.POSIXct object or a string of a recognisable form (such as "\%Y-\%m-\%d \%H:\%M:\%S") are supported.}
 
 \item{knots}{The speed to use in the stratum, given in knots.}
 
@@ -107,7 +107,9 @@ readStrataPolygons(projectName)
 \code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
 }
 \description{
-Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).
+\code{surveyPlanner} reads a WKT (Well known text) file, shapefiles, or a StoX project and generates a survey plan of parallel or zig zag transects.  \cr \cr
+\code{plotStratum} plots the survey plan returned by \code{surveyPlanner} . \cr \cr
+\code{readStrataPolygons} reads a WKT (Well known text) file, shapefiles, or a StoX project and returns the strata system.  \cr \cr
 }
 \details{
 Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443

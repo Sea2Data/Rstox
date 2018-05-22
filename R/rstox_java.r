@@ -32,15 +32,25 @@ Rstox.init <- function() {
 #' @export
 #' @keywords internal
 #' 
-getAvailableFunctions <- function(type="baseline"){
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
-	Rstox.init()
-	projectName <- .jnew("no/imr/stox/model/Project")
-	functions <- projectName$getLibrary()$getMetaFunctions()$toString()
-	functions <- JavaString2vector(functions)
-	if(!identical(type, "all")){
+getAvailableFunctions <- function(){
+	if(length(getRstoxEnv()$Definitions$availableFunctions) == 0){
+		# The functions J and .jnew and other functions in the rJava package needs initialization:
+		Rstox.init()
+		projectName <- .jnew("no/imr/stox/model/Project")
+		functions <- projectName$getLibrary()$getMetaFunctions()$toString()
+		functions <- JavaString2vector(functions)
+		
 		categories <- sapply(functions, function(x) projectName$getLibrary()$findMetaFunction(x)$getCategory())
-		functions <- functions[categories %in% type]
+		functions <- split(functions, categories)
+		
+		RstoxEnv$Definitions$availableFunctions <- functions
+		#if(!identical(type, "all")){
+		#	categories <- sapply(functions, function(x) projectName$getLibrary()$findMetaFunction(x)$getCategory())
+		#	functions <- functions[categories %in% type]
+		#}
+	}
+	else{
+		functions <- getRstoxEnv()$Definitions$availableFunctions
 	}
 	return(functions)
 }
@@ -48,7 +58,7 @@ getAvailableFunctions <- function(type="baseline"){
 
 #*********************************************
 #*********************************************
-#' Add processes to a project given as output from getParlist():
+#' Add processes to a project, given output from getParlist():
 #' 
 #' This function extracts the project names and adds function names where these are not given, and adds processes to the project.
 #' 
@@ -56,11 +66,33 @@ getAvailableFunctions <- function(type="baseline"){
 #' @param processes	A list of processes as returned from \code{\link{getParlist}}.
 #' 
 #' @export
+#' @importFrom rJava .jrcall
 #' @keywords internal
 #' 
 addProcesses <- function(project, processes){
+	# Function for adding one process. This should be replaced by something less akward, where .jcall should be used and the function name given as input to .jcall instead of the series of if and else:
+	addOneProcess <- function(i, project, modelFun, processNames, functionNames){
+		getProject(project, modelFun[i])$addProcess(processNames[i], functionNames[i])
+		###
+		###if(modelFun[i]=="getBaseline"){
+		###	project$getBaseline()$addProcess(processNames[i], functionNames[i])
+		###}
+		###else if(modelFun[i]=="getBaselineReport"){
+		###	project$getBaselineReport()$addProcess(processNames[i], functionNames[i])
+		###}
+		###else if(modelFun[i]=="getRModel"){
+		###	project$getRModel()$addProcess(processNames[i], functionNames[i])
+		###}
+		###else if(modelFun[i]=="getRModelReport"){
+		###	project$getRModelReport()$addProcess(processNames[i], functionNames[i])
+		###}
+		###else{
+		###	stop("Invalid 'modelFun'")
+		###}
+	}
+	
 	if(!is.list(processes)){
-		stop("processes must be a list of elements processName = list(par1 = value, par2 = value, ...)")
+		stop("processes must be a list of elements 'processName' (as a string naming the process with no parameters) or processName = list(par1 = value, par2 = value, ...)")
 	}
 	# Discard duplicated process names, since we are only using the process and function names, and not the parameter values, which are treated by setBaselineParameters():
 	processes <- processes[!duplicated(names(processes))]
@@ -71,15 +103,26 @@ addProcesses <- function(project, processes){
 	functionNames[empty] <- processNames[empty]
 	
 	# Remove the processes with invalid functions:
-	valid <- functionNames %in% getAvailableFunctions()
+	availableFunctions <- getAvailableFunctions()
+	availableFunctionsFlat <- unlist(availableFunctions)
+	modelTypes <- rep(names(availableFunctions), sapply(availableFunctions, length))
+	valid <- functionNames %in% unlist(availableFunctions)
 	if(any(!valid)){
-		warning(paste0("The following functions were not recognized (use getAvailableFunctions() to get a list of available Stox functions):\n"), paste(functionNames[!valid], sep="\n"))
+		warning(paste0("The following functions were not recognized (use getAvailableFunctions() to get a list of available functions in Stox):\n"), paste(functionNames[!valid], sep="\n"))
 	}
 	functionNames <- functionNames[valid]
 	processNames <- processNames[valid]
 	
+	# Identify the model types of the processes:
+	modelFun <- modelTypes[match(functionNames, availableFunctionsFlat)]
+	### # Match with the defined modelTypeJavaNames, and extract the corresponding modelTypeJavaFuns:
+	### modelTypeJavaNames <- getRstoxEnv()$Definitions$modelTypeJavaNames
+	### modelTypeJavaFuns <- getRstoxEnv()$Definitions$modelTypeJavaFuns
+	### modelFun <- modelTypeJavaFuns[match(modelFun, modelTypeJavaNames)]
+	
 	# Add the processes:
-	lapply(seq_along(processNames), function(i) project$getBaseline()$addProcess(processNames[i], functionNames[i]))
+	#lapply(seq_along(processNames), function(i) project$getBaseline()$addProcess(processNames[i], functionNames[i]))
+	lapply(seq_along(processNames), addOneProcess, project, modelFun, processNames, functionNames)
 	return(list(processNames=processNames, functionNames=functionNames))
 }
 
@@ -308,7 +351,7 @@ setAssignments <- function(projectName, assignments){
 	baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE)
 	# Define the Java-object to modify:
 	JavaPath <- baseline$getProject()$getProcessData()$getMatrix("bioticassignment")
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
+	# The functions J and .jnew and other functions in the rJava package needs initialization:
 	Rstox.init()
 	# Modify with the 'assignments':
 	J("no.imr.stox.functions.utils.AbndEstProcessDataUtil")$setAssignments(JavaPath, .jarray(as.character(assignments$AssignmentID)), .jarray(as.character(assignments$Station)), .jarray(as.double(assignments$StationWeight)))
@@ -323,7 +366,7 @@ setNASC <- function(projectName, process="MeanNASC", data){
 	baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE)
 	# Define the Java-object to modify:
 	JavaPath <- baseline$findProcessByFunction(process)$getOutput()$getData()
-	# The functions J and .jnew and other functions in the rJava library needs initialization:
+	# The functions J and .jnew and other functions in the rJava package needs initialization:
 	Rstox.init()
 	# Modify with the 'data':
 	J("no.imr.stox.bo.MatrixUtil")$setGroupRowColValues(JavaPath, .jarray(as.character(data$AcoCat)), .jarray(as.character(data$SampleUnit)), .jarray(as.character(data$Layer)), .jarray(as.double(data$Value)))
