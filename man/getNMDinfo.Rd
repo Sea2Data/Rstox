@@ -74,7 +74,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{run}{Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).}
 
-\item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal".}
+\item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 

@@ -1008,6 +1008,8 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 			}
 			# Set the new parameters:
 			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE, save=c("last", "java"))
+			# Make sure that processes are given by the correct form "Process(processName)"
+			newpar <- getParlist(newpar)
 			
 			# Run the baseline:
 			baseline$run(jInt(startProcess), jInt(endProcess), jBoolean(FALSE))
@@ -1044,6 +1046,7 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 #' @rdname runBaseline
 #' 
 getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TRUE, modelType="baseline", msg=TRUE, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, parlist=list(), ...){
+	
 	# Locate/run the baseline object. If rerun=TRUE or if parameters are given different from the parameters used in the last baseline run, rerun the baseline, and if the :
 	#baseline <- runBaseline(projectName, startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, out="baseline", msg=msg, parlist=parlist, ...)
 	baseline <- runBaseline(projectName, startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, out=modelType[1], modelType=modelType[1], msg=msg, parlist=parlist, ...)
@@ -1533,6 +1536,7 @@ getBaselineParameters <- function(projectName, out="all"){
 #' 
 modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 	# Include both parameters specified in 'parlist' and parameters specified freely in '...':
+	
 	parlist <- getParlist(parlist=parlist, ...)
 	# If nothing has changed these wiil appear as NULL in the output:
 	changeProcesses    <- NULL
@@ -1546,9 +1550,10 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 		# Update process names:
 		processNames <- names(parameters)
 		
+		
 		# Get names and indices of processes to change, and names and values of the parameters to change in those processes:
 		changeProcesses    <- names(parlist)
-		numParameters      <- unlist(lapply(parlist, length))
+		numParameters      <- pmax(0, unlist(lapply(parlist, length))) # Allow for no parameters given
 		changeProcesses    <- rep(changeProcesses, numParameters)
 		
 		modelTypes <- sapply(parameters, "[[", "modelType")
@@ -1566,7 +1571,10 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 		changeValues <- unlist(parlist, recursive=FALSE)
 		
 		# Set logical values to "true"/"false":
-		logicalValues <- sapply(changeValues, is.logical)
+		is.TRUEorFALSE <- function(x){
+			is.logical(x) & !is.na(x)
+		}
+		logicalValues <- sapply(changeValues, is.TRUEorFALSE)
 		changeValues[logicalValues] <- lapply(changeValues[logicalValues], function(xx) if(xx) "true" else "false")
 		
 		# Convert parameter values given as a data frame to a string:
@@ -1628,6 +1636,7 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 #' 
 #' @param parlist		List of parameters values specified as processName = list(parameter = value)
 #' @param ...			Same as parlist, but can be specified separately (not in a list but as separate inputs).
+#' @param na.rm			Logical: If TRUE (default), remove NAs in the parlist.
 #' @param fun			The name of a function to which the parameters in parlist should be fit.
 #'
 #' @return Merged list of parameters, duplicates not removed.
@@ -1636,7 +1645,7 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 #' @keywords internal
 #' @rdname getParlist
 #'
-getParlist <- function(parlist=list(), ...){
+getParlist <- function(parlist=list(), ..., na.rm=TRUE){
 	# Function for detecting and formatting process names:
 	formatProcessNameParameters <- function(parlist){
 		# Funciton do detect parameter values which are process names, and enclose these in "Process()":
@@ -1663,6 +1672,9 @@ getParlist <- function(parlist=list(), ...){
 	}
 	# Merge the inputs:
 	parlist <- c(parlist, dotlist)
+	# Uniquify the list (change added on 2018-05-24 after trouble with the possibility to define parameters both in 'model', and 'parlist' and '...'):
+	# parlist <- unique(parlist) THIS REMOVED THE NAMES AND SHOULD NOT BE USED
+	parlist <- parlist[!duplicated(parlist)]
 	
 	if(length(parlist)){
 		# Convert strings to list:
@@ -1683,6 +1695,17 @@ getParlist <- function(parlist=list(), ...){
 	
 	# Format process names:
 	parlist <- formatProcessNameParameters(parlist)
+	
+	# Remove all missing values:
+	if(na.rm){
+		removeNAsFromList <- function(x){
+			x[!is.na(x)]
+		}
+		# Remove NAs from the top level:
+		parlist <- removeNAsFromList(parlist)
+		# Remove NAs from the sub lists:
+		parlist <- lapply(parlist, removeNAsFromList)
+	}
 	
 	return(parlist)
 }
@@ -2749,4 +2772,24 @@ readBaselineFiles <- function(x){
 		out <- lapply(out, function(y) if(length(y)==1) y[[1]] else y)
 	}
 	out
+}
+
+
+#*********************************************
+#*********************************************
+#' Small function for removing missing values if requested
+#'
+#' @param x		The files to read.
+#' @param na.rm	Logical: If FALSE do not remove the NAs.
+#'
+#' @export
+#' @keywords internal
+#'
+rm.na <- function(x, na.rm=TRUE){
+	if(na.rm){
+		x[!is.na(x)]
+	}
+	else{
+		x
+	}
 }

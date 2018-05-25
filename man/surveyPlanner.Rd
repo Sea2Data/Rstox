@@ -4,6 +4,7 @@
 \alias{surveyPlanner}
 \alias{plotStratum}
 \alias{readStrataPolygons}
+\alias{getCentroid}
 \title{Plan an acoustic-trawl survey.}
 \usage{
 surveyPlanner(projectName, parameters = NULL, type = "Parallel",
@@ -19,6 +20,8 @@ plotStratum(x, transect = TRUE, centroid = NULL, transport_alpha = 0.1,
   xlab = "longitude", ylab = "latitude", xlim = NULL, ylim = NULL)
 
 readStrataPolygons(projectName)
+
+getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude", "latitude"))
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -186,3 +189,4 @@ writeTransects(Zigzag3, projectName, ext="nc")
 \seealso{
 See ?writeTransects for writing the transects to verious files.
 }
+\keyword{internal}

@@ -5,7 +5,7 @@
 \alias{applyParlist}
 \title{Merges a list and the following list elements given as "...".}
 \usage{
-getParlist(parlist = list(), ...)
+getParlist(parlist = list(), ..., na.rm = TRUE)
 
 applyParlist(parlist, fun)
 }
@@ -13,6 +13,8 @@ applyParlist(parlist, fun)
 \item{parlist}{List of parameters values specified as processName = list(parameter = value)}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
+
+\item{na.rm}{Logical: If TRUE (default), remove NAs in the parlist.}
 
 \item{fun}{The name of a function to which the parameters in parlist should be fit.}
 }

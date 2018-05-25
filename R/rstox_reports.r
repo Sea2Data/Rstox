@@ -1368,26 +1368,151 @@ getFunsRstox <- function(string, out="all"){
 #*********************************************
 #' Generate species matrix with biotic stations as rows and station information and the species present in the \code{ref} file as columns. One matrix generated per variable \code{var}.
 #'
-#' @param projectName						The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
-#' @param ref								The path to a file linking species to species categories, specifically named by \code{specVar} or \code{specVar.ref} and \code{catVar}. The file must be a CSV (comma separated) file with UTF-8 encoding.
-#' @param specVar,specVar.bio,specVar.ref	Names of the species columns in the data and in the \code{ref} file. When only specifying \code{specVar}, a common column name is assumed.
-#' @param catVar							The name of the species category column in the \code{ref} file.
-#' @param bioticProc						The process from which the biotic data should be extracted from the project.
-#' @param stationVar						The names of the columns of the biotic data identifying the biotic stations. These columns will be concatenated.
-#' @param var								The names of the columns for which the species matrices should be generated.
-#' @param na.as								The value to use for missing data (e.g., species categories that are not present in a station).
-#' @param drop.out							Logical: If TRUE (default) unlist if only one variable is given in \code{var}.
-#' @param close								Logical: If TRUE (default) close the project after reading the data.
-#' @param ...								Parameters passed on to getBaseline(), e.g. for changing the baseline parameters (adding filters).
-
+#' @param cs						A vector of cruise series names providing the data.
+#' @param ref						Either a data frame with the reference information about the species, containing the variables specied in "specVar", "catVar", or the path to a csv file holding this data frame.
+#' @param years						A vector of the years to process.
+#' @param downloadProjects			Logical: If TRUE download the projects, which must be done the first time, or if one needs to re-download.
+#' @param timeout					Used on Windows if problems with incompletely downloded data occurs (server problems).
+#' @param model						The model to use in the projects. Per default only two processes are needed: ReadBioticXML reads the biotic data, and FilterBiotic filters away stations, gear, species and so on. Set FilterBiotic to filter data from ReadBioticXML.
+#' @param model						Parameters such as FilterBiotic <- list(BioticData="ReadBioticXML",  FishStationExpr = "gear =~['3270','3271', '3293', '']  and gearcondition < 3 and trawlquality =~['1','3']  and fishstationtype != ['2','C']", SampleExpr = "genetics != '7'").
+#' @param specVar					The name of the variable identifying the species the data. This variable must be present also in 'ref'.
+#' @param catVar					The name of the variable identifying the species categories to which the data should be grouped.
+#' @param stationVar				The variables in the data defining biotic stations (the combination of these variables is used).
+#' @param bioticProc				The StoX process from which the data are extracted (one of "ReadBioticXML" and "FilterBiotic" (the default, useful for filtering out e.g. gears)).
+#' @param var						The variables to return data of.
+#' @param projectName				The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param specVar.bio,specVar.ref	Names of the species columns in the data and in the \code{ref} file. When only specifying \code{specVar}, a common column name is assumed.
+#' @param na.as						The value to use for missing data (e.g., species categories that are not present in a station).
+#' @param drop.out					Logical: If TRUE (default) unlist if only one variable is given in \code{var}.
+#' @param close						Logical: If TRUE (default) close the project after reading the data.
+#' @param ...						Parameters passed on to getBaseline(), e.g. for changing the baseline parameters (adding filters).
 #' 
-#' @return A list of matrices (dropped to a matrix if only one variable is specified in \code{var}) with stations as rows and station information and the species present in the \code{ref} file as columns.
+#' @return A list of data frames with stations as rows and station information and the species present in the \code{ref} file as columns.
+#'
+#' @export
+#' @rdname generateSpeciesMatrix
+#' 
+generateSpeciesMatrix <- function(cs, ref, years, pr=NULL, check=TRUE, 
+	downloadProjects = FALSE, timeout = 600, 
+	model = list("ReadBioticXML", FilterBiotic=list(BioticData="ReadBioticXML")), 
+	specVar = "noname", catVar = "Speccat", stationVar = c("cruise", "serialno"), 
+	bioticProc = "FilterBiotic", var = c("weight", "count"), 
+	max.sampletype=49, projectNames.out=FALSE, ...){
+	
+	# Function to detect species that are present in the data but not in the reference file:
+	out.noname <- function(pr, ref, bioticProc="FilterBiotic", max.sampletype=49){
+		# Read the biotic proecss and extract the catch sample level:
+		cat("Project:", pr, "...\n")
+		s1 <- getBaseline(pr, endProcess=bioticProc, proc=bioticProc, input=FALSE, msg=FALSE)
+		dat1 <- s1$ReadBioticXML$ReadBioticXML_BioticData_CatchSample.txt
+	
+		# Note that all names are converted to lower case 
+		noname.pr <- tolower(sort(as.character(unique(dat1$noname[dat1$sampletype <= max.sampletype]))))
+		ref$noname <- tolower(sort(as.character(ref$noname)))
+
+		# What is in XML file but not in Reference file:
+		only.in.xml <- setdiff(noname.pr, ref$noname)
+		if(length(only.in.xml)){
+			cat("Only in xml files (not in the reference table):", only.in.xml, "\n")
+		}
+		
+		only.in.xml
+	}
+	
+	# Function for merging all years for each cruise series and each variable:
+	mergeAllYears <- function(x, var){
+		mergeAllYears_OneVar <- function(var, x){
+			do.call(rbind, c(lapply(x, "[[", var), make.row.names=FALSE))
+		}
+		out <- lapply(var, mergeAllYears_OneVar, x=x)
+		names(out) <- var
+		out
+	}
+	
+	cs <- cs[1]
+	
+	# Read the reference file linking species and species category:
+	if(!is.data.frame(ref)){
+		ref <- read.csv2(ref, encoding = "UTF-8", stringsAsFactors=FALSE)
+	}
+	
+	
+	# Download the data and create StoX projects (use run=TRUE only the first time to avoid downloading each time the code is run. The output is the project names.):
+	if(length(pr)==0){
+		# Get the subset of the cruise series defined by 'years' (requires group="year" in getNMDdata()):
+		cs_info <- getNMDinfo("cs")
+		#cs_years <- lapply(cs_info[cs], function(x) sort(as.numeric(unique(x[, "year"]))))
+		cs_years <- sort(as.numeric(unique(cs_info[[cs]][, "year"])))
+		#subsets <- lapply(cs_years, function(x) rm.na(match(years, x)))
+		subset <- rm.na(match(years, cs_years))
+		
+		# Get the years of the cruise series:
+		#years <- lapply(seq_along(subsets), function(i) cs_years[[i]][subsets[[i]]])
+		years <- cs_years[subset]
+		
+	
+		if(downloadProjects == TRUE){
+			pr <- getNMDdata(cs, subdir=TRUE, abbrev=TRUE, subset=subset, model=model, group="year", ow=TRUE, timeout=timeout)
+		}
+
+		# This is only get the project names, and takes approximately 2 minutes (not neccesary if line above is done)
+		if(downloadProjects == FALSE){
+			pr <- getNMDdata(cs, subdir=TRUE, abbrev=TRUE, subset=subset, model=model, group="year", run=FALSE)
+		}
+		
+		# Use years as names to the individual project paths and the cruise series names at the top level:
+		pr <- setNames(pr, years)
+	}
+
+	# Report species that are present in the data but not in the reference file:
+	if(check){
+		cat("Checking whether all species are present in the reference data frame...\n")
+		only.in.xml <- lapply(pr, out.noname, ref=ref, bioticProc=bioticProc, max.sampletype=max.sampletype)
+		if(length(only.in.xml)==0){
+			cat("All species present\n")
+		}
+	}
+	
+	## All years using the same Speccat
+	speciesMatrices <- lapply(pr, aggregateBySpeciesCategory, ref=ref, specVar=specVar, catVar=catVar, bioticProc=bioticProc, stationVar=stationVar, var=var, ...)
+	
+	
+	# Merge all years:
+	speciesMatrices <- mergeAllYears(speciesMatrices, var=var)
+	
+	if(projectNames.out){
+		list(x=speciesMatrices, projectNames=pr)
+	}
+	else{
+		speciesMatrices
+	}
+}
+#'
+#' @export
+#' @rdname generateSpeciesMatrix
+#' 
+mergeSpeciesMatrix <- function(...){
+	# Function for rbinding all elements of a specific variable name:
+	mergeSpeciesMatrixOneVar <- function(var, l){
+		#do.call("rbind", lapply(l, "[[", var))
+		Reduce(function(...) merge(..., all=TRUE), lapply(l, "[[", var))
+	}
+	# Capture the input lists:
+	l <- list(...)
+	# Get the variable names:
+	vars <- names(l[[1]])
+	
+	# Do the merging for each variable:
+	out <- lapply(vars, mergeSpeciesMatrixOneVar, l)
+	names(out) <- vars
+	out
+}
 #'
 #' @export
 #' @keywords internal
-#' @rdname aggregateBySpeciesCategory
+#' @rdname generateSpeciesMatrix
 #' 
-aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", stationVar=c("cruise", "serialno"), var=c("weight", "count"), na.as=0, drop.out=TRUE, close=TRUE, msg=FALSE, ...){
+aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", stationVar=c("cruise", "serialno"), var=c("weight", "count"), na.as=0, drop.out=TRUE, close=TRUE, msg=TRUE, ...){
 	# Function used for converting a matrix into a data frame and appending the rownames as the first column:
 	createTempDataFrame <- function(x){
 		out <- data.frame(stationVar=rownames(x), as.data.frame(x))
@@ -1397,22 +1522,30 @@ aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specV
 	# Add concatination of 
 	appendStationFirst <- function(x, stationVar=c("cruise", "serialno")){
 		Station <- do.call(paste, x[stationVar])
-		cbind(Station=Station, x)
+		cbind(Station=Station, x, stringsAsFactors=FALSE)
+	}
+	
+	# Read the reference file linking species and species category:
+	if(is.data.frame(ref)){
+		ref <- ref
+	}
+	else{
+		ref <- read.csv2(ref, encoding = "UTF-8", stringsAsFactors=FALSE)
 	}
 	
 	# Read the ref file:
-	ref <- read.csv2(ref, stringsAsFactors=FALSE)
+	#ref <- read.csv2(ref, stringsAsFactors=FALSE)
 	ref[[specVar]] <- tolower(ref[[specVar]])
 	# Test whether the specVar and catVar are present in the ref file:
 	if(!all(c(specVar.ref, catVar) %in% names(ref))){
-		stop("All of 'specVar.ref' (possibly specified commonly for the biotic data and the ref file by 'specVar') and 'catVar' must be present in the 'ref' file")
+		stop(paste0("All of 'specVar.ref' (possibly specified commonly for the biotic data and the ref file by 'specVar') and 'catVar' must be present in the 'ref' file (", paste(setdiff(c(specVar.ref, catVar), names(ref)), sep=", "), " not present in the ref file)."))
 	}
 	
 	# Get the project output:
 	if(msg){
 		cat("Generating species matrix for project ", projectName, "\n")
 	}
-	g <- getBaseline(projectName, input=NULL, proc=bioticProc, ...)
+	g <- getBaseline(projectName, input=NULL, proc=bioticProc, msg=FALSE, ...)
 	closeProject(projectName)
 	
 	# Merge station and catch data from the bioticProc, but keep all stations through all = TRUE:
@@ -1443,14 +1576,20 @@ aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specV
 	
 	# Group by catVar:
 	temp <- lapply(var, function(v) tapply(data[, v], data[, c("Station", catVar)], sum, na.rm=TRUE))
-	# Convert into a data frame and merge by 'stationVar':
-	#temp <- lapply(temp, createTempDataFrame)
+	# Convert into a data frame and add Station:
 	temp <- lapply(temp, function(x) data.frame(Station=rownames(x), as.data.frame(x)))
+	# If there was created a column named V1, rename it to "Unknown":
+	#temp <- lapply(temp, function(x) {if(any("V1" == names(x))) names(x)["V1" == names(x)] <- "Unknown"; x})
+	temp <- lapply(temp, function(x) if(any("V1" == names(x))) x["V1" != names(x)] else x)
 	# replace NA:
-	temp <- lapply(temp, function(x) {x[is.na(x)] <- na.as; x})
+	temp <- lapply(temp, function(x) {if(any(is.na(x))) x[is.na(x)] <- na.as; x})
 	
 	# Merge with the station data:
 	temp <- lapply(temp, function(x) merge(out, x, by="Station", all.x=TRUE))
+	# Add Year as the firs column:
+	temp <- lapply(temp, function(x) cbind(Year = as.numeric(format(as.Date(x$startdate, format="%d/%m/%Y"),"%Y")), x))
+	
+	# Set names to the data frame:
 	names(temp) <- var
 	if(drop.out && length(temp)==1){
 		temp <- temp[[1]]

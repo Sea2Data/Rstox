@@ -470,6 +470,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		# projectPaths <- unlist(lapply(projectPaths, createProject, model=model, ow=ow, ...)) # Here we should implement some way of setting ow=TRUE interactively at first prompt
 		##### temp <- unlist(lapply(projectPaths, createProject, model=model, ow=ow, ...)) # Here we should implement some way of setting ow=TRUE interactively at first prompt
 		
+		
 		temp <- createProject(projectPaths, model=model, ow=ow, ...)
 		suppressWarnings(toWrite <- which(!is.na(temp)))
 		if(length(toWrite)==0){

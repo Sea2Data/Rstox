@@ -423,16 +423,6 @@ writeHIXML <- function(x, file, root, addVersion=TRUE, xsd=NULL, na.rm=TRUE, dec
 data.frame2nestedList <- function(x, pre=NULL, levelnames=NULL, rename=NULL, na.rm=FALSE, lastlevel=NULL){
 	
 	# Small function for removing missing values if requested:
-	rm.na <- function(x, na.rm=TRUE){
-		if(na.rm){
-			x[!is.na(x)]
-		}
-		else{
-			x
-		}
-	}
-	
-	# Small function for removing missing values if requested:
 	rm.empty <- function(x, keepAttr=TRUE){
 		valid <- sapply(x, length)>0
 		if(keepAttr){
