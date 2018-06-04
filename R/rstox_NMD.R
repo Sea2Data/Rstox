@@ -883,6 +883,7 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE, me
 		x <- readChar(file, file.info(file)$size)
 		# Parse the file as XML:
 		# 2018-06-04: Added encoding="UTF-8":
+		#x <- tryCatch(xmlParse(x, asText=TRUE), error=function(...) failed<<-TRUE)
 		x <- tryCatch(xmlParse(x, asText=TRUE, encoding="UTF-8"), error=function(...) failed<<-TRUE)
 		if(failed){
 			warning(paste("URL" ,URLdecode(URL) ,"does not contain valid XML data (error in xmlParse())"))
@@ -892,7 +893,7 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE, me
 			# Convert to list:
 			x <- xmlToList(x)
 			# New line added on 2016-08-12 after an issue with nordic characters being interpreted as latin1 by R on Windows. The problem is that xmlAttrs() has no parameter for encoding, and, in contrast with the rest of xmlToList(), fails to interpret the data as UTF-8. The solution is to convert all the data afterwards:
-			rapply(x, function(xx) iconv(xx, "UTF-8", "UTF-8"), how="replace")
+			x <- rapply(x, function(xx) iconv(xx, "UTF-8", "UTF-8"), how="replace")
 		}
 		x
 	}
