@@ -10,7 +10,7 @@
 		NMD_data_types = c("echosounder", "biotic", "landing"), 
 		StoX_data_types = c("acoustic", "biotic", "landing"), 
 		StoX_data_type_keys = c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel"), 
-		model_types = c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal"), 
+		project_types = c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal"), 
 		processLevels = c("bootstrap", "bootstrapImpute"), 
 		modelTypeJavaNames = c("baseline", "baseline-report", "r", "r-report", "name"), 
 		modelTypeJavaFuns = c("getBaseline", "getBaselineReport", "getRModel", "getRModelReport", "getProjectName")

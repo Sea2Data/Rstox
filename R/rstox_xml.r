@@ -1,6 +1,6 @@
 #*********************************************
 #*********************************************
-#' Write biotic and acosutic XML files from data frames given a (preferably hierarcical) xsd (xml schema file).
+#' Write biotic and acoustic XML files from data frames given a (preferably hierarcical) xsd (xml schema file).
 #'
 #' \code{writeBioticXML} Writes a data frame to a biotic XML file. \cr \cr
 #' \code{writeAcousticXML} Writes a data frame to an acoustic XML file. \cr \cr
@@ -100,10 +100,12 @@
 #' @rdname writeBioticXML
 #' 
 writeBioticXML <- function(x, file, xsd="1.4", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
-	if(!file.exists(xsd)){
-		filename <- paste0("biotic_v", xsd, ".xsd")
-		xsd <- system.file("extdata", "xsd", "biotic", filename, package="Rstox")
-	}
+	#if(!file.exists(xsd)){
+		#filename <- paste0("biotic_v", xsd, ".xsd")
+		#xsd <- system.file("extdata", "xsd", "biotic", filename, package="Rstox")
+		#
+		xsd <- getHIXSDfile(xsd=xsd, xsdtype="biotic")
+		#}
 	root <- "missions"
 	writeHIXML(x=x, file=file, root=root, xsd=xsd, addVersion=addVersion, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple)
 }
@@ -112,19 +114,45 @@ writeBioticXML <- function(x, file, xsd="1.4", addVersion=TRUE, na.rm=TRUE, decl
 #' @rdname writeBioticXML
 #' 
 writeAcousticXML <- function(x, file, xsd="1", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
-	if(!file.exists(xsd)){
-		filename <- paste0("LUF20_v", xsd, ".xsd")
-		xsd <- system.file("extdata", "xsd", "acosutic", filename, package="Rstox")
-	}
+	#if(!file.exists(xsd)){
+		#filename <- paste0("LUF20_v", xsd, ".xsd")
+		#xsd <- system.file("extdata", "xsd", "acoustic", filename, package="Rstox")
+		#
+		xsd <- getHIXSDfile(xsd=xsd, xsdtype="acoustic")
+		#}
 	root <- "echosounder_dataset"
 	writeHIXML(x=x, file=file, root=root, xsd=xsd, addVersion=addVersion, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple)
+}
+#'
+#' @export
+#' @rdname writeBioticXML
+#' 
+getHIXSDfile <- function(xsd="1.4", xsdtype=c("biotic", "acoustic")){
+	if(!file.exists(xsd)){
+		if(xsdtype[1] == "biotic"){
+			filename <- paste0("biotic_v", xsd, ".xsd")
+			xsd <- system.file("extdata", "xsd", "biotic", filename, package="Rstox")
+		}
+		else if(xsdtype[1] == "acoustic"){
+			filename <- paste0("LUF20_v", xsd, ".xsd")
+			xsd <- system.file("extdata", "xsd", "acoustic", filename, package="Rstox")
+		}
+		else{
+			stop("The given xsdtype not implemented.")
+		}
+	}
+	xsd
 }
 #'
 #' @importFrom XML xmlParse xmlToList
 #' @export
 #' @rdname writeBioticXML
 #' 
-readHIXSD <- function(xsd, discardSimple=FALSE){
+readHIXSD <- function(xsd="1.4", xsdtype=c("biotic", "acoustic"), discardSimple=FALSE){
+	
+	# Try locating the xsd in the Rstox resoureces:
+	xsd <- getHIXSDfile(xsd=xsd, xsdtype=xsdtype)
+	
 	# Change this when building the package:
 	data <- XML::xmlParse(xsd)
 	xml_data <- XML::xmlToList(data)

@@ -1512,7 +1512,8 @@ mergeSpeciesMatrix <- function(...){
 #' @keywords internal
 #' @rdname generateSpeciesMatrix
 #' 
-aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", stationVar=c("cruise", "serialno"), var=c("weight", "count"), na.as=0, drop.out=TRUE, close=TRUE, msg=TRUE, ...){
+aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", 
+	stationVar=c("cruise", "serialno"), var=c("weight", "count"), na.as=0, drop.out=TRUE, close=TRUE, msg=TRUE, ...){
 	# Function used for converting a matrix into a data frame and appending the rownames as the first column:
 	createTempDataFrame <- function(x){
 		out <- data.frame(stationVar=rownames(x), as.data.frame(x))

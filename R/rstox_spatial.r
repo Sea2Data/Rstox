@@ -628,7 +628,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @importFrom utils head tail
 #' @rdname surveyPlanner
 #' 
-surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, nmi=NULL, t0=NULL, knots=10, seed=0, angsep=1/6, distsep=NULL, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE, strata="all", cruise="surveyPlanner", keepTransport=TRUE){
+surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, nmi=NULL, t0=NULL, knots=10, seed=0, angsep=1/6, distsep=NULL, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE, strata="all", cruise="surveyPlanner", keepTransport=TRUE, centroid=NULL){
 #surveyPlanner <- function(projectName, shapefiles=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, t0=NULL, knots=10, nmi=NULL, seed=0, dt=1/60, plot=FALSE, margin=NULL, shapenames=list(longitude="long", latitude="lat", stratum="id"), equalEffort=FALSE, byStratum=TRUE) {
 	
 	############################################################
@@ -889,7 +889,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			coords$log_mid   <- trimws(format(round(coords$dist_mid, digits=1), nsmall=1))
 			
 			# Add the survey start time:
-			t0 <- unclass(as.POSIXct(t0))
+			t0 <- unclass(as.POSIXct(t0, tz="UTC"))
 			coords$time_start <- insertIfMissing(coords$time_start, as.POSIXct(coords$dist_start / coords$knots * 3600 + t0, origin="1970-01-01", tz="UTC"))
 			coords$time_stop  <- insertIfMissing(coords$time_stop,  as.POSIXct(coords$dist_stop / coords$knots * 3600 + t0, origin="1970-01-01", tz="UTC"))
 			coords$time_mid   <- insertIfMissing(coords$time_mid,   as.POSIXct(coords$dist_mid / coords$knots * 3600 + t0, origin="1970-01-01", tz="UTC"))
@@ -1402,7 +1402,11 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	Input$lonlatAll_stratum <- lonlatAll
 	
 	# Get the projection to use, centered at the centroid of the total survey area (using rgeos::gCentroid()):
-	proj <- getProjString(proj="aeqd", x=lonlatAll[,c("longitude", "latitude")], requireClosed=FALSE)
+	if(length(centroid)==0){
+		centroid <- rep(NA, 2)
+	}
+	Input$centroid <- centroid
+	proj <- getProjString(proj="aeqd", x=lonlatAll[,c("longitude", "latitude")], lon_0=centroid[1], lat_0=centroid[2], requireClosed=FALSE)
 	
 	##### Generate the parameters, one value per stratum: #####
 	if(length(parameters)==0 || !is.list(parameters)){
@@ -1422,7 +1426,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		implementedTypes <- c("Parallel", "RectEnclZZ", "EqSpZZ")
 		type <- implementedTypes[match(tolower(type), tolower(implementedTypes))]
 		if(is.na(type)){
-			warning(paste0("type not matching any of the implemented types (", implementedTypes, "). Parallel chosen"))
+			warning(paste0("type ", type, " not matching any of the implemented types (", paste(implementedTypes, sep=", "), "). Parallel chosen"))
 			type <- "Parallel"
 		}
 		# Add to the parameters list:
@@ -1487,7 +1491,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	##########
 		
 	# Extract the centroids of the survey and the strata:
-	centroid <- getCentroid(lonlatAll)
+	survey_centroid <- getCentroid(lonlatAll)
 	#stratum_centroid <- do.call(rbind, lapply(lonlat, getCentroid))
 	stratum_centroid <- getCentroid(lonlat)
 	
@@ -1567,7 +1571,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	Stratum <- data.frame(stratum=strataNames, stratum_centroid, parameters[parameterNames], totalSailedDist, stringsAsFactors=FALSE)
 	rownames(Stratum) <- Stratum$stratum
 	
-	Survey <- data.frame(centroid, nmi=sum(parameters$nmi), totalSailedDist1, proj=proj, stringsAsFactors=FALSE)
+	Survey <- data.frame(survey_centroid, nmi=sum(parameters$nmi), totalSailedDist1, proj=proj, stringsAsFactors=FALSE)
 	
 	if(!keepTransport){
 		Transect <- Transect[Transect$transport==0, , drop=FALSE]

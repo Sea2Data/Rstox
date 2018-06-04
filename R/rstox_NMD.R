@@ -113,11 +113,21 @@ getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nm
 			codes <- unlist(x[names(x)=="platformCodes"], recursive=FALSE, use.names=FALSE)
 			dates <- NULL
 			if(length(codes)){
+				# Get the dates:
 				dates <- t(sapply(codes, getvalidFromTo))
+				
+				# Get the paltform codes:
 				codes <- lapply(codes, getPlatformCode)
-				codes <- split(codes, apply(dates, 1, paste, collapse=""))
+				# Split the platform codes by the concatination of start and end date (converted to a factor with the original ordering):
+				validFromTo <- apply(dates, 1, paste, collapse="")
+				validFromTo <- factor(validFromTo, levels=unique(validFromTo))
+				#codes <- split(codes, apply(dates, 1, paste, collapse=""))
+				codes <- split(codes, validFromTo)
+				# Get all names of each unique specification of valid dates:
 				codes <- lapply(codes, unlist)
+				# Convert to a matrix, adding NAs at missing fields:
 				codes <- as.matrix_full(codes)
+				# Refresh the dates:
 				dates <- unique(dates)
 			}
 			# Column added on 2018-01-29 on request from Edvin:
@@ -872,7 +882,8 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE, me
 		# Read the file:
 		x <- readChar(file, file.info(file)$size)
 		# Parse the file as XML:
-		x <- tryCatch(xmlParse(x, asText=TRUE), error=function(...) failed<<-TRUE)
+		# 2018-06-04: Added encoding="UTF-8":
+		x <- tryCatch(xmlParse(x, asText=TRUE, encoding="UTF-8"), error=function(...) failed<<-TRUE)
 		if(failed){
 			warning(paste("URL" ,URLdecode(URL) ,"does not contain valid XML data (error in xmlParse())"))
 			return(NULL)

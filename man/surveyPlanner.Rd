@@ -13,7 +13,7 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
   shapenames = list(longitude = "long", latitude = "lat", stratum = "id"),
   equalEffort = FALSE, byStratum = TRUE, strata = "all",
-  cruise = "surveyPlanner", keepTransport = TRUE)
+  cruise = "surveyPlanner", keepTransport = TRUE, centroid = NULL)
 
 plotStratum(x, transect = TRUE, centroid = NULL, transport_alpha = 0.1,
   google = FALSE, margin = 0.5, zoom = 4, aspectratio = NULL,
@@ -66,11 +66,11 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude", "latitude"))
 
 \item{keepTransport}{Logical: If FALSE, remove transport stretches in the Transect output.}
 
+\item{centroid}{Logical: If TRUE, plot the centroid of the strata.}
+
 \item{x}{The output from \code{\link{surveyPlanner}}.}
 
 \item{transect}{Logical: If TRUE, plot the transects.}
-
-\item{centroid}{Logical: If TRUE, plot the centroid of the strata.}
 
 \item{transport_alpha}{The transparency to use for the transport paths.}
 

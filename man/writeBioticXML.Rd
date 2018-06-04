@@ -3,13 +3,14 @@
 \name{writeBioticXML}
 \alias{writeBioticXML}
 \alias{writeAcousticXML}
+\alias{getHIXSDfile}
 \alias{readHIXSD}
 \alias{validateHIXSD}
 \alias{writeHIXML}
 \alias{data.frame2nestedList}
 \alias{list2XML}
 \alias{data.frame2xml}
-\title{Write biotic and acosutic XML files from data frames given a (preferably hierarcical) xsd (xml schema file).}
+\title{Write biotic and acoustic XML files from data frames given a (preferably hierarcical) xsd (xml schema file).}
 \usage{
 writeBioticXML(x, file, xsd = "1.4", addVersion = TRUE, na.rm = TRUE,
   declaration = "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>",
@@ -19,7 +20,10 @@ writeAcousticXML(x, file, xsd = "1", addVersion = TRUE, na.rm = TRUE,
   declaration = "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>",
   strict = TRUE, discardSimple = FALSE)
 
-readHIXSD(xsd, discardSimple = FALSE)
+getHIXSDfile(xsd = "1.4", xsdtype = c("biotic", "acoustic"))
+
+readHIXSD(xsd = "1.4", xsdtype = c("biotic", "acoustic"),
+  discardSimple = FALSE)
 
 validateHIXSD(x, xsd, strict = TRUE, discardSimple = FALSE)
 
