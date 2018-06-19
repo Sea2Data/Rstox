@@ -99,13 +99,10 @@
 #' @export
 #' @rdname writeBioticXML
 #' 
-writeBioticXML <- function(x, file, xsd="1.4", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
-	#if(!file.exists(xsd)){
-		#filename <- paste0("biotic_v", xsd, ".xsd")
-		#xsd <- system.file("extdata", "xsd", "biotic", filename, package="Rstox")
-		#
-		xsd <- getHIXSDfile(xsd=xsd, xsdtype="biotic")
-		#}
+writeBioticXML_old <- function(x, file, xsd="1.4", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
+	# Get the xsd:
+	xsd <- getHIXSDfile(xsd=xsd, xsdtype="biotic")
+	# Define the root and write the XML:
 	root <- "missions"
 	writeHIXML(x=x, file=file, root=root, xsd=xsd, addVersion=addVersion, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple)
 }
@@ -113,13 +110,22 @@ writeBioticXML <- function(x, file, xsd="1.4", addVersion=TRUE, na.rm=TRUE, decl
 #' @export
 #' @rdname writeBioticXML
 #' 
-writeAcousticXML <- function(x, file, xsd="1", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
-	#if(!file.exists(xsd)){
-		#filename <- paste0("LUF20_v", xsd, ".xsd")
-		#xsd <- system.file("extdata", "xsd", "acoustic", filename, package="Rstox")
-		#
-		xsd <- getHIXSDfile(xsd=xsd, xsdtype="acoustic")
-		#}
+writeBioticXML <- function(x, file, xsd="1.4", blocksize=100, addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
+	# Get the xsd:
+	xsd <- getHIXSDfile(xsd=xsd, xsdtype="biotic")
+	# Define the root and write the XML:
+	root <- "missions"
+	blockvar <- "serialno"
+	writeHIXML(x=x, file=file, root=root, blockvar=blockvar, blocksize=blocksize, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, maxlines=maxlines, cores=cores)
+}
+#'
+#' @export
+#' @rdname writeBioticXML
+#' 
+writeAcousticXML_old <- function(x, file, xsd="1", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
+	# Get the xsd:
+	xsd <- getHIXSDfile(xsd=xsd, xsdtype="acoustic")
+	# Define the root and write the XML:
 	root <- "echosounder_dataset"
 	writeHIXML(x=x, file=file, root=root, xsd=xsd, addVersion=addVersion, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple)
 }
@@ -127,8 +133,133 @@ writeAcousticXML <- function(x, file, xsd="1", addVersion=TRUE, na.rm=TRUE, decl
 #' @export
 #' @rdname writeBioticXML
 #' 
+writeAcousticXML <- function(x, file, xsd="1", blocksize=100, addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
+	# Get the xsd:
+	xsd <- getHIXSDfile(xsd=xsd, xsdtype="acoustic")
+	# Define the root and write the XML:
+	root <- "echosounder_dataset"
+	blockvar <- "log_start"
+	writeHIXML(x=x, file=file, root=root, blockvar=blockvar, blocksize=blocksize, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, maxlines=maxlines, cores=cores)
+}
+#'
+#' @export
+#' @importFrom tools file_path_sans_ext file_ext
+#' @rdname writeBioticXML
+#' 
+###writeAcousticXML_test <- function(x, file, xsd="1", blocksize=100, blockvar="log_start", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
+###	
+###	addIndPreExt <- function(file, n){
+###		ind <- sprintf(paste0("%0", nchar(n), "d"), seq_len(n))
+###		base <- paste0(tools::file_path_sans_ext(file), ind)
+###		paste(base, tools::file_ext(file), sep=".")
+###	}
+###	
+###	writeAcousticXMLOne <- function(x, file, xsd="1", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
+###		# Get the xsd:
+###		xsd <- getHIXSDfile(xsd=xsd, xsdtype="acoustic")
+###		# Define the root and write the XML:
+###		root <- "echosounder_dataset"
+###		#writeHIXML(x=x, file=file, root=root, xsd=xsd, addVersion=addVersion, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple)
+###	}
+###	
+###	mergeXMLfiles <- function(files, file, maxlines=10){
+###		
+###		# Read all files:
+###		l <- lapply(files, readLines)
+###		
+###		# Get the first maxlines lines, and detect the last equal line between the files:
+###		header <- do.call("cbind", lapply(l, head, maxlines))
+###		equal <- apply(header, 1, function(x) all(x==x[1]))
+###		first <- min(which(!equal)) - 1
+###		
+###		# Get the last occurrence of the last equal line:
+###		getLast <- function(x, first){
+###			# Find the last of the first that is not closed:
+###			key <- max(which(!grepl("</", x[seq_len(first)], fixed = TRUE)))
+###			key <- strsplit(x[key], " +<?|>")[[1]][2]
+###			tail(grep(key, x[-seq_len(first)]), 1) + first
+###		}
+###		
+###		last <- sapply(l, getLast, first=first)
+###		
+###		# Store the first and last lines:
+###		firstLines <- head(l[[1]], first)
+###		lastLines <- tail(l[[1]], length(l[[1]]) - last[1] + 1)
+###		
+###		# Remove the first and last lines from all files:
+###		l <- lapply( seq_along(l), function(ind) l[[ind]] [seq(first + 1, last[ind] - 1)] )
+###		
+###		l <- c(firstLines, unlist(l), lastLines)
+###		
+###		writeLines(l, file)
+###		file
+###	}
+###	
+###	# Make sure that x is sorted by 'blockvar':
+###	#if(is.unsorted(as.numeric(x[[blockvar]]))){
+###	#	x <- x[order(as.numeric(x[[blockvar]])), ]
+###	#}
+###	
+###	# Split the data into blocks of log distances:
+###	lev <- cumsum(!duplicated(x$log_start))
+###	lev <- ceiling(lev / blocksize)
+###	xsplit <- split(x, lev)
+###	
+###	# Get file names:
+###	files <- addIndPreExt(file, length(xsplit))
+###	
+###	browser()
+###	
+###	
+###	# Write the individual blocks as xml:
+###	XMLfiles <- papply(seq_along(xsplit), function(ind) writeAcousticXMLOne(xsplit[[ind]], file=files[ind]), cores=cores)
+###	
+###	
+###	
+###	
+###	
+###	nboot <- length(xsplit)
+###	
+###	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
+###	availableCores = detectCores()
+###	# If memory runs out, a system call to determine number of cores might fail, thus detectCores() could return NA
+###	# defaulting to single core if this is the case
+###	if(is.na(availableCores)) availableCores <- 1
+###	if(cores > availableCores){
+###		warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
+###	}
+###	cores = min(cores, nboot, availableCores)
+###	
+###	# Generate the clusters of time steps:
+###	if(cores>1){
+###		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
+###		cl<-makeCluster(cores)
+###		# Bootstrap:
+###		out <- pblapply(seq_len(nboot), function(ind) writeAcousticXMLOne(xsplit[[ind]], file=files[ind]), cl=cl)
+###		# End the parallel bootstrapping:
+###		stopCluster(cl)
+###	}
+###	else{
+###		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
+###		out <- pblapply(seq_len(nboot), function(ind) writeAcousticXMLOne(xsplit[[ind]], file=files[ind]))
+###	}
+###	
+###	
+###	
+###	
+###	
+###	
+###	
+###	
+###	# Merge the xml files:
+###	mergeXMLfiles(files=files, file=file, maxlines=maxlines)
+###}
+#'
+#' @export
+#' @rdname writeBioticXML
+#' 
 getHIXSDfile <- function(xsd="1.4", xsdtype=c("biotic", "acoustic")){
-	if(!file.exists(xsd)){
+	if(is.character(xsd) && !file.exists(xsd)){
 		if(xsdtype[1] == "biotic"){
 			filename <- paste0("biotic_v", xsd, ".xsd")
 			xsd <- system.file("extdata", "xsd", "biotic", filename, package="Rstox")
@@ -422,7 +553,7 @@ validateHIXSD <- function(x, xsd, strict=TRUE, discardSimple=FALSE){
 #' @rdname writeBioticXML
 #' @keywords internal
 #' 
-writeHIXML <- function(x, file, root, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
+writeHIXML_old <- function(x, file, root, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
 	
 	# Read the xsd:
 	xsd <- readHIXSD(xsd, discardSimple=discardSimple)
@@ -442,6 +573,115 @@ writeHIXML <- function(x, file, root, addVersion=TRUE, xsd=NULL, na.rm=TRUE, dec
 	cat(XMLstring, file=file) 
 	
 	return(file)
+}#'
+#' @importFrom XML newXMLNode saveXML xmlAttrs
+#' @export
+#' @rdname writeBioticXML
+#' @keywords internal
+#' 
+writeHIXML <- function(x, file, root, blockvar=NULL, blocksize=100, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
+	
+	# Function for adding a serial number before the file extension:
+	addIndPreExt <- function(file, n){
+		ind <- sprintf(paste0("%0", nchar(n), "d"), seq_len(n))
+		base <- paste0(tools::file_path_sans_ext(file), ind)
+		paste(base, tools::file_ext(file), sep=".")
+	}
+	
+	# Function for wiriting the xml file for one block of the data frame (requires the xsd to be read):
+	writeHIXMLoneBlock <- function(ind, xlist, files, root, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
+	
+		x <- xlist[[ind]]
+		file <- files[ind]
+		
+		# Define the root:
+		root <- XML::newXMLNode(root)
+		if(addVersion && !is.na(xsd$ver)){
+			XML::xmlAttrs(root) <- list(xmlns = xsd$ver)
+		}
+
+		# Write the biotic data to the tempfile_biotic:
+		x <- data.frame2xml(x=x, root=root, xsd=xsd, na.rm=na.rm, strict=strict, discardSimple=discardSimple)
+
+		# Save the xml file, adding the prefix (which does not work in saveXML( so we need to use cat())):
+		XMLstring <- XML::saveXML(x)
+		XMLstring <- paste0(declaration, "\n", XMLstring, "\n")
+		cat(XMLstring, file=file) 
+	
+		return(file)
+	}
+	
+	# Function for merging the temporary xml files:
+	mergeXMLfiles <- function(files, file, maxlines=10){
+		
+		# Read all files:
+		l <- lapply(files, readLines)
+		
+		# Get the first maxlines lines, and detect the last equal line between the files:
+		header <- do.call("cbind", lapply(l, head, maxlines))
+		equal <- apply(header, 1, function(x) all(x==x[1]))
+		first <- min(which(!equal)) - 1
+		
+		# Get the last occurrence of the last equal line:
+		getLast <- function(x, first){
+			# Find the last of the first that is not closed:
+			key <- max(which(!grepl("</", x[seq_len(first)], fixed = TRUE)))
+			key <- strsplit(x[key], " +<?|>")[[1]][2]
+			key <- paste0(key, ">")
+			tail(grep(key, x[-seq_len(first)]), 1) + first
+		}
+		
+		last <- sapply(l, getLast, first=first)
+		
+		# Store the first and last lines:
+		firstLines <- head(l[[1]], first)
+		lastLines <- l[[1]][ seq(last[1], length(l[[1]])) ]
+		
+		# Remove the first and last lines from all files:
+		l <- lapply( seq_along(l), function(ind) l[[ind]] [seq(first + 1, last[ind] - 1)] )
+		
+		l <- c(firstLines, unlist(l), lastLines)
+		
+		writeLines(l, file)
+		file
+	}
+	
+	# Read the xsd:
+	browser()
+	xsd <- readHIXSD(xsd, discardSimple=discardSimple)
+
+	xlist <- list(x)
+	files <- file
+	
+	if(length(blockvar)){
+		# Split the data into blocks of log distances:
+		lev <- cumsum(!duplicated(x[[blockvar]]))
+		lev <- ceiling(lev / blocksize)
+		
+		if(max(lev) == 1){
+			blockvar <- NULL
+		}
+		else{
+			xlist <- split(x, lev)
+			# Get file names:
+			files <- addIndPreExt(file, length(xlist))
+		}
+	}
+	
+	if(length(blockvar) == 0){
+		cores <- 1
+	}
+	# Write the individual blocks as xml:
+	XMLfiles <- papply(seq_along(xlist), writeHIXMLoneBlock, xlist=xlist, file=files, root=root, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, cores=cores)
+	
+	# Merge the xml files:
+	if(length(blockvar)){
+		mergeXMLfiles(files=files, file=file, maxlines=maxlines)
+		# Trash the temporary files:
+		unlink(files, force=TRUE)
+	}
+	
+	return(file)
 }
 #'
 #' @export
@@ -449,130 +689,6 @@ writeHIXML <- function(x, file, root, addVersion=TRUE, xsd=NULL, na.rm=TRUE, dec
 #' @keywords internal
 #' 
 data.frame2nestedList <- function(x, pre=NULL, levelnames=NULL, rename=NULL, na.rm=FALSE, lastlevel=NULL){
-	
-	# Small function for removing missing values if requested:
-	rm.empty <- function(x, keepAttr=TRUE){
-		valid <- sapply(x, length)>0
-		if(keepAttr){
-			hasAttributes <- sapply(x, function(y) length(attributes(y))>0)
-			valid <- valid | hasAttributes
-		}
-		#x[sapply(x, length)>0]
-		x[valid]
-	}
-	
-	# Function to set attributes 'att' to object 'x':
-	setAttributes <- function(x, att){
-		oldatt <- attributes(x)
-		attributes(x) <- c(att, oldatt)
-		x
-	}
-	
-	# Function for appending a list 'add' to another list 'x', while keepeing the list names:
-	appendToListKeepAttr <- function(x, add){
-		# Store the attributes, and reinsert using the setAttributes() function after merging:
-		att <- attributes(x)
-		x <- c(x, add)
-		setAttributes(x, att)
-	}
-	
-	# Function for adding attributes stored in the names, which are ..AttrName.AttrValue:
-	extraxtAndSetDotDotAttributes <- function(x){
-		# Split the names by ".." and find those elements containing attributes:
-		thisNamesSplit <- strsplit(names(x), "..", fixed=TRUE)
-		indAtAttributes <- which(sapply(thisNamesSplit, length) > 1)
-		
-		if(length(indAtAttributes)){
-			# Extract the attributes stored in the names, which are ..AttrName.AttrValue:
-			newNames <- lapply(thisNamesSplit[indAtAttributes], "[", 1)
-			dotDotAttrs <- lapply(thisNamesSplit[indAtAttributes], "[", 2)
-			dotDotAttrsParts <- lapply(dotDotAttrs, function(x) strsplit(x, ".", fixed=TRUE)[[1]])
-			dotDotAttrsNames <- sapply(dotDotAttrsParts, "[", 1)
-			dotDotAttrsVals <- lapply(dotDotAttrsParts, "[", 2)
-			names(dotDotAttrsVals) <- dotDotAttrsNames
-			
-			# Add the attributes:
-			x[indAtAttributes] <- lapply(seq_along(indAtAttributes), function(i) setAttributes(x[[indAtAttributes[i]]], dotDotAttrsVals[i]))
-			names(x)[indAtAttributes] <- newNames
-		}
-			
-		return(x)
-	}
-	
-	# Function used for extracting the variables and setting attributes to the list:
-	getVarSetAttr <- function(x, Attr, Var, pre=NULL, onlyfirst=TRUE, method=c("include", "append"), rename=NULL, na.rm=FALSE, varAttr=NULL){
-		
-		# Function to extract the names (removing the key strings) and alter the remainder by the 'rename' list:
-		alterNames <- function(x, keys=c(".Var.", ".Attr.", ".AttrReq.", fixed=TRUE), rename=NULL){
-			# Function for replacing names in 'x' by the list 'rename', which is a list named by the old names and holding the new names:
-			replaceNames <- function(x, rename){
-				rename <- unlist(rename)
-				namesInX <- names(rename)
-				newNames <- rename
-	
-				present <- namesInX %in% names(x)
-				if(any(present)){
-					names(x)[(names(x) %in% namesInX[present])] <- newNames[present]
-				}
-	
-				x
-			}
-	
-			# Get the names of the data frame:
-			n <- names(x)
-			# Grep the keys:
-			at <- lapply(keys, function(y) regexpr(y, n))
-			# Get the position and length of the last key string:
-			len <- do.call(pmax, lapply(at, attr, "match.length"))
-			at <- do.call(pmax, at)
-			# Extact the variable name:
-			n <- substring(n, at + len)
-			names(x) <- n
-			# Rename:
-			replaceNames(x, rename)
-		}
-		
-		# Function for extracting the variables and setting attributes of one row:
-		getVarSetAttrOne <- function(x, Var, Attr, na.rm=FALSE, varAttr=NULL, rename=NULL){
-			# Remove NAs if requested:
-			this <- as.list(rm.na(x[Var], na.rm=na.rm))
-			
-			# Add attributes stored in the names past the "..":
-			this <- extraxtAndSetDotDotAttributes(this)
-			# Extract, alter and set the attributes given as columns:
-			att <- x[Attr]
-			att <- alterNames(att, rename=rename)
-			# Set the attributes:
-			setAttributes(this, att)
-		}
-		
-		# If onlyfirst=TRUE extract the first row only:
-		if(onlyfirst){
-			x <- x[1, , drop=FALSE]
-		}
-	
-		# Get a list of the children:
-		this <- apply(x, 1, getVarSetAttrOne, Var=Var, Attr=Attr, na.rm=na.rm, varAttr=varAttr, rename=rename)
-		# Remove empty resulting from all NAs:
-		this <- rm.empty(this)
-		# Return if all elements were removed:
-		if(length(this)==0){
-			return(this)
-		}
-		
-		# Alter names (see alterNames() for how the key strings "Var" and "Attr"/"AttrReq" are removed):
-		this <- lapply(this, alterNames, rename=rename)
-		#this[[1]] <- alterNames(this[[1]], rename=rename)
-		if(onlyfirst && startsWith(method[1], "i")){
-			this <- this[[1]]
-		}
-		
-		# Append only if 'pre' is given:
-		if(length(pre)){
-			appendToListKeepAttr(pre, this)
-		}
-		return(this)
-	}
 	
 	# Get the column names, which are of the form Level[num].[type].[name], where 'num' is the level of the variables, 'type' is one of "Attr" and "Var", and 'name' is the variable name:
 	name <- names(x)
@@ -652,7 +768,7 @@ data.frame2nestedList <- function(x, pre=NULL, levelnames=NULL, rename=NULL, na.
 		}
 		
 	}
-	# Otherwise, the lowest level has been reached, and we simply append 
+	# Otherwise, the lowest level has been reached, and we simply append:
 	else{
 		out <- getVarSetAttr(x, Attr=Attr, Var=Var, pre=pre, onlyfirst=FALSE, rename=rename, na.rm=na.rm, varAttr=varAttr)
 		names(out) <- rep(levelnames[thislevel], length(out))
@@ -662,40 +778,161 @@ data.frame2nestedList <- function(x, pre=NULL, levelnames=NULL, rename=NULL, na.
 }
 #'
 #' @export
-#' @importFrom XML xmlAttrs newXMLNode xmlValue
+#' @keywords internal
+#' 
+rm.empty <- function(x, keepAttr=TRUE){
+
+	# Small function for removing missing values if requested:
+
+	valid <- sapply(x, length)>0
+	if(keepAttr){
+		hasAttributes <- sapply(x, function(y) length(attributes(y))>0)
+		valid <- valid | hasAttributes
+	}
+	#x[sapply(x, length)>0]
+	x[valid]
+}
+#'
+#' @export
+#' @keywords internal
+#' 
+setAttributes <- function(x, att){
+	
+	# Function to set attributes 'att' to object 'x':
+	
+	oldatt <- attributes(x)
+	attributes(x) <- c(att, oldatt)
+	x
+}
+#'
+#' @export
+#' @keywords internal
+#' 
+appendToListKeepAttr <- function(x, add){
+	
+	# Function for appending a list 'add' to another list 'x', while keepeing the list names:
+	
+	# Store the attributes, and reinsert using the setAttributes() function after merging:
+	att <- attributes(x)
+	x <- c(x, add)
+	setAttributes(x, att)
+}
+#'
+#' @export
+#' @keywords internal
+#' 
+extraxtAndSetDotDotAttributes <- function(x){
+	
+	# Function for adding attributes stored in the names, which are ..AttrName.AttrValue:
+	
+	# Split the names by ".." and find those elements containing attributes:
+	thisNamesSplit <- strsplit(names(x), "..", fixed=TRUE)
+	indAtAttributes <- which(sapply(thisNamesSplit, length) > 1)
+	
+	if(length(indAtAttributes)){
+		# Extract the attributes stored in the names, which are ..AttrName.AttrValue:
+		newNames <- lapply(thisNamesSplit[indAtAttributes], "[", 1)
+		dotDotAttrs <- lapply(thisNamesSplit[indAtAttributes], "[", 2)
+		dotDotAttrsParts <- lapply(dotDotAttrs, function(x) strsplit(x, ".", fixed=TRUE)[[1]])
+		dotDotAttrsNames <- sapply(dotDotAttrsParts, "[", 1)
+		dotDotAttrsVals <- lapply(dotDotAttrsParts, "[", 2)
+		names(dotDotAttrsVals) <- dotDotAttrsNames
+		
+		# Add the attributes:
+		x[indAtAttributes] <- lapply(seq_along(indAtAttributes), function(i) setAttributes(x[[indAtAttributes[i]]], dotDotAttrsVals[i]))
+		names(x)[indAtAttributes] <- newNames
+	}
+		
+	return(x)
+}
+#'
+#' @export
+#' @keywords internal
+#' 
+getVarSetAttr <- function(x, Attr, Var, pre=NULL, onlyfirst=TRUE, method=c("include", "append"), rename=NULL, na.rm=FALSE, varAttr=NULL){
+
+	# Function used for extracting the variables and setting attributes to the list:
+		
+	# Function to extract the names (removing the key strings) and alter the remainder by the 'rename' list:
+	alterNames <- function(x, keys=c(".Var.", ".Attr.", ".AttrReq.", fixed=TRUE), rename=NULL){
+		# Function for replacing names in 'x' by the list 'rename', which is a list named by the old names and holding the new names:
+		replaceNames <- function(x, rename){
+			rename <- unlist(rename)
+			namesInX <- names(rename)
+			newNames <- rename
+
+			present <- namesInX %in% names(x)
+			if(any(present)){
+				names(x)[(names(x) %in% namesInX[present])] <- newNames[present]
+			}
+
+			x
+		}
+
+		# Get the names of the data frame:
+		n <- names(x)
+		# Grep the keys:
+		at <- lapply(keys, function(y) regexpr(y, n))
+		# Get the position and length of the last key string:
+		len <- do.call(pmax, lapply(at, attr, "match.length"))
+		at <- do.call(pmax, at)
+		# Extact the variable name:
+		n <- substring(n, at + len)
+		names(x) <- n
+		# Rename:
+		replaceNames(x, rename)
+	}
+	
+	# Function for extracting the variables and setting attributes of one row:
+	getVarSetAttrOne <- function(x, Var, Attr, na.rm=FALSE, varAttr=NULL, rename=NULL){
+		# Remove NAs if requested:
+		this <- as.list(rm.na(x[Var], na.rm=na.rm))
+		
+		# Add attributes stored in the names past the "..":
+		this <- extraxtAndSetDotDotAttributes(this)
+		# Extract, alter and set the attributes given as columns:
+		att <- x[Attr]
+		att <- alterNames(att, rename=rename)
+		# Set the attributes:
+		setAttributes(this, att)
+	}
+	
+	# If onlyfirst=TRUE extract the first row only:
+	if(onlyfirst){
+		x <- x[1, , drop=FALSE]
+	}
+
+	# Get a list of the children:
+	this <- apply(x, 1, getVarSetAttrOne, Var=Var, Attr=Attr, na.rm=na.rm, varAttr=varAttr, rename=rename)
+	# Remove empty resulting from all NAs:
+	this <- rm.empty(this)
+	# Return if all elements were removed:
+	if(length(this)==0){
+		return(this)
+	}
+	
+	# Alter names (see alterNames() for how the key strings "Var" and "Attr"/"AttrReq" are removed):
+	this <- lapply(this, alterNames, rename=rename)
+	#this[[1]] <- alterNames(this[[1]], rename=rename)
+	if(onlyfirst && startsWith(method[1], "i")){
+		this <- this[[1]]
+	}
+	
+	# Append only if 'pre' is given:
+	if(length(pre)){
+		appendToListKeepAttr(pre, this)
+	}
+	return(this)
+}
+#'
+#' @export
+#' @importFrom XML newXMLNode xmlValue
 #' @rdname writeBioticXML
 #' @keywords internal
 #' 
 list2XML <- function(node, sublist){
 	
-	# Function stolen from the xml2 package:
-	r_attrs_to_xml <- function(x) {
-		special_attributes <- c("class", "comment", "dim", "dimnames", "names", "row.names", "tsp")
-	
-		if (length(x) == 0) {
-			return(NULL)
-		}
-	
-		# Drop R special attributes
-		x <- x[!names(x) %in% special_attributes]
-	
-		# Rename any xml attributes needed
-		special <- names(x) %in% paste0(".", special_attributes)
-	
-		names(x)[special] <- sub("^\\.", "", names(x)[special])
-		x
-	}
-	
-	# Function to add attributes:
-	addAttributes <- function(child, x){
-		attr <- r_attrs_to_xml(attributes(x))
-		if(length(attr)){
-			attr <- unlist(attr)
-		}
-		XML::xmlAttrs(child) <- attr
-	}
-	
-    for(i in seq_along(sublist)){
+	 for(i in seq_along(sublist)){
 	    child <- XML::newXMLNode(names(sublist)[i], parent=node);
 
 		# If we are still in the list, recurse
@@ -716,10 +953,47 @@ list2XML <- function(node, sublist){
 }
 #'
 #' @export
+#' @keywords internal
+#' 
+r_attrs_to_xml <- function(x) {
+	# Function stolen from the xml2 package:
+	
+	special_attributes <- c("class", "comment", "dim", "dimnames", "names", "row.names", "tsp")
+
+	if (length(x) == 0) {
+		return(NULL)
+	}
+
+	# Drop R special attributes
+	x <- x[!names(x) %in% special_attributes]
+
+	# Rename any xml attributes needed
+	special <- names(x) %in% paste0(".", special_attributes)
+
+	names(x)[special] <- sub("^\\.", "", names(x)[special])
+	x
+}
+#'
+#' @export
+#' @importFrom XML xmlAttrs
+#' @keywords internal
+#'
+addAttributes <- function(child, x){
+	# Function to add attributes:
+	attr <- r_attrs_to_xml(attributes(x))
+	if(length(attr)){
+		attr <- unlist(attr)
+	}
+	XML::xmlAttrs(child) <- attr
+}
+
+#'
+#' @export
+#' @importFrom XML xmlName
 #' @rdname writeBioticXML
 #' @keywords internal
 #' 
-data.frame2xml <- function(x, root, xsd, na.rm=FALSE, strict=TRUE, discardSimple=FALSE){
+data.frame2xml <- function(x, root, xsd, na.rm=FALSE, strict=TRUE, discardSimple=FALSE, msg=FALSE){
 	
 	# Validate the input by the xsd:
 	temp <- validateHIXSD(x, xsd, strict=strict, discardSimple=discardSimple)
@@ -731,13 +1005,19 @@ data.frame2xml <- function(x, root, xsd, na.rm=FALSE, strict=TRUE, discardSimple
 	names(rename) <- xsd$x$Var.Level
 	
 	# Convert the data frame to a nested list:
+	if(msg){
+		cat("Converting the data frame to a nested list...\n")
+	}
 	l <- data.frame2nestedList(x, levelnames=xsd$level, rename=rename, na.rm=na.rm)
 	# Check that the top name of the nested list does not coincide with the root name:
-	if(length(l)==1 && xmlName(root) == names(l)){
+	if(length(l)==1 && XML::xmlName(root) == names(l)){
 		l <- l[[1]]
 	}
 
 	# Convert to xml:
+	if(msg){
+		cat("Converting the nested list to xml...\n")
+	}
 	x <- list2XML(root, l)
 	x
 }

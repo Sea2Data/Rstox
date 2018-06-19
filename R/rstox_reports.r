@@ -409,21 +409,21 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 	units <- list(
 		c( "ones", "tens", "hundreds", "thousands", "millions", "billions", "trillions" ),
 		c( "ones", "tens", "hundreds", "thousands", "millions", "billions", "trillions" ),
-		c( "micrograms", "milligrams", "grams", "hectograms", "kilograms", "tonnes" ),
+		c( "micrograms", "milligrams", "grams", "hectograms", "kilograms", "tonnes" , "thousandtonnes" , "milliontonnes" ),
 		c( "micrometers", "millimeters", "centimeters", "decimeters", "meters", "kilometers" ),
 		c( "microseconds", "milliseconds", "seconds", "minutes", "hours", "days" ) )[implemented]
 	names(units) <- Rstox_var
 	abbrev <- list(
 		c( "1", "10", "100", "1000", "1e6", "1e9", "1e12" ),
 		c( "1", "10", "100", "1000", "1e6", "1e9", "1e12" ),
-		c( "mcg", "mg", "g", "hg", "kg", "t" ),
+		c( "mcg", "mg", "g", "hg", "kg", "t" , "tt" , "mt" ),
 		c( "mcm", "mm", "cm", "dm", "m", "km" ),
 		c( "mcs", "ms", "s", "m", "h", "d" ) )[implemented]
 	names(abbrev) <- Rstox_var
 	scale <- list(
 		as.numeric(abbrev$Abundance),
 		as.numeric(abbrev$Abundance),
-		c( 1e-9, 1e-6, 1e-3, 1e-1, 1, 1e3 ),
+		c( 1e-9, 1e-6, 1e-3, 1e-1, 1, 1e3 , 1e6 , 1e9 ),
 		c( 1e-6, 1e-3, 1e-2, 1e-1, 1, 1e3 ),
 		c( 1e-6, 1e-3, 1, 60, 60*60, 24*60*60 ) )[implemented]
 	names(scale) <- Rstox_var
@@ -1368,7 +1368,7 @@ getFunsRstox <- function(string, out="all"){
 #*********************************************
 #' Generate species matrix with biotic stations as rows and station information and the species present in the \code{ref} file as columns. One matrix generated per variable \code{var}.
 #'
-#' @param cs						A vector of cruise series names providing the data.
+#' @param projectName						A vector of cruise series names providing the data.
 #' @param ref						Either a data frame with the reference information about the species, containing the variables specied in "specVar", "catVar", or the path to a csv file holding this data frame.
 #' @param years						A vector of the years to process.
 #' @param downloadProjects			Logical: If TRUE download the projects, which must be done the first time, or if one needs to re-download.
@@ -1392,18 +1392,19 @@ getFunsRstox <- function(string, out="all"){
 #' @export
 #' @rdname generateSpeciesMatrix
 #' 
-generateSpeciesMatrix <- function(cs, ref, years, pr=NULL, check=TRUE, 
+generateSpeciesMatrix <- function(projectName, ref, years, check=TRUE, 
 	downloadProjects = FALSE, timeout = 600, 
 	model = list("ReadBioticXML", FilterBiotic=list(BioticData="ReadBioticXML")), 
 	specVar = "noname", catVar = "Speccat", stationVar = c("cruise", "serialno"), 
 	bioticProc = "FilterBiotic", var = c("weight", "count"), 
-	max.sampletype=49, projectNames.out=FALSE, ...){
+	max.sampletype=49, list.out=TRUE, ...){
 	
 	# Function to detect species that are present in the data but not in the reference file:
 	out.noname <- function(pr, ref, bioticProc="FilterBiotic", max.sampletype=49){
 		# Read the biotic proecss and extract the catch sample level:
 		cat("Project:", pr, "...\n")
 		s1 <- getBaseline(pr, endProcess=bioticProc, proc=bioticProc, input=FALSE, msg=FALSE)
+		closeProject(pr)
 		dat1 <- s1$ReadBioticXML$ReadBioticXML_BioticData_CatchSample.txt
 	
 		# Note that all names are converted to lower case 
@@ -1429,8 +1430,6 @@ generateSpeciesMatrix <- function(cs, ref, years, pr=NULL, check=TRUE,
 		out
 	}
 	
-	cs <- cs[1]
-	
 	# Read the reference file linking species and species category:
 	if(!is.data.frame(ref)){
 		ref <- read.csv2(ref, encoding = "UTF-8", stringsAsFactors=FALSE)
@@ -1438,50 +1437,45 @@ generateSpeciesMatrix <- function(cs, ref, years, pr=NULL, check=TRUE,
 	
 	
 	# Download the data and create StoX projects (use run=TRUE only the first time to avoid downloading each time the code is run. The output is the project names.):
-	if(length(pr)==0){
+	if(!isProject(projectName)){
 		# Get the subset of the cruise series defined by 'years' (requires group="year" in getNMDdata()):
 		cs_info <- getNMDinfo("cs")
-		#cs_years <- lapply(cs_info[cs], function(x) sort(as.numeric(unique(x[, "year"]))))
-		cs_years <- sort(as.numeric(unique(cs_info[[cs]][, "year"])))
-		#subsets <- lapply(cs_years, function(x) rm.na(match(years, x)))
+		cs_years <- sort(as.numeric(unique(cs_info[[projectName]][, "year"])))
 		subset <- rm.na(match(years, cs_years))
 		
 		# Get the years of the cruise series:
-		#years <- lapply(seq_along(subsets), function(i) cs_years[[i]][subsets[[i]]])
 		years <- cs_years[subset]
 		
-	
+		# Download the cruise series and create StoX projects with the specified model:
 		if(downloadProjects == TRUE){
-			pr <- getNMDdata(cs, subdir=TRUE, abbrev=TRUE, subset=subset, model=model, group="year", ow=TRUE, timeout=timeout)
+			projectName <- getNMDdata(projectName, subdir=TRUE, abbrev=TRUE, subset=subset, model=model, group="year", ow=TRUE, timeout=timeout)
 		}
-
-		# This is only get the project names, and takes approximately 2 minutes (not neccesary if line above is done)
+		# This is only get the project names:
 		if(downloadProjects == FALSE){
-			pr <- getNMDdata(cs, subdir=TRUE, abbrev=TRUE, subset=subset, model=model, group="year", run=FALSE)
+			projectName <- getNMDdata(projectName, subdir=TRUE, abbrev=TRUE, subset=subset, group="year", run=FALSE)
 		}
 		
 		# Use years as names to the individual project paths and the cruise series names at the top level:
-		pr <- setNames(pr, years)
+		projectName <- setNames(projectName, years)
 	}
 
 	# Report species that are present in the data but not in the reference file:
 	if(check){
 		cat("Checking whether all species are present in the reference data frame...\n")
-		only.in.xml <- lapply(pr, out.noname, ref=ref, bioticProc=bioticProc, max.sampletype=max.sampletype)
+		only.in.xml <- lapply(projectName, out.noname, ref=ref, bioticProc=bioticProc, max.sampletype=max.sampletype)
 		if(length(only.in.xml)==0){
 			cat("All species present\n")
 		}
 	}
 	
 	## All years using the same Speccat
-	speciesMatrices <- lapply(pr, aggregateBySpeciesCategory, ref=ref, specVar=specVar, catVar=catVar, bioticProc=bioticProc, stationVar=stationVar, var=var, ...)
-	
+	speciesMatrices <- lapply(projectName, aggregateBySpeciesCategory, ref=ref, specVar=specVar, catVar=catVar, bioticProc=bioticProc, stationVar=stationVar, var=var, ...)
 	
 	# Merge all years:
 	speciesMatrices <- mergeAllYears(speciesMatrices, var=var)
 	
-	if(projectNames.out){
-		list(x=speciesMatrices, projectNames=pr)
+	if(list.out){
+		list(x=speciesMatrices, projectNames=projectName, only.in.xml=only.in.xml)
 	}
 	else{
 		speciesMatrices
@@ -1592,9 +1586,17 @@ aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specV
 	
 	# Set names to the data frame:
 	names(temp) <- var
+	
+	# Write the species matrix to a csv file:
+	outfile <- paste0("speciesMatrix", var, ".txt")
+	outfile <- file.path(getProjectPaths(projectName)$RReportDir, outfile)
+	lapply(seq_along(temp), function(i) write.table(temp[[i]], file=outfile[i], sep="\t", dec=".", row.names=FALSE, fileEncoding="UTF-8"))
+	
+	# Drop the list if only one variable is requested:
 	if(drop.out && length(temp)==1){
 		temp <- temp[[1]]
 	}
+	
 	
 	return(temp)
 }

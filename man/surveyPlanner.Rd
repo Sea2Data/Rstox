@@ -2,6 +2,8 @@
 % Please edit documentation in R/rstox_spatial.r
 \name{surveyPlanner}
 \alias{surveyPlanner}
+\alias{addStratum}
+\alias{supplementBaseline}
 \alias{plotStratum}
 \alias{readStrataPolygons}
 \alias{getCentroid}
@@ -13,7 +15,12 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
   shapenames = list(longitude = "long", latitude = "lat", stratum = "id"),
   equalEffort = FALSE, byStratum = TRUE, strata = "all",
-  cruise = "surveyPlanner", keepTransport = TRUE, centroid = NULL)
+  cruise = "surveyPlanner", keepTransport = TRUE, centroid = NULL, ...)
+
+addStratum(x, acousticProc = "FilterAcoustic")
+
+supplementBaseline(x, acousticProc = "FilterAcoustic",
+  bioticProc = "FilterBiotic")
 
 plotStratum(x, transect = TRUE, centroid = NULL, transport_alpha = 0.1,
   google = FALSE, margin = 0.5, zoom = 4, aspectratio = NULL,
@@ -24,7 +31,7 @@ readStrataPolygons(projectName)
 getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude", "latitude"))
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}). Can also be the path to a shapefile or folder of shape files, or to a file with polygons given as a two column matrix with stratum name in the first column and a MULTIPOLYGON wkt string in the second conlumn.}
 
 \item{parameters}{Optional named list of parameters overriding the inputs "type", "bearing", "retour", "hours", "knots", "nmi", "seed" or "t0". This list is returned from \code{surveyPlanner} (located in the element $parameters), and can be useful when changing say the 'nmi' in the last strata given time lost due to weather in the first strata. See examples.}
 
@@ -60,13 +67,15 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude", "latitude"))
 
 \item{byStratum}{Logical: If FALSE, include the transport between strata in the total traveled distance given in $Survey of the output.}
 
-\item{strata}{Specification of the strata to include, either given as the string "all", implying all strata to be used, og a index vector as given to "[]" (negative values may be used to exclude specific strata).}
+\item{strata}{Specification of the strata to include, either given as the string "all", implying all strata to be used; an index vector as given to "[]" (negative values may be used to exclude specific strata), or a character vector of the strata names. Note that if the strata are named by integers, these names must be given as character and not integers, which would act as indices.}
 
 \item{cruise}{A string or numeric giving the cruise name/code.}
 
 \item{keepTransport}{Logical: If FALSE, remove transport stretches in the Transect output.}
 
 \item{centroid}{Logical: If TRUE, plot the centroid of the strata.}
+
+\item{...}{Used for flexibility.}
 
 \item{x}{The output from \code{\link{surveyPlanner}}.}
 

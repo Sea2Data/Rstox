@@ -2793,3 +2793,209 @@ rm.na <- function(x, na.rm=TRUE){
 		x
 	}
 }
+
+
+#*********************************************
+#*********************************************
+#' Modify a StoX project.xml file directly.
+#'
+#' \code{insertStratumpolygon} inserts stratumpolygon to the project.xml file.
+#' \code{insertEdsupsu} inserts edsupsu to the project.xml file.
+#' \code{insertPsustratum} inserts psustratum to the project.xml file.
+#' \code{insertSuassignment} inserts suassignment to the project.xml file.
+#' \code{insertBioticassignment} inserts bioticassignment to the project.xml file.
+#' \code{insertToProjectXML} inserts a string to the project.xml file.
+#' \code{getTransectID} returns transect IDs.
+#'
+#' @param file		The path to the project.xml file.
+#' @param Stratum	A data.frame with column names "longitude" and "latitude" giving the stratum polygon, or a list of these, named by the stratum names.
+#' @param Log		A data.frame with one row per log distance, holding the following columns: "transect", "stratum", "logStoXid".
+#' @param Stations	A data.frame of one row per biotic station, holding the following columns: "stratum", "stationID".
+#' @param estlayer	A vector of the estimation layers.
+#' @param insert	A string to insert to the project.xml file.
+#' @param type		The type of data to insert to the project.xml file.
+#' 
+#' @return
+#'
+#' @export
+#' @rdname insertToProjectXML
+#' 
+insertStratumpolygon <- function(Stratum, file){
+	# Convert the list of stratum polygon matrices to WKT strings:
+	if(is.list(Stratum)){
+		wkt <- sapply(Stratum, getMultipolygon)
+		StratumNames <- names(wkt)
+	}
+	else{
+		wkt <- list(getMultipolygon(Stratum))
+		names(wkt) <- "Stratum1"
+	}
+	
+	# Get the include infor and the startum info:
+	include <- paste0("      <value polygonkey=\"", StratumNames, "\" polygonvariable=\"includeintotal\">true</value>")
+	wktXMLstring <- paste0("      <value polygonkey=\"", StratumNames, "\" polygonvariable=\"polygon\">", wkt, "</value>")
+	# Zip these together:
+	insert <- c(t(cbind(include, wktXMLstring)))
+	
+	insertToProjectXML(insert, type="stratumpolygon", file)
+}
+#'
+#' @export
+#' @rdname insertToProjectXML
+#' 
+insertEdsupsu <- function(Log, file){
+	# Paste logStoXid to transect ID:
+	transectID <- getTransectID(Log)
+	insert <- paste0("      <psu edsu=\"", Log$logStoXid, "\">", transectID, "</psu>")
+	
+	insertToProjectXML(insert, type="edsupsu", file)
+}
+#'
+#' @export
+#' @rdname insertToProjectXML
+#' 
+insertPsustratum <- function(Log, file){
+	# Paste transect ID and stratum ID:
+	transectID <- getTransectID(Log)
+	valid <- !duplicated(transectID)
+	insert <- paste0("      <stratum psu=\"", transectID[valid], "\">", Log$stratum[valid], "</stratum>")
+	
+	insertToProjectXML(insert, type="psustratum", file)
+}
+#'
+#' @export
+#' @rdname insertToProjectXML
+#' 
+insertSuassignment <- function(Log, estlayer=1, file){
+	# Paste transect ID, estlayer and stratum ID:
+	transectID <- getTransectID(Log)
+	valid <- which(!duplicated(transectID))
+	
+	temp1 <- paste0("      <assignmentid sampleunit=\"", transectID[valid], "\" estlayer=\"")
+	temp2 <- estlayer
+	temp3 <- paste0("\">", Log$stratum[valid], "</assignmentid>")
+	temp1 <- rep(temp1, each=length(estlayer))
+	temp2 <- rep(temp2, length(valid))
+	temp3 <- rep(temp3, each=length(estlayer))
+	
+	insert <- paste0(temp1, temp2, temp3)
+	
+	insertToProjectXML(insert, type="suassignment", file)
+}
+#'
+#' @export
+#' @rdname insertToProjectXML
+#' 
+insertBioticassignment <- function(Stations, file){
+	# Stations$stationID is the cruise/serialno:
+	insert <- paste0("      <stationweight assignmentid=\"", Stations$stratum, "\" station=\"", Stations$stationID, "\">1.0</stationweight>")
+	
+	insertToProjectXML(insert, type="bioticassignment", file)
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname insertToProjectXML
+#' 
+insertToProjectXML <- function(insert, type, file){
+	# Save the original project.xml files in the temp directory:
+	fileBackup <- file.path(tempdir(), basename(file))
+	file.copy(file, fileBackup)
+	
+	l <- readLines(file)
+	startSting <- paste0("<", type, ">")
+	endSting <- paste0("</", type, ">")
+	start <- grep(startSting, l)
+	end <- grep(endSting, l)
+	
+	out <- c(l[seq_len(start)], insert, l[seq(end, length(l))])
+	
+	writeLines(out, file)
+	
+	return(c(file=file, fileBackup=fileBackup))
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname insertToProjectXML
+#' 
+getTransectID <- function(Log){
+	#getTransectID <- function(Log, unique=FALSE){
+	zeropad <- function(x){
+		formatC(x, width=max(nchar(x)), format="d", flag="0")
+	}
+	out <- paste0("T", zeropad(Log$transect), if(!is.character(Log$stratum)) "S", zeropad(Log$stratum))
+	#if(unique){
+	#	out <- unique(out)
+	#}
+	out
+}
+
+
+#*********************************************
+#*********************************************
+#' Parallel version of lapply
+#'
+#' Detects and opens cores for simpler parallel lapply.
+#'
+#' @param X,FUN,...  See lapply.
+#' @param cores  An integer giving the number of cores to run the function FUN over.
+#' @param outfile  Set this to FALSE to suppress printing from the cores.
+#'
+#' @return
+#'
+#' @examples
+#' f <- function(i){
+#' 	for(j in 1:3){
+#' 		for(k in 1:500){
+#' 			Sys.sleep(0.001)
+#' 			d <- runif(100)
+#' 		}
+#' 	}	
+#' }
+#' system.time(p <- papply(1:4, f, cores=1))
+#' system.time(p <- papply(1:4, f, cores=2))
+#'
+#' @importFrom parallel makeCluster parLapply stopCluster detectCores
+#' @importFrom pbapply pblapply
+#' @export
+#' @rdname papply
+#'
+papply <- function(X, FUN, ..., cores=1, outfile="", msg="Processing... "){
+	availableCores <- parallel::detectCores()
+	# If memory runs out, a system call to determine number of cores might fail, thus detectCores() could return NA
+	# defaulting to single core if this is the case
+	if(is.na(availableCores)){
+		availableCores <- 1
+	}
+	if(cores > availableCores){
+		warning(paste0("Only ", availableCores, " cores available (", cores, " requested)"))
+	}
+	nruns <- length(X)
+	cores <- min(cores, nruns, availableCores)
+	
+	# Generate the clusters of time steps:
+	if(cores>1){
+		cat(paste0(msg, "(", nruns, " runs using ", cores, " cores in parallel):\n"))
+		cl <- parallel::makeCluster(cores)
+		# Bootstrap:
+		out <- pbapply::pblapply(X, FUN, ..., cl=cl)
+		# End the parallel bootstrapping:
+		parallel::stopCluster(cl)
+	}
+	else{
+		cat(paste0(msg, "(", nruns, " runs):\n"))
+		out <- pbapply::pblapply(X, FUN, ...)
+	}
+	return(out)
+}
+
+
+
+
+getLogStoXid <- function(x, timevar="start_time"){
+	dateSlashTime <- gsub(" ", "/", as.character(x[[timevar]]), fixed=TRUE)
+	log_start <- trimws(format(x$log_start, nsmall=1))
+	x$logStoXid <- paste(x$cruise, log_start, dateSlashTime, sep="/")
+	x
+}

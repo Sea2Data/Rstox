@@ -664,5 +664,6 @@ Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting trans
 
 Fixed bug in getNMDinfo("platform") and getNMDinfo("v"), where the columns validFrom and validTo did not correspond to the correct platform codes/names due to a sorting of these dates.
 
+Fixed bug in getNMDinfo, where UTF-8 encoding was ineffective (the corresponding bugfix in Version 1.3.2 was discovered to be ineffective). 
 
-
+Removed error in readStrataPolygons(), where multipolygons were not supported. Now only the first polygon of multipolygons are kept in the outputs 'lonlat' and 'lonlatAll', and all are kept in 'lonlatFull'.

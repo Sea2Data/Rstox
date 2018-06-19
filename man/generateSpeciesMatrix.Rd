@@ -6,12 +6,12 @@
 \alias{aggregateBySpeciesCategory}
 \title{Generate species matrix with biotic stations as rows and station information and the species present in the \code{ref} file as columns. One matrix generated per variable \code{var}.}
 \usage{
-generateSpeciesMatrix(cs, ref, years, pr = NULL, check = TRUE,
+generateSpeciesMatrix(projectName, ref, years, check = TRUE,
   downloadProjects = FALSE, timeout = 600, model = list("ReadBioticXML",
   FilterBiotic = list(BioticData = "ReadBioticXML")), specVar = "noname",
   catVar = "Speccat", stationVar = c("cruise", "serialno"),
   bioticProc = "FilterBiotic", var = c("weight", "count"),
-  max.sampletype = 49, projectNames.out = FALSE, ...)
+  max.sampletype = 49, list.out = TRUE, ...)
 
 mergeSpeciesMatrix(...)
 
@@ -22,7 +22,7 @@ aggregateBySpeciesCategory(projectName, ref, specVar = "noname",
   msg = TRUE, ...)
 }
 \arguments{
-\item{cs}{A vector of cruise series names providing the data.}
+\item{projectName}{A vector of cruise series names providing the data.}
 
 \item{ref}{Either a data frame with the reference information about the species, containing the variables specied in "specVar", "catVar", or the path to a csv file holding this data frame.}
 
@@ -46,8 +46,6 @@ aggregateBySpeciesCategory(projectName, ref, specVar = "noname",
 
 \item{...}{Parameters passed on to getBaseline(), e.g. for changing the baseline parameters (adding filters).}
 
-\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
-
 \item{specVar.bio, specVar.ref}{Names of the species columns in the data and in the \code{ref} file. When only specifying \code{specVar}, a common column name is assumed.}
 
 \item{na.as}{The value to use for missing data (e.g., species categories that are not present in a station).}
@@ -57,6 +55,8 @@ aggregateBySpeciesCategory(projectName, ref, specVar = "noname",
 \item{close}{Logical: If TRUE (default) close the project after reading the data.}
 
 \item{model}{Parameters such as FilterBiotic <- list(BioticData="ReadBioticXML",  FishStationExpr = "gear =~['3270','3271', '3293', '']  and gearcondition < 3 and trawlquality =~['1','3']  and fishstationtype != ['2','C']", SampleExpr = "genetics != '7'").}
+
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 }
 \value{
 A list of data frames with stations as rows and station information and the species present in the \code{ref} file as columns.

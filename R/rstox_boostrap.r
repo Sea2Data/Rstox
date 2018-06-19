@@ -177,6 +177,11 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted)
 	}
 	
+	
+	
+	#out <- papply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, cores=cores)
+	
+	
 	out <- unlist(out, recursive=FALSE)
 	
 	# Check the number of rows of the bootstrap runs:
