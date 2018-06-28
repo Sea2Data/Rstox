@@ -14,17 +14,19 @@
 #' @param startProcess	The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.
 #' @param endProcess	The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".
 #' @param seedV			A vector of seeds. seedV[i] is used.
-#' @param sorted	Should the data be sorted prior to sampling?
+#' @param sorted		Should the data be sorted prior to sampling?
+#' @param JavaMem		The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores. 
 #'
 #' @return list with (1) the abundance by length in the bootstrap run, (2) the abundance by super individuals in the bootstrap run
 #'
 #' @export
 #' @keywords internal
 #'
-bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE){
+bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE, JavaMem=getRstoxDef("JavaMem")){
 	
 	# Load Rstox if not already loaded:
 	library(Rstox)
+	setJavaMemory(JavaMem)
 	# Get the baseline object (run if not already run), as this is needed to insert biostation weighting and meanNASC values into. The warningLevel = 1 continues with a warning when the baseline encounters warnings:
 	baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1)
 	
@@ -115,7 +117,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 #' @export
 #' @keywords internal
 #'
-bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, baseline=NULL, msg=TRUE, parameters=list(), sorted=TRUE){
+bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, baseline=NULL, msg=TRUE, parameters=list(), sorted=TRUE, JavaMem=getRstoxDef("JavaMem")){
 	
 	# Stop the funciton if both projectName and baseline are missing:
 	if(length(baseline)==0 && missing(projectName)){
@@ -168,13 +170,13 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
 		cl<-makeCluster(cores)
 		# Bootstrap:
-		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, cl=cl)
+		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, cl=cl)
 		# End the parallel bootstrapping:
 		stopCluster(cl)
 	}
 	else{
 		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted)
+		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem)
 	}
 	
 	
@@ -266,7 +268,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' @export
 #' @rdname runBootstrap
 #'
-runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	lll <- list(...)
 	### Backwards compatibility: ###
 	# If the old numIterations is given, override the nboot by this:
@@ -286,7 +288,7 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 		stop("Invalid bootstrap type.")
 	}
 	bootstrapFun <- paste("runBootstrap", bootstrapMethod, sep="_")
-	do.call(bootstrapFun, list(projectName=projectName, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, ...))
+	do.call(bootstrapFun, list(projectName=projectName, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...))
 }
 #'
 #' @export
@@ -303,7 +305,7 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 #' @keywords internal
 #' @rdname runBootstrap
 #'
-runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	# Baseline and biotic assignments:
 	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
 	assignments <- getBioticAssignments(projectName=projectName)
@@ -328,7 +330,7 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	
 
 	# Run bootstrap:
-	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
+	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted, JavaMem=JavaMem)
 
 	# Add the method specification:
 	bootstrap$bootstrapParameters$bootstrapMethod <- "AcousticTrawl"
@@ -347,13 +349,13 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 #' @keywords internal
 #' @rdname runBootstrap
 #'
-runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	# Baseline and biotic assignments:
 	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
 	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Run bootstrap:
-	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
+	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted, JavaMem=JavaMem)
 	
 	# Add the method specification:
 	bootstrap$bootstrapParameters$bootstrapMethod <- "SweptAreaLength"

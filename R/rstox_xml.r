@@ -647,7 +647,6 @@ writeHIXML <- function(x, file, root, blockvar=NULL, blocksize=100, addVersion=T
 	}
 	
 	# Read the xsd:
-	browser()
 	xsd <- readHIXSD(xsd, discardSimple=discardSimple)
 
 	xlist <- list(x)

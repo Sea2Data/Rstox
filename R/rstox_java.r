@@ -375,21 +375,32 @@ setNASC <- function(projectName, process="MeanNASC", data){
 
 #*********************************************
 #*********************************************
-#' Set the size of the Java memory
+#' Get or set the size of the Java memory
 #' 
-#' @param size	The size of the memory (in bytes) assigned to Java for each project
+#' @param size	The size of the memory (in bytes) assigned to Java for each project. This value should not be as large as the total memory of the system. 
+#'
+#' @details
+#' The function \code{setJavaMemory} sets the memory reserved for the Java virtual machine. Use \code{getJavaMemory()} to get the current value. The default is 2e9 (2 gigabytes), which should be sufficient in most cases. See \code{\link{runBootstrap}} for how to reduce the memory occupied by Java during parallel bootstrap operations.
 #'
 #' @export
 #' @rdname setJavaMemory
 #'
 setJavaMemory <- function(size=2e9){
-	size <- paste0(round(size * 1e-6), "m")
-	options(java.parameters=paste0("-Xmx", size))
+	sizeString <- paste0(round(size * 1e-6), "m")
+	old <- options()$java.parameters
+	options(java.parameters=paste0("-Xmx", sizeString))
+	#cat("Java memory set to ", size, "\n", sep="")
 }
 #'
 #' @export
 #' @rdname setJavaMemory
 #'
 getJavaMemory <- function(){
-	options("java.parameters")
+	out <- options("java.parameters")
+	out <- substring(out, 5)
+	# Get the last character and interpret as mega or gigabytes:
+	byteChar <- substring(out, nchar(out))
+	out <- as.numeric(substr(out, 1, nchar(out) - 1))
+	out <- out * if(byteChar=="g") 1e9 else 1e6
+	out
 }

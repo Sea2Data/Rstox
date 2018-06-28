@@ -1577,10 +1577,15 @@ aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specV
 	#temp <- lapply(temp, function(x) {if(any("V1" == names(x))) names(x)["V1" == names(x)] <- "Unknown"; x})
 	temp <- lapply(temp, function(x) if(any("V1" == names(x))) x["V1" != names(x)] else x)
 	# replace NA:
-	temp <- lapply(temp, function(x) {if(any(is.na(x))) x[is.na(x)] <- na.as; x})
+	#temp <- lapply(temp, function(x) {if(any(is.na(x))) x[is.na(x)] <- na.as; x})
 	
 	# Merge with the station data:
 	temp <- lapply(temp, function(x) merge(out, x, by="Station", all.x=TRUE))
+	
+	
+	# replace NA:
+	temp <- lapply(temp, function(x) {y <- x[,-seq_len(ncol(out))]; if(any(is.na(y))) y[is.na(y)] <- na.as; x[,-seq_len(ncol(out))] <- y; x})
+		
 	# Add Year as the firs column:
 	temp <- lapply(temp, function(x) cbind(Year = as.numeric(format(as.Date(x$startdate, format="%d/%m/%Y"),"%Y")), x))
 	

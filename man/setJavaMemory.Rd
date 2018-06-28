@@ -3,15 +3,18 @@
 \name{setJavaMemory}
 \alias{setJavaMemory}
 \alias{getJavaMemory}
-\title{Set the size of the Java memory}
+\title{Get or set the size of the Java memory}
 \usage{
 setJavaMemory(size = 2e+09)
 
 getJavaMemory()
 }
 \arguments{
-\item{size}{The size of the memory (in bytes) assigned to Java for each project}
+\item{size}{The size of the memory (in bytes) assigned to Java for each project. This value should not be as large as the total memory of the system.}
 }
 \description{
-Set the size of the Java memory
+Get or set the size of the Java memory
+}
+\details{
+The function \code{setJavaMemory} sets the memory reserved for the Java virtual machine. Use \code{getJavaMemory()} to get the current value. The default is 2e9 (2 gigabytes), which should be sufficient in most cases. See \code{\link{runBootstrap}} for how to reduce the memory occupied by Java during parallel bootstrap operations.
 }

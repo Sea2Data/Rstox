@@ -1005,6 +1005,7 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 			# Get the java parameters for use later if save==FALSE:
 			if(!save){
 				javapar <- getBaselineParameters(projectName, out=modelType[1])$java # Use out=modelType
+				#javapar <- getBaselineParameters(projectName)$java # Use out=modelType
 			}
 			# Set the new parameters:
 			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE, save=c("last", "java"))
@@ -1556,7 +1557,8 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 		numParameters      <- pmax(0, unlist(lapply(parlist, length))) # Allow for no parameters given
 		changeProcesses    <- rep(changeProcesses, numParameters)
 		
-		modelTypes <- sapply(parameters, "[[", "modelType")
+		#modelTypes <- sapply(parameters, "[[", "modelType") # 2018-06-21: This was an error, since there could be more processes in 'parameters' than in 'parlist':
+		modelTypes <- sapply(parameters[names(parlist)], "[[", "modelType")
 		changeModelTypes <- rep(modelTypes, numParameters)
 	
 		# Set the changeProcessesIdx to be the indices in either the baseline or the baseline report (obtained by the pmax, which ):

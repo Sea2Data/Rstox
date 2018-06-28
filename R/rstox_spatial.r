@@ -517,12 +517,13 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param transect			Logical: If TRUE, plot the transects.
 #' @param centroid			Logical: If TRUE, plot the centroid of the strata.
 #' @param transport_alpha	The transparency to use for the transport paths.
-#' @param margin			The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since the forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.
+#' @param margin			The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.
 #' @param google			Logical: If TRUE, download Google maps.
 #' @param zoom				The zoom to use for google maps
 #' @param aspectratio		The aspect ratio of the plot, adjusted automatically by default.
-#' @param xlab				The x label for the plot.
-#' @param ylab				The y label for the plot.
+#' @param xlab,ylab			The x and y label for the plot.
+#' @param xlim,ylim			The x and y limit of the plot.
+#' @param keep0effort		Logical: If FALSE, keep only the strata with positive effort.
 #' @param ...				Used for flexibility.
 #' 
 #' @details Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443
@@ -1048,7 +1049,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		else if(length(x)>1 && !byStratum){
 			x <- list(as.data.frame(data.table::rbindlist(x)))
 		}
-	
+		
 		# Get sailed distances from each stratum
 		out <- lapply(x, getSailedDist_OneStratum)
 		out <- as.data.frame(data.table::rbindlist(out))
@@ -1058,9 +1059,9 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			if(nmi.out){
 				out <- cbind(out, nmi=nmi)
 			}
-			else{
-				out <- cbind(out)
-			}
+			#else{
+			#	out <- cbind(out)
+			#}
 			#outPercent <- round(out / nmi * 100, digits=2) # A bug, leading to total percent different from 100.
 			outPercent <- round(out / out$total * 100, digits=2)
 			colnames(outPercent) <- paste0(colnames(outPercent), "_percent")
@@ -1370,39 +1371,41 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	parameterNames <- c("type", "bearing", "retour", "hours", "knots", "nmi", "seed", "t0")
 	# Save the input parameters for reference. These are included in the output:
 	Input <- list(projectName=projectName, rev=rev, toursFirst=toursFirst, distsep=distsep, angsep=angsep, plot=plot, margin=margin, shapenames=shapenames, equalEffort=equalEffort, byStratum=byStratum)
-		
-		
+	
+	
 	# Read the the stratum polygons from a folder of shape files or from a StoX project:
 	temp <- readStrataPolygons(projectName)
-	lonlatAll <- temp$lonlatAll
+	#lonlatAll <- temp$lonlatAll
 	lonlat <- temp$lonlat
-	strataNames <- temp$strataNames
-	
+	#strataNames <- temp$strataNames
+	strataNames <- names(lonlat)
 	
 	# Include all or a subset of the strata:
-	if(identical(strata, "all")){
-		strata <- seq_along(strataNames)
-	}
-	else if(is.character(strata)){
-		temp <- match(strata, strataNames)
-		if(any(is.na(temp))){
-			warning(paste0("The following stratum names specified in 'strata' were not found: ", paste(strata[is.na(temp)], collapse=", ")))
-		}
-		strata <- temp[!is.na(temp)]
-	}
-	else if(!all(strata < 0)){
-		strata <- strata[strata >= 1 & strata <= length(lonlat)]
-	}
+	#if(identical(strata, "all")){
+	#	strata <- seq_along(strataNames)
+	#}
+	#else if(is.character(strata)){
+	#	temp <- match(strata, strataNames)
+	#	if(any(is.na(temp))){
+	#		warning(paste0("The following stratum names specified in 'strata' were not found: ", paste(strata[is.na(temp)], collapse=", ")))
+	#	}
+	#	strata <- temp[!is.na(temp)]
+	#}
+	#else if(!all(strata < 0)){
+	#	strata <- strata[strata >= 1 & strata <= length(lonlat)]
+	#}
+	strata <- subsetStrata(strata, lonlat)
+	
+	# Restrict the strata polygons to those specified by the input 'strata', and also by discarding strata with zero effort:
 	lonlat <- lonlat[strata]
 	strataNames <- strataNames[strata]
 	nstrata <- length(lonlat)
-	
 	lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
 	
 	# Include the stratum polygons as a list of matrices and a SpatialPolygons object:
-	Input$lonlat_stratum <- lonlat
-	Input$lonlat_stratumSP <- getSpatial(Input$lonlat_stratum)
-	Input$lonlatAll_stratum <- lonlatAll
+	Input$lonlat <- lonlat
+	Input$lonlatSP <- getSpatial(Input$lonlat)
+	Input$lonlatAll <- lonlatAll
 	
 	# Get the projection to use, centered at the centroid of the total survey area (using rgeos::gCentroid()):
 	if(length(centroid)==0){
@@ -1410,6 +1413,8 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	}
 	Input$centroid <- centroid
 	proj <- getProjString(proj="aeqd", x=lonlatAll[,c("longitude", "latitude")], lon_0=centroid[1], lat_0=centroid[2], requireClosed=FALSE)
+	
+	
 	
 	##### Generate the parameters, one value per stratum: #####
 	if(length(parameters)==0 || !is.list(parameters)){
@@ -1492,6 +1497,19 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	#suppressWarnings(parameters <- lapply(parameters, function(x) if(is.list(x)) rep(x[[1]]/nstrata, length.out=nstrata) else rep(x, length.out=nstrata)))
 	suppressWarnings(parameters <- lapply(parameters, rep,  length.out=nstrata))
 	##########
+	
+	
+	# If any parameters$nmi is zero, discard these strata:
+	if(any(parameters$nmi == 0)){
+		validStrata <- which(parameters$nmi > 0)
+		parameters <- lapply(parameters, "[", validStrata)
+		
+		lonlat <- lonlat[validStrata]
+		strataNames <- strataNames[validStrata]
+		lonlatAll <- as.data.frame(data.table::rbindlist(lonlat, idcol="stratum"))
+		proj <- getProjString(proj="aeqd", x=lonlatAll[,c("longitude", "latitude")], lon_0=centroid[1], lat_0=centroid[2], requireClosed=FALSE)
+	}
+	
 		
 	# Extract the centroids of the survey and the strata:
 	survey_centroid <- getCentroid(lonlatAll)
@@ -1514,19 +1532,22 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	
 	# Populate the stratum polygon borders with denser points, in order to preserve the geographic coordinate definition when converting to Cartesian coordinates (i.e., follow a latitude if two points are on the same latitude. If given only by two points, the azimuthal equal distance projection will follow the great circle, which in general will not coincide with the intended equal latitude path):
 	lonlatPopulated <- lapply(lonlat, populatePath, dt=angsep, addInfo=FALSE)
-	Input$lonlatPopulated_stratum <- lonlatPopulated
+	Input$lonlatPopulated <- lonlatPopulated
 	
 	# Convert to Cartesian:
 	xy <- lapply(lonlatPopulated, geo2xy, data.frame.out=TRUE, par=proj)
-	Input$xy_stratum <- xy
+	Input$xy <- xy
+	
 	
 	#########################################
 	##### Get transects for all strata: #####
 	#########################################
 	out <- lapply(seq_along(xy), transectsOneStratum, xy=xy, area=area, parameters=parameters, plot=plot, margin=margin)
+	#out <- lapply(validStrata, transectsOneStratum, xy=xy, area=area, parameters=parameters, plot=plot, margin=margin)
 	Transect <- as.data.frame(data.table::rbindlist(out, idcol="stratum"))
 	# Convert the idcol 'stratum' from index to name:
 	Transect$stratum <- strataNames[Transect$stratum]
+	#Transect$stratum <- strataNames[validStrata][Transect$stratum]
 	
 	# If requested, reorder the strata so that the tours are first, followed by the retours reversed:
 	if(toursFirst && length(unique(Transect$retour))==2){
@@ -1573,6 +1594,10 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	totalSailedDist1 <- getSailedDist(Transect, nmi=sum(parameters$nmi), area=sum(area), nmi.out=FALSE, byStratum=FALSE)
 	
 	Stratum <- data.frame(stratum=strataNames, stratum_centroid, parameters[parameterNames], totalSailedDist, stringsAsFactors=FALSE)
+	#Stratum <- data.frame(stratum=strataNames, stratum_centroid, parameters[parameterNames], stringsAsFactors=FALSE)
+	#Stratum <- Stratum[validStrata, ]
+	#Stratum <- cbind(Stratum, totalSailedDist, stringsAsFactors=FALSE)
+	
 	rownames(Stratum) <- Stratum$stratum
 	
 	Survey <- data.frame(survey_centroid, nmi=sum(parameters$nmi), totalSailedDist1, proj=proj, stringsAsFactors=FALSE)
@@ -1614,6 +1639,28 @@ addStratum <- function(x, acousticProc="FilterAcoustic"){
 }
 #' 
 #' @export
+#' @keywords internal
+#' @rdname surveyPlanner
+#' 
+subsetStrata <- function(strata, lonlat){
+	strataNames <- names(lonlat)
+	if(identical(strata, "all")){
+		strata <- seq_along(strataNames)
+	}
+	else if(is.character(strata)){
+		temp <- match(strata, strataNames)
+		if(any(is.na(temp))){
+			warning(paste0("The following stratum names specified in 'strata' were not found: ", paste(strata[is.na(temp)], collapse=", ")))
+		}
+		strata <- temp[!is.na(temp)]
+	}
+	else if(!all(strata < 0)){
+		strata <- strata[strata >= 1 & strata <= length(lonlat)]
+	}
+	strata
+}
+#' 
+#' @export
 #' @rdname surveyPlanner
 #' 
 supplementBaseline <- function(x, acousticProc="FilterAcoustic", bioticProc="FilterBiotic"){
@@ -1627,7 +1674,20 @@ supplementBaseline <- function(x, acousticProc="FilterAcoustic", bioticProc="Fil
 #' @import ggplot2
 #' @rdname surveyPlanner
 #' 
-plotStratum <- function(x, transect=TRUE, centroid=NULL, transport_alpha=0.1, google=FALSE, margin=0.5, zoom=4, aspectratio=NULL, xlab="longitude", ylab="latitude", xlim=NULL, ylim=NULL){
+plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, transport_alpha=0.1, google=FALSE, margin=0.5, zoom=4, aspectratio=NULL, xlab="Longitude", ylab="Latitude", xlim=NULL, ylim=NULL, keep0effort=TRUE, strata="all", strataNameCol="darkblue"){
+	
+	if(is.character(x)){
+		x <- list(Input=readStrataPolygons(x))
+		strata <- subsetStrata(strata=strata, lonlat=x$Input$lonlat)
+		x$Input$lonlat <- x$Input$lonlat[strata]
+		x$Input$lonlatAll <- as.data.frame(data.table::rbindlist(x$Input$lonlat, idcol="stratum"))
+	}
+	
+	# Remove non-empty strata;
+	if(!keep0effort){
+		x$Input$lonlatAll <- x$Input$lonlatAll[x$Input$lonlatAll$stratum %in% x$Stratum$stratum, ]
+	}
+	
 	# Get the range in geographic coordinates:
 	#rangelonlat <- cbind(range(x$Transect$lon_start), range(x$Transect$lat_start))
 	rangelonlat <- cbind(range(x$Input$lonlatAll$longitude), range(x$Input$lonlatAll$latitude))
@@ -1638,54 +1698,70 @@ plotStratum <- function(x, transect=TRUE, centroid=NULL, transport_alpha=0.1, go
 	#location <- colMeans(x[, c("longitude", "latitude")])
 	
 	# Get the data from the map package or alternatively from Google:
-	if(google){
-		gmap <- ggmap::get_map(location=centroid, zoom=zoom, maptype="terrain", source="google", col="bw")
-		# Initiate the plot:
-		p <- ggmap::ggmap(gmap)
+	if("map" %in%  tolower(plot)){
+		if(google){
+			gmap <- ggmap::get_map(location=centroid, zoom=zoom, maptype="terrain", source="google", col="bw")
+			# Initiate the plot:
+			p <- ggmap::ggmap(gmap)
+		}
+		else{
+			# get the map and set the limits and aspect ratio:
+			gmap <- map_data("world")
+			spanlonlat <- apply(rangelonlat, 2, diff)
+			fact <- c(-1, 1) * (1 + margin)
+			if(length(xlim) == 0){
+				xlim <- centroid[1] + fact * spanlonlat[1] / 2
+			}
+			if(length(ylim) == 0){
+				ylim <- centroid[2] + fact * spanlonlat[2] / 2
+			}
+			# Adjust the aspect ratio by latitude:
+			aspectratio <- 1 / cos(centroid[2] * pi/180)
+			# Initiate the plot:
+			p <- ggplot() + geom_polygon(data=gmap, aes_string(x="long", y="lat", group="group")) + coord_fixed(aspectratio, xlim=xlim, ylim=ylim)
+		}
 	}
 	else{
-		# get the map and set the limits and aspect ratio:
-		gmap <- map_data("world")
-		spanlonlat <- apply(rangelonlat, 2, diff)
-		fact <- c(-1, 1) * (1 + margin)
-		if(length(xlim) == 0){
-			xlim <- centroid[1] + fact * spanlonlat[1] / 2
-		}
-		if(length(ylim) == 0){
-			ylim <- centroid[2] + fact * spanlonlat[2] / 2
-		}
-		# Adjust the aspect ratio by latitude:
-		aspectratio <- 1 / cos(centroid[2] * pi/180)
-		# Initiate the plot:
-		p <- ggplot() + geom_polygon(data=gmap, aes_string(x="long", y="lat", group="group")) + coord_fixed(aspectratio, xlim=xlim, ylim=ylim)
+		# Initiate an empty plot:
+		p <- ggplot()
 	}
 	
 	# Add the strata:
-	p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", fill="stratum", group="stratum"), colour="black", alpha=0.3, inherit.aes=FALSE)
+	if(any(c("stratum", "strata") %in% tolower(plot))){
+		p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", fill="stratum", group="stratum"), colour="black", alpha=0.3, inherit.aes=FALSE)
+	}
 	
 	
 	# Add transects:
-	if(isTRUE(transect) && length(x$Transect)){
+	if(any(c("transect", "transects") %in% tolower(plot))){
+		if(length(x$Transect)==0){
+			warning("The data frame 'Transect' missing in the input list 'x'")
+		}
+		else{
 		# Use the retour as line type:
-		hasRetour <- length(unique(x$Transect$retour)) > 1
-		# Convert to factor:
-		x$Transect$stratum <- as.factor(x$Transect$stratum)
-		x$Transect$retour <- as.factor(x$Transect$retour)
-		x$Transect$alpha <- 1 - x$Transect$transport
+			hasRetour <- length(unique(x$Transect$retour)) > 1
+			# Convert to factor:
+			x$Transect$stratum <- as.factor(x$Transect$stratum)
+			x$Transect$retour <- as.factor(x$Transect$retour)
+			x$Transect$alpha <- 1 - x$Transect$transport
 		
-		p <- p + 
-			geom_segment(data=x$Transect, aes_string(x="lon_start", y="lat_start", xend="lon_stop", yend="lat_stop", group="stratum", colour="stratum", alpha="alpha", linetype="retour"), show.legend=TRUE) + 
-			scale_alpha(range = c(transport_alpha, 1), guide=FALSE) + 
-			scale_colour_discrete(guide=FALSE) + 
-			if(hasRetour) scale_linetype(name="retour") else scale_linetype(guide=FALSE) 
+			p <- p + 
+				geom_segment(data=x$Transect, aes_string(x="lon_start", y="lat_start", xend="lon_stop", yend="lat_stop", group="stratum", colour="stratum", alpha="alpha", linetype="retour"), show.legend=TRUE) + 
+				scale_alpha(range = c(transport_alpha, 1), guide=FALSE) + 
+				scale_colour_discrete(guide=FALSE) + 
+				if(hasRetour) scale_linetype(name="retour") else scale_linetype(guide=FALSE)
+		}
 	}
 	
 	# Add labels:
 	p <- p + xlab(xlab) + ylab(ylab)
 	
 	# Add stratum names:
-	### stratum_centroid <- getCentroid(lonlat)
-	p <- p + geom_text(data=x$Stratum, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"))
+	stratum_centroid <- getCentroid(x$Input$lonlat)
+	if(any(c("stratum", "strata") %in% tolower(plot))){
+		#p <- p + geom_text(data=x$Stratum, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"))
+		p <- p + geom_text(data=stratum_centroid, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"), colour=strataNameCol)
+	}
 	#annotate("text", x=x$Stratum$lon_centroid, y=x$Stratum$lat_centroid, label=x$Stratum$stratum, alpha=0.5, col=)
 	
 	# Run the plot

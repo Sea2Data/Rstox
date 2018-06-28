@@ -7,7 +7,7 @@
 bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
   stratumNASC = NULL, resampledNASC = NULL,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seedV = NULL, sorted = TRUE)
+  seedV = NULL, sorted = TRUE, JavaMem = getRstoxDef("JavaMem"))
 }
 \arguments{
 \item{i}{The boostrap iteration number.}
@@ -31,6 +31,8 @@ bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
 \item{seedV}{A vector of seeds. seedV[i] is used.}
 
 \item{sorted}{Should the data be sorted prior to sampling?}
+
+\item{JavaMem}{The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores.}
 }
 \value{
 list with (1) the abundance by length in the bootstrap run, (2) the abundance by super individuals in the bootstrap run
