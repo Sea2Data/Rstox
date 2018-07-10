@@ -4,7 +4,6 @@
 \alias{surveyPlanner}
 \alias{addStratum}
 \alias{subsetStrata}
-\alias{supplementBaseline}
 \alias{plotStratum}
 \alias{readStrataPolygons}
 \alias{getCentroid}
@@ -14,7 +13,6 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   bearing = "N", rev = FALSE, retour = FALSE, toursFirst = FALSE,
   hours = 240, nmi = NULL, t0 = NULL, knots = 10, seed = 0,
   angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
-  shapenames = list(longitude = "long", latitude = "lat", stratum = "id"),
   equalEffort = FALSE, byStratum = TRUE, strata = "all",
   cruise = "surveyPlanner", keepTransport = TRUE, centroid = NULL, ...)
 
@@ -22,16 +20,13 @@ addStratum(x, acousticProc = "FilterAcoustic")
 
 subsetStrata(strata, lonlat)
 
-supplementBaseline(x, acousticProc = "FilterAcoustic",
-  bioticProc = "FilterBiotic")
-
 plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
   transport_alpha = 0.1, google = FALSE, margin = 0.5, zoom = 4,
   aspectratio = NULL, xlab = "Longitude", ylab = "Latitude",
   xlim = NULL, ylim = NULL, keep0effort = TRUE, strata = "all",
-  strataNameCol = "darkblue")
+  strataNameCol = "darkblue", ...)
 
-readStrataPolygons(projectName)
+readStrataPolygons(projectName, ...)
 
 getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude", "latitude"))
 }
@@ -66,8 +61,6 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude", "latitude"))
 
 \item{margin}{The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.}
 
-\item{shapenames}{A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.}
-
 \item{equalEffort}{Logical: If TRUE, assign effort proportional to the area of each stratum.}
 
 \item{byStratum}{Logical: If FALSE, include the transport between strata in the total traveled distance given in $Survey of the output.}
@@ -80,7 +73,7 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude", "latitude"))
 
 \item{centroid}{Logical: If TRUE, plot the centroid of the strata.}
 
-\item{...}{Used for flexibility.}
+\item{...}{Used for flexibility, and including shapenames: A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.}
 
 \item{x}{The output from \code{\link{surveyPlanner}}.}
 

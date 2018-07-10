@@ -481,6 +481,7 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 #' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")
 #' plotNASCDistribution(projectName)
 #'
+#' @importFrom grDevices dev.off
 #' @export
 #' 
 plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
@@ -604,6 +605,7 @@ plotAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="Abu
 #'
 #' @export
 #' @import ggplot2
+#' @importFrom grDevices dev.off
 #' @keywords internal
 #' @rdname plotAbundance
 #'
@@ -785,6 +787,7 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 #'
 #' @export
 #' @import ggplot2
+#' @importFrom grDevices dev.off
 #' @keywords internal
 #' @rdname plotAbundance
 #' 

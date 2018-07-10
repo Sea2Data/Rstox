@@ -12,9 +12,8 @@ papply(X, FUN, ..., cores = 1, outfile = "", msg = "Processing... ")
 \item{cores}{An integer giving the number of cores to run the function FUN over.}
 
 \item{outfile}{Set this to FALSE to suppress printing from the cores.}
-}
-\value{
 
+\item{msg}{A string to start the info printed to the console by.}
 }
 \description{
 Detects and opens cores for simpler parallel lapply.

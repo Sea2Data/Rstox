@@ -17,6 +17,7 @@
 #' psuNASC_agg <- aggPSUNASC(psuNASC=psuNASC)
 #'
 #' @export
+#' @keywords internal
 #' @rdname getPSUNASC
 #'
 getPSUNASC <- function(baseline){
@@ -58,6 +59,7 @@ getPSUNASC <- function(baseline){
 }
 #'
 #' @export
+#' @keywords internal
 #' @rdname getPSUNASC
 #'
 aggPSUNASC <- function(psuNASC){
@@ -116,6 +118,7 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
 #'
+#' @keywords internal
 #' @export
 #' 
 getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
@@ -193,6 +196,7 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #' resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, 
 #'     parameters=list(seed=1, nboot=5))
 #'
+#' @keywords internal
 #' @export
 #' 
 getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters, sorted=TRUE){

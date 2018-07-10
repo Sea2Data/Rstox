@@ -34,11 +34,15 @@
 #'
 #' @examples
 #' # Show templates:
-#' createProject()
+#' templ <- createProject()
+#' names(templ)
+#' str(templ)
 #'
 #' # See avilable projects, either as full paths or as a list:
-#' openProject()
-#' openProject(list())
+#' op <- openProject()
+#' str(op)
+#' opl <- openProject(list())
+#' str(opl)
 #' # A test project "Test_Rstox" is automatically created when openProject("Test_Rstox") is run. 
 #' # If one wishes to re-create the "Test_Rstox" project, use createProject("Test_Rstox", ow=TRUE).
 #'
@@ -282,11 +286,13 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 	# Old version, listing everything in the default workspace:
 	#return(list.files(J("no.imr.stox.functions.utils.ProjectUtils")$getSystemProjectRoot()))
 	
-	# get the available projects, ordered from the top level and down:
-	availableProjects <- getAvailableProjects()
+	# Initialize the list of available projects, and get this list only if neseccary:
+	availableProjects <- NULL
 	
 	# If nothing is given return a list of the projects in the StoX project directory:
 	if(length(projectName)==0){
+		# Get the available projects, ordered from the top level and down:
+		availableProjects <- getAvailableProjects()
 		if(is.list(projectName)){
 			return(availableProjects$projectNameList)
 		}
@@ -302,6 +308,11 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 	if(length(project)==0){
 		# Search for the project:
 		if(!isProject(projectName)){
+			# Get the available projects, ordered from the top level and down:
+			if(length(availableProjects)==0){
+				availableProjects <- getAvailableProjects()
+			}
+			
 			# If the Test_Rstox project is requested, create it:
 			if(identical(projectName, "Test_Rstox")){
 				temp <- createProject("Test_Rstox")
@@ -928,9 +939,11 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' @rdname runBaseline
 #'
 runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("project", "baseline", "baseline-report", "name"), modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
+	
 	# Open the project (avoiding generating multiple identical project which demands memory in Java):
 	#projectName <- getProjectPaths(projectName)$projectName
 	# If reset==TRUE allow for the warning in getProject():
+	
 	if(length(projectName)){
 		#baseline <- openProject(projectName, out="baseline")
 		baseline <- openProject(projectName, out=modelType[1])
@@ -939,6 +952,7 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 		warning("Empty 'projectName'")
 		return(NULL)
 	}
+	
 	baseline$setBreakable(jBoolean(FALSE))
 	baseline$setWarningLevel(jInt(warningLevel))
 	if(!exportCSV){
@@ -958,7 +972,7 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	# First, make sure that the process indices are within the valid range:
 	startProcess <- getProcess(projectName, proc=startProcess, modelType=modelType[1])
 	endProcess   <- getProcess(projectName, proc=endProcess, modelType=modelType[1])
-	
+
 	# (1) If 'reset' is given as TRUE, run the baseline model between the given start and end processes:
 	if(reset){
 		run <- TRUE
@@ -1025,7 +1039,7 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 			baseline$run(jInt(startProcess), jInt(endProcess), jBoolean(FALSE))
 		}
 	}
-
+	
 	# Return the object specified in 'out':
 	#return(getProject(projectName, out=out))
 	return(getProject(baseline, out=out))
@@ -1551,6 +1565,10 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 		# Update process names:
 		processNames <- names(parameters)
 		
+		# Remove elements of the parlist which names are not present in the list of parameters:
+		if(any(!names(parlist) %in% processNames)){
+			parlist <- parlist[names(parlist) %in% processNames]
+		}
 		
 		# Get names and indices of processes to change, and names and values of the parameters to change in those processes:
 		changeProcesses    <- names(parlist)
@@ -1564,9 +1582,20 @@ modifyBaselineParameters <- function(parameters, parlist=list(), ...){
 		# Set the changeProcessesIdx to be the indices in either the baseline or the baseline report (obtained by the pmax, which ):
 		#changeProcessesIdx <- match(changeProcesses, processNames)
 		changeProcessesIdx <- pmax(
-			match(changeProcesses, processNames[modelTypes==getModelType("baseline")$name]), 
-			match(changeProcesses, processNames[modelTypes==getModelType("baseline-report")$name]), 
-			na.rm=TRUE)
+			match(changeProcesses, processNames[modelTypes == getModelType("baseline")$name]), 
+			match(changeProcesses, processNames[modelTypes == getModelType("baseline-report")$name]), 
+			na.rm=TRUE
+		)
+		
+		# 2018-07-09: Attempt to solve a problem with processes in 'parlist' not recognized in the list 'parameters', but this was solved by removing those in 'parlist':
+		#changeProcessesIdx <- rep(NA, length(changeProcesses))
+		#baselineIndices <- which(changeModelTypes == getModelType("baseline")$name)
+		#baselineProcesses <- processNames[modelTypes == getModelType("baseline")$name]
+		#baselineReportIndices <- which(changeModelTypes == getModelType("baseline-report")$name)
+		#baselineReportProcesses <- processNames[modelTypes == getModelType("baseline-report")$name]
+		#changeProcessesIdx[baselineIndices] <- match(changeProcesses[baselineIndices], baselineProcesses)
+		#changeProcessesIdx[baselineReportIndices] <- match(changeProcesses[baselineReportIndices], baselineReportProcesses)
+		
 		changeParameters   <- unlist(lapply(parlist, names))
 
 		# Unlist using recursive=FALSE since it can hold different types (logical, string), and collapse to a vector after converting to logical strings as used in StoX: 
@@ -2225,6 +2254,7 @@ moveToTrash <- function(x){
 #'
 #' \code{getRstoxEnv} initiates the RstoxEnv environment if not existing.
 #' \code{getRstoxDef} gets an Rstox definition.
+#' \code{initiateRstoxEnv} sets up the Rstox environment with the definitions .
 #'
 #' @param name	The name of the Rstox definition to retrieve.
 #'
@@ -2257,18 +2287,21 @@ initiateRstoxEnv <- function(){
 	assign("RstoxEnv", new.env(), envir=.GlobalEnv)
 	# Assign fundamental variables to the RstoxEnv:
 	Definitions <- list(
+		JavaMem = 2e9, 
 		StoXFolders = c("input", "output", "process"), 
 		NMD_data_types = c("echosounder", "biotic", "landing"), 
 		StoX_data_types = c("acoustic", "biotic", "landing"), 
 		StoX_data_type_keys = c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel"), 
 		project_types = c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal"), 
 		processLevels = c("bootstrap", "bootstrapImpute"), 
-		modelTypeJavaNames <- c("baseline", "baseline-report", "r", "r-report", "name"), 
+		modelTypeJavaNames = c("baseline", "baseline-report", "r", "r-report", "name"), 
 		#modelTypeRstoxNames <- c("baseline", "report", NA, NA), 
-		modelTypeJavaFuns <- c("getBaseline", "getBaselineReport", "getRModel", "getRModelReport", "getProjectName")
+		modelTypeJavaFuns = c("getBaseline", "getBaselineReport", "getRModel", "getRModelReport", "getProjectName")
 		)
 	assign("Definitions", Definitions, envir=get("RstoxEnv"))
 	assign("Projects", list(), envir=get("RstoxEnv"))
+	
+	return(Definitions)
 }
 #' 
 #' @export
@@ -2817,8 +2850,6 @@ rm.na <- function(x, na.rm=TRUE){
 #' @param insert	A string to insert to the project.xml file.
 #' @param type		The type of data to insert to the project.xml file.
 #' 
-#' @return
-#'
 #' @export
 #' @rdname insertToProjectXML
 #' 
@@ -2940,11 +2971,10 @@ getTransectID <- function(Log){
 #'
 #' Detects and opens cores for simpler parallel lapply.
 #'
-#' @param X,FUN,...  See lapply.
-#' @param cores  An integer giving the number of cores to run the function FUN over.
-#' @param outfile  Set this to FALSE to suppress printing from the cores.
-#'
-#' @return
+#' @param X,FUN,...	See lapply.
+#' @param cores  	An integer giving the number of cores to run the function FUN over.
+#' @param outfile	Set this to FALSE to suppress printing from the cores.
+#' @param msg		A string to start the info printed to the console by.
 #'
 #' @examples
 #' f <- function(i){

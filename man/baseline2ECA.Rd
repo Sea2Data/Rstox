@@ -27,11 +27,3 @@ A reference to the StoX Java baseline object
 \description{
 This function reads data from a baseline run and converts to a list of data used by the ECA model in the Reca package.
 }
-\examples{
-system.time(eca <- baseline2eca("Test_Rstox"))
-# Show the covariate definitions:
-eca$resources
-# Show the eca object:
-str(eca)
-
-}

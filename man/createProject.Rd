@@ -111,11 +111,15 @@ A project object
 }
 \examples{
 # Show templates:
-createProject()
+templ <- createProject()
+names(templ)
+str(templ)
 
 # See avilable projects, either as full paths or as a list:
-openProject()
-openProject(list())
+op <- openProject()
+str(op)
+opl <- openProject(list())
+str(opl)
 # A test project "Test_Rstox" is automatically created when openProject("Test_Rstox") is run. 
 # If one wishes to re-create the "Test_Rstox" project, use createProject("Test_Rstox", ow=TRUE).
 

@@ -13,13 +13,6 @@
 #'
 #' @return A reference to the StoX Java baseline object
 #'
-#' @examples
-#' system.time(eca <- baseline2eca("Test_Rstox"))
-#' # Show the covariate definitions:
-#' eca$resources
-#' # Show the eca object:
-#' str(eca)
-#'
 #' @export
 #' @rdname baseline2eca
 #'

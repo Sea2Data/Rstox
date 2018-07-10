@@ -39,9 +39,6 @@ getTransectID(Log)
 
 \item{type}{The type of data to insert to the project.xml file.}
 }
-\value{
-
-}
 \description{
 \code{insertStratumpolygon} inserts stratumpolygon to the project.xml file.
 \code{insertEdsupsu} inserts edsupsu to the project.xml file.

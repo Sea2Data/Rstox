@@ -1,4 +1,4 @@
-# Rstox version: 1.9.1 (latest alpha, 2018-06-28)
+# Rstox version: 1.9.1 (latest alpha, 2018-07-10)
 # R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -60,5 +60,11 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # 8. Changed surveyPlanner() to discard strata with zero effort, but keep those strata in the Input list for plotting.
 
 # 9. Added the parameter "JavaMem" in bootstrap functions, used for setting the Java memory of each bootstrap replicate (useful to reduce memory for parallelized bootstrapping).
+
+# 10. Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
+
+# 11. Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
+
+
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS
