@@ -2,7 +2,11 @@
 % Please edit documentation in R/rstox_NMD.R
 \name{getNMDinfo}
 \alias{getNMDinfo}
+\alias{getNMDinfoV1}
+\alias{getNMDinfoV2}
 \alias{getNMDdata}
+\alias{getNMDdataV1}
+\alias{getNMDdataV2}
 \alias{downloadXML}
 \title{Get NMD API data and reference information}
 \usage{
@@ -10,10 +14,33 @@ getNMDinfo(type = NULL, ver = 1,
   API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
   msg = FALSE, simplify = TRUE)
 
+getNMDinfoV1(type = NULL, ver = 1,
+  API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
+  msg = FALSE, simplify = TRUE)
+
+getNMDinfoV2(type = NULL, API = "http://tomcat7.imr.no:8080/apis/nmdapi",
+  recursive = TRUE, msg = FALSE, simplify = TRUE)
+
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
   tsn = NULL, datatype = NULL, dir = NULL, subdir = FALSE,
   group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
   ver = 1, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
+  return.URL = FALSE, run = TRUE, timeout = NULL, ...)
+
+getNMDdataV1(cruise = NULL, year = NULL, shipname = NULL,
+  serialno = NULL, tsn = NULL, datatype = NULL, dir = NULL,
+  subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
+  filebase = "NMD", ver = 1,
+  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
+  return.URL = FALSE, run = TRUE, timeout = NULL, ...)
+
+getNMDdataV2(cruise = NULL, year = NULL, shipname = NULL,
+  serialno = NULL, tsn = NULL, datatype = NULL, dir = NULL,
+  subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
+  filebase = "NMD", ver = 1,
+  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
   return.URL = FALSE, run = TRUE, timeout = NULL, ...)
 

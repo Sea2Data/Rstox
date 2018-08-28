@@ -16,7 +16,7 @@
 #' @export
 #' @rdname baseline2eca
 #'
-baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCovData", temporal=NULL, gearfactor=NULL, spatial=NULL){
+baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCovData", temporal=NULL, gearfactor=NULL, spatial=NULL, ...){
 	# Function that retreives year, month, day, yearday:
 	addYearday <- function(x, datecar="startdate", tz="UTC", format="%d/%m/%Y"){
 		x[[datecar]] <- as.POSIXlt(x[[datecar]], tz=tz, format=format)
@@ -30,9 +30,10 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 	}
 	# Function used for extracting covariate definitions:
 	getCovDef <- function(x){
+		# If the covariate is given as a comma separated string, split into a vector:
 		if(length(grep(",", x[[3]]))){
-		x[[3]] = strsplit(x[[3]], ",")
-		x[[3]] = lapply(x[[3]], as.numeric)
+			x[[3]] = strsplit(x[[3]], ",")
+			x[[3]] = lapply(x[[3]], as.numeric)
 		}
 			#biotic <- as.data.frame(sapply(x, "[", x$CovariateSourceType=="Biotic", drop=FALSE))
 		biotic <- x[x$CovariateSourceType=="Biotic", , drop=FALSE]
@@ -64,10 +65,12 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 	}
 	
 	# Define covariate processes and returned process data:
-									covariateProcessesData <- c("temporal", "season", "gearfactor", "spatial")
+	# covariateProcessesData <- c("temporal", "season", "gearfactor", "spatial") # Changed on 2018-08-28 according to Jira STOX-153:
+	covariateProcessesData <- c("temporal", "gearfactor", "spatial") # This is not used anywhere....
+	
 	# Get the baseline output:
 	### baselineOutput <- getBaseline(projectName, input=c("par", "proc"), fun=c(biotic, landing))
-	baselineOutput <- getBaseline(projectName, input=c("par", "proc"), proc=c(biotic, landing))
+	baselineOutput <- getBaseline(projectName, input=c("par", "proc"), proc=c(biotic, landing), ...)
 	
 	# Run if both biotic and landing data are present:
 	if(all(c(biotic[1], landing[1]) %in% names(baselineOutput$out))){
@@ -75,10 +78,14 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		#####################################
 		##### (1) Get raw landing data: #####
 		#####################################
+		
 		# (1a) Get the data and convert variable names to lower case:
 		landing <- baselineOutput$out[[landing[1]]]
 		names(landing) <- tolower(names(landing))
-		landing <- addYearday(landing, datecar="formulardato", tz="UTC", format="%d/%m/%Y")
+		
+		# 2018-08-28: Changed to using 'sistefangstdato' as per comment from Edvin:
+		#landing <- addYearday(landing, datecar="formulardato", tz="UTC", format="%d/%m/%Y")
+		landing <- addYearday(landing, datecar="sistefangstdato", tz="UTC", format="%d/%m/%Y")
 		#####################################
 	
 		############################################################
@@ -90,18 +97,26 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 	
 		# Detect whether temporal is defined with seasons, and add year and season and remove temporal in the process data:
 		# This caused error with cod and could be solved with Jira STOX-153:
-		if(any(baselineOutput$out$LandingCovData$Season %in% TRUE)){
-			baselineOutput$proc$season <- baselineOutput$proc$temporal
-			years <- range(biotic$year, landing$year)
-			years <- seq(years[1], years[2])
-			baselineOutput$proc$year <- data.frame(CovariateSourceType=rep(c("Biotic","Landing"), each=length(years)), Covariate=rep(years, ,2), Value=rep(years, ,2), stringsAsFactors=FALSE)
-			baselineOutput$proc$temporal <- NULL
-		}
+		
+		# Disabled on 2018-08-28, according to Jira STOX-153, where now 'temporal' is the only temporal covariate (no longer 'year' and 'season'):
+		### if(any(baselineOutput$out$LandingCovData$Season %in% TRUE)){
+		### 	baselineOutput$proc$season <- baselineOutput$proc$temporal
+		### 	years <- range(biotic$year, landing$year)
+		### 	years <- seq(years[1], years[2])
+		### 	#baselineOutput$proc$year <- data.frame(CovariateSourceType=rep(c("Biotic","Landing"), each=length(years)), Covariate=rep(years, ,2), Value=rep(years, ,2), stringsAsFactors=FALSE)
+		### 	baselineOutput$proc$year <- data.frame(CovariateSourceType=rep(c("Biotic","Landing"), each=length(years)), Covariate=rep(years, ,2), Definition=rep(years, ,2), stringsAsFactors=FALSE)
+		### 	baselineOutput$proc$temporal <- NULL
+		### }
 	
 		# (2b) Define the present covariate names, which are some but not all of the following:
-		implementedCovariateNames <- c("year", "season", "gearfactor", "spatial")
-		implementedCovariateDescriptions <- c("The year covariate, used in conjunction with 'season'", "The season covariate defining seasons throughout a year", "The gear covariate given as groups of gear codes", "The spatial covariate giving polygons or locations")
-		implementedCovariateProcesses <- c("DefineTemporalLanding", "DefineTemporalLanding", "DefineGearLanding", "DefineSpatialLanding")
+		# Changed on 2018-08-28 according to Jira STOX-153:
+		# implementedCovariateNames <- c("year", "season", "gearfactor", "spatial")
+		#implementedCovariateDescriptions <- c("The year covariate, used in conjunction with 'season'", "The season covariate defining seasons throughout a year", "The gear covariate given as groups of gear codes", "The spatial covariate giving polygons or locations")
+		#implementedCovariateProcesses <- c("DefineTemporalLanding", "DefineTemporalLanding", "DefineGearLanding", "DefineSpatialLanding")
+		implementedCovariateNames <- c("temporal", "gearfactor", "spatial")
+		implementedCovariateDescriptions <- c("The temporal covariate", "The gear covariate given as groups of gear codes", "The spatial covariate giving polygons or locations")
+		implementedCovariateProcesses <- c("DefineTemporalLanding", "DefineGearLanding", "DefineSpatialLanding")
+		browser()
 	
 		present <- which(implementedCovariateNames %in% names(biotic))
 		covariateNames <- implementedCovariateNames[present]
@@ -134,8 +149,10 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		# Add year covariate definitions if present:
 		if("year" %in% covariateNames){
 			year <- unique(c(landing$year, biotic$year))
-			yearBiotic = data.frame(CovariateSourceType="Biotic", Covariate=year, Value=year, stringsAsFactors=FALSE)
-			yearLanding = data.frame(CovariateSourceType="Biotic", Covariate=year, Value=year, stringsAsFactors=FALSE)
+			#yearBiotic = data.frame(CovariateSourceType="Biotic", Covariate=year, Value=year, stringsAsFactors=FALSE)
+			#yearLanding = data.frame(CovariateSourceType="Biotic", Covariate=year, Value=year, stringsAsFactors=FALSE)
+			yearBiotic = data.frame(CovariateSourceType="Biotic", Covariate=year, Definition=year, stringsAsFactors=FALSE)
+			yearLanding = data.frame(CovariateSourceType="Biotic", Covariate=year, Definition=year, stringsAsFactors=FALSE)
 			covariateDefinition$year <- list(biotic=yearBiotic, landing=yearLanding)
 		}
 	 
@@ -149,9 +166,19 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		colnames(covariateMatrixBiotic) <- covariateNames
 		colnames(covariateMatrixLanding) <- covariateNames
 		
-		covariateLink <- lapply(seq_along(allLevels), function(i) match(allLevels[[i]], covariateDefinition[[i]]$biotic[,2]))
-		covariateLink <- lapply(seq_along(allLevels), function(i) data.frame(Numeric=seq_along(allLevels[[i]]), Covariate=covariateDefinition[[i]]$biotic[covariateLink[[i]], 2], stringsAsFactors=FALSE))
+		
+		# Match the levels of each covariate with the unique values of the union of biotic and landing:
+		matchToBioticAndLanding <- function(i, allLevels, covariateDefinition){
+			allValues <- sort(unique(union(covariateDefinition[[i]]$biotic[,2], covariateDefinition[[i]]$landing[,2])))
+			link <- match(allLevels[[i]], allValues)
+			data.frame(Numeric=seq_along(link), Covariate=allValues[link], stringsAsFactors=FALSE)
+		}
+		covariateLink <- lapply(seq_along(allLevels), matchToBioticAndLanding, allLevels=allLevels, covariateDefinition=covariateDefinition)
 		names(covariateLink) <- names(covariateDefinition)
+		
+		#covariateLink <- lapply(seq_along(allLevels), function(i) match(allLevels[[i]], covariateDefinition[[i]]$biotic[,2]))
+		#covariateLink <- lapply(seq_along(allLevels), function(i) data.frame(Numeric=seq_along(allLevels[[i]]), Covariate=covariateDefinition[[i]]$biotic[covariateLink[[i]], 2], stringsAsFactors=FALSE))
+		#names(covariateLink) <- names(covariateDefinition)
 		
 		
 		#############################################

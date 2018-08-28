@@ -5,17 +5,20 @@
 \alias{getBaseline}
 \title{Run a StoX baseline model}
 \usage{
-runBaseline(projectName, startProcess = 1, endProcess = Inf,
-  reset = FALSE, save = FALSE, out = c("project", "baseline",
-  "baseline-report", "name"), modelType = "baseline", msg = TRUE,
-  exportCSV = FALSE, warningLevel = 0, parlist = list(), ...)
+runBaseline(projectName, out = c("project", "baseline", "baseline-report",
+  "name"), startProcess = 1, endProcess = Inf, reset = FALSE,
+  save = FALSE, modelType = "baseline", msg = TRUE, exportCSV = FALSE,
+  warningLevel = 0, parlist = list(), ...)
 
 getBaseline(projectName, input = c("par", "proc"), proc = "all",
-  drop = TRUE, modelType = "baseline", msg = TRUE, startProcess = 1,
-  endProcess = Inf, reset = FALSE, save = FALSE, parlist = list(), ...)
+  drop = TRUE, startProcess = 1, endProcess = Inf, reset = FALSE,
+  save = FALSE, modelType = "baseline", msg = TRUE, exportCSV = FALSE,
+  warningLevel = 0, parlist = list(), ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
+
+\item{out}{The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object). First element used.}
 
 \item{startProcess}{The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.}
 
@@ -24,8 +27,6 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 \item{reset}{Logical; if TRUE rerun the baseline model even if it has been run previously.}
 
 \item{save}{Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.}
-
-\item{out}{The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object). First element used.}
 
 \item{modelType}{The type of model to run, currently one of "baseline" and "report" (the latter referring to "baseline report"). First element used.}
 

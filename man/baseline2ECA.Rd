@@ -6,7 +6,7 @@
 \usage{
 baseline2eca(projectName, biotic = "BioticCovData",
   landing = "LandingCovData", temporal = NULL, gearfactor = NULL,
-  spatial = NULL)
+  spatial = NULL, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

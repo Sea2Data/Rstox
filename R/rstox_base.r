@@ -938,7 +938,7 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' @export
 #' @rdname runBaseline
 #'
-runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, out=c("project", "baseline", "baseline-report", "name"), modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
+runBaseline <- function(projectName, out=c("project", "baseline", "baseline-report", "name"), startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
 	
 	# Open the project (avoiding generating multiple identical project which demands memory in Java):
 	#projectName <- getProjectPaths(projectName)$projectName
@@ -955,11 +955,13 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 	
 	baseline$setBreakable(jBoolean(FALSE))
 	baseline$setWarningLevel(jInt(warningLevel))
+	# If exportCSV==TRUE, reset the baseline (changed on 2018-08-28):
 	if(!exportCSV){
 		baseline$setExportCSV(jBoolean(FALSE))
 	}
 	else{
-		cat("Exporting CSV files...\n")
+		cat("Exporting CSV files (rerunning baseline)...\n")
+		reset <- TRUE
 	}
 	
 	# Remove processes that saves the project.xml file, which is assumed to ALWAYS be the last process. Please ask Åsmund to set this as a requirement in StoX:
@@ -1060,11 +1062,11 @@ runBaseline <- function(projectName, startProcess=1, endProcess=Inf, reset=FALSE
 #' @export
 #' @rdname runBaseline
 #' 
-getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TRUE, modelType="baseline", msg=TRUE, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, parlist=list(), ...){
+getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TRUE, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
 	
 	# Locate/run the baseline object. If rerun=TRUE or if parameters are given different from the parameters used in the last baseline run, rerun the baseline, and if the :
 	#baseline <- runBaseline(projectName, startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, out="baseline", msg=msg, parlist=parlist, ...)
-	baseline <- runBaseline(projectName, startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, out=modelType[1], modelType=modelType[1], msg=msg, parlist=parlist, ...)
+	baseline <- runBaseline(projectName, out=modelType[1], startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, modelType=modelType[1], msg=msg, exportCSV=exportCSV, warningLevel=warningLevel, parlist=parlist, ...)
 	
 	if(msg){
 		cat("Reading:\n")
@@ -2141,6 +2143,7 @@ saveProjectData <- function(projectName, var="all", ...){
 	trashDir <- file.path(projectPaths$RDataDir, "trash")
 	#Empty trash, but only those:
 	#unlink(trashDir, recursive=TRUE, force=TRUE)
+	
 	# Move files to the trash:
 	suppressWarnings(dir.create(trashDir, recursive=TRUE))
 	files <- file.path(projectPaths$RDataDir, paste0(var, ".RData"))

@@ -1,4 +1,4 @@
-# Rstox version: 1.9.1 (latest alpha, 2018-07-10)
+# Rstox version: 1.9.1 (latest alpha, 2018-08-28)
 # R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -64,6 +64,14 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # 10. Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
 
 # 11. Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
+
+# 12. Changed from using 'formulardato' to using 'sistefangstdato' in baseline2eca().
+
+# 13. Fixed bug in runBaseline(), where exportCSV==TRUE now implies resetting (and rerunning) the baseline.
+
+# 14. Changed 'covariateLink' in the output from baseline2eca() to link to the union of the covariate values in biotic and landing (and not only to landing as before). Also changed name of the thrid column of the data frames in covariateDefinition from "Value" to "Definition".
+
+# 15. Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
 
 
 

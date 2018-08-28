@@ -50,7 +50,7 @@ getTransectFileName(x, projectName, prefix = "", suffix = "", ext = "txt",
 
 \item{ext}{The file extension. For \code{writeTransects} \code{ext} = "nc" implies writing NetCDF files, and otherwise a CSV files are written.}
 
-\item{...}{Parameters passed to \code{\link[utils]{write.table}}, \code{\link[utils]{write.csv}} and \code{\link[data.table]{fwrite}}. For \code{writeTransects} thie \code{...} contains the important variables \code{sep} specifying the separator used in CSV files, and \code{dateTimeAs} which defines how to save the time in \code{\link[data.table]{fwrite}}.}
+\item{...}{Parameters passed to \code{\link[utils]{write.table}}, \code{\link[utils]{write.csv}} and \code{\link[data.table]{fwrite}}. For \code{writeTransects} the \code{...} contains the important variables \code{sep} specifying the separator used in CSV files, and \code{dateTimeAs} which defines how to save the time in \code{\link[data.table]{fwrite}}.}
 
 \item{item.type, item.id, item.col}{The type (default 257), id (default 20) and color (default 1) to pass to MaxSea.}
 

@@ -676,6 +676,14 @@ Added the functions writeBioticXML() and writeAcousticXML() (with supporting fun
 
 Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
 
+Changed from using 'formulardato' to using 'sistefangstdato' in baseline2eca().
+
+Fixed bug in runBaseline(), where exportCSV==TRUE now implies resetting (and rerunning) the baseline.
+
+Changed 'covariateLink' in the output from baseline2eca() to link to the union of the covariate values in biotic and landing (and not only to landing as before). Also changed name of the thrid column of the data frames in covariateDefinition from "Value" to "Definition".
+
+Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
+
 
 ########## Version 1.10 (2018-07-06) ##########
 
@@ -701,4 +709,11 @@ Added the functions writeBioticXML() and writeAcousticXML() (with supporting fun
 
 Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
 
+Changed from using 'formulardato' to using 'sistefangstdato' in baseline2eca().
+
+Fixed bug in runBaseline(), where exportCSV==TRUE now implies resetting (and rerunning) the baseline.
+
+Changed 'covariateLink' in the output from baseline2eca() to link to the union of the covariate values in biotic and landing (and not only to landing as before). Also changed name of the thrid column of the data frames in covariateDefinition from "Value" to "Definition".
+
+Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
 
