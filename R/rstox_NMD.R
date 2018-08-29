@@ -252,7 +252,7 @@ getNMDinfoV1 <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/
 	}
 	# Get the list of survey time series with StoX projets for each series:
 	else if(type[1] %in% c("sts", "surveytimeseries")){
-		browser()
+		#browser()
 		URLbase <- paste(API, "surveytimeseries", paste0("v", ver), sep="/")
 		# Get the list of survey time series. The survey time series name can be given exactly as the second element of 'type':
 		if(length(type)==2){

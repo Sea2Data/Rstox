@@ -116,8 +116,7 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		implementedCovariateNames <- c("temporal", "gearfactor", "spatial")
 		implementedCovariateDescriptions <- c("The temporal covariate", "The gear covariate given as groups of gear codes", "The spatial covariate giving polygons or locations")
 		implementedCovariateProcesses <- c("DefineTemporalLanding", "DefineGearLanding", "DefineSpatialLanding")
-		browser()
-	
+		
 		present <- which(implementedCovariateNames %in% names(biotic))
 		covariateNames <- implementedCovariateNames[present]
 		covariateDescriptions <- implementedCovariateDescriptions[present]
