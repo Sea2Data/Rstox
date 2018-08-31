@@ -932,11 +932,11 @@ factorNAfirst <- function(x){
 #*********************************************
 #' Calculate a summary of the bootstrap iterations (possibly after imputing unknown ages).
 #' 
-#' \code{reportAbundance} is a wrapper function for the reportAbundance functions for the bootstrapMehtods "AcousticTrawl", "SweptAreaLength" and "SweptAreaTotal".
-#' \code{reportAbundance_AcousticTrawl} reports and writes to file the abundance with uncertanty for the different groups given by \code{grp1} and (possibly) \code{grp2}.
-#' \code{reportAbundance_SweptAreaLength} is an alias for \code{reportAbundance_AcousticTrawl}.
-#' \code{reportAbundance_SweptAreaTotal} returns summary statistics generated from bootstrap replicates for projects with only total catch.
-#' \code{reportAbundanceAtLevel} is used in \code{reportAbundance_AcousticTrawl} and \code{reportAbundance_SweptAreaLength} for generating the report for each level "bootstra" or "bootstrapImpute".
+#' \code{reportAbundance} is a wrapper function for the reportAbundance functions for the bootstrapMehtods "AcousticTrawl", "SweptAreaLength" and "SweptAreaTotal". \cr \cr
+#' \code{reportAbundance_AcousticTrawl} reports and writes to file the abundance with uncertanty for the different groups given by \code{grp1} and (possibly) \code{grp2}. \cr \cr
+#' \code{reportAbundance_SweptAreaLength} is an alias for \code{reportAbundance_AcousticTrawl}. \cr \cr
+#' \code{reportAbundance_SweptAreaTotal} returns summary statistics generated from bootstrap replicates for projects with only total catch. \cr \cr
+#' \code{reportAbundanceAtLevel} is used in \code{reportAbundance_AcousticTrawl} and \code{reportAbundance_SweptAreaLength} for generating the report for each level "bootstra" or "bootstrapImpute". \cr \cr
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param bootstrapMethod	The method used when bootstrapping (see \code{\link{runBootstrap}}). This option selects different versions of functions such as \code{\link{reportAbundance}}}}. Note: Currently (Rstox_1.7) the report is equal for bootstrapMethod = "AcousticTrawl" and "SweptAreaLength".
@@ -1267,26 +1267,6 @@ getReports <- function(projectName, out="all", options="", ...){
 #' @rdname runFunsRstox
 #' 
 runFunsRstox <- function(projectName, string, out="all", options="", all.out=FALSE, drop.out=TRUE, ...){
-	# Function for extracting the parameters given in the options text string:
-	getOptionsText <- function(options){
-		# Test first using commas and semi colons:
-		options <- unlist(strsplit(options, ";", fixed=TRUE))
-		temp <- unlist(strsplit(options, ",", fixed=TRUE))
-		commaOK <- all(sapply(gregexpr("=", temp), function(x) sum(x)>0))
-		if(commaOK){
-			options <- temp
-		}
-		# Split into single parameter definitions:
-		#options <- strsplit(options, ";", fixed=TRUE)[[1]]
-		# Get parameter names:
-		optionsNames <- gsub("=.*", "", options)
-		optionsNames <- gsub("[[:blank:]]", "", optionsNames)
-		# Evaluate parameter expressions:
-		options <- lapply(options, function(x) eval(parse(text=x)))
-		names(options) <- optionsNames
-		options
-	}
-	
 	# Get the available functions:
 	funs <- getFunsRstox(string=string, out=out)
 	
@@ -1350,19 +1330,37 @@ getFunsRstox <- function(string, out="all"){
 	#		all = c("reportAbundance")
 	#		)
 	#	)
+	
+	# Added the Rstox functions exported to StoX in the initiateRstox(), to extract them and detect the function type by the start of the function name (2018-08-29):
+	### RReportFunctions <- getRstoxDef()$RReportFunctions$Name
+	### plotFunctions <- RReportFunctions[startsWith(tolower(RReportFunctions), "plot")]
+	### reportFunctions <- RReportFunctions[startsWith(tolower(RReportFunctions), "report")]
+	### funs <- list(
+	### 	plots = list(
+	### 		all = plotFunctions
+	### 	),
+	### 	reports = list(
+	### 		all = reportFunctions
+	### 	)
+	### )
+	
 	funs <- list(
 		plots = list(
-			all = c("plotAbundance", "plotNASCDistribution")
-			),
+			all = c("plotAbundance", "plotNASCDistribution", "plotRECA")
+		),
 		reports = list(
-			all = c("reportAbundance")
-			)
+			all = c("reportAbundance", "reportRECA")
 		)
+	)
 	# Select the specified functions:
 	hit <- applyKeyword(funs, string)
 	outFuns <- funs[[hit]]
 	hit <- applyKeyword(outFuns, out)
 	outFuns <- outFuns[[out]]
+	
+	# Use only the functions that exists (used for testing):
+	outFuns <- outFuns[sapply(outfuns, exists)]
+	
 	return(outFuns)
 }
 

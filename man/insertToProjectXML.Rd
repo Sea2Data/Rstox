@@ -40,12 +40,12 @@ getTransectID(Log)
 \item{type}{The type of data to insert to the project.xml file.}
 }
 \description{
-\code{insertStratumpolygon} inserts stratumpolygon to the project.xml file.
-\code{insertEdsupsu} inserts edsupsu to the project.xml file.
-\code{insertPsustratum} inserts psustratum to the project.xml file.
-\code{insertSuassignment} inserts suassignment to the project.xml file.
-\code{insertBioticassignment} inserts bioticassignment to the project.xml file.
-\code{insertToProjectXML} inserts a string to the project.xml file.
-\code{getTransectID} returns transect IDs.
+\code{insertStratumpolygon} inserts stratumpolygon to the project.xml file. \cr \cr
+\code{insertEdsupsu} inserts edsupsu to the project.xml file. \cr \cr
+\code{insertPsustratum} inserts psustratum to the project.xml file. \cr \cr
+\code{insertSuassignment} inserts suassignment to the project.xml file. \cr \cr
+\code{insertBioticassignment} inserts bioticassignment to the project.xml file. \cr \cr
+\code{insertToProjectXML} inserts a string to the project.xml file. \cr \cr
+\code{getTransectID} returns transect IDs. \cr \cr
 }
 \keyword{internal}

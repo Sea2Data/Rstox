@@ -108,6 +108,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 #'	\item{parameters$seed}{The seed for the random number generator (used for reproducibility)}
 #' }
 #' @param sorted	Should the data be sorted prior to sampling?
+#' @param JavaMem		The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores. 
 #'
 #' @return list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
 #'
@@ -218,20 +219,20 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #*********************************************
 #' Run a bootstrap in StoX
 #'
-#' \code{runBootstrap} is a wrapper function for the bootstrap functions below.
-#' \code{runBootstrap_1.6} runs the bootstrap of Rstox 1.6. The bootstrap changed from Rstox 1.6 to 1.7, by applying sorting prior to sampling, and different results (but with the same expected value) should be expected. Using \code{runBootstrap_1.6} identical results from previous runs should be expected.
-#' \code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata.
-#' \code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata.
-#' \code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata.
-#' \code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user.
-#' \code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'.
+#' \code{runBootstrap} is a wrapper function for the bootstrap functions below. \cr \cr
+#' \code{runBootstrap_1.6} runs the bootstrap of Rstox 1.6. The bootstrap changed from Rstox 1.6 to 1.7, by applying sorting prior to sampling, and different results (but with the same expected value) should be expected. Using \code{runBootstrap_1.6} identical results from previous runs should be expected. \cr \cr
+#' \code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
+#' \code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
+#' \code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
+#' \code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user. \cr \cr
+#' \code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'. \cr \cr
 #'
 #' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (bootstrapMethod="AcousticTrawl"), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 #'
-#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param projectName   				The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param bootstrapMethod				The method to use for the bootstrap. Currently implemented are given in the following table:
 #' \tabular{rrr}{
-#'   bootstrapMethod \tab Description
+#'   bootstrapMethod \tab Description\cr
 #'   AcousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
 #'   SweptAreaLength \tab Bootstrap only biotic data with length information\cr
 #'   SweptAreaTotal \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
@@ -246,15 +247,16 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #'   EDSU \tab Acoustic data averaged over e.g. one nmi \tab Biotic station\cr
 #'   Sample \tab Ping \tab Individal catch sample
 #' }
-#' @param nboot							Number of bootstrap replicates.
-#' @param startProcess					The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.
-#' @param endProcess					The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".
-#' @param seed							The seed for the random number generator (used for reproducibility).
-#' @param cores							An integer giving the number of cores to run the bootstrapping over.
-#' @param msg							Logical: if TRUE print messages from runBaseline().
-#' @param ignore.case					Logical: If TRUE, ingore case when splitting by species category SpecCat.
-#' @param ...							Used for backwards compatibility.
-#' @param sorted						Should the data be sorted prior to sampling?
+#' @param nboot			Number of bootstrap replicates.
+#' @param startProcess	The start process of the bootstrapping, e.g., the last process before bio-stations have been assigned and NASC values have been calculated.
+#' @param endProcess	The end process of the bootstrapping, e.g., the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex" (typically "SuperIndAbundance").
+#' @param seed			The seed for the random number generator (used for reproducibility).
+#' @param cores			An integer giving the number of cores to run the bootstrapping over.
+#' @param msg			Logical: if TRUE print messages from runBaseline().
+#' @param ignore.case	Logical: If TRUE, ingore case when splitting by species category SpecCat.
+#' @param sorted		Should the data be sorted prior to sampling?
+#' @param JavaMem		The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores.
+#' @param ...			Used for backwards compatibility.
 #'
 #' @return list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
 #'
@@ -697,8 +699,8 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 #*********************************************
 #' Bootstrap utils.
 #'
-#' \code{linkPSU2Stratum} Adds stratum information to a data frame with one row per PSU. Stratum ID, Area, number of PSUs and positive PSUs are added, and rows are generated for strata with non-positive density.
-#' \code{checkNumPSUsInStratum} Checks for numner of PSUs >= 2 in each stratum, which is a requirement for variance estimation, and should possibly be a requirement for the bootstrapping when one of the methods is PSU~Stratum.
+#' \code{linkPSU2Stratum} Adds stratum information to a data frame with one row per PSU. Stratum ID, Area, number of PSUs and positive PSUs are added, and rows are generated for strata with non-positive density. \cr \cr
+#' \code{checkNumPSUsInStratum} Checks for numner of PSUs >= 2 in each stratum, which is a requirement for variance estimation, and should possibly be a requirement for the bootstrapping when one of the methods is PSU~Stratum. \cr \cr
 #'
 #' @param x				A data frame with with one row per PSU, to which Stratum information should be added.
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).

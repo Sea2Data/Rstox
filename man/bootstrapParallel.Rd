@@ -42,6 +42,8 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
 }}
 
 \item{sorted}{Should the data be sorted prior to sampling?}
+
+\item{JavaMem}{The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores.}
 }
 \value{
 list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run

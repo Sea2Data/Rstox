@@ -2065,7 +2065,7 @@ is.empty <- function(x){
 #' Set, get, save or load project data.
 #' 
 #' \code{setProjectData} Assigns an object to the projectData environment of the project. \cr \cr
-#' \code{getProjectData} Gets an object from the projectData environment of the project. \cr \cr
+#' \code{getProjectData} Gets (a copy of) an object from the projectData environment of the project. \cr \cr
 #' \code{saveProjectData} Saves some or all of the objects in the projectData environment of the project to files in the output/r/data directory. \cr \cr
 #' \code{loadProjectData} Loads some or all of the objects in the output/r/data directory to the projectData environment of the project. \cr \cr
 #' \code{saveRImage} (Old function, kept for backwards compatibility) Saves the contents of the projectData environment of the project (RestoEnv[[projectName]]$projectData). \cr \cr
@@ -2277,8 +2277,13 @@ getRstoxEnv <- function(){
 #' @keywords internal
 #' @rdname getRstoxEnv
 #'
-getRstoxDef <- function(name){
-	getRstoxEnv()$Definitions[[name]]
+getRstoxDef <- function(name=NULL){
+	if(length(name)==0){
+		getRstoxEnv()$Definitions
+	}
+	else{
+		getRstoxEnv()$Definitions[[name]]
+	}
 }
 #' 
 #' @export
@@ -2286,24 +2291,204 @@ getRstoxDef <- function(name){
 #' @rdname getRstoxEnv
 #' 
 initiateRstoxEnv <- function(){
+	
+	# Function used for extracting defaults and possible values of functions:
+	getDefaultsAndPossibleValues <- function(data){
+		
+		getDefaultsAndPossibleValuesOne <- function(data){
+			fun_formals <- formals(data$Name)
+			# Remove the first the projectName:
+			fun_formals <- fun_formals[names(fun_formals) != "projectName"]
+			# Keep only the specified arguments:
+			fun_formals <- subset(fun_formals, names(fun_formals) %in% data$Parameters$Name)
+			# Evaluate the arguments:
+			fun_formalsEval <- lapply(fun_formals, eval)
+		
+
+			data$Parameters$DataType <- sapply(fun_formalsEval, function(x) if(is.numeric(x) && x==round(x)) "Integer" else if(is.numeric(x) && x!=round(x)) "Double" else "String")
+		
+			# Convert to string, by converting numeric and character using as.character() and all other using deparse():
+			data$Parameters$Values <- lapply(fun_formalsEval, function(x) if(is.numeric(x) || is.character(x)) as.character(x) else deparse(x))
+			# Assume that all the parameters of functions passed to StoX have length 1, and thus that if there are more than one value given as default, these are the possible values, and the first of these is the true default.
+			data$Parameters$DefaultValue <- sapply(data$Parameters$Values, function(x) head(x, 1))
+		
+			data
+		}
+		
+		lapply(data, getDefaultsAndPossibleValuesOne)
+	}
+	
 	# Create a Rstox environment in which the baseline objects of the various projects are placed. This allows for a check for previously run baseline models and avoids memory leakage:", 
 	assign("RstoxEnv", new.env(), envir=.GlobalEnv)
-	# Assign fundamental variables to the RstoxEnv:
+	
+	##### Define fundamental variables Rstox: #####
+	
+	# Default Java memory:
+	JavaMem = 2e9
+	
+	# The folders in a StoX project:
+	StoXFolders = c("input", "output", "process")
+	
+	# NMD and StoX defines different data types (StoX has the more general category "acoustic"):
+	NMD_data_types = c("echosounder", "biotic", "landing")
+	StoX_data_types = c("acoustic", "biotic", "landing")
+	# The following keay strings are used to detect the data file type:
+	StoX_data_type_keys = c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel")
+	
+	# Define project types:
+	project_types = c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal")
+	
+	# Define the process levels for the presicion estimate:
+	processLevels = c("bootstrap", "bootstrapImpute")
+	
+	# Define model types, i.e., the panes in StoX, added the project name:
+	modelTypeJavaNames = c("baseline", "baseline-report", "r", "r-report", "name")
+	#modelTypeRstoxNames <- c("baseline", "report", NA, NA), 
+	modelTypeJavaFuns = c("getBaseline", "getBaselineReport", "getRModel", "getRModelReport", "getProjectName")
+	
+	
+	# Define functions passed to the "R" and "R report" pane of StoX, along with associated aliases (function names that should still work for backwards compatibility):
+	RFunctions <- list(
+		# 1. The runBootstrap() function:
+		runBootstrap = list(
+			Name = "runBootstrap", 
+			Alias = c("bootstrapBioticAcoustic", "bootstrapBioticSweptArea"), 
+			Description = "The Rstox function 'runBootstrap' resamples (with replacement) trawl stations and acoustic transects to obtain 'nboot' bootstrap replicates of the output from the process SuperIndAbundance, which can be used to estimate precision of the survey estimates.",
+			Parameters = list(
+				Name = c(
+					"bootstrapMethod", 
+					"acousticMethod", 
+					"bioticMethod", 
+					"nboot", 
+					"startProcess", 
+					"endProcess", 
+					"seed", 
+					"cores"
+				), 
+				Description = c(
+					"The method to use for the bootstrap. Currently implemented are (1) 'AcousticTrawl': Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled, (2) 'SweptAreaLength': Bootstrap only biotic data with length information, and (3) 'SweptAreaTotal': For surveys with information only about total catch (count or weight), bootstrap biotic stations.", 
+					"Specification of the method to use for bootstrapping. Currently only one method is available for acoustic data: acousticMethod = PSU~Stratum.", 
+					"Specification of the method to use for bootstrapping. Currently only one method is available for biotic data: bioticMethod = PSU~Stratum.", 
+					"Number of bootstrap replicates.", 
+					"The start process of the bootstrapping such as 'TotalLengthDist' (the last process before bio-stations are assigned and NASC values are calculated).", 
+					"The end process of the bootstrapping such as 'SuperIndAbundance' (the process returning a matrix with the columns 'Stratum', 'Abundance', and 'weight', as well grouping variables such as 'age', 'SpecCat', 'sex').", 
+					"The seed for the random number generator (used for reproducibility).", 
+					"An integer giving the number of cores to run the bootstrapping over."
+				)
+			)
+		), 
+		# 1. The runBootstrap() function:
+		runBootstrap_1.6 = list(
+			Name = "runBootstrap_1.6", 
+			Alias = NULL, 
+			Description = "The Rstox function 'runBootstrap_1.6' is a replicate of the 'runBootstrap' in Rstox 1.6, after which the function was changed by applying sorting prior to sampling to avoid platform specific results. Using 'runBootstrap_1.6' assures identical results compared to Rstox 1.6.",
+			Parameters = list(
+				Name = c(
+					"bootstrapMethod", 
+					"acousticMethod", 
+					"bioticMethod", 
+					"nboot", 
+					"startProcess", 
+					"endProcess", 
+					"seed", 
+					"cores"
+				), 
+				Description = c(
+					"The method to use for the bootstrap. Currently implemented are (1) 'AcousticTrawl': Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled, (2) 'SweptAreaLength': Bootstrap only biotic data with length information, and (3) 'SweptAreaTotal': For surveys with information only about total catch (count or weight), bootstrap biotic stations.", 
+					"Specification of the method to use for bootstrapping. Currently only one method is available for acoustic data: acousticMethod = PSU~Stratum.", 
+					"Specification of the method to use for bootstrapping. Currently only one method is available for biotic data: bioticMethod = PSU~Stratum.", 
+					"Number of bootstrap replicates.", 
+					"The start process of the bootstrapping such as 'TotalLengthDist' (the last process before bio-stations are assigned and NASC values are calculated).", 
+					"The end process of the bootstrapping such as 'SuperIndAbundance' (the process returning a matrix with the columns 'Stratum', 'Abundance', and 'weight', as well grouping variables such as 'age', 'SpecCat', 'sex').", 
+					"The seed for the random number generator (used for reproducibility).", 
+					"An integer giving the number of cores to run the bootstrapping over."
+				)
+			)
+		), 
+		# 1. The runBootstrap() function:
+		imputeByAge = list(
+			Name = "imputeByAge", 
+			Alias = NULL, 
+			Description = "The Rstox function 'imputeByAge' imputes missing data in the output from 'runBootstrap' at rows with missing age. The imputation draws rows with non-missing age within the same length group as the row with missing data, searching for these matches first inside the station, then inside the stratum, and finally inside the survey.",
+			Parameters = list(
+				Name = c(
+					"seed", 
+					"cores"
+				), 
+				Description = c(
+					"The seed for the random number generator (used for reproducibility).", 
+					"An integer giving the number of cores to run in parallel."
+				)
+			)
+		), 
+		# 1. The runBootstrap() function:
+		saveProjectData = list(
+			Name = "saveProjectData", 
+			Alias = "saveRImage", 
+			Description = "The Rstox function 'saveProjectData' saves data such as bootstrap replicates to RData-files in the output/r/data directory.",
+			Parameters = list(
+				Name = c(), 
+				Description = c()
+			)
+		)	
+	)
+	RFunctions <- getDefaultsAndPossibleValues(RFunctions)
+	
+	
+	# Define functions passed to the "R" and "R report" pane of StoX, along with associated aliases (function names that should still work for backwards compatibility):
+	RReportFunctions <- list(
+		# 1. The runBootstrap() function:
+		getReports = list(
+			Name = "getReports", 
+			Alias = NULL, 
+			Description = "The Rstox function 'getReports' runs the report functions specified by 'out'.",
+			Parameters = list(
+				Name = c(
+					"out", 
+					"options"
+				), 
+				Description = c(
+					"The report functions to run. Keyword 'all' implies to run all relevant report functions", 
+					"Options given to the report functions given as R expressions separated by semicolons or commas in cases where no commas are used in the expressions. Example: \"grp1 = 'age'; grp2 = 'sex'\" or \"grp1 = NULL\" for returning TSN and \"grp1 = NULL; var='weight'\" for returning TSB."
+				)
+			)
+		), 
+		# 1. The runBootstrap() function:
+		getPlots = list(
+			Name = "getPlots", 
+			Alias = NULL, 
+			Description = "The Rstox function 'getPlots' runs the plot functions specified by 'out'.",
+			Parameters = list(
+				Name = c(
+					"out", 
+					"options"
+				), 
+				Description = c(
+					"The plotting functions to run. Keyword 'all' implies to run all relevant plotting functions", 
+					"Options given to the plotting functions given as R expressions separated by semicolons or commas in cases where no commas are used in the expressions. Example: \"grp1 = 'age'; grp2 = 'sex'\" or \"grp1 = NULL\" for plotting TSN and \"grp1 = NULL; var='weight'\" for plotting TSB."
+				)
+			)
+		)	
+	)
+	RReportFunctions <- getDefaultsAndPossibleValues(RReportFunctions)
+	
+		
+	# Assign to RstoxEnv and return the definitions:
 	Definitions <- list(
-		JavaMem = 2e9, 
-		StoXFolders = c("input", "output", "process"), 
-		NMD_data_types = c("echosounder", "biotic", "landing"), 
-		StoX_data_types = c("acoustic", "biotic", "landing"), 
-		StoX_data_type_keys = c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel"), 
-		project_types = c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal"), 
-		processLevels = c("bootstrap", "bootstrapImpute"), 
-		modelTypeJavaNames = c("baseline", "baseline-report", "r", "r-report", "name"), 
-		#modelTypeRstoxNames <- c("baseline", "report", NA, NA), 
-		modelTypeJavaFuns = c("getBaseline", "getBaselineReport", "getRModel", "getRModelReport", "getProjectName")
-		)
+		JavaMem = JavaMem, 
+		StoXFolders = StoXFolders, 
+		NMD_data_types = StoXFolders, 
+		StoX_data_types = StoX_data_types, 
+		StoX_data_type_keys = StoX_data_type_keys, 
+		project_types = project_types, 
+		processLevels = processLevels, 
+		modelTypeJavaNames = modelTypeJavaNames, 
+		modelTypeJavaFuns = modelTypeJavaFuns, 
+		RFunctions = RFunctions, 
+		RReportFunctions = RReportFunctions
+	)
 	assign("Definitions", Definitions, envir=get("RstoxEnv"))
 	assign("Projects", list(), envir=get("RstoxEnv"))
-	
 	return(Definitions)
 }
 #' 
@@ -2837,13 +3022,13 @@ rm.na <- function(x, na.rm=TRUE){
 #*********************************************
 #' Modify a StoX project.xml file directly.
 #'
-#' \code{insertStratumpolygon} inserts stratumpolygon to the project.xml file.
-#' \code{insertEdsupsu} inserts edsupsu to the project.xml file.
-#' \code{insertPsustratum} inserts psustratum to the project.xml file.
-#' \code{insertSuassignment} inserts suassignment to the project.xml file.
-#' \code{insertBioticassignment} inserts bioticassignment to the project.xml file.
-#' \code{insertToProjectXML} inserts a string to the project.xml file.
-#' \code{getTransectID} returns transect IDs.
+#' \code{insertStratumpolygon} inserts stratumpolygon to the project.xml file. \cr \cr
+#' \code{insertEdsupsu} inserts edsupsu to the project.xml file. \cr \cr
+#' \code{insertPsustratum} inserts psustratum to the project.xml file. \cr \cr
+#' \code{insertSuassignment} inserts suassignment to the project.xml file. \cr \cr
+#' \code{insertBioticassignment} inserts bioticassignment to the project.xml file. \cr \cr
+#' \code{insertToProjectXML} inserts a string to the project.xml file. \cr \cr
+#' \code{getTransectID} returns transect IDs. \cr \cr
 #'
 #' @param file		The path to the project.xml file.
 #' @param Stratum	A data.frame with column names "longitude" and "latitude" giving the stratum polygon, or a list of these, named by the stratum names.
@@ -3033,4 +3218,32 @@ getLogStoXid <- function(x, timevar="start_time"){
 	log_start <- trimws(format(x$log_start, nsmall=1))
 	x$logStoXid <- paste(x$cruise, log_start, dateSlashTime, sep="/")
 	x
+}
+
+
+# Function for extracting the parameters given in the options text string:
+getOptionsText <- function(options, string.out=FALSE){
+	# Test first using commas and semi colons:
+	options <- unlist(strsplit(options, ";", fixed=TRUE))
+	temp <- unlist(strsplit(options, ",", fixed=TRUE))
+	commaOK <- all(sapply(gregexpr("=", temp), function(x) sum(x)>0))
+	if(commaOK){
+		options <- temp
+	}
+	# Split into single parameter definitions:
+	#options <- strsplit(options, ";", fixed=TRUE)[[1]]
+	# Get parameter names:
+	optionsNames <- gsub("=.*", "", options)
+	optionsNames <- gsub("[[:blank:]]", "", optionsNames)
+	# Evaluate parameter expressions:
+	options <- lapply(options, function(x) eval(parse(text=x)))
+	names(options) <- optionsNames
+	
+	# Return either a list or a string of options:
+	if(string.out){
+		paste(names(options), options, sep=" = ", collapse=", ")
+	}
+	else{
+		options
+	}
 }

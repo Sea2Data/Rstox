@@ -34,7 +34,7 @@ loadEnv(projectName, var = "all", ow = FALSE, ...)
 }
 \description{
 \code{setProjectData} Assigns an object to the projectData environment of the project. \cr \cr
-\code{getProjectData} Gets an object from the projectData environment of the project. \cr \cr
+\code{getProjectData} Gets (a copy of) an object from the projectData environment of the project. \cr \cr
 \code{saveProjectData} Saves some or all of the objects in the projectData environment of the project to files in the output/r/data directory. \cr \cr
 \code{loadProjectData} Loads some or all of the objects in the output/r/data directory to the projectData environment of the project. \cr \cr
 \code{saveRImage} (Old function, kept for backwards compatibility) Saves the contents of the projectData environment of the project (RestoEnv[[projectName]]$projectData). \cr \cr

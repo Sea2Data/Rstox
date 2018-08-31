@@ -19,6 +19,7 @@ getNMDinfoV1(type = NULL, ver = 1,
   msg = FALSE, simplify = TRUE)
 
 getNMDinfoV2(type = NULL, API = "http://tomcat7.imr.no:8080/apis/nmdapi",
+  ver = list(API = "2", biotic = "1.4", reference = "2.0"),
   recursive = TRUE, msg = FALSE, simplify = TRUE)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
@@ -116,9 +117,9 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{method}{The download method. See \code{\link{download.file}}.}
 }
 \description{
-\code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr 
-\code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr 
-\code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming).
+\code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr \cr
+\code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr \cr
+\code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming). \cr \cr
 }
 \details{
 If non-standard characters are not shown as expected, it might be an issue of locale encoding. 

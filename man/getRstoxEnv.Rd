@@ -9,7 +9,7 @@
 \usage{
 getRstoxEnv()
 
-getRstoxDef(name)
+getRstoxDef(name = NULL)
 
 initiateRstoxEnv()
 

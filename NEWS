@@ -684,6 +684,8 @@ Changed 'covariateLink' in the output from baseline2eca() to link to the union o
 
 Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
 
+Changed the name of baseline2eca() to getCovData(). The old function kept for backwards compatibility.
+
 
 ########## Version 1.10 (2018-07-06) ##########
 
@@ -716,4 +718,8 @@ Fixed bug in runBaseline(), where exportCSV==TRUE now implies resetting (and rer
 Changed 'covariateLink' in the output from baseline2eca() to link to the union of the covariate values in biotic and landing (and not only to landing as before). Also changed name of the thrid column of the data frames in covariateDefinition from "Value" to "Definition".
 
 Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
+
+Changed the name of baseline2eca() to getCovData(). The old function kept for backwards compatibility.
+
+
 

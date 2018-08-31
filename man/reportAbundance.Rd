@@ -53,11 +53,11 @@ reportAbundanceAtLevel(projectName, var = "Abundance", unit = NULL,
 A data frame of the abundance in sumary per grp2 and grp1 if plotOutput=FALSE, and a list holding this object (keeping "-" for missing values and not ordering) and other objects needed by plotAbundance().
 }
 \description{
-\code{reportAbundance} is a wrapper function for the reportAbundance functions for the bootstrapMehtods "AcousticTrawl", "SweptAreaLength" and "SweptAreaTotal".
-\code{reportAbundance_AcousticTrawl} reports and writes to file the abundance with uncertanty for the different groups given by \code{grp1} and (possibly) \code{grp2}.
-\code{reportAbundance_SweptAreaLength} is an alias for \code{reportAbundance_AcousticTrawl}.
-\code{reportAbundance_SweptAreaTotal} returns summary statistics generated from bootstrap replicates for projects with only total catch.
-\code{reportAbundanceAtLevel} is used in \code{reportAbundance_AcousticTrawl} and \code{reportAbundance_SweptAreaLength} for generating the report for each level "bootstra" or "bootstrapImpute".
+\code{reportAbundance} is a wrapper function for the reportAbundance functions for the bootstrapMehtods "AcousticTrawl", "SweptAreaLength" and "SweptAreaTotal". \cr \cr
+\code{reportAbundance_AcousticTrawl} reports and writes to file the abundance with uncertanty for the different groups given by \code{grp1} and (possibly) \code{grp2}. \cr \cr
+\code{reportAbundance_SweptAreaLength} is an alias for \code{reportAbundance_AcousticTrawl}. \cr \cr
+\code{reportAbundance_SweptAreaTotal} returns summary statistics generated from bootstrap replicates for projects with only total catch. \cr \cr
+\code{reportAbundanceAtLevel} is used in \code{reportAbundance_AcousticTrawl} and \code{reportAbundance_SweptAreaLength} for generating the report for each level "bootstra" or "bootstrapImpute". \cr \cr
 }
 \examples{
 projectName <- "Test_Rstox"

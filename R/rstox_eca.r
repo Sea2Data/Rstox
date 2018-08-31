@@ -183,6 +183,18 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		#############################################
 		##### (6) Get aggreagated landing data: #####
 		#############################################
+		# Change added on 2018-09-31:
+		# Stop the function if there are any missing values in 'rundvekt' or in any of the covariates:
+		if(any(is.na(landing$rundvekt))){
+			stop("Missing values in landing$rundvekt.")
+		}
+		testCovariate <- function(name, covariateMatrixLanding){
+			if(any(is.na(covariateMatrixLanding[[name]]))){
+				stop(paste0("Missing values in covariate ", name, "."))
+			}
+		}
+		lapply(names(covariateMatrixLanding), testCovariate, covariateMatrixLanding=covariateMatrixLanding)
+		
 		#landingAggOrig <- aggregateLanding(landing, covariateNames, covariateDefinition=covariateDefinition)
 		#landingAgg <- aggregateLanding(landing, covariateNames, covariateDefinition=covariateDefinition)
 		# Aggregate the rundvekt by covariates:

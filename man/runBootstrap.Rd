@@ -48,7 +48,7 @@ getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
 
 \item{bootstrapMethod}{The method to use for the bootstrap. Currently implemented are given in the following table:
 \tabular{rrr}{
-  bootstrapMethod \tab Description
+  bootstrapMethod \tab Description\cr
   AcousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
   SweptAreaLength \tab Bootstrap only biotic data with length information\cr
   SweptAreaTotal \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
@@ -67,9 +67,9 @@ getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
 
 \item{nboot}{Number of bootstrap replicates.}
 
-\item{startProcess}{The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.}
+\item{startProcess}{The start process of the bootstrapping, e.g., the last process before bio-stations have been assigned and NASC values have been calculated.}
 
-\item{endProcess}{The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".}
+\item{endProcess}{The end process of the bootstrapping, e.g., the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex" (typically "SuperIndAbundance").}
 
 \item{seed}{The seed for the random number generator (used for reproducibility).}
 
@@ -79,6 +79,8 @@ getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
 
 \item{sorted}{Should the data be sorted prior to sampling?}
 
+\item{JavaMem}{The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores.}
+
 \item{...}{Used for backwards compatibility.}
 
 \item{ignore.case}{Logical: If TRUE, ingore case when splitting by species category SpecCat.}
@@ -87,13 +89,13 @@ getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
 list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
 }
 \description{
-\code{runBootstrap} is a wrapper function for the bootstrap functions below.
-\code{runBootstrap_1.6} runs the bootstrap of Rstox 1.6. The bootstrap changed from Rstox 1.6 to 1.7, by applying sorting prior to sampling, and different results (but with the same expected value) should be expected. Using \code{runBootstrap_1.6} identical results from previous runs should be expected.
-\code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata.
-\code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata.
-\code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata.
-\code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user.
-\code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'.
+\code{runBootstrap} is a wrapper function for the bootstrap functions below. \cr \cr
+\code{runBootstrap_1.6} runs the bootstrap of Rstox 1.6. The bootstrap changed from Rstox 1.6 to 1.7, by applying sorting prior to sampling, and different results (but with the same expected value) should be expected. Using \code{runBootstrap_1.6} identical results from previous runs should be expected. \cr \cr
+\code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
+\code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
+\code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
+\code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user. \cr \cr
+\code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'. \cr \cr
 }
 \details{
 Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (bootstrapMethod="AcousticTrawl"), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).

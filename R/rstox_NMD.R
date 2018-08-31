@@ -2,9 +2,9 @@
 #*********************************************
 #' Get NMD API data and reference information
 #'
-#' \code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr 
-#' \code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr 
-#' \code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming).
+#' \code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr \cr
+#' \code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr \cr
+#' \code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming). \cr \cr
 #'
 #' @param type					A character string naming the type of information to return for the specifications given in 'spec'. Possible values are shown in the list below. Any reference data can be requested, and the names of the possible reference data are returned by running getNMDinfo():
 #' \describe{
@@ -374,27 +374,124 @@ getNMDinfoV1 <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi", recursive=TRUE, msg=FALSE, simplify=TRUE){
-	###############################
+getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi", ver=list(API="2", biotic="1.4", reference="2.0"), recursive=TRUE, msg=FALSE, simplify=TRUE){
 	
-	ver <- 2
+	if(version$API != 2){
+		warning("This function returns reference info from NMD API version 2. Selecting a different version is not recommended.")
+	}
 	
 	##### Internal functions>>> #####
 	# Function used for extracting a data frame of the cruises used in a cruise series:
-	getCruiseSeriesCruises <- function(x, URLbase, name="Cruises", msg=FALSE){
-		this <- downloadXML(paste(URLbase, x, sep="/"), msg=msg)$Sample
-		# Get years and repeat by the number of cruises for each year
-		years <- unname(sapply(this, "[[", ".attrs"))
-		nCruisesPerYear <- sapply(this, function(xx) length(xx$Cruises))
-		years <- rep(years, nCruisesPerYear)
-		CruiseShipName <- as.matrix_full(unlist(lapply(this, "[[", name), use.names=FALSE, recursive=FALSE))
-		as.data.frame(cbind(year=years, Cruise=CruiseShipName[,1], ShipName=CruiseShipName[,2]), stringsAsFactors=FALSE)
+	#getCruiseSeriesCruises <- function(x, URLbase, name="Cruises", msg=FALSE){
+	#	this <- downloadXML(paste(URLbase, x, sep="/"), msg=msg)$Sample
+	#	# Get years and repeat by the number of cruises for each year
+	#	years <- unname(sapply(this, "[[", ".attrs"))
+	#	nCruisesPerYear <- sapply(this, function(xx) length(xx$Cruises))
+	#	years <- rep(years, nCruisesPerYear)
+	#	CruiseShipName <- as.matrix_full(unlist(lapply(this, "[[", name), use.names=FALSE, recursive=FALSE))
+	#	as.data.frame(cbind(year=years, Cruise=CruiseShipName[,1], ShipName=CruiseShipName[,2]), stringsAsFactors=FALSE)
+	#}
+	# Version of lapply() where missing values are replaced by NA and then unlisted:
+	NAspply <- function(y, fun){
+		out <- lapply(y, fun)
+		empty <- sapply(out, length)==0
+		if(any(empty)){
+			out[empty] <- as.list(rep(NA, sum(empty)))
+		}
+		unlist(unname(out))	
+	}
+	getURLbase <- function(API, type, model=NULL, dataset=NULL, ver){
+		version <- paste0("v", ver$API)
+		query <- paste0("version=", ver[[type]])
+		if(length(model)){
+			model <- paste("model", model, sep="/")
+		}
+		if(length(dataset)){
+			dataset <- paste("dataset", dataset, sep="/")
+		}
+		out <- apply(cbind(API, type, version, model, dataset), 1, paste, collapse="/")
+		out <- paste(out, query, sep="?")
+		out
+	}
+	
+	getElements <- function(data, levels=list("element", c("text", ".attrs")), data.frame.out=TRUE){
+		# Extract the elements given in the second element of 'levels' for all elements of 'data' named by the first element of 'levels':
+		if(length(levels)==2){
+			data <- lapply(levels[[2]], function(x) sapply(data[names(data)==levels[[1]]], "[[", x))
+			data <- as.data.frame(data, col.names=levels[[2]], stringsAsFactors=FALSE)
+			if(!data.frame.out){
+				data <- unname(unlist(data))
+			}
+		}
+		else if(length(levels)==1){
+			data <- NULL
+		}
+		data
+	}
+	getReferenceList <- function(API, ver, msg=FALSE){
+		# V1: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1
+		# V1: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1?version=1.0
+		# V2: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2?version=2.0
+		URLbase <- getURLbase(API=API, type="reference", ver=ver)
+		# Get the list of cruise series:
+		data <- downloadXML(URLbase, msg=msg)
+		data <- getElements(data, levels=list("row", c("name")), data.frame.out=FALSE)
+		data
+	}
+	
+	getCruiseSeriesCruises <- function(x){
+		year <- NAspply(x$samples, function(y) y$sampleTime)
+		Cruise <- NAspply(x$samples, function(y) y$cruises$cruise$cruisenr)
+		ShipName <- NAspply(x$samples, function(y) y$cruises$cruise$shipName)
+		data.frame(year=year, Cruise=Cruise, ShipName=ShipName, stringsAsFactors=FALSE)
 	}
 	# Function used for extracting a data frame of the StoX projects used in a survey time series:
+	#getSurveyTimeSeriesProjects <- function(x, URLbase){
+	#	this <- downloadXML(paste(URLbase, x, sep="/"), msg=msg)$Sample
+	#	as.data.frame(as.matrix_full(this), stringsAsFactors=FALSE)
+	#}
 	getSurveyTimeSeriesProjects <- function(x, URLbase){
-		this <- downloadXML(paste(URLbase, x, sep="/"), msg=msg)$Sample
-		as.data.frame(as.matrix_full(this), stringsAsFactors=FALSE)
+		year <- NAspply(x$cruiseSeries$cruiseSeries$samples, function(y) y$sampleTime)
+		stoxProjectId <- NAspply(x$cruiseSeries$cruiseSeries$samples, function(y) y$stoxProject)
+		data.frame(year=year, stoxProjectId=stoxProjectId, stringsAsFactors=FALSE)
 	}
+	
+	getSeriesInfo <- function(API, ver, type){
+		# V1: http://tomcat7.imr.no:8080/apis/nmdapi/cruiseseries/v1
+		# V2: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/model/cruiseseries?version=2.0
+		# V2: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/dataset/cruiseseries?version=2.0
+		# V1: http://tomcat7.imr.no:8080/apis/nmdapi/surveytimeseries/v1
+		# V2: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/model/surveytimeseries?version=2.0
+		# V2: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/dataset/surveytimeseries?version=2.0
+		
+		# Get the function to use for extracting the series info (one of getCruiseSeriesCruises() and getSurveyTimeSeriesProjects()):
+		fun <- switch(type[1], 
+			cruiseseries = getCruiseSeriesCruises, 
+			surveytimeseries = getSurveyTimeSeriesProjects)
+		
+		URLbase <- getURLbase(API=API, type="reference", model=type[1], ver=ver)
+		
+		# Get the list of cruise/survey time series. The name can be given exactly as the second element of 'type':
+		if(length(type)==2){
+			data <- type[2]
+			recursive <- TRUE
+		}
+		else{
+			data <- downloadXML(URLbase, msg=msg)
+			#data <- unlist(data[names(data)=="element"], use.names=FALSE)
+			data <- getElements(data, levels=list("row", c("name")), data.frame.out=FALSE)
+		}
+		if(recursive){
+			URLbase <- getURLbase(API=API, type="reference", dataset=type[1], ver=ver)
+			namesdata <- data
+			data <- downloadXML(URLbase, msg=msg)
+			data <- lapply(data, fun)
+			names(data) <- namesdata
+		}
+		data
+	}
+	
+	
 	# Function for extracting the platform information from the NMD platform data structure:
 	platformExtract <- function(x){
 		# Small function for extracting the platform code from an NMD platform:
@@ -475,12 +572,11 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 	###############################
 	
 	####################################################
+	
+	
 	# Get the list of reference data types:
 	if(length(type)==0){
-		URLbase <- paste(API, "reference", paste0("v", ver), sep="/")
-		# Get the list of cruise series:
-		data <- downloadXML(URLbase, msg=msg)
-		data <- unname(sapply(data[names(data)=="element"], "[[", "text"))
+		data <- getReferenceList(API, ver, msg=FALSE)
 		return(data)
 	}
 	##### Treat the requested type of information>>> #####
@@ -506,63 +602,34 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 	}
 	# Get the list of cruises series with cruises for each series:
 	else if(type[1] %in% c("cs", "cruiseseries")){
-		URLbase <- paste(API, "cruiseseries", paste0("v", ver), sep="/")
-		# Get the list of cruise series. The cruise series name can be given exactly as the second element of 'type':
-		if(length(type)==2){
-			data <- type[2]
-			recursive <- TRUE
-		}
-		else{
-			data <- downloadXML(URLbase, msg=msg)
-			data <- unlist(data[names(data)=="element"], use.names=FALSE)
-		}
-		if(recursive){
-			namesdata <- data
-			data <- lapply(data, getCruiseSeriesCruises, URLbase=URLbase, msg=msg)
-			names(data) <- namesdata
-		}
+		# Set the full name of the type:
+		type[1] <- "cruiseseries"
+		data <- getSeriesInfo(API=API, ver=ver, type=type)
 	}
 	# Get the list of survey time series with StoX projets for each series:
 	else if(type[1] %in% c("sts", "surveytimeseries")){
-		browser()
-		URLbase <- paste(API, "surveytimeseries", paste0("v", ver), sep="/")
-		# Get the list of survey time series. The survey time series name can be given exactly as the second element of 'type':
-		if(length(type)==2){
-			data <- type[2]
-			recursive <- TRUE
-		}
-		else{
-			data <- downloadXML(URLbase, msg=msg)
-			data <- unlist(data[names(data)=="element"], use.names=FALSE)
-		}
-		if(recursive){
-			namesdata <- data
-			data <- lapply(data, getSurveyTimeSeriesProjects, URLbase=URLbase)
-			names(data) <- namesdata
-		}
+		# Set the full name of the type:
+		type[1] <- "surveytimeseries"
+		data <- getSeriesInfo(API=API, ver=ver, type=type)
 	}
 	else{
 		# Get the available reference data types:
-		URLbase <- paste(API, "reference", paste0("v", ver), sep="/")
+		URLbase <- getURLbase(API=API, type="reference", ver=ver)
 		# Get the list of references:
-		ref <- downloadXML(URLbase, msg=msg)
-		ref <- unname(sapply(ref[names(ref)=="element"], "[[", "text"))
-		if(length(type)==0){
-			return(ref)
-		}
+		ref <- getReferenceList(API, ver, msg=FALSE)
 		
 		# Match the 'type' with the reference data available:
 		type <- ref[tolower(ref) == type[1]]
 		
 		# Download the reference data:
-		URLbase <- paste(API, "reference", paste0("v", ver), type[1], sep="/")
+		URLbase <- getURLbase(API=API, type="reference", dataset=type[1], ver=ver)
 		data <- downloadXML(URLbase, msg=msg)
 		
 		# Simplify the data:
 		if(simplify){
 			if(length(data)){
 				# Remove elements with length 1, indicating time stamps and the like:
-				data <- data[sapply(data, length)>1]
+				#data <- data[sapply(data, length)>1]
 				
 				# 
 				if("element" %in% names(data)){
@@ -1679,6 +1746,10 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE, me
 		else{
 			# Convert to list:
 			x <- xmlToList(x)
+			if(length(x)==0){
+				warning(paste("URL" ,URLdecode(URL) ,"does not contain data (xmlToList() returning NULL)"))
+				return(NULL)
+			}
 			# New line added on 2016-08-12 after an issue with nordic characters being interpreted as latin1 by R on Windows. The problem is that xmlAttrs() has no parameter for encoding, and, in contrast with the rest of xmlToList(), fails to interpret the data as UTF-8. The solution is to convert all the data afterwards:
 			# 2018-06-04: This line contained an error prior to this date (missing "x <- "), rendering the line ineffective:
 			x <- rapply(x, function(xx) iconv(xx, "UTF-8", "UTF-8"), how="replace")
@@ -1723,9 +1794,9 @@ searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=1, API="http://to
 #*********************************************
 #' Encodes and decodes NMD API strings.
 #'
-#' \code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr 
-#' \code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr 
-#' \code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming).
+#' \code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr \cr
+#' \code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr \cr
+#' \code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming). \cr \cr
 #'
 #' @param URL	An URL.
 #' 
