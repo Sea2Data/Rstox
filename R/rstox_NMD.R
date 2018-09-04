@@ -78,12 +78,12 @@
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDinfo <- function(type=NULL, ver=2, API="http://tomcat7.imr.no:8080/apis/nmdapi", recursive=TRUE, msg=FALSE, simplify=TRUE){
-	if(ver==1){
+getNMDinfo <- function(type=NULL, ver=list(API="2", reference="2.0"), API="http://tomcat7.imr.no:8080/apis/nmdapi", recursive=TRUE, msg=FALSE, simplify=TRUE){
+	if((!is.list(ver) && ver==1) || (is.list(ver) && ver$API==1)){
 		getNMDinfoV1(type=type, ver=1, API=API, recursive=recursive, msg=msg, simplify=simplify)
 	}
-	else if(ver==2){
-		getNMDinfoV2(type=type, API=API, recursive=recursive, msg=msg, simplify=simplify)
+	else if(is.list(ver) && ver$API==2){
+		getNMDinfoV2(type=type, ver=ver, API=API, recursive=recursive, msg=msg, simplify=simplify)
 	}
 	else{
 		warning("Version 2 of the NMD API is the latest available. Version 1 is no longer maintained (as of july 2018).")
@@ -480,7 +480,7 @@ NAunlist <- function(y){
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi", ver=list(API="2", biotic="1.4", reference="2.0"), recursive=TRUE, msg=FALSE, simplify=TRUE){
+getNMDinfoV2 <- function(type=NULL, ver=list(API="2", biotic="1.4", reference="2.0"), API="http://tomcat7.imr.no:8080/apis/nmdapi", recursive=TRUE, msg=FALSE, simplify=TRUE){
 	
 	# Assure that the API version is 2:
 	if(ver$API != 2){
@@ -493,7 +493,7 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 	asNumericDataFrame <- function(data){
 		data <- as.data.frame(data, stringsAsFactors=FALSE)
 		# Convert all numeric columns to numeric, identified by no NAs when converting:
-		suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x)))) as.numeric(x) else x))
+		suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x[!is.na(x)])))) as.numeric(x) else x))
 		data <- as.data.frame(data, stringsAsFactors=FALSE)
 	}
 	
@@ -632,21 +632,21 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 	#}
 	
 	# Function for converting from UNIX time to date:
-	toDate <- function(x){
+	toDate <- function(x, tz=""){
 		if(is.numeric(x)){
-			out <- as.POSIXct(as.vector(x), origin="1970-01-01", tz="UTC")
+			out <- as.POSIXct(as.vector(x), origin="1970-01-01", tz=tz)
 		}
-		as.Date(out, tz="UTC")
+		as.Date(out, tz=tz)
 	}
 	
 	# Function for checking for identical dates in valid from and to, and subtracting one day from the valid to with a warning:
-	corectEqualFromTo <- function(x, platformNumber){
+	corectEqualFromTo <- function(x, platformNumber, tz=""){
 		# Check whether there are equal validFrom and validTo:
 		equal <- which(x$validTo %in% x$validFrom)
 		if(length(equal)){
 			# Subtract one day from validTo:
 			warning(paste0("Platform number ", platformNumber, " contained equal 'validFrom' and 'validTo' date (", paste(x$validTo[equal], collapse=", "), "). One day subtracted from 'validTo'."))
-			temp <- as.POSIXct(x$validTo[equal], tz="UTC", format="%Y-%m-%dT%H:%M:%S") - 86400
+			temp <- as.POSIXct(x$validTo[equal], tz=tz, format="%Y-%m-%dT%H:%M:%S") - 86400
 			temp <- format(temp, format="%Y-%m-%dT%H:%M:%OS3Z")
 			x$validTo[equal] <- temp
 		}
@@ -688,8 +688,12 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 			codes$validFrom_ISO_8601 <- codes$validFrom
 			codes$validTo_ISO_8601 <- codes$validTo
 			# Convert to UNIX time:
-			codes$validFrom <- unclass(as.POSIXct(codes$validFrom, tz="UTC", format="%Y-%m-%dT%H:%M:%S"))
-			codes$validTo <- unclass(as.POSIXct(codes$validTo, tz="UTC", format="%Y-%m-%dT%H:%M:%S"))
+			#codes$validFrom <- unclass(as.POSIXct(codes$validFrom, tz="UTC", format="%Y-%m-%dT%H:%M:%S"))
+			#codes$validTo <- unclass(as.POSIXct(codes$validTo, tz="UTC", format="%Y-%m-%dT%H:%M:%S"))
+			codes$validFrom_POSIXct <- as.POSIXct(codes$validFrom, format="%Y-%m-%dT%H:%M:%S")
+			codes$validTo_POSIXct <- as.POSIXct(codes$validTo, format="%Y-%m-%dT%H:%M:%S")
+			codes$validFrom <- unclass(codes$validFrom_POSIXct)
+			codes$validTo <- unclass(codes$validTo_POSIXct)
 			
 			# Get first unique validFrom times:
 			uniqueValidFrom <- sort(unique(codes$validFrom))
@@ -703,13 +707,18 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 			
 			# If only one time interval, simply create the output here:
 			if(length(uniqueValidFrom)==1){
-				platform <- list(column2ilst(codes, "value", "sysname"), validFrom=codes$validFrom_ISO_8601[1], validTo=codes$validTo_ISO_8601[1])
+				#platform <- list(column2ilst(codes, "value", "sysname"), validFrom=codes$validFrom_ISO_8601[1], validTo=codes$validTo_ISO_8601[1])
+				platform <- list(column2ilst(codes, "value", "sysname"), validFrom=codes$validFrom_POSIXct[1], validTo=codes$validTo_POSIXct[1])
 			}
 			else{
 				# Set the unique validTo times, and convert both the unique validFrom and validTo to ISO_8601 for insertion into the output:
 				uniqueValidTo <- c(uniqueValidFrom[-1] - 86400, max(codes$validTo))
-				uniqueValidFrom_ISO_8601 <- format(as.POSIXct(uniqueValidFrom, origin="1970-01-01", tz="UTC"), format="%Y-%m-%dT%H:%M:%OS3Z")
-				uniqueValidTo_ISO_8601 <- format(as.POSIXct(uniqueValidTo, origin="1970-01-01", tz="UTC"), format="%Y-%m-%dT%H:%M:%OS3Z")
+				#uniqueValidFrom_ISO_8601 <- format(as.POSIXct(uniqueValidFrom, origin="1970-01-01", tz="UTC"), format="%Y-%m-%dT%H:%M:%OS3Z")
+				#uniqueValidTo_ISO_8601 <- format(as.POSIXct(uniqueValidTo, origin="1970-01-01", tz="UTC"), format="%Y-%m-%dT%H:%M:%OS3Z")
+				uniqueValidFrom_POSIXct <- as.POSIXct(uniqueValidFrom, origin="1970-01-01")
+				uniqueValidTo_POSIXct <- as.POSIXct(uniqueValidTo, origin="1970-01-01")
+				uniqueValidFrom_ISO_8601 <- format(uniqueValidFrom_POSIXct, format="%Y-%m-%dT%H:%M:%OS3Z")
+				uniqueValidTo_ISO_8601 <- format(uniqueValidTo_POSIXct, format="%Y-%m-%dT%H:%M:%OS3Z")
 				
 				# Split the intercals of each column of 'codes', but split into a list of individual rows first to comply with lapply(). This avoids the problem that apply reduces the rows of a data frame to a simple vector, making the "$" notation inapropriate:
 				codesList <- split(codes, seq_len(nrow(codes)))
@@ -730,7 +739,8 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 				platform <- as.data.frame(array(NA, dim=c(max(temp$DateInt), numSysnames)))
 				names(platform) <- unique(temp$sysname)
 				#platform <- cbind(DateInt=seq_len(nrow(platform)), platform, validFrom=uniqueValidFrom_ISO_8601, validTo=uniqueValidTo_ISO_8601)
-				platform <- cbind(platform, validFrom=uniqueValidFrom_ISO_8601, validTo=uniqueValidTo_ISO_8601, stringsAsFactors=FALSE)
+				#platform <- cbind(platform, validFrom=uniqueValidFrom_ISO_8601, validTo=uniqueValidTo_ISO_8601, stringsAsFactors=FALSE)
+				platform <- cbind(platform, validFrom=uniqueValidFrom_POSIXct, validTo=uniqueValidTo_POSIXct, stringsAsFactors=FALSE)
 			
 				# Insert the data into the 'platform' data frame:
 				indexMatrix <- cbind(temp$DateInt, match(temp$sysname, names(platform)))
@@ -767,7 +777,7 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 		# Split into individual rows for as.matrix.full() to work:
 		x <- lapply(x, function(DF) split(DF, seq_len(nrow(DF))))
 		x <- unlist(x, recursive=FALSE, use.names=FALSE)
-		x <- as.matrix_full(x)
+		x <- as.dataFrame_full(x)
 		x <- asNumericDataFrame(x)
 		x
 	}
@@ -796,7 +806,8 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 	}
 	getTaxa <- function(x){
 		x <- lapply(x, getTaxaOne)
-		x <- as.matrix_full(x)
+		#x <- as.dataFrame_full(x)
+		x <- as.dataFrame_full(x)
 		# Add the same Ind column as in version 1:
 		x <- cbind(Ind = seq_len(nrow(x)), x)
 		x <- asNumericDataFrame(x)
@@ -879,12 +890,13 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=2, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, ...){
-	if(ver==1){
+getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=list(API="2", biotic="1.4", reference="2.0"), API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, ...){
+	
+	if((!is.list(ver) && ver==1) || (is.list(ver) && ver$API==1)){
 		getNMDdataV1(cruise=cruise, year=year, shipname=shipname, serialno=serialno, tsn=tsn, datatype=datatype, dir=dir, subdir=subdir, group=group, abbrev=abbrev, subset=subset, filebase=filebase, ver=1, API=API, cleanup=cleanup, model=model, msg=msg, ow=ow, return.URL=return.URL, run=run, timeout=timeout, ...)
 	}
-	else if(ver==2){
-		getNMDdataV2(cruise=cruise, year=year, shipname=shipname, serialno=serialno, tsn=tsn, datatype=datatype, dir=dir, subdir=subdir, group=group, abbrev=abbrev, subset=subset, filebase=filebase, ver=2, API=API, cleanup=cleanup, model=model, msg=msg, ow=ow, return.URL=return.URL, run=run, timeout=timeout, ...)
+	else if(is.list(ver) && ver$API==2){
+		getNMDdataV2(cruise=cruise, year=year, shipname=shipname, serialno=serialno, tsn=tsn, datatype=datatype, dir=dir, subdir=subdir, group=group, abbrev=abbrev, subset=subset, filebase=filebase, ver=ver, API=API, cleanup=cleanup, model=model, msg=msg, ow=ow, return.URL=return.URL, run=run, timeout=timeout, ...)
 	}
 	else{
 		warning("Version 2 of the NMD API is the latest available. Version 1 is no longer maintained (as of july 2018).")
@@ -1914,9 +1926,9 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, method="auto",
 	}
 	else{
 		URL <- URLencode(URL)
-		if(msg){
-			cat("Downloading", URL, "\n")
-		}
+		#if(msg){
+		#	cat("Downloading", URL, "\n")
+		#}
 		failed <- FALSE
 		if(msg){
 			used <- proc.time()[3]
@@ -2002,7 +2014,6 @@ searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=list(API="2", bio
 	# Function for extacting the URL of the cruise. In version 1 this URL was given directly, whereas in version 2 it has to be constructed from the downloaded table:
 	getCruiseString <- function(x, ver=list(API="2", biotic="1.4", reference="2.0")){
 		# Download the result from the search query:
-		browser()
 		out <- suppressWarnings(downloadXML(URLencode(x), msg=FALSE))
 		if(ver$API == 1){
 			# Version 1 returns the cruise URL directly:
@@ -2025,6 +2036,11 @@ searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=list(API="2", bio
 			stop("Invalid version")
 		}
 		out
+	}
+	
+	# Add support for giving 'ver' as a single numeric, as was done prior to Rstox_1.10:
+	if(!is.list(ver)){
+		ver <- list(API=ver[1])
 	}
 	
 	# Get the search URL:

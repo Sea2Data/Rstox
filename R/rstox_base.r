@@ -1921,7 +1921,7 @@ getProjectDataEnv <- function(projectName){
 
 #*********************************************
 #*********************************************
-#' Convert list to matrix and generate missing values
+#' Convert list to matrix or data.frame and generate missing values
 #'
 #' Convert a list of vectors with variable length to a matrix with all possible variables in the columns, and with missing values
 #'
@@ -1929,6 +1929,7 @@ getProjectDataEnv <- function(projectName){
 #'
 #' @export
 #' @keywords internal
+#' @rdname as.matrix_full
 #' 
 as.matrix_full <- function(x, stringsAsFactors=FALSE){
 	# Scan for the field names:
@@ -1969,6 +1970,46 @@ as.matrix_full <- function(x, stringsAsFactors=FALSE){
 	out <- matrix(unlist(x, use.names=FALSE), ncol=length(unames), byrow=TRUE)
 	rownames(out) <- NULL
 	colnames(out) <- unames
+	out
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname as.matrix_full
+#' 
+as.dataFrame_full <- function(x, stringsAsFactors=FALSE){
+	
+	# Scan for the field names, using names for lists and colnames if not:
+	if(is.list(x[[1]])){
+		convertToList <- function(x){
+			if(!is.list(x)){
+				x <- as.list(x)
+			}
+			x
+		}
+		x <- lapply(x, convertToList)
+	}
+	
+	xflat <- unlist(x, recursive=FALSE)
+	
+	allnames <- lapply(x, names)
+	lens <- sapply(allnames, length)
+	allnamesFlat <- unlist(allnames)
+	unames <- unique(allnamesFlat)
+	
+	# Get all indices of the unlisted x:
+	rowInd <- rep(seq_along(x), lens)
+	colInd <- unlist(lapply(allnames, match, unames))
+	
+	out <- as.data.frame(array(NA, dim=c(length(x), length(unames))))
+	names(out) <- unames
+	
+	for(i in seq_along(unames)){
+		at <- which(colInd==i)
+		class(out[[i]]) <- class(do.call(c, xflat[at]))
+		out[rowInd[at], i] <- do.call(c, xflat[at])
+	}
+	
 	out
 }
 

@@ -11,7 +11,7 @@
 \alias{downloadXML}
 \title{Get NMD API data and reference information}
 \usage{
-getNMDinfo(type = NULL, ver = 2,
+getNMDinfo(type = NULL, ver = list(API = "2", reference = "2.0"),
   API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
   msg = FALSE, simplify = TRUE)
 
@@ -21,14 +21,15 @@ getNMDinfoV1(type = NULL, ver = 1,
 
 addQuery(URL, ...)
 
-getNMDinfoV2(type = NULL, API = "http://tomcat7.imr.no:8080/apis/nmdapi",
-  ver = list(API = "2", biotic = "1.4", reference = "2.0"),
-  recursive = TRUE, msg = FALSE, simplify = TRUE)
+getNMDinfoV2(type = NULL, ver = list(API = "2", biotic = "1.4", reference =
+  "2.0"), API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
+  msg = FALSE, simplify = TRUE)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
   tsn = NULL, datatype = NULL, dir = NULL, subdir = FALSE,
   group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
-  ver = 2, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  ver = list(API = "2", biotic = "1.4", reference = "2.0"),
+  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
   return.URL = FALSE, run = TRUE, timeout = NULL, ...)
 
