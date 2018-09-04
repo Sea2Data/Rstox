@@ -394,7 +394,9 @@ getURLbase <- function(API, type, model=NULL, dataset=NULL, ver){
 	}
 	out <- apply(cbind(API, type, version, model, dataset), 1, paste, collapse="/")
 	# Add the query of type version:
-	out <- addQuery(out, version=ver[[type]])
+	if(length(ver)){
+		out <- addQuery(out, version=ver[[type]])
+	}
 	#out <- addQuery(out, ver=ver, type=type)
 	#out <- paste(out, query, sep="?")
 	out
@@ -492,8 +494,12 @@ getNMDinfoV2 <- function(type=NULL, ver=list(API="2", biotic="1.4", reference="2
 	# Convert to a data frame:
 	asNumericDataFrame <- function(data){
 		data <- as.data.frame(data, stringsAsFactors=FALSE)
+		convertableToNumeric <- function(x, not=c("POSIXct", "POSIXt")){
+			!class(x) %in% not && !any(is.na(as.numeric(x[!is.na(x)])))
+		}
 		# Convert all numeric columns to numeric, identified by no NAs when converting:
-		suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x[!is.na(x)])))) as.numeric(x) else x))
+		#suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x[!is.na(x)])))) as.numeric(x) else x))
+		suppressWarnings(data <- lapply(data, function(x) if(convertableToNumeric(x)) as.numeric(x) else x))
 		data <- as.data.frame(data, stringsAsFactors=FALSE)
 	}
 	
@@ -813,6 +819,16 @@ getNMDinfoV2 <- function(type=NULL, ver=list(API="2", biotic="1.4", reference="2
 		x <- asNumericDataFrame(x)
 		x
 	}
+	
+	getCruiseInfo <- function(API, ver, msg=FALSE){
+		URL <- addQuery(paste(API, "biotic", paste0("v", ver$API), sep="/"), type="ListAll")
+		d <- downloadXML(URL, msg=msg)
+		s <- lapply(d, function(x) column2ilst(getElements(x), "text", ".attrs"))
+		x <- as.dataFrame_full(s)
+		x <- asNumericDataFrame(x)
+		x
+	}
+	
 	##### <<<Internal functions #####
 	###############################
 	
@@ -847,6 +863,9 @@ getNMDinfoV2 <- function(type=NULL, ver=list(API="2", biotic="1.4", reference="2
 		# Set the full name of the type:
 		type[1] <- "surveytimeseries"
 		data <- getSeriesInfo(API=API, ver=ver, type=type)
+	}
+	else if(type[1] %in% c("cruise", "cruises")){
+		data <- getCruiseInfo(API=API, ver=ver, msg=msg)
 	}
 	else{
 		# Get the available reference data types:

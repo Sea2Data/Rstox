@@ -2,9 +2,12 @@
 % Please edit documentation in R/rstox_base.r
 \name{as.matrix_full}
 \alias{as.matrix_full}
-\title{Convert list to matrix and generate missing values}
+\alias{as.dataFrame_full}
+\title{Convert list to matrix or data.frame and generate missing values}
 \usage{
 as.matrix_full(x, stringsAsFactors = FALSE)
+
+as.dataFrame_full(x, stringsAsFactors = FALSE)
 }
 \arguments{
 \item{x}{A list of vectors of one dimension with column names or names.}
