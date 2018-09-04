@@ -686,6 +686,8 @@ Removed the covariate 'season', which was used in conjunction to 'year'. Now, th
 
 Changed the name of baseline2eca() to getCovData(). The old function kept for backwards compatibility.
 
+Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
+
 
 ########## Version 1.10 (2018-07-06) ##########
 
@@ -721,5 +723,6 @@ Removed the covariate 'season', which was used in conjunction to 'year'. Now, th
 
 Changed the name of baseline2eca() to getCovData(). The old function kept for backwards compatibility.
 
+Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
 
 

@@ -37,10 +37,9 @@
 #' @param return.URL			Logical: If TRUE, return the URL of the files to download.
 #' @param run					Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).
 #' @param ...		 			Same as parlist, but can be specified separately (not in a list but as separate inputs).
-#' @param URL					The URL(s) to the xml data.
+#' @param URL					The URL(s) to the xml data, or the path to a local XML file.
 #' @param list.out				Logical: If TRUE, convert the XML data to a list (time consuming).
 #' @param file					The path to a the file to which the data are saved.
-#' @param quiet					Used in download.file().
 #' @param method				The download method. See \code{\link{download.file}}.
 #' @param timeout				If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}). 
 #'
@@ -59,7 +58,6 @@
 #' g3 <- getNMDinfo("sts")
 #' # List of vessels (the first vessel per platform) and the more complicated list of platforms,
 #' # (where there can be several vessels per platform). These requestes may take tens of seconds:
-#' g4 <- getNMDinfo("v")
 #' g5 <- getNMDinfo("platform")
 #' # Get other types of information:
 #' g6 <- getNMDinfo("gearcondition")
@@ -71,13 +69,16 @@
 #' # And all names containing "torsk":
 #' g9[grep("torsk", g9$Norwegian, ignore.case=TRUE),]
 #' 
+#' # Download all reference data (takes at lest 5 minutes):
+#' # system.time(l <- lapply(g1, getNMDinfo, msg=TRUE))
+#'
 #' # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
 #' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
 #' 
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDinfo <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi", recursive=TRUE, msg=FALSE, simplify=TRUE){
+getNMDinfo <- function(type=NULL, ver=2, API="http://tomcat7.imr.no:8080/apis/nmdapi", recursive=TRUE, msg=FALSE, simplify=TRUE){
 	if(ver==1){
 		getNMDinfoV1(type=type, ver=1, API=API, recursive=recursive, msg=msg, simplify=simplify)
 	}
@@ -150,6 +151,7 @@ getNMDinfoV1 <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/
 			platformNumber <- x$.attrs["platformNumber"]
 			out <- cbind(nation=unname(x$nation$.attrs), platformNumber=platformNumber, platformType=unname(x$platformType$.attrs), codes, dates)
 			out <- as.data.frame(out, stringsAsFactors=FALSE)
+			out
 		}
 		# Drop elements with length 1, indicating time stamps or similar:
 		x <- x[sapply(x, length)>1]
@@ -252,7 +254,6 @@ getNMDinfoV1 <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/
 	}
 	# Get the list of survey time series with StoX projets for each series:
 	else if(type[1] %in% c("sts", "surveytimeseries")){
-		#browser()
 		URLbase <- paste(API, "surveytimeseries", paste0("v", ver), sep="/")
 		# Get the list of survey time series. The survey time series name can be given exactly as the second element of 'type':
 		if(length(type)==2){
@@ -371,63 +372,140 @@ getNMDinfoV1 <- function(type=NULL, ver=1, API="http://tomcat7.imr.no:8080/apis/
 	data
 }
 #' 
+##' @export
+##' @rdname getNMDinfo
+##' 
+# Function for adding the query of type version:
+addQuery <- function(URL, ...){
+	l <- list(...)
+	query <- paste(names(l), l, sep="=", collapse="&")
+	#query <- paste0("version=", ver[[type]])
+	paste(URL, query, sep="?")
+}
+# Get the URL base string:
+getURLbase <- function(API, type, model=NULL, dataset=NULL, ver){
+	version <- paste0("v", ver$API)
+	query <- paste0("version=", ver[[type]])
+	if(length(model)){
+		model <- paste("model", model, sep="/")
+	}
+	if(length(dataset)){
+		dataset <- paste("dataset", dataset, sep="/")
+	}
+	out <- apply(cbind(API, type, version, model, dataset), 1, paste, collapse="/")
+	# Add the query of type version:
+	out <- addQuery(out, version=ver[[type]])
+	#out <- addQuery(out, ver=ver, type=type)
+	#out <- paste(out, query, sep="?")
+	out
+}
+# Function to extract the variables given in the levels[[2]] in the list elements named by levels[[1]]
+getElements <- function(data, levels=list("element", c("text", ".attrs")), data.frame.out=TRUE){
+	# Extract the elements given in the second element of 'levels' for all elements of 'data' named by the first element of 'levels':
+	if(length(levels)==2){
+		# The second element of 'levels' (the column specifications) can be given as NA, impying all columns:
+		if(is.na(levels[[2]][1])){
+			#levels[[2]] <- names(data[[levels[[1]]]])
+			# Function for extracting one row of data, stored as a list where one of the list elements contain the attributes:
+			getOneRow <- function(x){
+				d <- x[names(x) != ".attrs"]
+				d <- NAunlist(d)
+				attrs <- unlist(x$.attrs)
+				c(d, attrs)
+			}
+			
+			# Extract the rows:
+			data <- lapply(data[names(data)==levels[[1]]], getOneRow)
+			# Any one of the rows has length differing from the rest, delete this row (herevy we require that all variables are filled):
+			s <- sapply(data, length)
+			equalLengths <- s==max(s)
+			if(!all(equalLengths)){
+				data <- data[equalLengths]
+			}
+			data <- as.data.frame(do.call(rbind, data), stringsAsFactors=FALSE)
+		}
+		else{
+			# The variables can be given using '$', so we split those variable names here, "[[" recombines with '$' to get the requested elements:
+			levels[[2]] <- lapply(levels[[2]], function(x) if(grepl("$", x, fixed=TRUE)) strsplit(x, "$", fixed=TRUE)[[1]] else x)
+			# Extract the elements given the variables specified in level[[2]]:
+			data <- lapply(levels[[2]], function(x) NAsapply(data[names(data)==levels[[1]]], "[[", x))
+			# Make sure that if several elements were read into a matrix, these are transposed (since sapply() rbinds instead of cbind):
+			areMatrices <- sapply(data, function(x) length(dim(x))==2)
+			if(any(areMatrices)){
+				data[areMatrices] <- lapply(data[areMatrices], t)
+			}
+		
+			# Define the names of the columns of the data frame. Here we fill inn the colnames of the individual matrices (some data are read as matrices above):
+			dataNames <- levels[[2]]
+			if(any(areMatrices)){
+				dataNames[areMatrices] <- lapply(data[areMatrices], colnames)
+			}
+			dataNames <- unlist(dataNames)
+		
+			# Combine into a data frame:
+			data <- as.data.frame(data, stringsAsFactors=FALSE)
+			names(data) <- dataNames
+		}
+		# Remove row names:
+		rownames(data) <- NULL
+		
+		# Return a simple vector if data.frame.out is FALSE:
+		if(!data.frame.out){
+			data <- unname(unlist(data))
+		}
+	}
+	else if(length(levels)==1){
+		data <- NULL
+	}
+	data
+}
+# Versions of lapply() and unlist() where missing values are replaced by NA:
+NAsapply <- function(y, fun, ...){
+	out <- lapply(y, fun, ...)
+	empty <- sapply(out, length)==0
+	if(any(empty)){
+		out[empty] <- as.list(rep(NA, sum(empty)))
+	}
+	sapply(out, function(x) x)	
+}
+NAunlist <- function(y){
+	empty <- sapply(y, length) == 0
+	if(any(empty)){
+		y[empty] <- as.list(rep(NA, sum(empty)))
+	}
+	unlist(y)
+}
+
+#' 
 #' @export
 #' @rdname getNMDinfo
 #' 
 getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi", ver=list(API="2", biotic="1.4", reference="2.0"), recursive=TRUE, msg=FALSE, simplify=TRUE){
 	
-	if(version$API != 2){
+	# Assure that the API version is 2:
+	if(ver$API != 2){
 		warning("This function returns reference info from NMD API version 2. Selecting a different version is not recommended.")
 	}
 	
 	##### Internal functions>>> #####
-	# Function used for extracting a data frame of the cruises used in a cruise series:
-	#getCruiseSeriesCruises <- function(x, URLbase, name="Cruises", msg=FALSE){
-	#	this <- downloadXML(paste(URLbase, x, sep="/"), msg=msg)$Sample
-	#	# Get years and repeat by the number of cruises for each year
-	#	years <- unname(sapply(this, "[[", ".attrs"))
-	#	nCruisesPerYear <- sapply(this, function(xx) length(xx$Cruises))
-	#	years <- rep(years, nCruisesPerYear)
-	#	CruiseShipName <- as.matrix_full(unlist(lapply(this, "[[", name), use.names=FALSE, recursive=FALSE))
-	#	as.data.frame(cbind(year=years, Cruise=CruiseShipName[,1], ShipName=CruiseShipName[,2]), stringsAsFactors=FALSE)
-	#}
-	# Version of lapply() where missing values are replaced by NA and then unlisted:
-	NAspply <- function(y, fun){
-		out <- lapply(y, fun)
-		empty <- sapply(out, length)==0
-		if(any(empty)){
-			out[empty] <- as.list(rep(NA, sum(empty)))
-		}
-		unlist(unname(out))	
-	}
-	getURLbase <- function(API, type, model=NULL, dataset=NULL, ver){
-		version <- paste0("v", ver$API)
-		query <- paste0("version=", ver[[type]])
-		if(length(model)){
-			model <- paste("model", model, sep="/")
-		}
-		if(length(dataset)){
-			dataset <- paste("dataset", dataset, sep="/")
-		}
-		out <- apply(cbind(API, type, version, model, dataset), 1, paste, collapse="/")
-		out <- paste(out, query, sep="?")
-		out
+	
+	# Convert to a data frame:
+	asNumericDataFrame <- function(data){
+		data <- as.data.frame(data, stringsAsFactors=FALSE)
+		# Convert all numeric columns to numeric, identified by no NAs when converting:
+		suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x)))) as.numeric(x) else x))
+		data <- as.data.frame(data, stringsAsFactors=FALSE)
 	}
 	
-	getElements <- function(data, levels=list("element", c("text", ".attrs")), data.frame.out=TRUE){
-		# Extract the elements given in the second element of 'levels' for all elements of 'data' named by the first element of 'levels':
-		if(length(levels)==2){
-			data <- lapply(levels[[2]], function(x) sapply(data[names(data)==levels[[1]]], "[[", x))
-			data <- as.data.frame(data, col.names=levels[[2]], stringsAsFactors=FALSE)
-			if(!data.frame.out){
-				data <- unname(unlist(data))
-			}
-		}
-		else if(length(levels)==1){
-			data <- NULL
-		}
-		data
+	# Detect platform or taxa reference data:
+	isPlatform <- function(data){
+		any(names(data[[1]]) == "platformCodes")
 	}
+	isTaxa <- function(data){
+		any(names(data[[1]]) == "TaxaSynonyms")
+	}
+	
+	# Function for extracting the list of reference names:
 	getReferenceList <- function(API, ver, msg=FALSE){
 		# V1: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1
 		# V1: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1?version=1.0
@@ -439,10 +517,11 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 		data
 	}
 	
+	# Function used to extracting the year, cruise code and ship name of a cruise series:
 	getCruiseSeriesCruises <- function(x){
-		year <- NAspply(x$samples, function(y) y$sampleTime)
-		Cruise <- NAspply(x$samples, function(y) y$cruises$cruise$cruisenr)
-		ShipName <- NAspply(x$samples, function(y) y$cruises$cruise$shipName)
+		year <- NAsapply(x$samples, function(y) y$sampleTime)
+		Cruise <- NAsapply(x$samples, function(y) y$cruises$cruise$cruisenr)
+		ShipName <- NAsapply(x$samples, function(y) y$cruises$cruise$shipName)
 		data.frame(year=year, Cruise=Cruise, ShipName=ShipName, stringsAsFactors=FALSE)
 	}
 	# Function used for extracting a data frame of the StoX projects used in a survey time series:
@@ -451,11 +530,16 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 	#	as.data.frame(as.matrix_full(this), stringsAsFactors=FALSE)
 	#}
 	getSurveyTimeSeriesProjects <- function(x, URLbase){
-		year <- NAspply(x$cruiseSeries$cruiseSeries$samples, function(y) y$sampleTime)
-		stoxProjectId <- NAspply(x$cruiseSeries$cruiseSeries$samples, function(y) y$stoxProject)
-		data.frame(year=year, stoxProjectId=stoxProjectId, stringsAsFactors=FALSE)
+		sampleTime <- NAsapply(x$cruiseSeries$cruiseSeries$samples, function(y) y$sampleTime)
+		stoxProjectId <- NAsapply(x$cruiseSeries$cruiseSeries$samples, function(y) y$stoxProject)
+		STSCode <- x$code
+		STSName <- x$name
+		CSCode <- x$cruiseSeries$cruiseSeries$cruiseSeriesCode
+		CSName <- x$cruiseSeries$cruiseSeries$cruiseSeries
+		data.frame(sampleTime=sampleTime, stoxProjectId=stoxProjectId, STSCode=STSCode, STSName=STSName, CSCode=CSCode, CSName=CSName, stringsAsFactors=FALSE)
 	}
 	
+	# Function used for applying either getCruiseSeriesCruises() or getSurveyTimeSeriesProjects() for all years:
 	getSeriesInfo <- function(API, ver, type){
 		# V1: http://tomcat7.imr.no:8080/apis/nmdapi/cruiseseries/v1
 		# V2: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/model/cruiseseries?version=2.0
@@ -469,109 +553,257 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 			cruiseseries = getCruiseSeriesCruises, 
 			surveytimeseries = getSurveyTimeSeriesProjects)
 		
-		URLbase <- getURLbase(API=API, type="reference", model=type[1], ver=ver)
-		
-		# Get the list of cruise/survey time series. The name can be given exactly as the second element of 'type':
+		# Get the list of cruise/survey time series. The name can be given exactly as the second element of 'type', in which case the list of series is reduced, but still a list (used in getNMDdata()):
+		requestedSeries <- NULL
 		if(length(type)==2){
-			data <- type[2]
+			requestedSeries <- type[2]
 			recursive <- TRUE
 		}
-		else{
-			data <- downloadXML(URLbase, msg=msg)
-			#data <- unlist(data[names(data)=="element"], use.names=FALSE)
-			data <- getElements(data, levels=list("row", c("name")), data.frame.out=FALSE)
-		}
+		# Download either the 'model' (the names of the elements of the series) or the 'dataset' (the contents of the series):
 		if(recursive){
+			# Download the seies dataset:
 			URLbase <- getURLbase(API=API, type="reference", dataset=type[1], ver=ver)
-			namesdata <- data
 			data <- downloadXML(URLbase, msg=msg)
+			# Extract the names of the series:
+			seriesNames <- sapply(data, "[[", "name")
+			# Extract the series info:
 			data <- lapply(data, fun)
-			names(data) <- namesdata
+			names(data) <- seriesNames
+			if(length(requestedSeries)){
+				data <- data[requestedSeries]
+			}
+		}
+		else{
+			# Download the seies model (only the names of the series):
+			URLbase <- getURLbase(API=API, type="reference", model=type[1], ver=ver)
+			data <- downloadXML(URLbase, msg=msg)
+			# Extract the names:
+			data <- getElements(data, levels=list("row", c("name")), data.frame.out=FALSE)
 		}
 		data
 	}
 	
+	# Function for converting a column to a list with names given by another column:
+	column2ilst <- function(x, col, colnames){
+		out <- as.list(x[[col]])
+		names(out) <- gsub(" ", "_", x[[colnames]])
+		out
+	}
 	
-	# Function for extracting the platform information from the NMD platform data structure:
-	platformExtract <- function(x){
-		# Small function for extracting the platform code from an NMD platform:
-		getPlatformCode <- function(xx){
-			out <- xx["platformCode"]
-			names(out) <- gsub(" ", "_", xx["sysName"])
-			out
+	## Extract the relevant data from the platform reference data:
+	#getPlatformOne_old <- function(x){
+	#	# Read the platformCode:
+	#	if(length(x$platformCodes)){
+	#		codes <- getElements(x$platformCodes, levels=list("platformCode", NA), data.frame.out=TRUE)
+	#		
+	#		# Split by validTo date, and pick the latest:
+	#		codes <- split(codes, codes$validTo)
+	#		codes <- codes[[length(codes)]]
+	#		
+	#		# If there are duplicated vessel names for the latest 'validTo', order these with decreasing 'validFrom', and remove the duplicates:
+	#		duplicatedSysname <- duplicated(codes$sysname)
+	#		if(any(duplicatedSysname)){
+	#			codes <- codes[order(codes$validFrom, decreasing=TRUE), ]
+	#			duplicatedSysname <- duplicated(codes$sysname)
+	#			codes <- codes[!duplicatedSysname, ]
+	#		}
+	#		
+	#		# Create a data frame added the validTo info:
+	#		codes <- list(column2ilst(codes, "value", "sysname"), validTo=codes$validTo[1])
+	#	}
+	#	else{
+	#		codes <- list()
+	#	}
+	#	
+	#	# Add the data which is not in a list and not attributes:
+	#	headerData <- !sapply(x, is.list) & names(x) != ".attrs"
+	#	codes <- as.data.frame(c(x[headerData], codes), stringsAsFactors=FALSE)
+	#	
+	#	# Special care of the nation, which is stripped for trailing whitespace:
+	#	codes$nation <- trimws(codes$nation, which=c("right"))
+	#	
+	#	return(codes)
+	#}
+	#getPlatform_old <- function(x){
+	#	x <- lapply(x, getPlatformOne)
+	#	x <- as.matrix_full(x)
+	#	x <- asNumericDataFrame(x)
+	#	x
+	#}
+	
+	# Function for converting from UNIX time to date:
+	toDate <- function(x){
+		if(is.numeric(x)){
+			out <- as.POSIXct(as.vector(x), origin="1970-01-01", tz="UTC")
 		}
-		# Small function for extracting the from and to date from a NMD platform:
-		getvalidFromTo <- function(xx){
-			c(xx["validFrom"], xx["validTo"])
+		as.Date(out, tz="UTC")
+	}
+	
+	# Function for checking for identical dates in valid from and to, and subtracting one day from the valid to with a warning:
+	corectEqualFromTo <- function(x, platformNumber){
+		# Check whether there are equal validFrom and validTo:
+		equal <- which(x$validTo %in% x$validFrom)
+		if(length(equal)){
+			# Subtract one day from validTo:
+			warning(paste0("Platform number ", platformNumber, " contained equal 'validFrom' and 'validTo' date (", paste(x$validTo[equal], collapse=", "), "). One day subtracted from 'validTo'."))
+			temp <- as.POSIXct(x$validTo[equal], tz="UTC", format="%Y-%m-%dT%H:%M:%S") - 86400
+			temp <- format(temp, format="%Y-%m-%dT%H:%M:%OS3Z")
+			x$validTo[equal] <- temp
 		}
-		# Extract the relevant data from the platform reference data:
-		platformExtractOne <- function(x){
-			# Group the platformCodes according to dates:
-			codes <- unlist(x[names(x)=="platformCodes"], recursive=FALSE, use.names=FALSE)
-			dates <- NULL
-			if(length(codes)){
-				# Get the dates:
-				dates <- t(sapply(codes, getvalidFromTo))
-				
-				# Get the paltform codes:
-				codes <- lapply(codes, getPlatformCode)
-				# Split the platform codes by the concatination of start and end date (converted to a factor with the original ordering):
-				validFromTo <- apply(dates, 1, paste, collapse="")
-				validFromTo <- factor(validFromTo, levels=unique(validFromTo))
-				#codes <- split(codes, apply(dates, 1, paste, collapse=""))
-				codes <- split(codes, validFromTo)
-				# Get all names of each unique specification of valid dates:
-				codes <- lapply(codes, unlist)
-				# Convert to a matrix, adding NAs at missing fields:
-				codes <- as.matrix_full(codes)
-				# Refresh the dates:
-				dates <- unique(dates)
+		x
+	}
+	# Split each line into multiple lines, for all date intervals that the line covers:
+	splitByValidFromValidTo <- function(x, uniqueValidFrom, uniqueValidTo){
+		
+		# Find all date intervals covered by the current interval (use only dates and not times, since the hour of registering may change (often 22:00 or 23:00)):
+		#inside <- which(x$validFrom <= uniqueValidFrom  &  uniqueValidTo <= x$validTo)
+		inside <- which(toDate(x$validFrom) <= toDate(uniqueValidFrom)  &  toDate(uniqueValidTo) <= toDate(x$validTo))
+		numInside <- length(inside)
+	
+		# Repeat the data into a data frame with 'numInside' rows:
+		x <- do.call("rbind", replicate(numInside, x, simplify=FALSE))
+		# Save the original dates, since these can be used to order the rows in case of duplicated information in the same time interval:
+		x$validFrom_Original <- x$validFrom
+		x$validTo_Original <- x$validTo
+		# Insert the dates of the intervals into which the data have been split:
+		x$validFrom <- uniqueValidFrom[inside]
+		x$validTo <- uniqueValidTo[inside]
+		# Include the index of the time interval:
+		x <- cbind(x, DateInt=inside)
+		x
+	}
+
+	# Extract the relevant data from the platform reference data:
+	#getPlatformOne <- function(x, raw.out=FALSE){
+	getPlatformOne <- function(x){
+		# Read the platformCode:
+		if(length(x$platformCodes)){
+			# Get the platform data of the current platform:
+			codes <- getElements(x$platformCodes, levels=list("platformCode", NA), data.frame.out=TRUE)
+			
+			# Check for identical dates in valid from and to, and subtract one day from the valid to with a warning:
+			codes <- corectEqualFromTo(codes, platformNumber=x$platformNumber)
+			
+			# Save the ISO_8601 datetimes for use if there is only one interval:
+			codes$validFrom_ISO_8601 <- codes$validFrom
+			codes$validTo_ISO_8601 <- codes$validTo
+			# Convert to UNIX time:
+			codes$validFrom <- unclass(as.POSIXct(codes$validFrom, tz="UTC", format="%Y-%m-%dT%H:%M:%S"))
+			codes$validTo <- unclass(as.POSIXct(codes$validTo, tz="UTC", format="%Y-%m-%dT%H:%M:%S"))
+			
+			# Get first unique validFrom times:
+			uniqueValidFrom <- sort(unique(codes$validFrom))
+			uniqueValidTo <- sort(unique(codes$validTo))
+			# Then find any dates in validTo which are not equal to any of the dates in validFrom + 1 day:
+			inValidTo <- which(!(toDate(uniqueValidTo) + 1) %in% toDate(uniqueValidFrom))
+			# The last element of inValidTo is the day after the last validTo, and should not be included in the unique validFrom:
+			inValidTo <- inValidTo[-length(inValidTo)]
+			# Insert the missing validFrom times into 'uniqueValidFrom':
+			uniqueValidFrom <- sort(unique(c(uniqueValidFrom, uniqueValidTo[inValidTo] + 86400)))
+			
+			# If only one time interval, simply create the output here:
+			if(length(uniqueValidFrom)==1){
+				platform <- list(column2ilst(codes, "value", "sysname"), validFrom=codes$validFrom_ISO_8601[1], validTo=codes$validTo_ISO_8601[1])
 			}
-			# Column added on 2018-01-29 on request from Edvin:
-			platformNumber <- x$.attrs["platformNumber"]
-			out <- cbind(nation=unname(x$nation$.attrs), platformNumber=platformNumber, platformType=unname(x$platformType$.attrs), codes, dates)
-			out <- as.data.frame(out, stringsAsFactors=FALSE)
+			else{
+				# Set the unique validTo times, and convert both the unique validFrom and validTo to ISO_8601 for insertion into the output:
+				uniqueValidTo <- c(uniqueValidFrom[-1] - 86400, max(codes$validTo))
+				uniqueValidFrom_ISO_8601 <- format(as.POSIXct(uniqueValidFrom, origin="1970-01-01", tz="UTC"), format="%Y-%m-%dT%H:%M:%OS3Z")
+				uniqueValidTo_ISO_8601 <- format(as.POSIXct(uniqueValidTo, origin="1970-01-01", tz="UTC"), format="%Y-%m-%dT%H:%M:%OS3Z")
+				
+				# Split the intercals of each column of 'codes', but split into a list of individual rows first to comply with lapply(). This avoids the problem that apply reduces the rows of a data frame to a simple vector, making the "$" notation inapropriate:
+				codesList <- split(codes, seq_len(nrow(codes)))
+				out <- lapply(codesList, splitByValidFromValidTo, uniqueValidFrom=uniqueValidFrom, uniqueValidTo=uniqueValidTo)
+				# Rbind into a data frame:
+				temp <- do.call(rbind, out)
+				# Replace space ty underscore in sysname, peparing it for conversion to columns in a data frame:
+				temp$sysname <- gsub(" ", "_", temp$sysname)
+				# temp[order(temp$sysname, temp$validFrom),]
+				temp <- temp[order(temp$sysname, temp$validFrom_Original, decreasing=TRUE), ]
+				
+				#if(raw.out){
+				#	return(temp)
+				#}
+			
+				# Define a data frame of NAs, with the the different values of 'sysname' as columns:
+				numSysnames <- length(unique(temp$sysname))
+				platform <- as.data.frame(array(NA, dim=c(max(temp$DateInt), numSysnames)))
+				names(platform) <- unique(temp$sysname)
+				#platform <- cbind(DateInt=seq_len(nrow(platform)), platform, validFrom=uniqueValidFrom_ISO_8601, validTo=uniqueValidTo_ISO_8601)
+				platform <- cbind(platform, validFrom=uniqueValidFrom_ISO_8601, validTo=uniqueValidTo_ISO_8601, stringsAsFactors=FALSE)
+			
+				# Insert the data into the 'platform' data frame:
+				indexMatrix <- cbind(temp$DateInt, match(temp$sysname, names(platform)))
+				# Check for duplicated info for the same time interval:
+				dup <- which(duplicated(indexMatrix))
+				if(length(dup)){
+					# Keep only the data with the latest validFrom:
+					temp <- temp[-dup, , drop=FALSE]
+					warning(paste0("Platform number ", x$platformNumber, " contained duplicated information in the same time interval. Removing ", length(dup), " row(s)."))
+				}
+			
+				# Insert into the plarform data frame:
+				indexMatrix <- cbind(temp$DateInt, match(temp$sysname, names(platform)))
+				platform[indexMatrix] <- temp$value
+			}
 		}
-		# Drop elements with length 1, indicating time stamps or similar:
-		x <- x[sapply(x, length)>1]
-		lapply(x, platformExtractOne)
+		else{
+			warning(paste0("Platform with platform number ", x$platformNumber, " contained no rows."))
+			platform <- list()
+		}
+		
+		# Add the data which is not in a list and not attributes:
+		headerData <- !sapply(x, is.list) & names(x) != ".attrs"
+		platform <- as.data.frame(c(x[headerData], platform), stringsAsFactors=FALSE)
+		
+		# Special care of the nation, which is stripped for trailing whitespace:
+		platform$nation <- trimws(platform$nation, which=c("right"))
+		
+		return(platform)
 	}
-	# Function used for simplifiying taxa data into a matrix:
-	gettaxaMatrix <- function(x, name=".attrs"){
-		# Get the number of elements per taxa for the specified name:
-		Ind <- sapply(x, function(x){ temp <- x[[name]]; if(is.list(temp)) length(temp) else 1 }) # Vector
-		Ind <- rep(seq_along(Ind), Ind) # Vector
-	
-		# If the data are given as a list for each taxa, get the indices for the rows at which to insert the data in the matrix 'allMatrix':
-		numFull <- unlist(lapply(x, function(x){ temp <- x[[name]]; if(is.list(temp)) unlist(lapply(temp, length)) else length(temp) })) # Vector
-		# Get the indices to which taxa each element in all belong:
-		rowInd <- rep(seq_along(numFull), numFull) # Vector
-	
-		# Get a vector of the data for each taxa, in a list:
-		allList <- lapply(x, function(x) unlist(x[[name]])) # List
-		# Flatten the data in one vector:
-		all <- unlist(allList) # Vector
-		# Get all names:
-		allNames <- unlist(lapply(x, function(x){ temp <- x[[name]]; if(is.list(temp)) names(unlist(temp)) else names(temp) })) # Vector
-		# Get the unique names 
-		allUniqueNames <- unique(allNames)
-		# Create a matrix of NAs to be filled with the data using the indices 'rowInd' and names 'allNames':
-		allMatrix <- as.data.frame(array(NA, dim=c(max(rowInd), length(allUniqueNames))), stringsAsFactors=FALSE)
-		names(allMatrix) <- allUniqueNames
-		allMatrix[cbind(rowInd, match(allNames, allUniqueNames))] <- all
-		cbind(Ind=Ind, allMatrix)
+	getPlatform <- function(x, cores=1){
+		cat("Converting platform data to data frame...\n")
+		x <- papply(x, getPlatformOne, cores=cores)
+		# Split into individual rows for as.matrix.full() to work:
+		x <- lapply(x, function(DF) split(DF, seq_len(nrow(DF))))
+		x <- unlist(x, recursive=FALSE, use.names=FALSE)
+		x <- as.matrix_full(x)
+		x <- asNumericDataFrame(x)
+		x
 	}
-	# Convert to a data frame:
-	asNumericDataFrame <- function(data){
-		data <- as.data.frame(data, stringsAsFactors=FALSE)
-		# Convert all numeric columns to numeric, identified by no NAs when converting:
-		suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x)))) as.numeric(x) else x))
-		data <- as.data.frame(data, stringsAsFactors=FALSE)
+	
+	# Extract the relevant data from the platform reference data:
+	getTaxaOne <- function(x){
+		# Read the platformCode:
+		if(length(x$TaxaSynonyms)){
+			codes <- getElements(x$TaxaSynonyms, levels=list("synonym", NA), data.frame.out=TRUE)
+			# Split by 'preferred'', and pick the latest:
+			codes <- split(codes, codes$preferred)
+			codes <- codes[[length(codes)]]
+			
+			# Create a data frame added the validTo info:
+			codes <- list(column2ilst(codes, "name", "language"), preferred=codes$preferred[1])
+		}
+		else{
+			codes <- list()
+		}
+		
+		# Add the data which is not in a list and not attributes:
+		headerData <- !sapply(x, is.list) & names(x) != ".attrs"
+		codes <- as.data.frame(c(x[headerData], codes), stringsAsFactors=FALSE)
+		
+		return(codes)
+	}
+	getTaxa <- function(x){
+		x <- lapply(x, getTaxaOne)
+		x <- as.matrix_full(x)
+		# Add the same Ind column as in version 1:
+		x <- cbind(Ind = seq_len(nrow(x)), x)
+		x <- asNumericDataFrame(x)
+		x
 	}
 	##### <<<Internal functions #####
 	###############################
-	
-	####################################################
 	
 	
 	# Get the list of reference data types:
@@ -579,24 +811,17 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 		data <- getReferenceList(API, ver, msg=FALSE)
 		return(data)
 	}
-	##### Treat the requested type of information>>> #####
-	# A string requested to the API consists of the following parts:
-	# 1. The API specific string: "http://tomcat7.imr.no:8080/apis/nmdapi"
-	# 2. The datatype: "cruise", "reference", "biotic", "echosounder", "stox", "cruiseseries", "surveytimeseries", where the latter two may be moved to the reference data
-	# 3. Version: Such as 1 (current as of 2016-05) or 2
+	
+	# Treat the requested type of information:
 	type[1] <- tolower(type[1])
-	vesseltype <- FALSE
+	#vesseltype <- FALSE
 	if(length(intersect(type, c("v", "vessel")))){
 		type <- "platform"
-		vesseltype <- TRUE
+		simplify <- TRUE
+		#vesseltype <- TRUE
 	}
-	##### <<<Treat the requested type of information #####
-	####################################################
 	
-	################################
-	##### Get the information>>> #####
 	# Get the list of cruises:
-	#else 
 	if(type[1] %in% c("c", "cruises")){
 		warning("Returning a list of cruises will be implemented in version 2")
 	}
@@ -624,92 +849,37 @@ getNMDinfoV2 <- function(type=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi"
 		# Download the reference data:
 		URLbase <- getURLbase(API=API, type="reference", dataset=type[1], ver=ver)
 		data <- downloadXML(URLbase, msg=msg)
-		
 		# Simplify the data:
 		if(simplify){
 			if(length(data)){
-				# Remove elements with length 1, indicating time stamps and the like:
-				#data <- data[sapply(data, length)>1]
-				
-				# 
-				if("element" %in% names(data)){
-					if("text" %in% names(data[[1]])){
-						data <- sapply(data[names(data)=="element"], "[[", "text")
+				# If the reference data contains a list of data, it will in API version 2 be either 'platform' or 'taxa', which requires more elaborated extraction. If not using getElements() will suffice, since each "row" of the data represents one row in the matrix:
+				arelists <- sapply(data[[1]], is.list)
+				if(!any(arelists)){
+					data <- getElements(data, levels=list("row", NA), data.frame.out=TRUE)
+				}
+				else{
+					if(isPlatform(data)){
+						data <- getPlatform(data)
+						
+					}
+					else if(isTaxa(data)){
+						data <- getTaxa(data)
 					}
 					else{
-						data <- as.matrix_full(data[names(data)=="element"])
-					}
-					data <- asNumericDataFrame(data)
-				}
-				# Special case for platform:
-				else if("platform" %in% names(data)){
-					data <- platformExtract(data)
-					if(vesseltype){
-						# Changed to extracting all info from the latest velidTo:
-						extractLatestValidTo <- function(data){
-							if(length(data$validTo)==0){
-								return(head(data, 1))
-							}
-							latestValidTo <- tail(sort(data$validTo), 1)
-							equalToLatestValidTo <- data$validTo==latestValidTo
-							as.data.frame(t(apply(data[equalToLatestValidTo,], 2, function(x) head(x[!is.na(x)], 1))))
-						}
-						data <- lapply(data, extractLatestValidTo)
-						data <- as.matrix_full(data)
-						#data <- as.matrix_full(lapply(data, head, 1))
-						data <- asNumericDataFrame(data)
+						stop(paste0("The reference data ", type[1], " is not implemented in version 2."))
 					}
 				}
-				# Special case for taxa:
-				else if("taxa" %in% names(data)){
-					attrs <- gettaxaMatrix(data, name=".attrs")
-					synonyms <- gettaxaMatrix(data, name="taxaSynonyms")
-					data <- merge(attrs, synonyms)
-					data <- asNumericDataFrame(data)
-					
-					# Convert to one row per species, with the scientific, norwegian, english and russian name as columns:
-					# system.time(data <- getNMDinfo("taxa"))
-					# Extract the preferred:
-					data <- data[data$synonym.preferred==1, ]
-
-					# Get the first row of each 'Ind':
-					out <- data[!duplicated(data$Ind), !names(data) %in% c("synonym.language", "synonym.name", "synonym.preferred")]
-					# Make sure that 'Ind' are the row indices:
-					out <- out[order(out$Ind), ]
-
-					# Get all present values of 'synonym.language':
-					synonym.language <- unique(data$synonym.language)
-					# Create a data frame of NAs for the synonym.language, and insert present values into this data frame:
-					synonym.name <- as.data.frame(array("", dim=c(nrow(out), length(synonym.language))), stringsAsFactors=FALSE)
-					names(synonym.name) <- synonym.language
-					
-					for(this in synonym.language){
-						y <- data[data$synonym.language == this, ]
-						synonym.name[y$Ind, this] <- y[, "synonym.name"]
-					}
-
-					# Insert the columns of scientific, norwegian, english and russian names:
-					data <- cbind(out[, c("Ind", "tsn")], synonym.name, out[, !names(out) %in% c("Ind", "tsn")])
-				}
-				# Else do a basic simplification:
-				else if(is.list(data[[1]])){
-					data <- t(Reduce(cbind, data))
-					data <- asNumericDataFrame(data)
-				}
-				
-				
 			}
 		}
 	}
-	##### <<<Get the information #####
-	################################
-	data
+	
+	return(data)
 }
-#' 
+##' 
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, ...){
+getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=2, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, ...){
 	if(ver==1){
 		getNMDdataV1(cruise=cruise, year=year, shipname=shipname, serialno=serialno, tsn=tsn, datatype=datatype, dir=dir, subdir=subdir, group=group, abbrev=abbrev, subset=subset, filebase=filebase, ver=1, API=API, cleanup=cleanup, model=model, msg=msg, ow=ow, return.URL=return.URL, run=run, timeout=timeout, ...)
 	}
@@ -1211,7 +1381,12 @@ getNMDdataV1 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, ...){
+getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datatype=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, filebase="NMD", ver=list(API="2", biotic="1.4", reference="2.0"), API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, ...){
+	
+	# Assure that the API version is 2:
+	if(ver$API != 2){
+		warning("This function returns reference info from NMD API version 2. Selecting a different version is not recommended.")
+	}
 	
 	##### Internal functions: #####
 	downloadFailedWarning <- function(x, type=c("file", "sts")){
@@ -1227,8 +1402,14 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 		cbind(x[starts], x[ends])
 	}
 	# Function for getting the URL for serial number searches:
-	getURLBySerialno <- function(serialno, year, tsn=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi", ver=1){
-		paste(API, "biotic", paste0("v", ver), year[1], serialno[1], serialno[2], tsn[1], "serial", sep="/")
+	getURLBySerialno <- function(serialno, year, tsn=NULL, API="http://tomcat7.imr.no:8080/apis/nmdapi", ver=list(API="2", biotic="1.4", reference="2.0")){
+		version <- paste0("v", ver$API)
+		#query <- paste0("version=", ver$biotic)
+		out <- paste(c(API, "biotic", version, year[1], serialno[1], serialno[2], tsn[1], "serial"), collapse="/")
+		# Add the query of type version:
+		out <- addQuery(out, version=ver$biotic)
+		#out <- addQuery(out, ver=ver, type="biotic")
+		out
 	}
 	# Function for building a project path, possibly abbreviating words:
 	abbrevPath <- function(x, abbrev=FALSE){
@@ -1253,7 +1434,7 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 		gsub("//", "/", projectPaths)
 	}
 	# Function for downloading a stox project in a surveytimeseries:
-	getSurveyTimeSeriesStoXProjects <- function(sts, stsInfo, projectParts, dir, cleanup=TRUE, downloadtype="?format=zip", abbrev=FALSE, ow=NULL, run=TRUE){
+	getSurveyTimeSeriesStoXProjects <- function(sts, stsInfo, projectParts, dir, cleanup=TRUE, format="zip", abbrev=FALSE, ow=NULL, run=TRUE, ver=list(API="2", biotic="1.4", reference="2.0")){
 		# Set original and abbreviated project names:
 		projectPaths <- unlist(lapply(projectParts, abbrevPath, abbrev=abbrev))
 		if(!run){
@@ -1270,9 +1451,35 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 		for(i in seq_len(nsts)){
 			# Create the project directory:
 			suppressWarnings(dir.create(dirname(projectPaths[i]), recursive=TRUE))
-			URL <- URLencode(paste(API, "surveytimeseries", paste0("v", ver), sts, "samples", stsInfo[i,"sampleTime"], sep="/"))
+			
+			
+			
+			
+			
+			
+			
+			
+		
+		
+		
+		
+			
+			#http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/model/surveytimeseries/'STS_ID'/cruiseseries/'CS_ID'/samples/'YAER'/zip?format=zip&version=2.0
+			
+			#http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/model/surveytimeseries/1/cruiseseries/5/samples/1994/zip?format=zip&version=2.0
+			
+			#http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/model/surveytimeseries/1/cruiseseries/5/samples/1994/zip?version=2.0&format=zip
+			
+			URL <- URLencode(paste(API, "reference", paste0("v", ver$API), "model/surveytimeseries", stsInfo$STSCode, "cruiseseries", stsInfo$CSCode, "samples", stsInfo[i,"sampleTime"], "zip", sep="/"))
+			
+			
+			
+			
+			
+			#URL <- URLencode(paste(API, "surveytimeseries", paste0("v", ver$API), sts, "samples", stsInfo[i,"sampleTime"], sep="/"))
 			# Add download type:
-			URL = paste0(URL, downloadtype)
+			URL <- addQuery(URL, version=ver$reference, format=format)
+			#URL = paste0(URL, downloadtype)
 			#projectPaths[i] <- file.path(dir, paste0(abbrevWords(sts), "_", stsInfo[i,"sampleTime"]))
 			
 			# The following using onlyone=nsts==1 did not work, since typing "ya" did not continue the loop:
@@ -1302,7 +1509,7 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 	# Function for extracting URLs to a list of cruises. The conversion from the names given by 'datatype' to the names given by 'StoX_data_types' is needed to save the data in the StoX directory structure:
 	getCruiseStrings <- function(csInfo, datatype, StoX_data_types, ver, API="http://tomcat7.imr.no:8080/apis/nmdapi"){
 		# Use the search function in version 1:
-		if(ver==1){
+		if(ver$API==2){
 			# Pick out the first element of 'csInfo', since a list is always returned from getNMDinfo():
 			#cruiseURL <- apply(csInfo[[1]][,c("Cruise", "ShipName"), drop=FALSE], 1, searchNMDCruise, datatype=datatype[1])
 			cat("Searching for cruises...\n")
@@ -1420,8 +1627,8 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 	
 	# Get URLs to the cruises:
 	# Get the available cruise series and survey time series (StoX) in order to recognize the inputs:
-	cs <- getNMDinfo("cs", recursive=FALSE)
-	sts <- getNMDinfo("sts", recursive=FALSE)
+	cs <- getNMDinfoV2("cs", recursive=FALSE)
+	sts <- getNMDinfoV2("sts", recursive=FALSE)
 	#######################################
 	
 	dir <- getProjectPaths(projectName="", projectRoot=dir)$projectRoot
@@ -1493,9 +1700,10 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 	#############################################
 	if(length(cruise)==1 && cruise %in% sts){
 		# Get the matrix of stoxProjectId and sampleTime (i.e., year), and the name of the survey time series (sts):
-		sts <- getNMDinfo(c("sts", cruise))
+		sts <- getNMDinfoV2(c("sts", cruise))
 		stsInfo <- sts[[1]]
-		sts <- names(sts)
+		#sts <- names(sts)
+		sts <- cruise
 		
 		# Set the parts of the project name, one for each year:
 		nprojects <- nrow(stsInfo)
@@ -1532,7 +1740,7 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 		stsInfo <- stsInfo[subset, , drop=FALSE]
 	
 		# Download and unzip all StoX projects of the survey time series:
-		projectNames <- getSurveyTimeSeriesStoXProjects(sts=sts, stsInfo=stsInfo, projectParts=projectParts, dir=dir, cleanup=cleanup, ow=ow, abbrev=abbrev, downloadtype="?format=zip", run=run)
+		projectNames <- getSurveyTimeSeriesStoXProjects(sts=sts, stsInfo=stsInfo, projectParts=projectParts, dir=dir, cleanup=cleanup, ow=ow, abbrev=abbrev, format="zip", run=run,  ver=ver)
 		
 		###lapply(stsInfo[,"sampleTime"], getSurveyTimeSeriesStoXProject, sts=sts, dir=dir, cleanup=cleanup, downloadtype="?format=zip")
 		return(projectNames)
@@ -1544,9 +1752,11 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 	########################################
 	else if(length(cruise)==1 && cruise %in% cs){
 		# Get the matrix of stoxProjectId and sampleTime (i.e., year), and the name of the survey time series (sts):
-		cs <- getNMDinfo(c("cs", cruise))
+		cs <- getNMDinfoV2(c("cs", cruise))
 		csInfo <- cs[[1]]
 		cs <- names(cs)
+		print("cs")
+		browser()
 		cruiseMatrix <- getCruiseStrings(csInfo=csInfo, datatype=datatype, StoX_data_types=StoX_data_types, ver=ver, API=API)
 		# Discard any filebase, which is a prefix on the StoX project name:
 		filebase <- NULL
@@ -1573,7 +1783,7 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 			cruiseMatrix <- NULL
 		}
 		else{
-			cruiseMatrix <- getCruiseStrings(data.frame(Cruise=cruise, ShipName=shipname), datatype=datatype, StoX_data_types=StoX_data_types, ver=ver, API=API)
+			cruiseMatrix <- getCruiseStrings(data.frame(Cruise=cruise, ShipName=shipname), datatype=datatype, StoX_data_types=StoX_data_types, ver=ver$API, API=API)
 			yearbase <- cruiseMatrix[,StoX_data_types]
 			yearbase <- yearbase[!is.na(yearbase)]
 			if(length(yearbase)==0){
@@ -1698,54 +1908,64 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 #' @export
 #' @rdname getNMDinfo
 #' 
-downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE, method="auto", timeout=NULL){
-	URL <- URLencode(URL)
-	if(msg){
-		cat("Downloading", URL, "\n")
+downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, method="auto", timeout=NULL){
+	if(file.exists(URL)){
+		file <- URL
 	}
-	failed <- FALSE
-	if(msg){
-		used <- proc.time()[3]
+	else{
+		URL <- URLencode(URL)
+		if(msg){
+			cat("Downloading", URL, "\n")
+		}
+		failed <- FALSE
+		if(msg){
+			used <- proc.time()[3]
+		}
+		# Using rCurl there are recurring encoding problems, where the xml file is interpreted as some other than the UTF-8 encoding specified in the first line of the file (such as latin-1). Thus we test out downloading the file directly using download.file():
+		# Download to the temporary file if 'file' is missing:
+		if(length(file)==0){
+			file <- tempfile()
+		}
+		# Set the timeout if given and on windows, in which case method needs to be "internal":
+		if(.Platform$OS.type == "windows" && length(timeout)){
+			old_timeout <- getOption("timeout")
+			method <- "internal"
+			options(timeout=timeout)
+		}
+		tryCatch(download.file(URL, destfile=file, quiet=!msg, method=method), error=function(...) failed<<-TRUE)
+		# Reset timeout:
+		if(.Platform$OS.type == "windows" && length(timeout)){
+			options(timeout=old_timeout)
+		}
+		if(failed){
+			warning(paste("Non-existent URL", URLdecode(URL)))
+			return(NULL)
+		}
 	}
-	# Using rCurl there are recurring encoding problems, where the xml file is interpreted as some other than the UTF-8 encoding specified in the first line of the file (such as latin-1). Thus we test out downloading the file directly using download.file():
-	# Download to the temporary file if 'file' is missing:
-	if(length(file)==0){
-		file <- tempfile()
-	}
-	# Set the timeout if given and on windows, in which case method needs to be "internal":
-	if(.Platform$OS.type == "windows" && length(timeout)){
-		old_timeout <- getOption("timeout")
-		method <- "internal"
-		options(timeout=timeout)
-	}
-	tryCatch(download.file(URL, destfile=file, quiet=quiet, method=method), error=function(...) failed<<-TRUE)
-	# Reset timeout:
-	if(.Platform$OS.type == "windows" && length(timeout)){
-		options(timeout=old_timeout)
-	}
-	if(failed){
-		warning(paste("Non-existent URL", URLdecode(URL)))
-		return(NULL)
-	}
+	
 	# Convert to a list and output if requested:
 	if(list.out){
 		if(msg){
 			used <- proc.time()[3] - used
-			cat("Time left (rough estimate at ", toString(Sys.time()), "): ", signif(8*used, 2), " seconds\n", sep="")
+			cat("Converting to list...\n")
+			#cat("Time left (rough estimate at ", toString(Sys.time()), "): ", signif(8*used, 2), " seconds\n", sep="")
+			# 6 seems to give a closer estimate:
+			cat("Time left (rough estimate at ", toString(Sys.time()), "): ", signif(6 * used, 2), " seconds\n", sep="")
 		}
 		# Read the file:
 		x <- readChar(file, file.info(file)$size)
 		# Parse the file as XML:
 		# 2018-06-04: Added encoding="UTF-8":
 		#x <- tryCatch(xmlParse(x, asText=TRUE), error=function(...) failed<<-TRUE)
-		x <- tryCatch(xmlParse(x, asText=TRUE, encoding="UTF-8"), error=function(...) failed<<-TRUE)
+		x <- tryCatch(XML::xmlParse(x, asText=TRUE, encoding="UTF-8"), error=function(...) failed<<-TRUE)
 		if(failed){
 			warning(paste("URL" ,URLdecode(URL) ,"does not contain valid XML data (error in xmlParse())"))
 			return(NULL)
 		}
 		else{
 			# Convert to list:
-			x <- xmlToList(x)
+			# There is a possibility to speed this process up by x <- xml2::read_xml(file); x <- xml2::as_list(x), which takes 30 vs 50 sec on platform data in NMD API version 2, but the output is a bit different, with .attrs as attributes, and lists even for single valiables, such as x[[1]][[3]]$platformCodes[[2]]$sysname.
+			x <- XML::xmlToList(x)
 			if(length(x)==0){
 				warning(paste("URL" ,URLdecode(URL) ,"does not contain data (xmlToList() returning NULL)"))
 				return(NULL)
@@ -1777,19 +1997,48 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, quiet=TRUE, me
 #' @export
 #' @keywords internal
 #' 
-searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=1, API="http://tomcat7.imr.no:8080/apis/nmdapi"){
-	searchURL <- paste(API, datatype, paste0("v", ver), paste0("find?cruisenr=", cruisenrANDshipname[1], "&shipname=", cruisenrANDshipname[2]), sep="/")
+searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=list(API="2", biotic="1.4", reference="2.0"), API="http://tomcat7.imr.no:8080/apis/nmdapi"){
+	
+	# Function for extacting the URL of the cruise. In version 1 this URL was given directly, whereas in version 2 it has to be constructed from the downloaded table:
+	getCruiseString <- function(x, ver=list(API="2", biotic="1.4", reference="2.0")){
+		# Download the result from the search query:
+		browser()
+		out <- suppressWarnings(downloadXML(URLencode(x), msg=FALSE))
+		if(ver$API == 1){
+			# Version 1 returns the cruise URL directly:
+			out <- out$element$text
+		}
+		else if(ver$API == 2){
+			# In version 2 the elements of the cruise URL are given and must be combined to get the URL:
+			g <- getElements(out, levels=list("element", NA))
+			gg <- as.list(g$text)
+			names(gg) <- g$name
+			# Build the URL:
+			relativePath <- gg$path
+			APIverString <- paste0("v", ver$API)
+			query <- paste0("version=", ver[[datatype]])
+			out <- paste(API, datatype, APIverString, relativePath, "dataset", sep="/")
+			# Add datatype version:
+			out <- paste(out, query, sep="?")
+		}
+		else{
+			stop("Invalid version")
+		}
+		out
+	}
+	
+	# Get the search URL:
+	searchURL <- paste(API, datatype, paste0("v", ver$API), paste0("find?cruisenr=", cruisenrANDshipname[1], "&shipname=", cruisenrANDshipname[2]), sep="/")
 	out <- rep(NA, length(searchURL))
 	for(i in seq_along(out)){
-		temp <- suppressWarnings(downloadXML(URLencode(searchURL[i]), msg=FALSE)$element$text)
+		# Insert the cruise URL:
+		temp <- getCruiseString(x=searchURL[i], ver=ver)
 		if(length(temp)){
 			out[i] <- temp
 		}
 	}
 	out
 }
-
-
 #*********************************************
 #*********************************************
 #' Encodes and decodes NMD API strings.

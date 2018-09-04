@@ -4,8 +4,8 @@
 \alias{searchNMDCruise}
 \title{Search for a cruise given the cruise number and ship name.}
 \usage{
-searchNMDCruise(cruisenrANDshipname, datatype, ver = 1,
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi")
+searchNMDCruise(cruisenrANDshipname, datatype, ver = list(API = "2", biotic =
+  "1.4", reference = "2.0"), API = "http://tomcat7.imr.no:8080/apis/nmdapi")
 }
 \arguments{
 \item{cruisenrANDshipname}{A vector of two elements, the first being the cruise number and the second the ship name.}

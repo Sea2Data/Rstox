@@ -3,6 +3,7 @@
 \name{getNMDinfo}
 \alias{getNMDinfo}
 \alias{getNMDinfoV1}
+\alias{addQuery}
 \alias{getNMDinfoV2}
 \alias{getNMDdata}
 \alias{getNMDdataV1}
@@ -10,13 +11,15 @@
 \alias{downloadXML}
 \title{Get NMD API data and reference information}
 \usage{
-getNMDinfo(type = NULL, ver = 1,
+getNMDinfo(type = NULL, ver = 2,
   API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
   msg = FALSE, simplify = TRUE)
 
 getNMDinfoV1(type = NULL, ver = 1,
   API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
   msg = FALSE, simplify = TRUE)
+
+addQuery(URL, ...)
 
 getNMDinfoV2(type = NULL, API = "http://tomcat7.imr.no:8080/apis/nmdapi",
   ver = list(API = "2", biotic = "1.4", reference = "2.0"),
@@ -25,7 +28,7 @@ getNMDinfoV2(type = NULL, API = "http://tomcat7.imr.no:8080/apis/nmdapi",
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
   tsn = NULL, datatype = NULL, dir = NULL, subdir = FALSE,
   group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
-  ver = 1, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  ver = 2, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
   return.URL = FALSE, run = TRUE, timeout = NULL, ...)
 
@@ -40,13 +43,13 @@ getNMDdataV1(cruise = NULL, year = NULL, shipname = NULL,
 getNMDdataV2(cruise = NULL, year = NULL, shipname = NULL,
   serialno = NULL, tsn = NULL, datatype = NULL, dir = NULL,
   subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
-  filebase = "NMD", ver = 1,
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  filebase = "NMD", ver = list(API = "2", biotic = "1.4", reference =
+  "2.0"), API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
   return.URL = FALSE, run = TRUE, timeout = NULL, ...)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
-  quiet = TRUE, method = "auto", timeout = NULL)
+  method = "auto", timeout = NULL)
 }
 \arguments{
 \item{type}{A character string naming the type of information to return for the specifications given in 'spec'. Possible values are shown in the list below. Any reference data can be requested, and the names of the possible reference data are returned by running getNMDinfo():
@@ -67,6 +70,10 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{msg}{Logical: if TRUE a message is printed to the consolle stating the estimated time left for the funciton.}
 
 \item{simplify}{Logical: if TRUE simplify the data into matrices instead of complicated lists in some cases like taxa.}
+
+\item{URL}{The URL(s) to the xml data, or the path to a local XML file.}
+
+\item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
 \item{cruise}{Either the code of a cruise, such as "2015116", or the full or short name of a cruise series or survey time series. In the current version, if given as a cruise code, the parameter 'shipname' must be given as well, based on which the path to the cruise is searched for by functionallity provided by NMD. For cruises prior to the year 1995 several vessels can be linked to the same cruise code, and as of version 2 the user will by default be asked to specify which vessel(s) to specify the vessels when this occurs, instead of having to specify the cruise initially.}
 
@@ -104,15 +111,9 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).}
 
-\item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
-
-\item{URL}{The URL(s) to the xml data.}
-
 \item{list.out}{Logical: If TRUE, convert the XML data to a list (time consuming).}
 
 \item{file}{The path to a the file to which the data are saved.}
-
-\item{quiet}{Used in download.file().}
 
 \item{method}{The download method. See \code{\link{download.file}}.}
 }
@@ -134,7 +135,6 @@ g2 <- getNMDinfo("cs")
 g3 <- getNMDinfo("sts")
 # List of vessels (the first vessel per platform) and the more complicated list of platforms,
 # (where there can be several vessels per platform). These requestes may take tens of seconds:
-g4 <- getNMDinfo("v")
 g5 <- getNMDinfo("platform")
 # Get other types of information:
 g6 <- getNMDinfo("gearcondition")
@@ -145,6 +145,9 @@ g9 <- getNMDinfo("taxa")
 g9[g9$Norwegian=="torsk",]
 # And all names containing "torsk":
 g9[grep("torsk", g9$Norwegian, ignore.case=TRUE),]
+
+# Download all reference data (takes at lest 5 minutes):
+# system.time(l <- lapply(g1, getNMDinfo, msg=TRUE))
 
 # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
 # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.

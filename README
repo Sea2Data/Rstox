@@ -1,4 +1,4 @@
-# Rstox version: 1.9.1 (latest alpha, 2018-08-31)
+# Rstox version: 1.9.1 (latest alpha, 2018-09-04)
 # R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -74,6 +74,8 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # 15. Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
 
 # 16. Changed the name of baseline2eca() to getCovData(). The old function kept for backwards compatibility.
+
+# 17. Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
 
 
 

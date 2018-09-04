@@ -2477,7 +2477,7 @@ initiateRstoxEnv <- function(){
 	Definitions <- list(
 		JavaMem = JavaMem, 
 		StoXFolders = StoXFolders, 
-		NMD_data_types = StoXFolders, 
+		NMD_data_types = NMD_data_types, 
 		StoX_data_types = StoX_data_types, 
 		StoX_data_type_keys = StoX_data_type_keys, 
 		project_types = project_types, 
