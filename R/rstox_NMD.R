@@ -1814,7 +1814,7 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 			cruiseMatrix <- NULL
 		}
 		else{
-			cruiseMatrix <- getCruiseStrings(data.frame(Cruise=cruise, ShipName=shipname), datatype=datatype, StoX_data_types=StoX_data_types, ver=ver$API, API=API)
+			cruiseMatrix <- getCruiseStrings(data.frame(Cruise=cruise, ShipName=shipname), datatype=datatype, StoX_data_types=StoX_data_types, ver=ver, API=API)
 			yearbase <- cruiseMatrix[,StoX_data_types]
 			yearbase <- yearbase[!is.na(yearbase)]
 			if(length(yearbase)==0){
@@ -1834,7 +1834,6 @@ getNMDdataV2 <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, t
 	if(length(group)==0){
 		# All data in one project if 'group' is empty:
 		cruiseMatrixSplit <- list(cruiseMatrix)
-		
 		# Wrap in a list to indicate the numer of projects to generate:
 		projectParts <- list(
 			list(
@@ -2031,7 +2030,7 @@ downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, method="auto",
 searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=list(API="2", biotic="1.4", reference="2.0"), API="http://tomcat7.imr.no:8080/apis/nmdapi"){
 	
 	# Function for extacting the URL of the cruise. In version 1 this URL was given directly, whereas in version 2 it has to be constructed from the downloaded table:
-	getCruiseString <- function(x, ver=list(API="2", biotic="1.4", reference="2.0")){
+	getCruiseString <- function(x, dataSource=NULL, ver=list(API="2", biotic="1.4", reference="2.0")){
 		# Download the result from the search query:
 		out <- suppressWarnings(downloadXML(URLencode(x), msg=FALSE))
 		if(ver$API == 1){
@@ -2039,15 +2038,16 @@ searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=list(API="2", bio
 			out <- out$element$text
 		}
 		else if(ver$API == 2){
+			if(is.null(out)) return(out)
 			# In version 2 the elements of the cruise URL are given and must be combined to get the URL:
-			g <- getElements(out, levels=list("element", NA))
+			g <- getElements(out[[1]], levels=list("element", NA))
 			gg <- as.list(g$text)
 			names(gg) <- g$name
 			# Build the URL:
 			relativePath <- gg$path
 			APIverString <- paste0("v", ver$API)
-			query <- paste0("version=", ver[[datatype]])
-			out <- paste(API, datatype, APIverString, relativePath, "dataset", sep="/")
+			query <- paste0("version=", 1.4)
+			out <- paste(API, dataSource, APIverString, relativePath, "dataset", sep="/")
 			# Add datatype version:
 			out <- paste(out, query, sep="?")
 		}
@@ -2063,11 +2063,15 @@ searchNMDCruise <- function(cruisenrANDshipname, datatype, ver=list(API="2", bio
 	}
 	
 	# Get the search URL:
-	searchURL <- paste(API, datatype, paste0("v", ver$API), paste0("find?cruisenr=", cruisenrANDshipname[1], "&shipname=", cruisenrANDshipname[2]), sep="/")
+	if(ver$API == 1){
+		searchURL <- paste(API, datatype, paste0("v", ver$API), paste0("find?cruisenr=", cruisenrANDshipname[1], "&shipname=", cruisenrANDshipname[2]), sep="/")
+	}else if(ver$API == 2){
+		searchURL <- paste(API, datatype, paste0("v", ver$API), paste0("?type=findByCruise&cruisenr=", cruisenrANDshipname[1], "&shipname=", cruisenrANDshipname[2]), sep="/")
+	}
 	out <- rep(NA, length(searchURL))
 	for(i in seq_along(out)){
 		# Insert the cruise URL:
-		temp <- getCruiseString(x=searchURL[i], ver=ver)
+		temp <- getCruiseString(x=searchURL[i], dataSource=datatype[i], ver=ver)
 		if(length(temp)){
 			out[i] <- temp
 		}
