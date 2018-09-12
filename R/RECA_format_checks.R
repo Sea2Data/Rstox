@@ -107,7 +107,10 @@ check_covariates <- function(modelobject){
 #' @keywords internal
 checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   check_columns_present(agelength$DataMatrix, c("age", "realage", "part.year", "lengthCM", "samplingID", "partnumber", "partcount"))
-  check_none_missing(agelength$DataMatrix, c("lengthCM", "samplingID", "partnumber", "partcount"))
+  check_none_missing(agelength$DataMatrix, c("lengthCM", "samplingID", "partnumber"))
+  if (any(is.na(agelength$DataMatrix$partcount))){
+    stop("Missing values for partcount (derived from lengthsamplecount, lengthsampleweight and cathcweight)")
+  }
   check_data_matrix(agelength)
   check_covariates(agelength)
   if (any(is.na(agelength$AgeErrorMatrix)) || any(agelength$AgeErrorMatrix>1) || any(agelength$AgeErrorMatrix<0)){
@@ -121,7 +124,10 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
 #' @keywords internal
 checkWeightLength<-function(weightlength, landings){
   check_columns_present(weightlength$DataMatrix, c("weightKG", "lengthCM", "samplingID", "partnumber", "partcount"))
-  check_none_missing(weightlength$DataMatrix, c("lengthCM", "samplingID", "partnumber", "partcount", "weightKG"))
+  check_none_missing(weightlength$DataMatrix, c("lengthCM", "samplingID", "partnumber", "weightKG"))
+  if (any(is.na(weightlength$DataMatrix$partcount))){
+    stop("Missing values for partcount (derived from lengthsamplecount, lengthsampleweight and catchweight)")
+  }
   check_data_matrix(weightlength)
   check_covariates(weightlength)
 }
