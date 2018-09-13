@@ -1359,7 +1359,7 @@ getFunsRstox <- function(string, out="all"){
 	outFuns <- outFuns[[out]]
 	
 	# Use only the functions that exists (used for testing):
-	outFuns <- outFuns[sapply(outfuns, exists)]
+	outFuns <- outFuns[sapply(outFuns, exists)]
 	
 	return(outFuns)
 }

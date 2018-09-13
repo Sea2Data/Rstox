@@ -750,7 +750,7 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
     res=NULL
   }
   
-  formatPlot(projectname, "RECA_results", function(){plot_RECA_results_panel(rundata$runRECA$pred, prep$prepareRECA$StoxExport$biotic, ...)}, verbose=verbose, format=format, height=height, width=width, res=res, ...)
+  formatPlot(projectName, "RECA_results", function(){plot_RECA_results_panel(rundata$runRECA$pred, prep$prepareRECA$StoxExport$biotic, ...)}, verbose=verbose, format=format, height=height, width=width, res=res, ...)
   
   warning("Implement save catch matrix")
   warning("Fix defaults for units kt and mt. Consider adding lengthunits")
@@ -874,3 +874,11 @@ diagnosticsRECA <-
       res, ...)
     
   }
+
+#' Defines which plots to plot to R report for RECA
+#' @param project name
+#' @export
+plotRECA <- function(projectName){
+  plotRECAresults(projectName)
+  diagnosticsRECA(projectName)
+}
