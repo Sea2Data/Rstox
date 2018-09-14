@@ -1,4 +1,4 @@
-# Rstox version: 1.9.1 (latest alpha, 2018-09-04)
+# Rstox version: 1.9.1 (latest alpha, 2018-09-14)
 # R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -46,41 +46,45 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 
 # Release notes Rstox_1.9.1:
 
-# 1. Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
+# 1. Added support for NMD API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before getMNDinfo("v") returned only the last entry of each platform.
 
-# 2. Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
+# 2. Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
 
-# 3. Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns.
+# 3. Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
 
-# 4. Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting transects, whereas transect=NULL did. In the new version all values other than TRUE suppresses plotting transects.
+# 4. Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns.
 
-# 5. Fixed bug in getNMDinfo("platform") and getNMDinfo("v"), where the columns validFrom and validTo did not correspond to the correct platform codes/names due to a sorting of these dates.
+# 5. Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting transects, whereas transect=NULL did. In the new version all values other than TRUE suppresses plotting transects.
 
-# 6. Fixed bug in getNMDinfo, where UTF-8 encoding was ineffective (the corresponding bugfix in Version 1.3.2 was discovered to be ineffective). 
+# 6. Fixed bug in getNMDinfo("platform") and getNMDinfo("v"), where the columns validFrom and validTo did not correspond to the correct platform codes/names due to a sorting of these dates.
 
-# 7. Removed error in readStrataPolygons(), where multipolygons were not supported. Now only the first polygon of multipolygons are kept in the outputs 'lonlat' and 'lonlatAll', and all are kept in 'lonlatFull'.
+# 7. Fixed bug in getNMDinfo, where UTF-8 encoding was ineffective (the corresponding bugfix in Version 1.3.2 was discovered to be ineffective). 
 
-# 8. Changed surveyPlanner() to discard strata with zero effort, but keep those strata in the Input list for plotting.
+# 8. Removed error in readStrataPolygons(), where multipolygons were not supported. Now only the first polygon of multipolygons are kept in the outputs 'lonlat' and 'lonlatAll', and all are kept in 'lonlatFull'.
 
-# 9. Added the parameter "JavaMem" in bootstrap functions, used for setting the Java memory of each bootstrap replicate (useful to reduce memory for parallelized bootstrapping).
+# 9. Changed surveyPlanner() to discard strata with zero effort, but keep those strata in the Input list for plotting.
 
-# 10. Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
+# 10. Added the parameter "JavaMem" in bootstrap functions, used for setting the Java memory of each bootstrap replicate (useful to reduce memory for parallelized bootstrapping).
 
-# 11. Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
+# 11. Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
 
-# 12. Changed from using 'formulardato' to using 'sistefangstdato' in baseline2eca().
+# 12. Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
 
-# 13. Fixed bug in runBaseline(), where exportCSV==TRUE now implies resetting (and rerunning) the baseline.
+# 13. Changed from using 'formulardato' to using 'sistefangstdato' in baseline2eca().
 
-# 14. Changed 'covariateLink' in the output from baseline2eca() to link to the union of the covariate values in biotic and landing (and not only to landing as before). Also changed name of the thrid column of the data frames in covariateDefinition from "Value" to "Definition".
+# 14. Fixed bug in runBaseline(), where exportCSV==TRUE now implies resetting (and rerunning) the baseline.
 
-# 15. Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
+# 15. Changed 'covariateLink' in the output from baseline2eca() to link to the union of the covariate values in biotic and landing (and not only to landing as before). Also changed name of the thrid column of the data frames in covariateDefinition from "Value" to "Definition".
 
-# 16. Changed the name of baseline2eca() to getCovData(). The old function kept for backwards compatibility.
+# 16. Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
 
-# 17. Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
+# 17. Changed the name of baseline2eca() to getCovData(). The old function kept for backwards compatibility.
 
-# 18. Added support for NMD API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before getMNDinfo("v") returned only the last entry of each platform.
+# 18. Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
+
+# 19. Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a list of all cruises.
+
+# 20. Avoided strange behavior by rgeos::readWKT() on Windows, where long strings were "unable to parse" (500 charaters).
 
 
 

@@ -2,52 +2,20 @@
 % Please edit documentation in R/rstox_NMD.R
 \name{getNMDinfo}
 \alias{getNMDinfo}
-\alias{getNMDinfoV1}
-\alias{addQuery}
-\alias{getNMDinfoV2}
 \alias{getNMDdata}
-\alias{getNMDdataV1}
-\alias{getNMDdataV2}
 \alias{downloadXML}
 \title{Get NMD API data and reference information}
 \usage{
-getNMDinfo(type = NULL, ver = list(API = "2", reference = "2.0"),
+getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
   API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
-  msg = FALSE, simplify = TRUE)
-
-getNMDinfoV1(type = NULL, ver = 1,
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
-  msg = FALSE, simplify = TRUE)
-
-addQuery(URL, ...)
-
-getNMDinfoV2(type = NULL, ver = list(API = "2", biotic = "1.4", reference =
-  "2.0"), API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
   msg = FALSE, simplify = TRUE)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
-  tsn = NULL, datatype = NULL, dir = NULL, subdir = FALSE,
-  group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
-  ver = list(API = "2", biotic = "1.4", reference = "2.0"),
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
-  model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, run = TRUE, timeout = NULL, ...)
-
-getNMDdataV1(cruise = NULL, year = NULL, shipname = NULL,
-  serialno = NULL, tsn = NULL, datatype = NULL, dir = NULL,
-  subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
-  filebase = "NMD", ver = 1,
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
-  model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, run = TRUE, timeout = NULL, ...)
-
-getNMDdataV2(cruise = NULL, year = NULL, shipname = NULL,
-  serialno = NULL, tsn = NULL, datatype = NULL, dir = NULL,
-  subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
-  filebase = "NMD", ver = list(API = "2", biotic = "1.4", reference =
-  "2.0"), API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
-  model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, run = TRUE, timeout = NULL, ...)
+  tsn = NULL, dataSource = NULL, dir = NULL, subdir = FALSE,
+  group = "default", abbrev = FALSE, subset = NULL, prefix = "NMD",
+  ver = getRstoxDef("ver"), API = "http://tomcat7.imr.no:8080/apis/nmdapi",
+  cleanup = TRUE, model = "StationLengthDistTemplate", msg = TRUE,
+  ow = NULL, return.URL = FALSE, run = TRUE, timeout = NULL, ...)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
   method = "auto", timeout = NULL)
@@ -62,7 +30,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{"v"}{List of vessels, where the first line of the platform information is extracted and presented in a matrix with vessels in the rows. Use "platform" to preserve all details about the platforms/vessels}
 }}
 
-\item{ver}{The version of the API. As of 2015-05 only version 1 is available. Version 2 will include the possibility to return a list of all cruises.}
+\item{ver}{The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef2("ver", API=list(biotic=1, reference=1)).}
 
 \item{API}{The path to the API.}
 
@@ -71,10 +39,6 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{msg}{Logical: if TRUE a message is printed to the consolle stating the estimated time left for the funciton.}
 
 \item{simplify}{Logical: if TRUE simplify the data into matrices instead of complicated lists in some cases like taxa.}
-
-\item{URL}{The URL(s) to the xml data, or the path to a local XML file.}
-
-\item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
 \item{cruise}{Either the code of a cruise, such as "2015116", or the full or short name of a cruise series or survey time series. In the current version, if given as a cruise code, the parameter 'shipname' must be given as well, based on which the path to the cruise is searched for by functionallity provided by NMD. For cruises prior to the year 1995 several vessels can be linked to the same cruise code, and as of version 2 the user will by default be asked to specify which vessel(s) to specify the vessels when this occurs, instead of having to specify the cruise initially.}
 
@@ -86,7 +50,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{tsn}{The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.}
 
-\item{datatype}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datatype=NULL (default) returns all possible data.}
+\item{dataSource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. dataSource=NULL (default) returns all possible data.}
 
 \item{dir}{The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects}
 
@@ -98,7 +62,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{subset}{An integer vector giving the subset of the cruises to download in a cruise series (1 meaning the first cruise and c(2,5) cruise nr 2 and 5).}
 
-\item{filebase}{The prefix to use in the names of the StoX projects to which the data are downloaded.}
+\item{prefix}{The prefix to use in the names of the StoX projects to which the data are downloaded.}
 
 \item{cleanup}{Logical: if FALSE, zip files containing cruise series or survey time series are not deleted.}
 
@@ -111,6 +75,10 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{run}{Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).}
 
 \item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).}
+
+\item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
+
+\item{URL}{The URL(s) to the xml data, or the path to a local XML file.}
 
 \item{list.out}{Logical: If TRUE, convert the XML data to a list (time consuming).}
 

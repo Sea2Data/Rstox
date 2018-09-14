@@ -20,6 +20,8 @@ baseline2eca(projectName, biotic = "BioticCovData",
 \item{gearfactor}{Optional definition of the gearfactor covariate (not yet implemented).}
 
 \item{spatial}{Optional definition of the spatial covariate (not yet implemented).}
+
+\item{...}{Parameters passed to \code{\link{getBaseline}}.}
 }
 \value{
 A reference to the StoX Java baseline object

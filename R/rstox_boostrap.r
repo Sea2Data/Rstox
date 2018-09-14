@@ -224,8 +224,6 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' \code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
 #' \code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
 #' \code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
-#' \code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user. \cr \cr
-#' \code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'. \cr \cr
 #'
 #' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (bootstrapMethod="AcousticTrawl"), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 #'
@@ -253,7 +251,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' @param seed			The seed for the random number generator (used for reproducibility).
 #' @param cores			An integer giving the number of cores to run the bootstrapping over.
 #' @param msg			Logical: if TRUE print messages from runBaseline().
-#' @param ignore.case	Logical: If TRUE, ingore case when splitting by species category SpecCat.
+#' @param ignore.case	Logical: If TRUE ignore case in species category SpecCat.
 #' @param sorted		Should the data be sorted prior to sampling?
 #' @param JavaMem		The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores.
 #' @param ...			Used for backwards compatibility.
@@ -304,7 +302,6 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 }
 #'
 #' @export
-#' @keywords internal
 #' @rdname runBootstrap
 #'
 runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
@@ -348,7 +345,6 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 }
 #'
 #' @export
-#' @keywords internal
 #' @rdname runBootstrap
 #'
 runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
@@ -373,9 +369,8 @@ runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioti
 }
 #'
 #' @importFrom data.table rbindlist
-#' @keywords internal
-#' @export
 #' @rdname runBootstrap
+#' @export
 #'
 runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, startProcess="SweptAreaDensity", endProcess=NULL, nboot=5, seed=1, cores=1, ignore.case=TRUE, sorted=TRUE, ...){
 	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE, sample=TRUE){
@@ -473,11 +468,8 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 
 	invisible(TRUE)
 }
-#'
-#' @export
-#' @keywords internal
-#' @rdname runBootstrap
-#'
+
+# Function used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user:
 getBootstrapLevels <- function(x){
 	isNULL <- any(length(x)==0, sum(nchar(x))==0, identical(x, FALSE), is.character(x) && identical(tolower(x), "null"))
 	if(isNULL){
@@ -500,11 +492,8 @@ getBootstrapLevels <- function(x){
 		return(NULL)
 	}
 }
-#'
-#' @export
-#' @keywords internal
-#' @rdname runBootstrap
-#'
+
+# Function for gettin the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod':
 getBootstrapMethod <- function(bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, ...){
 	# Function for comparing strings:
 	strequal <- function(x, y, ignore.case=TRUE){
@@ -519,7 +508,6 @@ getBootstrapMethod <- function(bootstrapMethod="AcousticTrawl", acousticMethod=P
 	# get the bootstrap levels:
 	acousticMethod <- getBootstrapLevels(acousticMethod)
 	bioticMethod <- getBootstrapLevels(bioticMethod)
-	
 	
 	# Special care for when bootstrapMethod=="AcousticTrawl" (the default) and acousticMethod = NULL and bioticMethod = PSU~Stratum or EDSU~Stratum:
 	if(strequal(bootstrapMethod[1], "AcousticTrawl")){

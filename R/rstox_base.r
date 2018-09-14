@@ -17,7 +17,7 @@
 #' \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
 #'
 #' @param projectName   	The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.
-#' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in Definitions$StoX_data_types in the environment "RstoxEnv". Get these by getRstoxDef("StoX_data_types"). These could be given as directories, in which case all files within the directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If \code{files} has length 0 (default), no files are written to the project except the project.xml file using the specified \code{model}. If multiple projects are created, the files are copied to all projects. If given as a single URL to a zipped StoX project, the project is downloaded and unzipped, usting the 
+#' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in Definitions$StoX_data_sources in the environment "RstoxEnv". Get these by getRstoxDef("StoX_data_sources"). These could be given as directories, in which case all files within the directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If \code{files} has length 0 (default), no files are written to the project except the project.xml file using the specified \code{model}. If multiple projects are created, the files are copied to all projects. If given as a single URL to a zipped StoX project, the project is downloaded and unzipped, usting the 
 #' @param newProjectName	The name of the project to save an open project as.
 #' @param dir				The directory in which to put the project. The project is a directory holding three sub directories named "input", "output" and "process", where input, output and process files are stored.
 #' @param model   			The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (see \code{parlist}). Show available templates with createProject().
@@ -89,12 +89,12 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	#	seq_along(x) %in% unique(unlist(lapply(URLkeys, grep, x=x, fixed=TRUE)))
 	#}
 	# Function used for copying data and process file to the project:
-	getFiles <- function(files, StoX_data_types){
+	getFiles <- function(files, StoX_data_sources){
 		if(length(files)==1 && is.character(files)){
 			if(isTRUE(file.info(files)$isdir)){
 				dirs <- list.dirs(files, full.names=TRUE)
 				# Select the element with valid names:
-				valid_dirs <- tolower(basename(dirs)) %in% StoX_data_types
+				valid_dirs <- tolower(basename(dirs)) %in% StoX_data_sources
 				files <- lapply(dirs[valid_dirs], list.files, recursive=TRUE, full.names=TRUE)
 				names(files) <- tolower(basename(dirs[valid_dirs]))
 			}
@@ -102,10 +102,10 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		files
 	}
 	# Function used for copying data and process file to the project:
-	copyFilesToStoX <- function(data_types, files, dirs){
+	copyFilesToStoX <- function(data_sources, files, dirs){
 		# Select only the valid data types:
-		for(i in seq_along(data_types)){
-			x <- files[[data_types[i]]]
+		for(i in seq_along(data_sources)){
+			x <- files[[data_sources[i]]]
 			if(length(x)){
 				x <- c(x[file.info(x)$isdir %in% FALSE], list.files(x, full.names=TRUE, recursive=TRUE))
 				file.copy(x, dirs[i])
@@ -201,16 +201,17 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		project <- J("no.imr.stox.factory.FactoryUtil")$createProject(dir, thisProjectName, template)
 	
 		# Copy files to the project directory:
-		StoX_data_types <- getRstoxDef("StoX_data_types")
-		StoXdirs <- file.path(thisProjectPath, "input", StoX_data_types)
+		StoX_data_sources <- getRstoxDef("StoX_data_sources")
+		StoXdirs <- file.path(thisProjectPath, "input", StoX_data_sources)
 		# Add the process directory to allow for the project.xml file to be given in the input 'files':
-		StoX_data_types <- c(StoX_data_types, "process")	 
+		StoX_data_sources <- c(StoX_data_sources, "process")	 
 		StoXdirs <- c(StoXdirs, file.path(thisProjectPath, "process"))	 
 		
 
 		### Add the files: ####
 		# If the Test_Rstox project is to be created, add the example files, thus overriding any other files specified in the input:
 		if(identical(thisProjectName, "Test_Rstox")){
+			cat("The test project Test_Rstox is The International Ecosystem survey in the Nordic Seas in May 2016\n")
 			thisfiles <- system.file("extdata", "Test_Rstox", package="Rstox")
 		}
 		else{
@@ -218,13 +219,13 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		}
 		
 		# Get the different files:
-		thisfiles <- getFiles(thisfiles, StoX_data_types)
+		thisfiles <- getFiles(thisfiles, StoX_data_sources)
 		if(ignore.processXML){
 			thisfiles$process <- NULL
 			}
 		# Copy the files 
 		if(length(thisfiles) && is.list(thisfiles)){
-			copyFilesToStoX(StoX_data_types, thisfiles, dirs=StoXdirs)
+			copyFilesToStoX(StoX_data_sources, thisfiles, dirs=StoXdirs)
 		}
 		
 		# Save the project if no project.xml file was given. This is done in order to open the project in the next step using openProject(), which is needed to create the project environment. Here we need to the project object, since that is what we wish to save. If we used the project name, getProject() used in saveProject() would look for the project object in the project environment, which we have not created yet:
@@ -617,8 +618,8 @@ isProject <- function(projectName, subset.out=FALSE){
 	# The following is done in getProjectPaths():
 	#	1. Look for the project if given by the full path
 	#	2. Look for the project in the default root and sub directories
-	# Function for checking whether all the folders given in getRstoxEnv()$StoX_data_types are present in the directory:
-	hasStoX_data_typesOne <- function(projectName){
+	# Function for checking whether all the folders given in getRstoxEnv()$StoX_data_sources are present in the directory:
+	hasStoX_data_sourcesOne <- function(projectName){
 		suppressWarnings(projectName <- getProjectPaths(projectName)$projectPath)
 		# If the project paths do not exist:
 		if(is.na(projectName[1])){
@@ -632,7 +633,7 @@ isProject <- function(projectName, subset.out=FALSE){
 				return(TRUE)
 			}
 			else{
-				#warning(paste0("The path ", projectName, " does not contain the required folders (", paste(getRstoxEnv()$StoX_data_types, collapse=", "), ")"))
+				#warning(paste0("The path ", projectName, " does not contain the required folders (", paste(getRstoxEnv()$StoX_data_sources, collapse=", "), ")"))
 				return(FALSE)
 			}
 		}
@@ -641,8 +642,8 @@ isProject <- function(projectName, subset.out=FALSE){
 		}
 	}	
 	
-	hasStoX_data_types <- function(x, subset.out=FALSE){
-		out <- unlist(lapply(x, hasStoX_data_typesOne))
+	hasStoX_data_sources <- function(x, subset.out=FALSE){
+		out <- unlist(lapply(x, hasStoX_data_sourcesOne))
 		if(subset.out){
 			x[out]
 		}
@@ -654,15 +655,15 @@ isProject <- function(projectName, subset.out=FALSE){
 	### # Check first the 'projectName' directly (which needs to be a full path, indicated by the !dirname(projectName) %in% c(".", "", "/")):
 	### out <- FALSE
 	### if(!dirname(projectName) %in% c(".", "", "/")){
-	### 	out <- hasStoX_data_types(projectName)
+	### 	out <- hasStoX_data_sources(projectName)
 	### }
 	### # Then look for the project in the default workspace:
 	### if(!out){
-	### 	out <- hasStoX_data_types(getProjectPaths(projectName)$projectPath)
+	### 	out <- hasStoX_data_sources(getProjectPaths(projectName)$projectPath)
 	### }
 	### out
 	
-	hasStoX_data_types(projectName, subset.out=subset.out)
+	hasStoX_data_sources(projectName, subset.out=subset.out)
 }
 #' 
 #' @importFrom rJava J
@@ -734,10 +735,10 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 		out <- lapply(getRstoxDef("StoX_data_type_keys"), grep, first, ignore.case=TRUE)
 		if(sum(sapply(out, length))){
 			out <- lapply(out, function(x) files[x])
-			names(out) <- getRstoxDef("StoX_data_types")
+			names(out) <- getRstoxDef("StoX_data_sources")
 		}
 		else{
-			warning(paste0("No acoustic, biotic or landing XML files detected (using the characteristic strings ", paste(paste0("'", getRstoxDef("StoX_data_type_keys"), "'"), collapse=", "), " as identifyers for the file types ", paste(paste0("'", getRstoxDef("StoX_data_types"), "'"), collapse=", ") , ") "))
+			warning(paste0("No acoustic, biotic or landing XML files detected (using the characteristic strings ", paste(paste0("'", getRstoxDef("StoX_data_type_keys"), "'"), collapse=", "), " as identifyers for the file types ", paste(paste0("'", getRstoxDef("StoX_data_sources"), "'"), collapse=", ") , ") "))
 			out <- list()
 		}
 		
@@ -758,8 +759,8 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 		if(length(files)==1 && isTRUE(file.info(files)$isdir)){
 			dirs <- list.dirs(files, recursive=FALSE, full.names=FALSE)
 			# Get the files if given as a directory holding sub directories named "biotic", "acoustic", or "landing":
-			if(any(getRstoxDef("StoX_data_types") %in% dirs)){
-				presentDirs <- file.path(files, intersect(getRstoxDef("StoX_data_types"), dirs))
+			if(any(getRstoxDef("StoX_data_sources") %in% dirs)){
+				presentDirs <- file.path(files, intersect(getRstoxDef("StoX_data_sources"), dirs))
 				files <- lapply(presentDirs, list.files, recursive=TRUE, full.names=TRUE)
 				names(files) <- basename(presentDirs)
 				files <- files[unlist(lapply(files, length))>0]
@@ -772,7 +773,7 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 	}
 	
 	# Keep only the valid file types:
-	files <- files[getRstoxDef("StoX_data_types")]
+	files <- files[getRstoxDef("StoX_data_sources")]
 	# And only non-empty elements:
 	files <- files[sapply(files, length)>0]
 	# Expand all paths for StoX to recognize the files:
@@ -814,7 +815,7 @@ generateRScripts <- function(projectName){
 #' Updates a project with the files located in the "input" directory. Used in updateProject().
 #'
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
-#' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in StoX_data_types in the environment "RstoxEnv". Get these by get("StoX_data_types", envir=get("RstoxEnv"))). These could be given as directories, in which case all files in those directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If files has length 0 (default), the files present in the project directory are used, if already existing (requires to answer "y" when asked to overwrite the project if ow=NULL, or alternatively to set ow=TRUE).
+#' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in StoX_data_sources in the environment "RstoxEnv". Get these by get("StoX_data_sources", envir=get("RstoxEnv"))). These could be given as directories, in which case all files in those directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If files has length 0 (default), the files present in the project directory are used, if already existing (requires to answer "y" when asked to overwrite the project if ow=NULL, or alternatively to set ow=TRUE).
 #'
 #' @return A project object
 #' 
@@ -830,14 +831,14 @@ pointToStoXFiles <- function(projectName, files=NULL){
 		# Remove project path (2016-11-08):
 		gsub(projectPath, "", files, fixed=TRUE)
 	}
-	getFiles <- function(projectPath, StoX_data_types, files=NULL){
+	getFiles <- function(projectPath, StoX_data_sources, files=NULL){
 		if(length(files)==0){
-			files <- lapply(StoX_data_types, getFilesOfDataType, projectPath=projectPath)
-			names(files) <- StoX_data_types
+			files <- lapply(StoX_data_sources, getFilesOfDataType, projectPath=projectPath)
+			names(files) <- StoX_data_sources
 		}
-		if(!all(names(files) %in% StoX_data_types)){
-			warning(paste0("'files' must be a list with one or more of the names ", paste(StoX_data_types, collapse=", "), ". Each element of the list must contain a vector of file paths."))
-			files <- files[names(files) %in% StoX_data_types]
+		if(!all(names(files) %in% StoX_data_sources)){
+			warning(paste0("'files' must be a list with one or more of the names ", paste(StoX_data_sources, collapse=", "), ". Each element of the list must contain a vector of file paths."))
+			files <- files[names(files) %in% StoX_data_sources]
 		}
 		lapply(files, path.expand)
 	}
@@ -876,14 +877,14 @@ pointToStoXFiles <- function(projectName, files=NULL){
 	baseline <- openProject(projectName, out="baseline")
 	projectPath <- getProjectPaths(projectName)$projectPath
 	# Get the currently defined StoX data types:
-	StoX_data_types <- getRstoxDef("StoX_data_types")
+	StoX_data_sources <- getRstoxDef("StoX_data_sources")
 	# Get the files if not specified in the input:
-	#files <- getFiles(project$getProjectFolder(), StoX_data_types, files)
-	files <- getFiles(projectPath, StoX_data_types=StoX_data_types, files=files)
+	#files <- getFiles(project$getProjectFolder(), StoX_data_sources, files)
+	files <- getFiles(projectPath, StoX_data_sources=StoX_data_sources, files=files)
 	# Point to the files, save and return:
-	#out <- lapply(StoX_data_types, pointToStoXFilesSingle, project, files)
-	out <- lapply(StoX_data_types, pointToStoXFilesSingle, baseline=baseline, files=files)
-	names(out) <- StoX_data_types
+	#out <- lapply(StoX_data_sources, pointToStoXFilesSingle, project, files)
+	out <- lapply(StoX_data_sources, pointToStoXFilesSingle, baseline=baseline, files=files)
+	names(out) <- StoX_data_sources
 	
 	# Save the project:
 	#project$save()
@@ -1980,7 +1981,7 @@ as.matrix_full <- function(x, stringsAsFactors=FALSE){
 as.dataFrame_full <- function(x, stringsAsFactors=FALSE){
 	
 	# Scan for the field names, using names for lists and colnames if not:
-	if(is.list(x[[1]])){
+	if(!is.list(x[[1]])){
 		convertToList <- function(x){
 			if(!is.list(x)){
 				x <- as.list(x)
@@ -2318,13 +2319,22 @@ getRstoxEnv <- function(){
 #' @keywords internal
 #' @rdname getRstoxEnv
 #'
-getRstoxDef <- function(name=NULL){
+getRstoxDef <- function(name=NULL, ...){
+	# Save the optional inputs for overriding the output:
+	l <- list(...)
+	
 	if(length(name)==0){
-		getRstoxEnv()$Definitions
+		out <- getRstoxEnv()$Definitions
 	}
 	else{
-		getRstoxEnv()$Definitions[[name]]
+		out <- getRstoxEnv()$Definitions[[name]]
 	}
+	
+	l <- l[names(l) %in% names(out)]
+	if(length(l)){
+		out <- modifyList(out, l)
+	}
+	out
 }
 #' 
 #' @export
@@ -2371,8 +2381,29 @@ initiateRstoxEnv <- function(){
 	StoXFolders = c("input", "output", "process")
 	
 	# NMD and StoX defines different data types (StoX has the more general category "acoustic"):
-	NMD_data_types = c("echosounder", "biotic", "landing")
-	StoX_data_types = c("acoustic", "biotic", "landing")
+	NMD_data_sources = c("echosounder", "biotic", "landing")
+	# The implemented NMD APIs for the NMD_data_sources:
+	NMD_API_versions <- list(
+		biotic = c(1, 2), 
+		echosounder = 1, 
+		reference = c(1, 2), 
+		landing = NULL
+	)
+	
+	ver <- list(
+		API = list(
+			biotic = "2", 
+			echosouder = "1", 
+			reference = "2", 
+			landing = NA
+		),
+		reference = "2.0", 
+		biotic = "1.4",
+		echosouder = NA, 
+		landing = NA
+	)
+	
+	StoX_data_sources = c("acoustic", "biotic", "landing")
 	# The following keay strings are used to detect the data file type:
 	StoX_data_type_keys = c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel")
 	
@@ -2518,8 +2549,10 @@ initiateRstoxEnv <- function(){
 	Definitions <- list(
 		JavaMem = JavaMem, 
 		StoXFolders = StoXFolders, 
-		NMD_data_types = NMD_data_types, 
-		StoX_data_types = StoX_data_types, 
+		NMD_data_sources = NMD_data_sources, 
+		NMD_API_versions = NMD_API_versions, 
+		ver = ver, 
+		StoX_data_sources = StoX_data_sources, 
 		StoX_data_type_keys = StoX_data_type_keys, 
 		project_types = project_types, 
 		processLevels = processLevels, 
@@ -2663,6 +2696,9 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 		projectPath <- getProjectPaths(projectName=projectName, projectRoot=projectRoot)$projectPath
 	}
 	
+	# Declare the output 'ow':
+	output_ow <- ow
+	
 	# Define the path to the downloaded zip file:
 	zipPath <- paste0(projectPath, ".zip")
 	
@@ -2671,10 +2707,11 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 	if(length(projectName)){
 		if(file.exists(projectPath)){
 			temp <- getow(ow, projectPath, onlyone=onlyone, msg=msg)
+			output_ow <- temp$ow
 			# Return from the function if not overwriting:
 			if(temp$jumpToNext){
 				# Added appropriate return value as per notice from Ibrahim on 2018-02-05 (changed from FALSE to 1 (see the Value section of ?download.file) on 2018-03-01):
-				return(list(success = FALSE))
+				return(list(success = FALSE, ow = output_ow))
 			}
 		}
 	}
@@ -2695,10 +2732,11 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 		# Treat overwriting:
 		if(file.exists(projectPath)){
 			temp <- getow(ow, projectPath, onlyone=onlyone, msg=msg)
+			output_ow <- temp$ow
 			# Return from the function if not overwriting:
 			if(temp$jumpToNext){
 				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:
-				return(list(success = FALSE))
+				return(list(success = FALSE, ow = output_ow))
 			}
 		}
 	}
@@ -2716,7 +2754,7 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 		unlink(zipPath)
 	}
 	# Return download success:
-	list(success=success, projectPath=projectPath)
+	list(success=success, projectPath=projectPath, ow = output_ow)
 }
 
 
@@ -2877,9 +2915,12 @@ getSequenceToSampleFrom <- function(){
 #' @rdname getow
 #'
 getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
+	# Truncate the projectPath to have ... followed by the basename, for use in readline(), which trunkates the prompt to 256 characters:
+	projectPathTrunk <- paste0("...", basename(projectPath))
+	
 	if(length(ow)==0){
 		if(onlyone){
-			ans <- readline(paste0("Project \"", projectPath, "\" already exists. Overwrite? (y/n)\n"))
+			ans <- readline(paste0("Project \"", projectPathTrunk, "\" already exists. Overwrite? (y/n)\n"))
 			if(ans!="y"){
 				if(msg){
 					cat("Not overwriting:", projectPath, "\n")
@@ -2895,7 +2936,7 @@ getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
 			}
 		}
 		else{
-			ans <- readline(paste0("Project \"", projectPath, "\" already exists. Overwrite?\n", paste(c("\"y\": ", "\"n\": ", "\"ya\":", "\"na\":"), c("Yes", "No", "Yes to all remaining", "No to all remaining"), collapse="\n"), "\n"))
+			ans <- readline(paste0("Project \"", projectPathTrunk, "\" already exists. Overwrite?\n", paste(c("\"y\": ", "\"n\": ", "\"ya\":", "\"na\":"), c("Yes", "No", "Yes to all remaining", "No to all remaining"), collapse="\n"), "\n"))
 			# This workflow sets ow to TRUE if "ya", to FALSE if "na" (jumps to next in the for loop), does nothing if "y", and jumps to next in the for loop if "n"
 			if(ans=="ya"){
 				if(msg){
@@ -2921,7 +2962,7 @@ getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
 				jumpToNext <- FALSE
 				ow <- ow
 			}
-			else{
+			else{ # This is actually else if(ans=="n"), but for simplicity we only use else to ensure that jumpToNext is defined:
 				if(msg){
 					cat("Not overwriting:", projectPath, "\n")
 				}

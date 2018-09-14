@@ -6,8 +6,6 @@
 \alias{runBootstrap_AcousticTrawl}
 \alias{runBootstrap_SweptAreaLength}
 \alias{runBootstrap_SweptAreaTotal}
-\alias{getBootstrapLevels}
-\alias{getBootstrapMethod}
 \title{Run a bootstrap in StoX}
 \usage{
 runBootstrap(projectName, bootstrapMethod = "AcousticTrawl",
@@ -37,11 +35,6 @@ runBootstrap_SweptAreaTotal(projectName, acousticMethod = NULL,
   bioticMethod = PSU ~ Stratum, startProcess = "SweptAreaDensity",
   endProcess = NULL, nboot = 5, seed = 1, cores = 1,
   ignore.case = TRUE, sorted = TRUE, ...)
-
-getBootstrapLevels(x)
-
-getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
-  Stratum, bioticMethod = PSU ~ Stratum, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -83,7 +76,7 @@ getBootstrapMethod(bootstrapMethod = "AcousticTrawl", acousticMethod = PSU ~
 
 \item{...}{Used for backwards compatibility.}
 
-\item{ignore.case}{Logical: If TRUE, ingore case when splitting by species category SpecCat.}
+\item{ignore.case}{Logical: If TRUE ignore case in species category SpecCat.}
 }
 \value{
 list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
@@ -94,10 +87,7 @@ list with (1) the abundance by length in the orginal model, (2) the abundance by
 \code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
 \code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
 \code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
-\code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user. \cr \cr
-\code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'. \cr \cr
 }
 \details{
 Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (bootstrapMethod="AcousticTrawl"), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 }
-\keyword{internal}

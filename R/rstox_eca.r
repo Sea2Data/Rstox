@@ -10,6 +10,7 @@
 #' @param temporal		Optional definition of the temporal covariate (not yet implemented).
 #' @param gearfactor	Optional definition of the gearfactor covariate (not yet implemented).
 #' @param spatial		Optional definition of the spatial covariate (not yet implemented).
+#' @param ...			Parameters passed to \code{\link{getBaseline}}.
 #'
 #' @return A reference to the StoX Java baseline object
 #'
@@ -66,7 +67,7 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 	
 	# Define covariate processes and returned process data:
 	# covariateProcessesData <- c("temporal", "season", "gearfactor", "spatial") # Changed on 2018-08-28 according to Jira STOX-153:
-	covariateProcessesData <- c("temporal", "gearfactor", "spatial") # This is not used anywhere....
+	# covariateProcessesData <- c("temporal", "gearfactor", "spatial") # This is not used anywhere....
 	
 	# Get the baseline output:
 	### baselineOutput <- getBaseline(projectName, input=c("par", "proc"), fun=c(biotic, landing))

@@ -38,7 +38,16 @@
 #' ###lapply(xy, polyArea, input="xy")
 #' 
 #' @export
-#' @importFrom rgeos readWKT gArea
+#' @importFrom rgeos readWKT
+#' @rdname polyArea
+#' 
+readWKTSplit <- function(x, ...){
+	x <- paste(strwrap(x, ...), collapse='\r')
+	rgeos::readWKT(x)
+}
+#' 
+#' @export
+#' @importFrom rgeos gArea
 #' @importFrom sp CRS spTransform proj4string
 #' @rdname polyArea
 #' 
@@ -51,7 +60,7 @@ polyArea <- function(x, requireClosed=TRUE) {
 	x <- matrix2multipolygon(x, requireClosed=requireClosed)
 	#write(x, "~/Desktop/Aktuelt/test3.txt")
 	
-	p <- rgeos::readWKT(x)
+	p <- readWKTSplit(x)
 	# Define projection for the wkt
 	sp::proj4string(p) <- sp::CRS("+proj=longlat +ellps=WGS84")	
 	# define the proj4 definition of Lambert Azimuthal Equal Area (laea) CRS with origo in wkt center:
@@ -155,7 +164,7 @@ getMultipolygon <- function(x, drop=TRUE, data.frame.out=FALSE, requireClosed=TR
 getSpatial <- function(x){
 	if(isMatrixList(x)){
 		#x <- matrixList2multipolygon(x)
-		#x <- rgeos::readWKT(x)
+		#x <- readWKTSplit(x)
 		if(matrixListLevel(x)==1){
 			x <- sp::SpatialPolygons(list(sp::Polygons(list(sp::Polygon(x)), ID=1)))
 		}
@@ -165,7 +174,7 @@ getSpatial <- function(x){
 		}
 	}
 	else if(isMultipolygon(x)){
-		x <- rgeos::readWKT(x)
+		x <- readWKTSplit(x)
 	}
 	else if(!isSpatial(x)){
 		warning("Unrecognized input by isSpatial(), isMatrixList() or isMultipolygon(). Returned unaltered")
@@ -242,8 +251,8 @@ getProjString <- function(par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA,
 		#if(is.list(p)){
 		#	p <- getCoordsPolygon(p)
 		#}
-		p <- rgeos::readWKT(p)
-		#p <- lapply(p, rgeos::readWKT)
+		p <- readWKTSplit(p)
+		#p <- lapply(p, readWKTSplit)
 		#p[[1]]@polygons[[1]]@Polygons[[1]]@coords <- getCoordsPolygon(p)
 		#p <- p[[1]]
 		temp <- rgeos::gCentroid(p)@coords
@@ -409,7 +418,7 @@ matrixList2multipolygon <- function(x, requireClosed=TRUE){
 #' @rdname getProjString
 #' 
 multipolygon2spatial <- function(x){
-	rgeos::readWKT(x)
+	readWKTSplit(x)
 }
 #'
 #' @export
