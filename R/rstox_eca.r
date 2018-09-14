@@ -414,7 +414,7 @@ getLandings <- function(eca, ecaParameters){
 }
 
 
-#' Funciton for extracting the DataMatrix for the given variable ("age" or "weight", length is requested in both):
+#' Function for extracting the DataMatrix for the given variable ("age" or "weight", length is requested in both):
 #' @keywords internal
 getDataMatrixANDCovariateMatrix <- function(eca, vars=c("age", "yearday"), ecaParameters){
   
@@ -451,7 +451,7 @@ getDataMatrixANDCovariateMatrix <- function(eca, vars=c("age", "yearday"), ecaPa
   return(list(DataMatrix=DataMatrix, CovariateMatrix=CovariateMatrix))
 }
 
-#' Funciton for extracting the CARNeighbours and info:
+#' Function for extracting the CARNeighbours and info:
 #' @keywords internal
 getInfo<- function(eca, CovariateMatrix, ecaParameters){
   ### 3. info: ###
@@ -617,6 +617,11 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 }
 
 
+#
+# Functions for running RECA
+#
+
+
 #' Convert data to eca format and test. Save results to project data 'prepareRECA'
 #' parameters not described below are defined in eca.estimate and eca.predict
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
@@ -676,7 +681,7 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
   setProjectData(projectName=projectName, var=list(GlobalParameters=GlobalParameters, Landings=Landings, WeightLength=WeightLength, AgeLength=AgeLength, StoxExport=eca), name="prepareRECA")
 }
 
-#' run fit and prediction. Save results to project data 'runRECA'
+#' run RECA fit and prediction. Save results to project data 'runRECA'
 #' parameters not described below are defined in eca.estimate and eca.predict
 #' @param export_only if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only
 #' @export
@@ -727,6 +732,10 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   }
 }
 
+#
+# Functions for plotting data and results from RECA
+#
+
 #' Generates plots and reports from RECA prediction
 #' @param projectname name of stox project
 #' @param verbose logical, if TRUE info is written to stderr()
@@ -757,6 +766,7 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
   #save catch matrix
 }
 
+#' Generate plots for diagnosis of RECA model configuration. Compares sampling effort to fisheries along covariates selected in the model , and along some standard covariate choices if available (gear, temporal and spatial)
 #' @param projectName name of stox project
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
@@ -875,10 +885,18 @@ diagnosticsRECA <-
     
   }
 
-#' Defines which plots to plot to R report for RECA
+#' Defines which plots to plot to R report for RECA. Fails silently on errors.
 #' @param project name
 #' @export
 plotRECA <- function(projectName){
-  plotRECAresults(projectName)
-  diagnosticsRECA(projectName)
+  tryCatch({diagnosticsRECA(projectName)},
+           finally={
+           }
+  )
+  
+  tryCatch({plotRECAresults(projectName)},
+    finally={
+    }
+  )
+  
 }
