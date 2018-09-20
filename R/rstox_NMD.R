@@ -311,6 +311,10 @@ getNMDinfo <- function(type=NULL, ver=getRstoxDef("ver"), API="http://tomcat7.im
 		}
 		else if(ver$API$reference == 2){
 			x <- getElements(x, levels=list("row", NA))
+			if(!is.data.frame(x)){
+				x <- as.dataFrame_full(x)
+				x <- as.numericDataFrame(x)
+			}
 		}
 		else{
 			stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")

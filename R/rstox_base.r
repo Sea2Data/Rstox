@@ -918,6 +918,7 @@ pointToStoXFiles <- function(projectName, files=NULL){
 #' @param proc			A string vector naming processes from which data should be returned.
 #' @param par			A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.
 #' @param drop			Logical: if TRUE drop empty list elements (default).
+#' @param close			Logical: if TRUE close the project on exit of the function (for \code{getBaseline}).
 #'
 #' @return For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "outputData", "processData", where empty elements can be dropped.
 #'
@@ -1063,7 +1064,7 @@ runBaseline <- function(projectName, out=c("project", "baseline", "baseline-repo
 #' @export
 #' @rdname runBaseline
 #' 
-getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TRUE, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
+getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TRUE, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), close=FALSE, ...){
 	
 	# Locate/run the baseline object. If rerun=TRUE or if parameters are given different from the parameters used in the last baseline run, rerun the baseline, and if the :
 	#baseline <- runBaseline(projectName, startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, out="baseline", msg=msg, parlist=parlist, ...)
@@ -1124,6 +1125,11 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 			out <- out[[1]]
 		}
 	}
+	
+	if(close){
+		closeProject(projectName)
+	}
+	
 	invisible(out)
 }
 
@@ -3125,13 +3131,15 @@ rm.na <- function(x, na.rm=TRUE){
 #' 
 insertStratumpolygon <- function(Stratum, file){
 	# Convert the list of stratum polygon matrices to WKT strings:
-	if(is.list(Stratum)){
+	if(is.list(Stratum) && !is.data.frame(Stratum)){
 		wkt <- sapply(Stratum, getMultipolygon)
 		StratumNames <- names(wkt)
 	}
 	else{
 		wkt <- list(getMultipolygon(Stratum))
-		names(wkt) <- "Stratum1"
+		warning("Stratum polygons not given as a list named by the stratum names. \"Stratum1\" will be used")
+		StratumNames <- "Stratum1"
+		names(wkt) <- StratumNames
 	}
 	
 	# Get the include infor and the startum info:
@@ -3233,6 +3241,17 @@ getTransectID <- function(Log){
 	#}
 	out
 }
+#'
+#' @export
+#' @keywords internal
+#' @rdname insertToProjectXML
+#' 
+getLogStoXid <- function(Log, timevar="start_time"){
+	dateSlashTime <- gsub(" ", "/", as.character(Log[[timevar]]), fixed=TRUE)
+	log_start <- trimws(format(Log$log_start, nsmall=1))
+	Log$logStoXid <- paste(Log$cruise, log_start, dateSlashTime, sep="/")
+	Log
+}
 
 
 #*********************************************
@@ -3295,12 +3314,7 @@ papply <- function(X, FUN, ..., cores=1, outfile="", msg="Processing... "){
 
 
 
-getLogStoXid <- function(x, timevar="start_time"){
-	dateSlashTime <- gsub(" ", "/", as.character(x[[timevar]]), fixed=TRUE)
-	log_start <- trimws(format(x$log_start, nsmall=1))
-	x$logStoXid <- paste(x$cruise, log_start, dateSlashTime, sep="/")
-	x
-}
+
 
 
 # Function for extracting the parameters given in the options text string:

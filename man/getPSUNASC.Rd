@@ -5,14 +5,14 @@
 \alias{aggPSUNASC}
 \title{Get and aggregate PSUNASC. Rows are reordered.}
 \usage{
-getPSUNASC(baseline)
+getPSUNASC(projectName)
 
 aggPSUNASC(psuNASC)
 }
 \arguments{
-\item{baseline}{A StoX baseline object.}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
-\item{psuNASC}{Data frame from getPSUNASC().}
+\item{psuNASC}{Data frame as returned from from \code{getPSUNASC}.}
 }
 \value{
 A Java integer, double, or Boolean

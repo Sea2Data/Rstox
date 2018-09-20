@@ -13,7 +13,7 @@ runBaseline(projectName, out = c("project", "baseline", "baseline-report",
 getBaseline(projectName, input = c("par", "proc"), proc = "all",
   drop = TRUE, startProcess = 1, endProcess = Inf, reset = FALSE,
   save = FALSE, modelType = "baseline", msg = TRUE, exportCSV = FALSE,
-  warningLevel = 0, parlist = list(), ...)
+  warningLevel = 0, parlist = list(), close = FALSE, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -45,6 +45,8 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 \item{proc}{A string vector naming processes from which data should be returned.}
 
 \item{drop}{Logical: if TRUE drop empty list elements (default).}
+
+\item{close}{Logical: if TRUE close the project on exit of the function (for \code{getBaseline}).}
 
 \item{par}{A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.}
 }

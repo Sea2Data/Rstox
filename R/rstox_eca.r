@@ -745,6 +745,11 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
 #' @export
 plotRECAresults <- function(projectName, verbose=F, format="png", ...){
   rundata <- loadProjectData(projectName, var="runRECA")
+  
+  if(length(rundata)==0){
+   return(NULL)
+  }
+  
   prep <- loadProjectData(projectName, var="prepareRECA")
   
   if (format=="png"){
@@ -779,6 +784,11 @@ diagnosticsRECA <-
            format = "png",
            ...) {
     prep <- loadProjectData(projectName, var = "prepareRECA")
+	
+    if(length(prep)==0){
+     return(NULL)
+    }
+  
     stoxexp <- prep$prepareRECA$StoxExpor
     
     #

@@ -223,6 +223,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #' @param seed			The seed for the random number generator (used for reproducibility)
 #' @param cores			An integer giving the number of cores to run the bootstrapping over.
 #' @param saveInd		Logical: if TRUE save the imputing indices.
+#' @param ...			Unused but usd for robustness.
 #' 
 #' @return Updated list with imputed bootstrap results 
 #'
@@ -238,7 +239,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 #'
 #' @export
 #' 
-imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE){
+imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE, ...){
 	
 	# Write a dot at each iteration to a textfile:
 	#dotfile <- file.path(getProjectPaths(projectName)$RReportDir, "imputeProgress.txt")
@@ -1283,13 +1284,13 @@ runFunsRstox <- function(projectName, string, out="all", options="", all.out=FAL
 	# Run functions and return outputs:
 	if(all.out){
 		#out <- lapply(funs, function(xx) {cat("... running", xx, "...\n"); do.call(xx, c(list(projectName=projectName), dotlist))})
-		out <- lapply(funs, function(xx) do.call(xx, c(list(projectName=projectName), dotlist)))
+		out <- lapply(funs, function(xx) tryCatch({do.call(xx, c(list(projectName=projectName), dotlist))}, error=function(err) err))
 	}
 	else{
 		#out <- lapply(funs, function(xx) {cat("... running", xx, "...\n"); do.call(xx, c(list(projectName=projectName), dotlist))$filename})
-		out <- lapply(funs, function(xx) do.call(xx, c(list(projectName=projectName), dotlist))$filename)
+		out <- lapply(funs, function(xx) tryCatch({do.call(xx, c(list(projectName=projectName), dotlist))}, error=function(err) err)$filename)
+		#out <- lapply(funs, function(xx) do.call(xx, c(list(projectName=projectName), dotlist))$filename)
 	}
-	
 	
 	out <- out[unlist(lapply(out, length))>0]
 	

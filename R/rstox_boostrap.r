@@ -22,13 +22,13 @@
 #' @export
 #' @keywords internal
 #'
-bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE, JavaMem=getRstoxDef("JavaMem")){
+bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	
 	# Load Rstox if not already loaded:
 	library(Rstox)
 	setJavaMemory(JavaMem)
 	# Get the baseline object (run if not already run), as this is needed to insert biostation weighting and meanNASC values into. The warningLevel = 1 continues with a warning when the baseline encounters warnings:
-	baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1)
+	temp <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1, ...)
 	
 	# Perform sampling drawing and replacement by stratum
 	BootWeights <- data.frame()
@@ -80,7 +80,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		setNASC(projectName, "MeanNASC", meanNASC)
 	}
 	# Run the sub baseline within Java. The argument reset=TRUE is essensial to obtain the bootstrapping:
-	getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=endProcess, input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1)$outputData
+	getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=endProcess, input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, ...)$outputData
 }
 
 
@@ -118,12 +118,12 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 #' @export
 #' @keywords internal
 #'
-bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, baseline=NULL, msg=TRUE, parameters=list(), sorted=TRUE, JavaMem=getRstoxDef("JavaMem")){
+bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, parameters=list(), sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	
-	# Stop the funciton if both projectName and baseline are missing:
-	if(length(baseline)==0 && missing(projectName)){
-		stop("Either projectName or baseline must be given.")
-	}
+	### # Stop the funciton if both projectName and baseline are missing:
+	### if(length(baseline)==0 && missing(projectName)){
+	### 	stop("Either projectName or baseline must be given.")
+	### }
  
 	# Allow for inputs given in 'nboot' and 'seed' to prepare for the higher level functions bootstrapAcoustic() and runBootstrap():
 	if(length(parameters$nboot)){
@@ -154,7 +154,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	# Store the SuperIndAbundance from the original model:
 	# base.SuperIndAbundance <- getBaseline(baseline, fun="SuperIndAbundance", input=FALSE, msg=msg, drop=FALSE)$outputData$SuperIndAbundance
 	# base.SuperIndAbundance <- getBaseline(baseline, proc="SuperIndAbundance", input=FALSE, msg=msg, drop=FALSE)$outputData$SuperIndAbundance
-	base.SuperIndAbundance <- getBaseline(baseline, proc=endProcess, input=FALSE, msg=msg, drop=FALSE)$outputData[[endProcess]]
+	base.SuperIndAbundance <- getBaseline(projectName, proc=endProcess, input=FALSE, msg=msg, drop=FALSE, ...)$outputData[[endProcess]]
 	
 	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
 	availableCores = detectCores()
@@ -171,13 +171,13 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
 		cl<-makeCluster(cores)
 		# Bootstrap:
-		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, cl=cl)
+		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ..., cl=cl)
 		# End the parallel bootstrapping:
 		stopCluster(cl)
 	}
 	else{
 		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem)
+		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ...)
 	}
 	
 	
@@ -306,12 +306,13 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 #'
 runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	# Baseline and biotic assignments:
-	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
+	#temp <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE, ...)
+	#print(head(getBaseline(projectName, msg=msg, reset=TRUE, ...)$outputData$FilterAcoustic$FilterAcoustic_AcousticData_DistanceFrequency.txt$freq))
 	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Acoustic data:
-	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keept this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
-	psuNASC <- getPSUNASC(baseline=baseline)
+	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keep this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
+	psuNASC <- getPSUNASC(projectName)
 	# Warning if 'psuNASC' is not of positive length, in which case psuNASC, stratumNASC and resampledNASC are set to NULL and not written, and bootstrapMethod "SweptAreaLength" is run as a consequence of these being empty:
 	if(length(psuNASC)==0){
 		warning("bootstrapMethod was \"AcousticTrawl\", but no acoustic data recognized (empty psuNASC). bootstrapMethod changed to \"SweptAreaLength\", and this change should be applied also in the project parameters.")
@@ -319,8 +320,8 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 		resampledNASC <- NULL
 	}
 	else{
-		stratumNASC <- getNASCDistr(baseline=baseline, psuNASC=psuNASC, NASCDistr="observed")
-		resampledNASC <- getResampledNASCDistr(baseline=baseline, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(nboot=nboot, seed=seed), sorted=sorted)
+		stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="observed")
+		resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(nboot=nboot, seed=seed), sorted=sorted)
 		# Assign varialbes to the project environment:
 		setProjectData(projectName=projectName, var=psuNASC)
 		setProjectData(projectName=projectName, var=stratumNASC)
@@ -329,7 +330,7 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	
 
 	# Run bootstrap:
-	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted, JavaMem=JavaMem)
+	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...)
 
 	# Add the method specification:
 	bootstrap$bootstrapParameters$bootstrapMethod <- "AcousticTrawl"
@@ -340,7 +341,7 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	# Assign the bootstrap to the project environment:
 	setProjectData(projectName=projectName, var=bootstrap)
 	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
-	baseline <- runBaseline(projectName, reset=TRUE, msg=FALSE)
+	temp <- runBaseline(projectName, reset=TRUE, msg=FALSE, ...)
 	invisible(TRUE)
 }
 #'
@@ -349,11 +350,11 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 #'
 runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	# Baseline and biotic assignments:
-	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
+	temp <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE, ...)
 	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Run bootstrap:
-	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted, JavaMem=JavaMem)
+	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...)
 	
 	# Add the method specification:
 	bootstrap$bootstrapParameters$bootstrapMethod <- "SweptAreaLength"
@@ -364,7 +365,7 @@ runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioti
 	# Assign varialbes to the global environment for use in plotting functions. This should be changed to a local Rstox environment in the future:
 	setProjectData(projectName=projectName, var=bootstrap)
 	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
-	baseline <- runBaseline(projectName, reset=TRUE, msg=FALSE)
+	temp <- runBaseline(projectName, reset=TRUE, msg=FALSE, ...)
 	invisible(TRUE)
 }
 #'
@@ -373,7 +374,7 @@ runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioti
 #' @export
 #'
 runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, startProcess="SweptAreaDensity", endProcess=NULL, nboot=5, seed=1, cores=1, ignore.case=TRUE, sorted=TRUE, ...){
-	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE, sample=TRUE){
+	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE, sample=TRUE, ...){
 		# Function for calculating the mean density and keep the first row of a matrix:
 		MeanDensity1 <- function(y){
 			out <- y[1, , drop=FALSE]
@@ -417,7 +418,7 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	###}
 	seedV <- getSeedV(seed, nboot=nboot)
 	
-	DensityMatrix <- getBaseline(projectName, proc=startProcess, input="par")
+	DensityMatrix <- getBaseline(projectName, proc=startProcess, input="par", ...)
 	if(length(DensityMatrix$parameters[[startProcess]])==0){
 		stop(paste0("Invalid startProcess: ", startProcess))
 	}
@@ -667,7 +668,7 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 	}
 	
 	# Add stratum information:
-	output <- linkPSU2Stratum(output, projectName=projectName, psustratum=psustratum, StratumArea=StratumArea, ignore.case=ignore.case)
+	output <- linkPSU2Stratum(output, projectName=projectName, psustratum=psustratum, StratumArea=StratumArea, ignore.case=ignore.case, fill0=TRUE)
 	
 	# Apply the variance estimation:
 	output <- lapply(output, JollyHampton, na.rm=na.rm)
@@ -705,7 +706,7 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 #' @keywords internal
 #' @rdname linkPSU2Stratum
 #'
-linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, list.out=TRUE, ignore.case=TRUE, fill0=FALSE){
+linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, list.out=TRUE, ignore.case=TRUE, fill0=TRUE){
 	# Funciton for expanding the matrix by zero density for missing PSUs in the matrix:
 	fillZeros <- function(y, psustratum){
 		n <- nrow(psustratum)

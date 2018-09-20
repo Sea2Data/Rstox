@@ -6,7 +6,7 @@
 \title{Bootstrap utils.}
 \usage{
 linkPSU2Stratum(x, projectName, psustratum = NULL, StratumArea = NULL,
-  list.out = TRUE, ignore.case = TRUE, fill0 = FALSE)
+  list.out = TRUE, ignore.case = TRUE, fill0 = TRUE)
 
 checkNumPSUsInStratum(projectName)
 }
