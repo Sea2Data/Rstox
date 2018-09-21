@@ -29,7 +29,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 	setJavaMemory(JavaMem)
 	# Get the baseline object (run if not already run), as this is needed to insert biostation weighting and meanNASC values into. The warningLevel = 1 continues with a warning when the baseline encounters warnings:
 	temp <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1, ...)
-	
+		
 	# Perform sampling drawing and replacement by stratum
 	BootWeights <- data.frame()
 	# Not effective if psuNASC has length 0:
@@ -79,6 +79,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		# Update MeanNASC object in Java memory:
 		setNASC(projectName, "MeanNASC", meanNASC)
 	}
+	
 	# Run the sub baseline within Java. The argument reset=TRUE is essensial to obtain the bootstrapping:
 	getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=endProcess, input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, ...)$outputData
 }
@@ -306,8 +307,6 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 #'
 runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	# Baseline and biotic assignments:
-	#temp <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE, ...)
-	#print(head(getBaseline(projectName, msg=msg, reset=TRUE, ...)$outputData$FilterAcoustic$FilterAcoustic_AcousticData_DistanceFrequency.txt$freq))
 	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Acoustic data:
@@ -586,7 +585,9 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 		}
 		
 		# Eq (3) in Jolly and Hampton (1990), but replacing the weights w by 1:
+		# Note that if there is only one station with positive values, e.g., c(0,0, something, 0), then the cv will be 1. This can be seen by deriving the unbiased sample variance estimator s2 = sum((x-meanx)^2) / (n-1), where x1 = a and all other xi are 0, giving meanx = a/n, and s2 = meanx^2 * n. The last n cancels out in the formula below, giving cv = 1 (sd / mean):
 		VarDensityStratumFun <- function(x, varName, meanName, na.rm=TRUE){
+			# Get the number of stations:
 			n = nrow(x)
 			if(n < 2){
 				return(Inf)
