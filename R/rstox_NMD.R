@@ -1439,7 +1439,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			# Define the info needed to get the URLs:
 			cruiseInfo <- data.frame(
 				Year = getYearFromCruiseNumber(cruise), 
-				CruiseNr = cruise, 
+				# Bug fix on 2018-09-28 after comment from Ibrahim. With Cruise named CruiseNr, getPaths() did not find the cruise number:
+				# CruiseNr = cruise, 
+				Cruise = cruise, 
 				ShipName = shipname
 			)
 			# Set the download type:
@@ -1468,12 +1470,12 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 #' @rdname getNMDinfo
 #' 
 downloadXML <- function(URL, msg=FALSE, list.out=TRUE, file=NULL, method="auto", timeout=NULL){
+	failed <- FALSE
 	if(file.exists(URL)){
 		file <- URL
 	}
 	else{
 		URL <- URLencode(URL)
-		failed <- FALSE
 		# Using rCurl there are recurring encoding problems, where the xml file is interpreted as some other than the UTF-8 encoding specified in the first line of the file (such as latin-1). Thus we test out downloading the file directly using download.file():
 		# Download to the temporary file if 'file' is missing:
 		if(length(file)==0){

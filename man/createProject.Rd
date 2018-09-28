@@ -32,7 +32,7 @@ getProject(projectName, out = c("project", "baseline", "baseline-report",
 
 listOpenProjects()
 
-updateProject(projectName)
+updateProject(projectName, close = FALSE)
 
 saveProject(projectName, soft = FALSE)
 

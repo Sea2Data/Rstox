@@ -511,11 +511,11 @@ listOpenProjects <- function(){
 #' @export
 #' @rdname createProject
 #' 
-updateProject <- function(projectName){
+updateProject <- function(projectName, close=FALSE){
 	# Set the project name and the root directory of the project:
 	projectPaths <- getProjectPaths(projectName)
 	if(file.exists(projectPaths$projectPath)){
-		pointToStoXFiles(projectName)
+		pointToStoXFiles(projectName, close=close)
 		TRUE
 	}
 	else{
@@ -822,7 +822,7 @@ generateRScripts <- function(projectName){
 #' @export
 #' @keywords internal
 #' 
-pointToStoXFiles <- function(projectName, files=NULL){
+pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 	# Function used for extracting the files located in a StoX project (getFiles does lapply of getFilesOfDataType):
 	getFilesOfDataType <- function(data_type, projectPath){
 		# Get the input data folder of the specified data type, and the files in that folder:
@@ -889,7 +889,9 @@ pointToStoXFiles <- function(projectName, files=NULL){
 	# Save the project:
 	#project$save()
 	saveProject(projectName)
-	closeProject(projectName)
+	if(close){
+		closeProject(projectName)
+	}
 	
 	# Return the file paths:
 	out
@@ -2445,13 +2447,13 @@ initiateRstoxEnv <- function(){
 	ver <- list(
 		API = list(
 			biotic = "2", 
-			echosouder = "1", 
+			echosounder = "1", 
 			reference = "2", 
 			landing = NA
 		),
 		reference = "2.0", 
 		biotic = "1.4",
-		echosouder = NA, 
+		echosounder = NA, 
 		landing = NA
 	)
 	

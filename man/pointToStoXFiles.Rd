@@ -4,7 +4,7 @@
 \alias{pointToStoXFiles}
 \title{Link to the files in a stox project}
 \usage{
-pointToStoXFiles(projectName, files = NULL)
+pointToStoXFiles(projectName, files = NULL, close = FALSE)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

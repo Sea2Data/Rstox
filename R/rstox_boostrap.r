@@ -24,6 +24,10 @@
 #'
 bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	
+	
+	# NOTE: Weneed to use ... to accommodate changes in parameters in the bootstrap. This function can be run in parallel, so we cannot change the parameters before the bootstrap. However, some data are extracted from the baseline, and these will also need ..., or that the parameters are chcanged "globally":
+	
+	
 	# Load Rstox if not already loaded:
 	library(Rstox)
 	setJavaMemory(JavaMem)
@@ -155,6 +159,8 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	# Store the SuperIndAbundance from the original model:
 	# base.SuperIndAbundance <- getBaseline(baseline, fun="SuperIndAbundance", input=FALSE, msg=msg, drop=FALSE)$outputData$SuperIndAbundance
 	# base.SuperIndAbundance <- getBaseline(baseline, proc="SuperIndAbundance", input=FALSE, msg=msg, drop=FALSE)$outputData$SuperIndAbundance
+	
+	# Also here, use the ... to accommodate changes in the parameters in the bootstrap:
 	base.SuperIndAbundance <- getBaseline(projectName, proc=endProcess, input=FALSE, msg=msg, drop=FALSE, ...)$outputData[[endProcess]]
 	
 	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
@@ -278,6 +284,9 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 	}
 	### End of backwards compatibility: ###
 	
+	# Get the baseline parameters, which will be used to reset the project after the bootstrapping, since ... may contain changes in parameters:
+	parameters <- getBaselineParameters(projectName)$java
+	
 	# Run the different bootstrap types:
 	temp <- getBootstrapMethod(bootstrapMethod=bootstrapMethod, acousticMethod=acousticMethod, bioticMethod=bioticMethod, ...)
 	bootstrapMethod <- temp$bootstrapMethod
@@ -290,6 +299,9 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 	}
 	bootstrapFun <- paste("runBootstrap", bootstrapMethod, sep="_")
 	do.call(bootstrapFun, list(projectName=projectName, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...))
+	
+	# Reset to the last baseline run before the bootstrap:
+	runBaseline(projectName, parlist=parameters, out="name", reset=TRUE, msg=FALSE)
 }
 #'
 #' @export
@@ -306,12 +318,14 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 #' @rdname runBootstrap
 #'
 runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
-	# Baseline and biotic assignments:
+	# Baseline and biotic assignments. Run the baseline here with reset and optional parameter list to ensure that these are set before getPSUNASC() and getResampledNASCDistr(), which use getBaseline() with no ...:
+	temp <- runBaseline(projectName, msg=FALSE, reset=TRUE, save=TRUE, ...)
 	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Acoustic data:
 	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keep this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
-	psuNASC <- getPSUNASC(projectName)
+	psuNASC <- getPSUNASC(projectName) # WARNING: THIS FUNCTION CALLS getBaseline() WITHOUT ANY PARLIST OR ..., AND WILL THUS RETURN THE MeanNASC FOR THE CURRENT PARAMETER STATE IN JAVA MEMORY.
+	print(summary(psuNASC))
 	# Warning if 'psuNASC' is not of positive length, in which case psuNASC, stratumNASC and resampledNASC are set to NULL and not written, and bootstrapMethod "SweptAreaLength" is run as a consequence of these being empty:
 	if(length(psuNASC)==0){
 		warning("bootstrapMethod was \"AcousticTrawl\", but no acoustic data recognized (empty psuNASC). bootstrapMethod changed to \"SweptAreaLength\", and this change should be applied also in the project parameters.")
@@ -339,8 +353,9 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	
 	# Assign the bootstrap to the project environment:
 	setProjectData(projectName=projectName, var=bootstrap)
-	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
-	temp <- runBaseline(projectName, reset=TRUE, msg=FALSE, ...)
+	
+	### # Rerun the baseline to ensure that all processes are run, and return the boostraped data:
+	### temp <- runBaseline(projectName, reset=TRUE, msg=FALSE, ...)
 	invisible(TRUE)
 }
 #'
@@ -349,7 +364,7 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 #'
 runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	# Baseline and biotic assignments:
-	temp <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE, ...)
+	temp <- runBaseline(projectName, msg=FALSE, reset=TRUE, save=TRUE, ...)
 	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Run bootstrap:
@@ -363,8 +378,9 @@ runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioti
 	
 	# Assign varialbes to the global environment for use in plotting functions. This should be changed to a local Rstox environment in the future:
 	setProjectData(projectName=projectName, var=bootstrap)
-	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
-	temp <- runBaseline(projectName, reset=TRUE, msg=FALSE, ...)
+	
+	### # Rerun the baseline to ensure that all processes are run, and return the boostraped data:
+	### temp <- runBaseline(projectName, reset=TRUE, msg=FALSE, ...)
 	invisible(TRUE)
 }
 #'
