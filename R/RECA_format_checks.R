@@ -84,13 +84,23 @@ check_cov_vs_info <- function(modelobj){
     if (modelobj$info[co,"CAR"]==1){
       asymmetric_pairs <- ""
       for (i in 1:modelobj$info[co,"nlev"]){
-        neighbours_i <- modelobj$CARNeighbours$idNeighbours[(sum(modelobj$CARNeighbours$numNeighbours[1:(i-1)])):sum(modelobj$CARNeighbours$numNeighbours[1:i])]
+        last_i <- sum(modelobj$CARNeighbours$numNeighbours[1:i])
+        num_i <- modelobj$CARNeighbours$numNeighbours[i]
+        neighbours_i <- modelobj$CARNeighbours$idNeighbours[(last_i-num_i+1):last_i]
         for (j in 1:modelobj$info[co,"nlev"]){
-          neighbours_j <- modelobj$CARNeighbours$idNeighbours[(sum(modelobj$CARNeighbours$numNeighbours[1:(j-1)])):sum(modelobj$CARNeighbours$numNeighbours[1:j])]
-          ineighbourofj <- i %in% neighbours_j
+          last_j <- sum(modelobj$CARNeighbours$numNeighbours[1:j])
+          num_j <- modelobj$CARNeighbours$numNeighbours[j]
+          neighbours_j <- modelobj$CARNeighbours$idNeighbours[(last_j-num_j+1):last_j]
+
+                    ineighbourofj <- i %in% neighbours_j
           jneighbourofi <- j %in% neighbours_i
             
           if (ineighbourofj!=jneighbourofi){
+            print(ineighbourofj)
+            print(i)
+            print(neighbours_i)
+            print(j)
+            print(neighbours_j)
             asymmetric_pairs <- paste(asymmetric_pairs, " (",i,",", j, ") ", sep="")
           }
         }  
