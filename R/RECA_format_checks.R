@@ -81,6 +81,24 @@ check_cov_vs_info <- function(modelobj){
     if (modelobj$info[co,"CAR"]==1 & sum(modelobj$CARNeighbours$numNeighbours) != length(modelobj$CARNeighbours$idNeighbours)){
       stop(paste("CAR variable specified as", co, "numNeigbours is not consistent with idNeigbours"))
     }
+    if (modelobj$info[co,"CAR"]==1){
+      asymmetric_pairs <- ""
+      for (i in 1:modelobj$info[co,"nlev"]){
+        neighbours_i <- modelobj$CARNeighbours$idNeighbours[(sum(modelobj$CARNeighbours$numNeighbours[1:(i-1)])):sum(modelobj$CARNeighbours$numNeighbours[1:i])]
+        for (j in 1:modelobj$info[co,"nlev"]){
+          neighbours_j <- modelobj$CARNeighbours$idNeighbours[(sum(modelobj$CARNeighbours$numNeighbours[1:(j-1)])):sum(modelobj$CARNeighbours$numNeighbours[1:j])]
+          ineighbourofj <- i %in% neighbours_j
+          jneighbourofi <- j %in% neighbours_i
+            
+          if (ineighbourofj!=jneighbourofi){
+            asymmetric_pairs <- paste(asymmetric_pairs, " (",i,",", j, ") ", sep="")
+          }
+        }  
+      }
+      if (length(asymmetric_pairs)>0){
+        stop(paste("CAR variable specified as", co, "but neighbour matrix is not symmetric (i is neighbour of j, but not j of i, or vice versa). Asymmetric pairs: ", asymmetric_pairs))
+      }
+    }
   }
 }
 #'
