@@ -96,11 +96,6 @@ check_cov_vs_info <- function(modelobj){
           jneighbourofi <- j %in% neighbours_i
             
           if (ineighbourofj!=jneighbourofi){
-            print(ineighbourofj)
-            print(i)
-            print(neighbours_i)
-            print(j)
-            print(neighbours_j)
             asymmetric_pairs <- paste(asymmetric_pairs, " (",i,",", j, ") ", sep="")
           }
         }  
