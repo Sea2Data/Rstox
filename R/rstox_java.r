@@ -139,6 +139,9 @@ addProcesses <- function(project, processes){
 #' @keywords internal
 #' 
 JavaString2vector <- function(x){
+	if(class(x) == "jobjRef"){
+		x <- x$toString()
+	}
 	x <- gsub("[", "", x, fixed=TRUE)
 	x <- gsub("]", "", x, fixed=TRUE)
 	strsplit(x, ", ")[[1]]
@@ -348,7 +351,8 @@ getProcessDataTableAsDataFrame <- function(projectName, tableName) {
 #'
 setAssignments <- function(projectName, assignments){
 	# Get the baseline object:
-	baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE)
+	#baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE)
+	baseline <- getProject(projectName=projectName, out="baseline", msg=FALSE)
 	# Define the Java-object to modify:
 	JavaPath <- baseline$getProject()$getProcessData()$getMatrix("bioticassignment")
 	# The functions J and .jnew and other functions in the rJava package needs initialization:
@@ -363,7 +367,8 @@ setAssignments <- function(projectName, assignments){
 #'
 setNASC <- function(projectName, process="MeanNASC", data){
 	# Get the baseline object:
-	baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE)
+	#baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE)
+	baseline <- getProject(projectName=projectName, out="baseline", msg=FALSE)
 	# Define the Java-object to modify:
 	JavaPath <- baseline$findProcessByFunction(process)$getOutput()$getData()
 	# The functions J and .jnew and other functions in the rJava package needs initialization:

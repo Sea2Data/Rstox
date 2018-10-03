@@ -5,8 +5,8 @@
 #' \code{getPSUNASC} gets a joined table with meanNASC, psu, stratum, and area. I.e., reads transect data, strata and area information from baseline Java object and merges them into one data frame. \cr \cr
 #' \code{aggPSUNASC} aggregates psuNASC Layer to PELBOT. Used within functions when resampling and rescaling NASC values if Layer!=PELBOT. \cr \cr
 #' 
-#' @param baseline	A StoX baseline object.
-#' @param psuNASC	Data frame from getPSUNASC().
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param psuNASC		Data frame as returned from from \code{getPSUNASC}.
 #'
 #' @return A Java integer, double, or Boolean
 #' \code{getPSUNASC} returns psuNASC Data frame with mean NASC (Value) per transect (PSU) and Layer together with strata area \cr 
@@ -20,29 +20,23 @@
 #' @keywords internal
 #' @rdname getPSUNASC
 #'
-getPSUNASC <- function(baseline){
+getPSUNASC <- function(projectName){
 	
-	#psuNASC <- getDataFrame1(baseline, 'MeanNASC')
-	### psuNASC <- getBaseline(baseline, fun="MeanNASC", input=FALSE, msg=FALSE)
-	psuNASC <- getBaseline(baseline, proc="MeanNASC", input=FALSE, msg=FALSE)
+	psuNASC <- getBaseline(projectName, proc="MeanNASC", input=FALSE, msg=FALSE)
 	# Test the presence of acoustic data:
 	if(length(psuNASC)==0){
-		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(baseline)$projectName, "\""))
+		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(projectName)$projectName, "\""))
 		return(NULL)
 	}
 	
-	#psuStratum <- getProcessDataTableAsDataFrame(baseline, 'proc')
-	psuStratum <- getBaseline(baseline, input="psustratum", proc=FALSE, msg=FALSE)
+	psuStratum <- getBaseline(projectName, input="psustratum", proc=FALSE, msg=FALSE)
 	
 	# Filter psu/stratum by includeintotal flag in table stratumpolygon.
-	#stratumPolygon <- getProcessDataTableAsDataFrame(baseline, 'stratumpolygon')
-	stratumPolygon <- getBaseline(baseline, input="stratumpolygon", proc=FALSE, msg=FALSE)
+	stratumPolygon <- getBaseline(projectName, input="stratumpolygon", proc=FALSE, msg=FALSE)
 	inclStrata <- stratumPolygon[stratumPolygon$IncludeInTotal %in% TRUE, c("Stratum")]
 	psuStratum <- psuStratum[psuStratum$Stratum %in% inclStrata,]
 	
-	#stratumArea <- getDataFrame1(baseline, 'StratumArea')
-	### stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
-	stratumArea <- getBaseline(baseline, proc="StratumArea", input=FALSE, msg=FALSE)
+	stratumArea <- getBaseline(projectName, proc="StratumArea", input=FALSE, msg=FALSE)
 	# Added a warning if SampleUnitType is not set to PSU, but rahter EDSU:
 	if(!any(tolower(psuNASC$SampleUnitType) == "psu")){
 		warning("getPSUNASC() requires SampleUnit to be PSU in the baseline.")
@@ -107,7 +101,7 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #'
 #' Calculates mean and variance of NASC, based on Jolly & Hampton 1990 http://www.nrcresearchpress.com/doi/pdf/10.1139/f90-147
 #' 
-#' @param baseline	StoX Java baseline object.
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param psuNASC	MeanNASC table from baseline.
 #' @param NASCDistr	Assumed distribution of mean NASC values, "normal", "lognormal", "gamma", or "weibull" ("normal" is default).
 #' 
@@ -121,16 +115,14 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #' @keywords internal
 #' @export
 #' 
-getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
+getNASCDistr <- function(projectName, psuNASC, NASCDistr="observed"){
 	# Test the presence of acoustic data:
 	if(length(psuNASC)==0){
-		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(baseline)$projectName, "\""))
+		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(projectName)$projectName, "\""))
 		return(NULL)
 	}
 	
-	#stratumArea <- getDataFrame1(baseline, 'StratumArea')
-	### stratumArea <- getBaseline(baseline, fun="StratumArea", input=FALSE, msg=FALSE)
-	stratumArea <- getBaseline(baseline, proc="StratumArea", input=FALSE, msg=FALSE)
+	stratumArea <- getBaseline(projectName, proc="StratumArea", input=FALSE, msg=FALSE)
 	names(stratumArea)[1] <- "Stratum"
 	tmp <- psuNASC
 	if(psuNASC$LayerType[1]!="WaterColumn") {
@@ -179,7 +171,7 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #'
 #' Generates resampled NASC distribution.
 #'
-#' @param baseline		StoX Java baseline object.
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param psuNASC		MeanNASC table from baseline.
 #' @param stratumNASC	Strata NASC estimates from getNASCDistr(baseline).
 #' @param parameters	Parameters set by user in Stox;
@@ -199,10 +191,10 @@ getNASCDistr <- function(baseline, psuNASC, NASCDistr="observed"){
 #' @keywords internal
 #' @export
 #' 
-getResampledNASCDistr <- function(baseline, psuNASC, stratumNASC, parameters, sorted=TRUE){
+getResampledNASCDistr <- function(projectName, psuNASC, stratumNASC, parameters, sorted=TRUE){
 	# Test the presence of acoustic data:
 	if(length(psuNASC)==0){
-		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(baseline)$projectName, "\""))
+		warning(paste0("Process with function MeanNASC missing in project \"", getProjectPaths(projectName)$projectName, "\""))
 		return(NULL)
 	}
 	

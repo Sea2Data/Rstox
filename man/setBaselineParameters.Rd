@@ -18,7 +18,7 @@ readBaselineParameters(projectName, rver = "1")
 
 getBaselineParameters(projectName, out = "all")
 
-modifyBaselineParameters(parameters, parlist = list(), ...)
+modifyBaselineParameters(projectName, parameters, parlist = list(), ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

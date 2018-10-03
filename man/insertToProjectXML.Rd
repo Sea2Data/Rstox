@@ -8,6 +8,7 @@
 \alias{insertBioticassignment}
 \alias{insertToProjectXML}
 \alias{getTransectID}
+\alias{getLogStoXid}
 \title{Modify a StoX project.xml file directly.}
 \usage{
 insertStratumpolygon(Stratum, file)
@@ -23,6 +24,8 @@ insertBioticassignment(Stations, file)
 insertToProjectXML(insert, type, file)
 
 getTransectID(Log)
+
+getLogStoXid(Log, timevar = "start_time")
 }
 \arguments{
 \item{Stratum}{A data.frame with column names "longitude" and "latitude" giving the stratum polygon, or a list of these, named by the stratum names.}

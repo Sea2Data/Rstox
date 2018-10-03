@@ -654,6 +654,8 @@ Added the function readBaselineFiles().
 
 ########## Version 1.9.1 (2018-04-19) ##########
 
+Added support for NMD API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before getMNDinfo("v") returned only the last entry of each platform.
+
 Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
 
 Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
@@ -688,13 +690,17 @@ Changed the name of baseline2eca() to getCovData(). The old function kept for ba
 
 Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
 
-Added support for NMD API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before getMNDinfo("v") returned only the last entry of each platform.
-
 Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a list of all cruises.
+
+Avoided strange behavior by rgeos::readWKT() on Windows, where long strings were "unable to parse" (500 charaters).
+
+Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process.
 
 
 ########## Version 1.10 (2018-07-06) ##########
 
+Added support for NMD API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before getMNDinfo("v") returned only the last entry of each platform.
+
 Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
 
 Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
@@ -729,8 +735,9 @@ Changed the name of baseline2eca() to getCovData(). The old function kept for ba
 
 Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
 
-Added support for NMD API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before getMNDinfo("v") returned only the last entry of each platform.
-
 Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a list of all cruises.
 
+Avoided strange behavior by rgeos::readWKT() on Windows, where long strings were "unable to parse" (500 charaters).
+
+Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process.
 

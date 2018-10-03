@@ -7,7 +7,7 @@
 bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
   stratumNASC = NULL, resampledNASC = NULL,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seedV = NULL, sorted = TRUE, JavaMem = getRstoxDef("JavaMem"))
+  seedV = NULL, sorted = TRUE, JavaMem = getRstoxDef("JavaMem"), ...)
 }
 \arguments{
 \item{i}{The boostrap iteration number.}
