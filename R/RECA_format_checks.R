@@ -92,7 +92,7 @@ check_cov_vs_info <- function(modelobj){
           num_j <- modelobj$CARNeighbours$numNeighbours[j]
           neighbours_j <- modelobj$CARNeighbours$idNeighbours[(last_j-num_j+1):last_j]
 
-                    ineighbourofj <- i %in% neighbours_j
+          ineighbourofj <- i %in% neighbours_j
           jneighbourofi <- j %in% neighbours_i
             
           if (ineighbourofj!=jneighbourofi){
@@ -100,7 +100,7 @@ check_cov_vs_info <- function(modelobj){
           }
         }  
       }
-      if (length(asymmetric_pairs)>0){
+      if (nchar(asymmetric_pairs)>0){
         stop(paste("CAR variable specified as", co, "but neighbour matrix is not symmetric (i is neighbour of j, but not j of i, or vice versa). Asymmetric pairs: ", asymmetric_pairs))
       }
     }
