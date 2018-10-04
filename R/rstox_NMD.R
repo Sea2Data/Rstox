@@ -27,9 +27,9 @@
 #' @param dataSource			The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. dataSource=NULL (default) returns all possible data.
 #' @param dir					The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects
 #' @param subdir				Either a name of the sub directory in which to put the StoX projects of downloaded data, or TRUE which puts all projects in a sub folder named after the cruise series or survey time series. 
-#' @param group					Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is NULL, all data are saved in one StoX project. The default "default" groups by years if several cruises are requested and by cruise otherwise.
-#' @param abbrev				Logical: If TRUE, abbreviate the project names. PArticularly useful when downloading survey time series, which can have long names.
-#' @param subset				An integer vector giving the subset of the cruises to download in a cruise series (1 meaning the first cruise and c(2,5) cruise nr 2 and 5).
+#' @param group					Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is "all", NULL or NA, all data are saved in one StoX project. Abbreviations are accepted (e.g., group="c"). The default "default" groups by years if several cruises are requested and by cruise otherwise. The projects generated from the downloaded data are named differently depending on the grouping, with, e.g., the suffixes "_Year_2004"/"_CruiseNumber_2004204_ShipName_Johan Hjort"/"_Alldata" for group = "year"/"cruise"/"all". This implies that the projects downloaded using group = "year" are not replaced when using group = "cruise", even if there is only one cruise per year.
+#' @param abbrev				Logical: If TRUE, abbreviate the project names. Particularly useful when downloading survey time series, which can have long names.
+#' @param subset				An vector giving the subset of the cruises/projects to download in a cruise series/survey time series. Can be given either as indices such as 1:3 or -4 or as a vector of years or cruise numbers such as c(2005, 2007, 2008) or c(2005105, 2007845, 2008809). Get the years and cruise numbers using getNMDinfo("cs").
 #' @param prefix				The prefix to use in the names of the StoX projects to which the data are downloaded.
 #' @param cleanup				Logical: if FALSE, zip files containing cruise series or survey time series are not deleted.
 #' @param model					The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (not yet implemented). Show available templates with createProject().
@@ -773,21 +773,22 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	}
 	# Function for defining the default grouping. If only one cruise is requested, this is grouped by cruise, implying that it will have "CruiseNumber_THECRUISENUMBER" as suffix:
 	getGroup <- function(cruiseInfo, group){
-		if(is.na(group) || length(group)==0){
-			group <- NA
+		#if(is.na(group) || length(group)==0){
+		if(any(is.na(group), length(group)==0, startsWith(tolower(group), "a"), na.rm=TRUE)){
+			group <- "all"
 		}
 		# Apply the default, which is by cruise if only one cruise is requested, and by year if not:
-		else if(tolower(substr(group, 1, 1))=="d"){
+		else if(startsWith(tolower(group), "d")){
 			if(nrow(cruiseInfo)==1){
-				group = "c"
+				group = "cruise"
 			}
 			else{
-				group = "y"
+				group = "year"
 			}
 		}
 		# Force grouping by cruise if only one cruise is requested, implying that these will be a suffix for cruise number and ship name in the StoX project name:
 		else if(nrow(cruiseInfo)==1){
-			group = "c"
+			group = "cruise"
 		}
 		
 		cruiseInfo$group <- group
@@ -806,14 +807,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		out <- lapply(seq_along(l), function(i) paste(names(l)[i], l[[i]], sep="_"))
 		out <- as.data.frame(out, stringsAsFactors=FALSE)
 		out <- apply(out, 1, paste, collapse="_")
-		#
-		#
-		#print("getSuffix")
-		#browser()
-		#l <- cbind(names(l), unlist(l))
-		#l <- c(t(l))
-		#l <- paste(l, collapse="_")
-		#l
 		out
 	}
 	# Function for constructing an xml file name from the NMD convension (dataSource_"cruiseNumber"_CruiseNumber_ShipName.xml):
@@ -841,12 +834,12 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	# Function for adding the project ID by which the cruises are grouped, as defeined by the 'group' parameter:
 	getProjectID <- function(cruiseInfo){
 		# Get the group variable from the 'cruiseInfo':
-		group <- cruiseInfo	$group[1]
-		if(nrow(cruiseInfo) == 1 || is.na(group)){
+		group <- cruiseInfo$group[1]
+		if(nrow(cruiseInfo) == 1 || startsWith(tolower(group), "a")){
 			cruiseInfo$ProjectID <- 1
 		}
 		else{
-			if(tolower(substr(group, 1, 1))=="y"){
+			if(startsWith(tolower(group), "y")){
 				cruiseInfo$ProjectID <- cruiseInfo$Year
 			}
 			else{
@@ -878,11 +871,11 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			subdir <- getSubdir(subdir, name, nprojects=NA)	
 		}
 		
-		
+		# Get cruise number and ship name of cruise series or single cruises:
 		if(tolower(downloadType[1]) %in% c("cs", "c")){
 			# Get the first cruise number of each project, which coincides with all cruise numbers, since this is only used when group=="c" or tolower(downloadType[1]) == "c":
 			CruiseNumber <- sapply(infoList, "[[", "Cruise")
-			# Likewise with the 
+			# Likewise with the ship name:
 			ShipName <- sapply(infoList, "[[", "ShipName")
 			# Pick out the first of the group values, since all these are identical:
 			group <- infoList[[1]]$group[1]
@@ -890,7 +883,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			## The data source values is reflected in the names of the URL columns of the elements of infoList (columns other than 'Year', 'Cruise', 'ShipName'):
 			#dataSource <- names(infoList[[1]])[-(1:3)]
 		}
-		
 		
 		# Different suffix definitions for each type of download:
 		if(tolower(downloadType[1]) == "serialno"){
@@ -910,16 +902,16 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		}
 		else if(tolower(downloadType[1]) == "cs"){
 			# Cruise series <ed by year gets Year in the suffix:
-			if(identical(group, "y")){
+			if(startsWith(tolower(group), "y")){
 				# Interpret the year from the cruise number:
 				suffix <- getSuffix(Year=getYearFromCruiseNumber(CruiseNumber))
 			}
 			# Cruise series grouped by cruise gets the same suffix as single cruises:
-			else if(identical(group, "c")){
+			else if(startsWith(tolower(group), "c")){
 				suffix <- getSuffix(CruiseNumber=CruiseNumber, ShipName=ShipName)
 			}
 			# Use "All" as suffix when all cruises are grouped together:
-			else if(is.na(group)){
+			else if(startsWith(tolower(group), "a")){
 				suffix <- "Alldata"
 				subdir <- NA
 			}
@@ -1175,6 +1167,31 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		# Return the projectPaths, where those not downloaded are represented by NA:
 		invisible(projectPaths)
 	}
+	
+	getSubset <- function(subset, nprojects, info){
+		if(length(subset) == 0){
+			subset = seq_len(nprojects)
+		}
+		else{
+			# Check whether the subset is a STS sampleTime:
+			if(all(nchar(subset) > 3) && any(subset %in% info[, "sampleTime"])){
+				subset <- which(subset == info[, "sampleTime"])
+			}
+			# Check whether the subset is a year or cruise code:
+			else if(all(nchar(subset) > 3) && any(subset %in% names(info))){
+				subset <- which(subset == names(info))
+			}
+			# Otherwise, restrict 'subset' to the range of projects:
+			else{
+				subset = subset[subset>=1 & subset<=nprojects]
+			}
+			if(length(subset)==0){
+				warning("The value of 'subset' excluded all projects (or for cruise series, years or cruises, or all data grouped in one project if group = NULL, NA or 'all')")
+				return(NULL)
+			}
+		}
+		subset
+	}
 	# Function for downloading a surveytimeseries:
 	getSurveyTimeSeries <- function(cruise, dir, subdir, subset, cleanup, ow, abbrev, run, ver){
 		# Get the matrix of stoxProjectId and sampleTime (i.e., year), and the name of the survey time series (sts):
@@ -1194,22 +1211,24 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		nprojects <- length(projectPathElements)
 		
 		# Select all or some of the projects:
-		if(length(subset)==0){
-			subset = seq_len(nprojects)
-		}
-		else{
-			if(all(nchar(subset) > 3) && any(subset %in% stsInfo[, "sampleTime"])){
-				subset <- which(subset == stsInfo[, "sampleTime"])
-			}
-			# Otherwise, restrict 'subset' to the range of projects:
-			else{
-				subset = subset[subset>=1 & subset<=nprojects]
-			}
-			if(length(subset)==0){
-				warning("The value of 'subset' excluded all years")
-				return(NULL)
-			}
-		}
+		#if(length(subset)==0){
+		#	subset = seq_len(nprojects)
+		#}
+		#else{
+		#	if(all(nchar(subset) > 3) && any(subset %in% stsInfo[, "sampleTime"])){
+		#		subset <- which(subset == stsInfo[, "sampleTime"])
+		#	}
+		#	# Otherwise, restrict 'subset' to the range of projects:
+		#	else{
+		#		subset = subset[subset>=1 & subset<=nprojects]
+		#	}
+		#	if(length(subset)==0){
+		#		warning("The value of 'subset' excluded all years")
+		#		return(NULL)
+		#	}
+		#}
+		subset <- getSubset(subset, nprojects=nprojects, info=stsInfo)
+			
 		projectPathElements <- projectPathElements[subset]
 		stsInfo <- stsInfo[subset, , drop=FALSE]
 	
@@ -1236,18 +1255,23 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		out
 	}
 	# Function for downloading cruises:
-	getCruises <- function(cruiseInfo,  model="StationLengthDistTemplate", dir=NA, subdir=NA, name=NA, prefix=NA, year=NA, dataSource=NA, ow=NULL, abbrev=FALSE, timeout=NULL, ...){
+	getCruises <- function(cruiseInfo,  model="StationLengthDistTemplate", dir=NA, subdir=NA, subset=NULL, prefix=NA, year=NA, dataSource=NA, ow=NULL, abbrev=FALSE, timeout=NULL, ...){
 		
 		#projectPathElements, cruiseMatrixSplit, StoX_data_sources, model="StationLengthDistTemplate", ow=NULL, abbrev=FALSE, run=TRUE, ...){
 		
 		# First split the cruiseInfo by project ID:
 		cruiseInfoList <- split(cruiseInfo, cruiseInfo$ProjectID)
+		nprojects <- length(cruiseInfoList)
 		
-		# Define the project names:
+		# Extract subset:
+		subset <- getSubset(subset, nprojects=nprojects, info=cruiseInfoList)
+		cruiseInfoList <- cruiseInfoList[subset]
+		
+		# Define the project names (original and possibly abbreviated):
+		projectPathsOrig <- getPaths(downloadType=downloadType, dir=dir, subdir=subdir, name=cruise, prefix=prefix, year=year, infoList=cruiseInfoList, abbrev=FALSE, dataSource=dataSource, StoX_data_sources=StoX_data_sources)$projectPaths
 		temp <- getPaths(downloadType=downloadType, dir=dir, subdir=subdir, name=cruise, prefix=prefix, year=year, infoList=cruiseInfoList, abbrev=abbrev, dataSource=dataSource, StoX_data_sources=StoX_data_sources)
 		projectPaths <- temp$projectPaths
 		filePaths <- temp$filePaths
-		projectPathsOrig <- getPaths(downloadType=downloadType, dir=dir, subdir=subdir, name=cruise, prefix=prefix, year=year, infoList=cruiseInfoList, abbrev=FALSE, dataSource=dataSource, StoX_data_sources=StoX_data_sources)$projectPaths
 		
 		
 		### # Get project names and create the projects:
@@ -1457,7 +1481,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		cruiseInfo <- getProjectID(cruiseInfo)
 		
 		# Download the cruises:
-		out <- getCruises(cruiseInfo,  model=model, dir=dir, subdir=subdir, name=cruise, prefix=prefix, dataSource=dataSource, ow=ow, abbrev=abbrev, timeout=timeout, ...)
+		out <- getCruises(cruiseInfo,  model=model, dir=dir, subdir=subdir, subset=subset, prefix=prefix, dataSource=dataSource, ow=ow, abbrev=abbrev, timeout=timeout, ...)
 		
 		# Return the project paths:
 		return(out)

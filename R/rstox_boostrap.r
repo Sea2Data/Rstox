@@ -325,7 +325,6 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	# Acoustic data:
 	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keep this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
 	psuNASC <- getPSUNASC(projectName) # WARNING: THIS FUNCTION CALLS getBaseline() WITHOUT ANY PARLIST OR ..., AND WILL THUS RETURN THE MeanNASC FOR THE CURRENT PARAMETER STATE IN JAVA MEMORY.
-	print(summary(psuNASC))
 	# Warning if 'psuNASC' is not of positive length, in which case psuNASC, stratumNASC and resampledNASC are set to NULL and not written, and bootstrapMethod "SweptAreaLength" is run as a consequence of these being empty:
 	if(length(psuNASC)==0){
 		warning("bootstrapMethod was \"AcousticTrawl\", but no acoustic data recognized (empty psuNASC). bootstrapMethod changed to \"SweptAreaLength\", and this change should be applied also in the project parameters.")

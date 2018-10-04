@@ -72,6 +72,8 @@ generateRScripts(projectName)
 
 \item{out}{One of "project", "baseline" or "name" (project name), specifying the output.}
 
+\item{close}{Logical: If TRUE, close the project after updating file paths (used in \code{updateProject}).}
+
 \item{soft}{Logical: If TRUE, do not save the current javaParameters to the savedParameters field in the project environment (used in saveasProject()).}
 
 \item{newProjectName}{The name of the project to save an open project as.}

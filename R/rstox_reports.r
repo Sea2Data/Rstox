@@ -410,14 +410,16 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 	units <- list(
 		c( "ones", "tens", "hundreds", "thousands", "millions", "billions", "trillions" ),
 		c( "ones", "tens", "hundreds", "thousands", "millions", "billions", "trillions" ),
-		c( "micrograms", "milligrams", "grams", "hectograms", "kilograms", "tonnes" , "thousandtonnes" , "milliontonnes" ),
+		#c( "micrograms", "milligrams", "grams", "hectograms", "kilograms", "tonnes" , "thousandtonnes" , "milliontonnes" ),
+		c( "micrograms", "milligrams", "grams", "hectograms", "kilograms", "tonnes" , "kilotonnes" , "megatonnes" ),
 		c( "micrometers", "millimeters", "centimeters", "decimeters", "meters", "kilometers" ),
 		c( "microseconds", "milliseconds", "seconds", "minutes", "hours", "days" ) )[implemented]
 	names(units) <- Rstox_var
 	abbrev <- list(
 		c( "1", "10", "100", "1000", "1e6", "1e9", "1e12" ),
 		c( "1", "10", "100", "1000", "1e6", "1e9", "1e12" ),
-		c( "mcg", "mg", "g", "hg", "kg", "t" , "tt" , "mt" ),
+		#c( "mcg", "mg", "g", "hg", "kg", "t" , "tt" , "mt" ),
+		c( "mcg", "mg", "g", "hg", "kg", "t" , "kt" , "mt" ),
 		c( "mcm", "mm", "cm", "dm", "m", "km" ),
 		c( "mcs", "ms", "s", "m", "h", "d" ) )[implemented]
 	names(abbrev) <- Rstox_var

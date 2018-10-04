@@ -296,7 +296,7 @@ plot_RECA_results_panel <- function(pred, biotic, ...){
   par.old <- par(no.readonly = T)
   par(mfrow=c(2,2))
   plot_catch_at_age_ci(pred, var="Abundance", unit="millions", ...)
-  plot_catch_at_age_ci(pred, var="Weight", unit="tt", ...)
+  plot_catch_at_age_ci(pred, var="Weight", unit="kt", ...)
   plot_weight_at_age(biotic, pred, unit="kg", ...)
   plot_length_at_age(biotic, pred, ...)
   par(par.old)

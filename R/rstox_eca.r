@@ -81,7 +81,7 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		#####################################
 		
 		# (1a) Get the data and convert variable names to lower case:
-		landing <- baselineOutput$out[[landing[1]]]
+		landing <- baselineOutput$outputData[[landing[1]]]
 		names(landing) <- tolower(names(landing))
 		
 		# 2018-08-28: Changed to using 'sistefangstdato' as per comment from Edvin:
@@ -93,7 +93,7 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		##### (2) Get raw biotic data with some modifications: #####
 		############################################################
 		# (2a) Get the data and convert variable names to lower case:
-		biotic <- baselineOutput$out[[biotic[1]]]
+		biotic <- baselineOutput$outputData[[biotic[1]]]
 		names(biotic) <- tolower(names(biotic))
 	
 		# Detect whether temporal is defined with seasons, and add year and season and remove temporal in the process data:
@@ -114,24 +114,28 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		# implementedCovariateNames <- c("year", "season", "gearfactor", "spatial")
 		#implementedCovariateDescriptions <- c("The year covariate, used in conjunction with 'season'", "The season covariate defining seasons throughout a year", "The gear covariate given as groups of gear codes", "The spatial covariate giving polygons or locations")
 		#implementedCovariateProcesses <- c("DefineTemporalLanding", "DefineTemporalLanding", "DefineGearLanding", "DefineSpatialLanding")
-		implementedCovariateNames <- c("temporal", "gearfactor", "spatial")
-		implementedCovariateDescriptions <- c("The temporal covariate", "The gear covariate given as groups of gear codes", "The spatial covariate giving polygons or locations")
-		implementedCovariateProcesses <- c("DefineTemporalLanding", "DefineGearLanding", "DefineSpatialLanding")
+		#implementedCovariateNames <- c("temporal", "gearfactor", "spatial")
+		#implementedCovariateDescriptions <- c("The temporal covariate", "The gear covariate given as groups of gear codes", "The spatial covariate giving polygons or locations")
+		#implementedCovariateProcesses <- c("DefineTemporalLanding", "DefineGearLanding", "DefineSpatialLanding")
+		ECACovariates <- getRstoxDef("ECACovariates")
 		
-		present <- which(implementedCovariateNames %in% names(biotic))
-		covariateNames <- implementedCovariateNames[present]
-		covariateDescriptions <- implementedCovariateDescriptions[present]
-		covariateProcesses <- implementedCovariateProcesses[present]
+		present <- which(ECACovariates$Name %in% names(biotic))
+		covariateNames <- ECACovariates$Name[present]
+		covariateDescriptions <- ECACovariates$Description[present]
+		covariateProcesses <- ECACovariates$Processe[present]
 		
 		# (2c) Add yearday, year and month:
 		biotic <- addYearday(biotic, datecar="startdate", tz="UTC", format="%d/%m/%Y")
 	 
 		# (2d) Hard code the lengthunits (from the sampling handbook). This must be changed in the future, so that lengthunitmeters is present in the biotic file:
+		# TO BE IMPLEMENTED: Read the lengthresolution from NMD, which here is named by lengthunitmeters and then renamed to lengthresM in getGlobalParameters():
+		# TO BE IMPLEMENTED: lengthresolution <- getNMDinfo("lengthresolution")
 		lengthcode <- 1:7
 		# Length unit codes in the reference tables:
 		lengthmeters <- c(1, 5, 10, 30, 50, 0.5, 0.1)/1000
 		biotic$lengthunitmeters <- lengthmeters[match(biotic$lengthunit, lengthcode)]
-	
+		
+		
 		# This section was removed with approval from Hanne and David. It was included for historical reasons, and the freqency column was supported in prevoius ECA versions, but we decided that there is no need for compressing the input data in this way anymore, given the assiciated complication of the input data:
 		# (2e) Aggregate by lines without weight, but with equal length:
 		#duplines = duplicated(biotic[,c("serialno", "length", "weight")]) & is.na(biotic$age)
@@ -145,6 +149,8 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		#######################################################
 		### (3) Get covariate definitions and change names: ###
 		#######################################################
+		browser()
+	
 		covariateDefinition <- lapply(baselineOutput$proc[covariateNames], getCovDef)
 		# Add year covariate definitions if present:
 		if("year" %in% covariateNames){
@@ -158,17 +164,34 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 	 
 		# Extract the covariates from biotic and landing in two separate matrices, and convert to integers using match():
 		allLevels <- lapply(covariateNames, function(x) sort(unique(c(biotic[[x]], landing[[x]]))))
+		names(allLevels) <- covariateNames
 		Nlevels <- sapply(allLevels, length)
-		covariateMatrixBiotic <- sapply(seq_along(covariateNames), function(i) match(biotic[[covariateNames[i]]], allLevels[[i]]))
-		covariateMatrixLanding <- sapply(seq_along(covariateNames), function(i) match(landing[[covariateNames[i]]], allLevels[[i]]))
-		covariateMatrixBiotic <- as.data.frame(covariateMatrixBiotic, stringsAsFactors=FALSE)
-		covariateMatrixLanding <- as.data.frame(covariateMatrixLanding, stringsAsFactors=FALSE)
-		colnames(covariateMatrixBiotic) <- covariateNames
-		colnames(covariateMatrixLanding) <- covariateNames
+		
+		# Function for converting the covariates present in biotic or landing to integer:
+		getCovariateMatrix <- function(data, covariateNames, allLevels){
+			# Get the covariate names present in the data:
+			covariateNames_present <- intersect(covariateNames, names(data))
+			# Convert each covariate to integer (index in allLevels):
+			out <- sapply(covariateNames_present, function(this) match(data[[this]], allLevels[[this]]))
+			# Convert to data frame and add colnames:
+			out <- as.data.frame(out, stringsAsFactors=FALSE)
+			colnames(out) <- covariateNames_present
+			out
+		}
+		covariateMatrixBiotic <- getCovariateMatrix(biotic, covariateNames=covariateNames, allLevels=allLevels)
+		covariateMatrixLanding <- getCovariateMatrix(landing, covariateNames=covariateNames, allLevels=allLevels)
+		
+		#covariateMatrixBiotic <- sapply(seq_along(covariateNames), function(i) match(biotic[[covariateNames[i]]], allLevels[[i]]))
+		#covariateMatrixLanding <- sapply(seq_along(covariateNames), function(i) match(landing[[covariateNames[i]]], allLevels[[i]]))
+		#covariateMatrixBiotic <- as.data.frame(covariateMatrixBiotic, stringsAsFactors=FALSE)
+		#covariateMatrixLanding <- as.data.frame(covariateMatrixLanding, stringsAsFactors=FALSE)
+		#colnames(covariateMatrixBiotic) <- covariateNames
+		#colnames(covariateMatrixLanding) <- covariateNames
 		
 		
 		# Match the levels of each covariate with the unique values of the union of biotic and landing:
 		matchToBioticAndLanding <- function(i, allLevels, covariateDefinition){
+			browser()
 			allValues <- sort(unique(union(covariateDefinition[[i]]$biotic[,2], covariateDefinition[[i]]$landing[,2])))
 			link <- match(allLevels[[i]], allValues)
 			data.frame(Numeric=seq_along(link), Covariate=allValues[link], stringsAsFactors=FALSE)
@@ -217,6 +240,7 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		###########################################
 		##### (7) Covariate meta information: #####
 		###########################################
+		
 		# Add a data frame with meta information about the covariates:
 		covType <- unlist(lapply(covariateProcesses, function(xx) baselineOutput$parameters[[xx]]$CovariateType))
 		CAR <- rep(NA, length(covType))
@@ -225,10 +249,49 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		CAR[unlist(lapply(temp, length))>0] <- unlist(temp)
 		 	# Make sure that CAR is a logical when covType is Random:
 		CAR[is.na(CAR) & covType=="Random"] <- FALSE
+		
+		# Combine into the covariate info data frame:
 		covariateInfo <- data.frame(
 			Nlevels = Nlevels, 
 			covType = covType, 
 			CAR = CAR, 
+			name = covariateNames, 
+			description = covariateDescriptions, stringsAsFactors=FALSE
+		)
+		
+		
+		
+		
+		
+		
+		
+		
+		# Changes on 2018-10-03:
+		# As of Rstox 1.10 the covariate info (covType and CAR) are stored as a process data output generated by the function bioticCovData (maybe to be changed to landingCovData?), as the data frame 'covparam':
+		covparam <- baselineOutput$processData$covparam
+		# Convert the parameter names to those used in baseline2eca():
+		parameterNamesInStoX <- c("CovariateType", "conditionalautoregression")
+		parameterNamesRstox <- c("covType", "CAR")
+		m <- match(covparam$Parameter, parameterNamesInStoX)
+		covparam$Parameter <- parameterNamesRstox[m]
+		# Split by covariate name and merge using dataFrame_full():
+		covparam <- split(covparam, covparam$CovariateTable)
+		covparamNames <- names(covparam)
+		extractCovparam <- function(covparam){
+			temp <- covparam$Value
+			names(temp) <- covparam$Parameter
+			temp
+		}
+		covparam <- lapply(covparam, extractCovparam)
+		covparam <- as.dataFrame_full(covparam)
+		rownames(covparam) <- covparamNames
+		# Convert character to logical:
+		covparam <- character2logical(covparam)
+		
+		# Combine into the covariate info data frame:
+		covariateInfo <- data.frame(
+			Nlevels = Nlevels, 
+			covparam[match(covariateNames, rownames(covparam)), ], 
 			name = covariateNames, 
 			description = covariateDescriptions, stringsAsFactors=FALSE
 		)
@@ -292,14 +355,14 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		
 		# Return all data in a list
 		list(
-			biotic=biotic, 
-			landing=landing, 
-			landingAggregated=landingAggregated, 
-			covariateMatrixBiotic=covariateMatrixBiotic, 
-			covariateMatrixLanding=covariateMatrixLanding, 
-			ageError=ageErrorMatrix, # Moved from resources on 2018-01-25
-			stratumNeighbour=stratumNeighbourList,  # Moved from resources on 2018-01-25
-			resources=list(
+			biotic = biotic, 
+			landing = landing, 
+			landingAggregated = landingAggregated, 
+			covariateMatrixBiotic = covariateMatrixBiotic, 
+			covariateMatrixLanding = covariateMatrixLanding, 
+			ageError = ageErrorMatrix, # Moved from resources on 2018-01-25
+			stratumNeighbour = stratumNeighbourList,  # Moved from resources on 2018-01-25
+			resources = list(
 				covariateInfo=covariateInfo, 
 				covariateDefinition=covariateDefinition, 
 				covariateLink=covariateLink
@@ -454,7 +517,7 @@ getDataMatrixANDCovariateMatrix <- function(eca, vars=c("age", "yearday"), ecaPa
 
 #' Function for extracting the CARNeighbours and info:
 #' @keywords internal
-getInfo<- function(eca, CovariateMatrix, ecaParameters){
+getInfo <- function(eca, CovariateMatrix, ecaParameters){
   ### 3. info: ###
   ncov <- length(names(CovariateMatrix))
   Infonames <- c("random", "CAR", "continuous", "in.landings", "nlev", "interaction", "in.slopeModel")

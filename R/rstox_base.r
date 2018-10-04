@@ -28,6 +28,7 @@
 #' @param out   			One of "project", "baseline" or "name" (project name), specifying the output.
 #' @param nchars			The number of characters to read when determining the types of the files in readXMLfiles().
 #' @param msg				Logical: If TRUE, print messages to the console.
+#' @param close				Logical: If TRUE, close the project after updating file paths (used in \code{updateProject}).
 #' @param soft				Logical: If TRUE, do not save the current javaParameters to the savedParameters field in the project environment (used in saveasProject()).
 #' @param to				A string naming the parameters to reset a project to (one of "original" and "saved", where the latter is only used in saveasProject()).
 #' @param subset.out		Logical: Used in \code{is.project}. If TRUE, subset the input project names, and if False, return a logical vector.
@@ -816,6 +817,7 @@ generateRScripts <- function(projectName){
 #'
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in StoX_data_sources in the environment "RstoxEnv". Get these by get("StoX_data_sources", envir=get("RstoxEnv"))). These could be given as directories, in which case all files in those directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If files has length 0 (default), the files present in the project directory are used, if already existing (requires to answer "y" when asked to overwrite the project if ow=NULL, or alternatively to set ow=TRUE).
+#' @param close				Logical: If TRUE, close the project after updating file paths (used in \code{updateProject}).
 #'
 #' @return A project object
 #' 
@@ -1694,7 +1696,7 @@ modifyBaselineParameters <- function(projectName, parameters, parlist=list(), ..
 # Functions for converting from character "true" and "false" to logicals TRUE and FALSE, and backwards:
 character2logical <- function(x){
 	is.trueorfalse <- function(x){
-		x %in% c("true", "false")
+		any(x %in% c("true", "false"))
 	}
 	character2logicalOne <- function(x){
 		if(is.trueorfalse(x)){
@@ -2353,7 +2355,7 @@ moveToTrash <- function(x){
 #'
 #' \code{getRstoxEnv} initiates the RstoxEnv environment if not existing.
 #' \code{getRstoxDef} gets an Rstox definition.
-#' \code{initiateRstoxEnv} sets up the Rstox environment with the definitions .
+#' \code{initiateRstoxEnv} sets up the Rstox environment with the definitions. To get these definitions, use getRstoxDef().
 #'
 #' @param name	The name of the Rstox definition to retrieve.
 #'
@@ -2471,6 +2473,29 @@ initiateRstoxEnv <- function(){
 	modelTypeJavaNames = c("baseline", "baseline-report", "r", "r-report", "name")
 	#modelTypeRstoxNames <- c("baseline", "report", NA, NA), 
 	modelTypeJavaFuns = c("getBaseline", "getBaselineReport", "getRModel", "getRModelReport", "getProjectName")
+	
+	# Define ECA covariates:
+	ECACovariates <- data.frame(
+		Name = c(
+			"temporal", 
+			"gearfactor", 
+			"spatial", 
+			"platformfactor"
+		), 
+		Processe = c(
+			"DefineTemporalLanding", 
+			"DefineGearLanding", 
+			"DefineSpatialLanding", 
+			"DefinePlatformLanding"
+		), 
+		Description = c(
+			"The temporal covariate", 
+			"The gear covariate given as groups of gear codes", 
+			"The spatial covariate giving polygons or locations", 
+			"The platform covariate (vessels)"
+		), 
+		stringsAsFactors = FALSE
+	)
 	
 	
 	# Define functions passed to the "R" and "R report" pane of StoX, along with associated aliases (function names that should still work for backwards compatibility):
@@ -2612,6 +2637,7 @@ initiateRstoxEnv <- function(){
 		processLevels = processLevels, 
 		modelTypeJavaNames = modelTypeJavaNames, 
 		modelTypeJavaFuns = modelTypeJavaFuns, 
+		ECACovariates = ECACovariates, 
 		RFunctions = RFunctions, 
 		RReportFunctions = RReportFunctions
 	)

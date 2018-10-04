@@ -21,6 +21,6 @@ getModelType(modelType)
 \description{
 \code{getRstoxEnv} initiates the RstoxEnv environment if not existing.
 \code{getRstoxDef} gets an Rstox definition.
-\code{initiateRstoxEnv} sets up the Rstox environment with the definitions .
+\code{initiateRstoxEnv} sets up the Rstox environment with the definitions. To get these definitions, use getRstoxDef().
 }
 \keyword{internal}

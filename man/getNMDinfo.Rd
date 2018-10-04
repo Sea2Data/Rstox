@@ -56,11 +56,11 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{subdir}{Either a name of the sub directory in which to put the StoX projects of downloaded data, or TRUE which puts all projects in a sub folder named after the cruise series or survey time series.}
 
-\item{group}{Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is NULL, all data are saved in one StoX project. The default "default" groups by years if several cruises are requested and by cruise otherwise.}
+\item{group}{Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is "all", NULL or NA, all data are saved in one StoX project. Abbreviations are accepted (e.g., group="c"). The default "default" groups by years if several cruises are requested and by cruise otherwise. The projects generated from the downloaded data are named differently depending on the grouping, with, e.g., the suffixes "_Year_2004"/"_CruiseNumber_2004204_ShipName_Johan Hjort"/"_Alldata" for group = "year"/"cruise"/"all". This implies that the projects downloaded using group = "year" are not replaced when using group = "cruise", even if there is only one cruise per year.}
 
-\item{abbrev}{Logical: If TRUE, abbreviate the project names. PArticularly useful when downloading survey time series, which can have long names.}
+\item{abbrev}{Logical: If TRUE, abbreviate the project names. Particularly useful when downloading survey time series, which can have long names.}
 
-\item{subset}{An integer vector giving the subset of the cruises to download in a cruise series (1 meaning the first cruise and c(2,5) cruise nr 2 and 5).}
+\item{subset}{An vector giving the subset of the cruises/projects to download in a cruise series/survey time series. Can be given either as indices such as 1:3 or -4 or as a vector of years or cruise numbers such as c(2005, 2007, 2008) or c(2005105, 2007845, 2008809). Get the years and cruise numbers using getNMDinfo("cs").}
 
 \item{prefix}{The prefix to use in the names of the StoX projects to which the data are downloaded.}
 
