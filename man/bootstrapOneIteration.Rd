@@ -4,8 +4,8 @@
 \alias{bootstrapOneIteration}
 \title{Run one bootstrap iteration of biotic stations and acoustic data}
 \usage{
-bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
-  stratumNASC = NULL, resampledNASC = NULL,
+bootstrapOneIteration(i, projectName, assignments, strataNames,
+  psuNASC = NULL, stratumNASC = NULL, resampledNASC = NULL,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
   seedV = NULL, sorted = TRUE, JavaMem = getRstoxDef("JavaMem"), ...)
 }
@@ -16,7 +16,7 @@ bootstrapOneIteration(i, projectName, assignments, strata, psuNASC = NULL,
 
 \item{assignments}{Trawl assignment from baseline.}
 
-\item{strata}{The strata of the survey.}
+\item{strataNames}{The strata names of the survey.}
 
 \item{psuNASC}{MeanNASC from baseline.}
 

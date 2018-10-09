@@ -50,6 +50,8 @@ setAttributes(x, att)
 \item{onlyfirst}{Not sure why this is included...}
 
 \item{add}{The list to add to the existinf list.}
+
+\item{att}{A named list of attributes.}
 }
 \description{
 \code{data.frame2xml} Converts a data frame to an XML object which can be written to file using XML::saveXML. \cr \cr

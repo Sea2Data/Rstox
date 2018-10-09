@@ -214,7 +214,7 @@ getResampledNASCDistr <- function(projectName, psuNASC, stratumNASC, parameters,
 		SeedV <- getSeedV(parameters$seed, nboot=parameters$nboot)
 		
 		tmp2NASC <- split(tmpNASC,list(tmpNASC$Stratum))
-		res.NASC.dist <- matrix(NA,nrow=parameters$nboot,ncol=length(unique(tmpNASC$Stratum)))
+		res.NASC.dist <- matrix(NA, nrow=parameters$nboot, ncol=length(unique(tmpNASC$Stratum)))
 		for(i in 1:parameters$nboot){
 			# Function used for sampling the PSUs:
 			reest <- function(yy){

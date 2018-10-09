@@ -354,9 +354,6 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 		
 		########## Open the project in R memory: ##########
 		# Create a list for the project in the environment 'RstoxEnv':
-		
-		# Prior to rstox_1.7 the function readBaselineParameters() was used, but this caused problems when parameters were changed when read to the Java memory. Thus DO NOT USE readBaselineParameters(), BUT RATHER readBaselineParametersJava():
-		#parameters <- readBaselineParameters(projectPath)
 		parameters <- readBaselineParametersJava(project)
 		# The first line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
 		temp <- getRstoxEnv()
@@ -454,13 +451,13 @@ getProject <- function(projectName, out=c("project", "baseline", "baseline-repor
 	}
 	
 	
-	# Get the StoX Java function:
-	modelTypeJavaFun <- getModelType(out[1])$fun
-	
 	# For backwards compatibility:
 	if(startsWith(tolower(out[1]), "report")){
 		out[1] <- "baseline-report"
 	}
+	
+	# Get the StoX Java function:
+	modelTypeJavaFun <- getModelType(out[1])$fun
 	
 	# Return either the project object itself, or the funciton identified using modelTypeJavaFun():
 	if(startsWith(tolower(out[1]), "project")){
@@ -907,13 +904,15 @@ pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 #' \code{runBaseline} runs a StoX baseline model possibily overriding parameters. \cr \cr
 #' \code{getBaseline} returns input and output data from the StoX baseline model. \cr \cr
 #' 
+#' The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
+#' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param startProcess	The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
 #' @param endProcess	The name or number of the end process in the list of processes in the model.
 #' @param reset			Logical; if TRUE rerun the baseline model even if it has been run previously.
 #' @param save			Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.
 #' @param out			The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object). First element used.
-#' @param modelType		The type of model to run, currently one of "baseline" and "report" (the latter referring to "baseline report"). First element used.
+#' @param modelType		The type of model to run, currently one of "baseline" and "baseline-report". First element used.
 #' @param msg			Logical: if TRUE print information about the progress of reading the data.
 #' @param exportCSV		Logical: if TRUE turn on exporting csv files from the baseline run.
 #' @param warningLevel	The warning level used in the baseline run, where 0 stops the baseline for Java warnings, and 1 continues with a warning.
@@ -933,6 +932,13 @@ pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 #' system.time(baselineData <- getBaseline(projectName))
 #' # Check the structure of the output from getBaseline():
 #' ls.str(baselineData)
+#' 
+#' # The predefined values of the parameters are included as attributes to the list of parameters:
+#' baselineData$parameters$NASC
+#' # To get a clean list of all predefined values run the following:
+#' att <- rapply(baselineData$parameters, attributes, how="replace")
+#' # The cleaned list has named PROCESSNAME.PARAMETERNAME.predefinedValues:
+#' unlist(unlist(att, recursive=FALSE), recursive=FALSE)
 #'
 #' # Override parameters in the baseline:
 #' system.time(baselineDataMod <- getBaseline(projectName, 
@@ -947,7 +953,7 @@ pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 #'
 runBaseline <- function(projectName, out=c("project", "baseline", "baseline-report", "name"), startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
 	
-	# Function for extracting a range a series of ranges:
+	# Function for extracting a range covering a series of ranges:
 	setProcRange <- function(...){
 		l <- unlist(list(...))
 		if(length(l)==0){
@@ -1001,38 +1007,83 @@ runBaseline <- function(projectName, out=c("project", "baseline", "baseline-repo
 		procUnrun <- seq(currentEndProcess + 1, numProcesses)
 	}
 	
-	# Get the processes to run. First, make sure that the process indices are within the valid range:
+	# Get the processes to run:
 	startProcess <- getProcess(projectName, proc=startProcess, modelType=modelType[1])
 	endProcess   <- getProcess(projectName, proc=endProcess, modelType=modelType[1])
 	procStartEnd <- seq(startProcess, endProcess)
 	
 	# Get the changed processes:
-	# Detect changes to the baseline parameters compared to the last used parameters. This is done only to determine whether the baseline should be rerun:
-	parlist <- getParlist(parlist=parlist, ...)
-	javapar <- getBaselineParameters(projectName, out=modelType[1])$java # Use out=modelType
-	newpar  <- modifyBaselineParameters(projectName, javapar, parlist=parlist)$parameters
-	lastpar <- getBaselineParameters(projectName, out=modelType[1])$last # Use out=modelType
+	# Detect changes to the baseline parameters compared to the last used parameters. This is done only to determine whether the baseline should be rerun. Using save=FALSE ensures that the parameters are not set but simply that changes are identified:
+	procChanged <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE, save=FALSE, ...)
 	
-	# Change made on 2017-09-15: If no valid processes are given in parlist or ..., using which() around the following line returned an error. which() is now moved to inside the if(any(changedProcesses)){}:
-	changedProcesses <- which(sapply(seq_along(newpar), function(i) !identical(newpar[[i]], lastpar[[i]])))
-	if(length(changedProcesses)==0){
-		procChanged <- NULL
-	}
-	else{
-		#procChanged <- seq(min(changedProcesses), max(changedProcesses))
-		# Set the last process affected by the change to the endProcess:
-		procChanged <- seq(min(changedProcesses), max(changedProcesses, endProcess))
-	}
+	#
+	#browser()
+	#parlist <- getParlist(parlist=parlist, ...)
+	#javapar <- getBaselineParameters(projectName, out=modelType[1])$java # Use out=modelType
+	#newpar  <- modifyBaselineParameters(projectName, javapar, parlist=parlist)$parameters
+	#lastpar <- getBaselineParameters(projectName, out=modelType[1])$last # Use out=modelType
+	#
+	## Change made on 2017-09-15: If no valid processes are given in parlist or ..., using which() around the following line returned an error. which() is now moved to inside the if(any(changedProcesses)){}:
+	#procChanged <- which(sapply(seq_along(newpar), function(i) !identical(newpar[[i]], lastpar[[i]])))
+	## Convert to all indices covered by the range of changed processes:
+	#if(length(procChanged)){
+	#	procChanged <- seq(min(procChanged), max(procChanged, endProcess))
+	#}
 	############################################################
 	
 	
-	# Regardless of the value of reset, we rerun the span of the range of procUnrun and procChanged. That is, if there are processes that are have not been run or have had parameters changed in memory, rerun:
-	procTorun <- setProcRange(procUnrun, procChanged)
+	### # Regardless of the value of reset, we rerun the span of the range of procUnrun and procChanged. That is, if there are processes that are have not been run or have had parameters changed in memory, rerun:
+	### procTorun <- setProcRange(procUnrun, procChanged)
+	### 
+	### # If reset=TRUE, we also include the processes specified through 'startProcess' and 'endProcess':
+	### if(reset){
+	### 	procTorun <- setProcRange(procTorun, procStartEnd)
+	### }
+	### 
+	### 
 	
-	# If reset=TRUE, we also include the processes specified through 'startProcess' and 'endProcess':
+	
+	# The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
+	
+	
+	# 1. If any of 1:End are unrun or changed, run from the first of these to End:
+	if(any(c(procUnrun, procChanged) %in% seq_len(max(procStartEnd)))){
+		procTorun <- seq(min(procUnrun, procChanged), max(procStartEnd))
+	}
+	else{
+		procTorun <- NULL
+	}
+	
+	# 2. If reset=TRUE, extend to the range of procStartEnd:
 	if(reset){
 		procTorun <- setProcRange(procTorun, procStartEnd)
 	}
+	
+	# 3. If any of procChanged > procTorun, run to the max of these:
+	if(any(procChanged > suppressWarnings(max(procTorun)))){
+		procTorun <- setProcRange(procTorun, procChanged)
+	}
+	
+	
+	
+	### # 1. If there are unrun processes in procStartEnd, use this as the last funciton to run
+	### if(suppressWarnings(min(procUnrun)) <= max(procStartEnd)){
+	### 	procTorun <- seq(min(procUnrun), max(procStartEnd))
+	### }
+	### else{
+	### 	procTorun <- NULL
+	### }
+	### 
+	### # 2. If reset=TRUE, extend to the range of procStartEnd:
+	### if(reset){
+	### 	procTorun <- setProcRange(procTorun, procStartEnd)
+	### }
+	### 
+	### # 3. If there are processes with changed parameters, expand by the range of these. The changed processes takes presedence:
+	### if(length(procChanged)){
+	### 	procTorun <- setProcRange(procTorun, procChanged)
+	### }
+	
 	
 	# Override parameters in the baseline:
 	#if(run){
@@ -1043,16 +1094,17 @@ runBaseline <- function(projectName, out=c("project", "baseline", "baseline-repo
 		if(msg)	{cat("Running baseline process ", startProcess, " to ", endProcess, " (out of ", numProcesses, " processes)\n", sep="")}
 		
 		# If parameters are given, override the java parameters in memory, and store the java (if save=TRUE) and last used parameters:
-		if(length(parlist)){
-			# Get the java parameters for use later if save==FALSE:
-			if(!save){
-				javapar <- getBaselineParameters(projectName, out=modelType[1])$java # Use out=modelType
-				#javapar <- getBaselineParameters(projectName)$java # Use out=modelType
-			}
+		if(length(procChanged)){
+		#if(length(parlist)){
+			 # Get the java parameters for use later if save==FALSE:
+			 if(!save){
+			 	javapar <- getBaselineParameters(projectName, modelType=modelType[1])$java # Use out=modelType
+			 	#javapar <- getBaselineParameters(projectName)$java # Use out=modelType
+			 }
 			# Set the new parameters:
-			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE, save=c("last", "java"))
-			# Make sure that processes are given by the correct form "Process(processName)"
-			newpar <- getParlist(newpar)
+			newpar <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE, save=c("last", "java"), ...)
+			### ACCOUNTED FOR IN setBaselineParameters() # Make sure that processes are given by the correct form "Process(processName)"
+			### ACCOUNTED FOR IN setBaselineParameters() newpar <- getParlist(newpar)
 			
 			# Run the baseline:
 			baseline$run(jInt(startProcess), jInt(endProcess), jBoolean(FALSE))
@@ -1098,7 +1150,7 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 		cat("Reading:\n")
 	}
 	# Get the processes of the baseline/baseline report and match with those given in 'proc':
-	processes <- getBaselineParameters(projectName, out=modelType[1])$last # Use out=modelType
+	processes <- getBaselineParameters(projectName, modelType=modelType[1])$last # Use out=modelType
 	processNames <- names(processes)
 	### functionNames <- sapply(processes, "[[", "functionName")
 	matchedProcesses <- processNames[getProcess(projectName, proc=proc, modelType=modelType[1])]
@@ -1166,7 +1218,7 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param proc			A string vector naming processes/function to find.
-#' @param modelType		The type of model to run, currently one of "baseline" and "report" (the latter referring to "baseline report"). First element used.
+#' @param modelType		The type of model to run, currently one of "baseline" and "baseline-report". First element used.
 #'
 #' @return Index number of the process.
 #'
@@ -1178,12 +1230,12 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 #' @rdname getProcess
 #' @keywords internal
 #'
-getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRUE, msg=TRUE){
+getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRUE, msg=TRUE, proc.out=FALSE){
 	if(length(proc)==0 || identical(proc, FALSE)){
 		return(NULL)
 	}
 	
-	matchOne <- function(proc, procNames, funNames){
+	matchOne <- function(proc, procNames, funNames, proc.out=FALSE){
 		matchedProcName <- which(procNames == proc)
 		matchedFunName <- which(funNames == proc)
 		# 1. Match process name:
@@ -1193,29 +1245,36 @@ getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRU
 					warning(paste0("One process AND one function used by another process use the same name: ", proc, ". The process name has presidence."))
 				}
 			}
-			return(matchedProcName)
+			out <- matchedProcName
 		}
 		# 2. Match function name:
 		else if(length(matchedFunName)==1){
-			return(matchedFunName)
+			out <- matchedFunName
 		}
 		# 3. Match multiple function names:
 		else if(length(matchedFunName)>1){
 			if(msg){
 				warning(paste0("Multiple processes use the function ", proc, " (", paste(procNames[matchedFunName], collapse=", "), "). The first returned (", procNames[matchedFunName[1]], ")."))
 			}
-			return(matchedFunName[1])
+			out <- matchedFunName[1]
 		}
 		else{
 			if(msg){
 				warning(paste0("The process ", proc, " does not match any process or function name."))
 			}
-			return(NA)
+			out <- NA
 		}
+		
+		if(proc.out){
+			# Select the first element to account for out = NA, which returns NAs as long as 'procNames':
+			out <- procNames[out][1]
+		}
+		
+		out
 	}
 	
 	# Locate/run the baseline object. If rerun=TRUE or if parameters are given different from the parameters used in the last baseline run, rerun the baseline, and if the :
-	processes <- getBaselineParameters(projectName, out=modelType[1])$last # Use out=modelType
+	processes <- getBaselineParameters(projectName, modelType=modelType[1])$last # Use out=modelType
 	procNames <- names(processes)
 	funNames <- sapply(processes, "[[", "functionName")
 	
@@ -1223,7 +1282,7 @@ getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRU
 	if(any(identical(proc, FALSE), length(proc)==0, nchar(proc)==0)){
 		out <- NULL
 	}
-	# Discard the WriteProcessData process (which should already be removed in readBaselineParameters()), and crop to the indices of the existing processes:
+	# Discard the WriteProcessData process (which should already be removed in readBaselineParametersJava()), and crop to the indices of the existing processes:
 	else if(is.numeric(proc)){
 		numProcesses <- length(processes) - sum(funNames == "WriteProcessData")
 		proc <- pmax(proc, 1)
@@ -1235,14 +1294,14 @@ getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRU
 	}
 	# Match with the input 'proc':
 	else{
-		out <- sapply(proc, matchOne, procNames, funNames)
+		out <- sapply(proc, matchOne, procNames=procNames, funNames=funNames, proc.out=proc.out)
 	}
 	
 	# Remove NAs:
 	if(dropNA){
 		out <- out[!is.na(out)]
 	}
-	# Output:
+	
 	return(out)
 }
 
@@ -1254,14 +1313,13 @@ getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRU
 #' 
 #' \code{setBaselineParameters} Sets baseline parameters in memory to new values specified in \code{parlist} or \code{...}. \cr \cr
 #' \code{readBaselineParametersJava} Reads the baseline parameters from the Java memory. \cr \cr
-#' \code{readBaselineParameters} Depricated and no longer maintained, use \code{readBaselineParametersJava} instead: Reads the baseline parameters from the project.xml file \cr \cr
 #' \code{getBaselineParameters} Gets either original, java or last used baseline parameters \cr \cr
 #' \code{modifyBaselineParameters} Only modifies the parameters in \code{parameters} using those in \code{parlist} and \code{...}. This function does not change the values other than in the return of the function (not in the RstoxEnv environment nor in the project file). \cr \cr
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
-#' @param project   	The project Java object.
 #' @param msg			Logical; if TRUE print old and new parameters.
 #' @param parlist		List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Numeric parameters must be given as numeric, string parameters as string, and logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE. New parameters can be set by setBaselineParameters() but not removed in the current version.
+#' @param modelType		The type of model to run, currently one of "baseline" and "baseline-report". First element used. If given as "all", parameters from both baseline and baseline-report are returned.
 #' @param save			A string naming the types of parameter to save ("java" implies saving the parameters to Java memory and to RstoxEnv[[projectName]]$javaParameters, whereas "last" implies saving the parameters to RstoxEnv[[projectName]]$javaParameters and to the projectData which are saved along with bootstrap and impute data). If save=TRUE, save is set to c("java", "last").
 #' @param ...			Same as parlist, but can be specified separately (not in a list but as separate inputs).
 #' @param keepMissing	Logical: If FALSE discard empty parameters of processes when reading the parameters from the Java memory.
@@ -1274,25 +1332,41 @@ getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRU
 #' @keywords internal
 #' @rdname setBaselineParameters
 #'
-setBaselineParameters <- function(projectName, msg=FALSE, parlist=list(), save=c("last", "java"), ...){
+setBaselineParameters <- function(projectName, msg=FALSE, parlist=list(), modelType="all", save=c("last", "java"), ...){
 	
 	# Get the project name:
 	projectName <- getProjectPaths(projectName)$projectName
 	# Include both parameters specified in 'parlist' and parameters specified freely in '...':
 	parlist <- getParlist(parlist=parlist, ...)
 	
-	# Get java parameters:
-	javapar <- getBaselineParameters(projectName)$java # USE out="all"
+	# Get the current Java parameters, indicating the current state of the baseline (i.e., the parameters which will be active when the baseline is run):
+	javapar <- getBaselineParameters(projectName, modelType=modelType)$java
+	# Get the new parameters, by modifying the Java parameters by the parlist. 
+	newpar  <- modifyBaselineParameters(projectName, javapar, parlist=parlist)
+	# Get the latest used parameters, i.e., the parameters used at the latest baseline run. The difference between newpar and lastpar will identify processes that have changed and that should be rerun:
+	lastpar <- getBaselineParameters(projectName, modelType=modelType)$last
+	
+	# Change made on 2017-09-15: If no valid processes are given in parlist or ..., using which() around the following line returned an error. which() is now moved to inside the if(any(changedProcesses)){}:
+	procChanged <- which(sapply(seq_along(newpar$parameters), function(i) !identical(newpar$parameters[[i]], lastpar[[i]])))
+	# Convert to all indices covered by the range of changed processes:
+	if(length(procChanged)){
+		procChanged <- seq(min(procChanged), max(procChanged))
+	}
+	
+	if(isFALSE(save)){
+		return(procChanged)
+	}
 	
 	# Override parameters in the baseline:
-	if(length(parlist)>0){
+	#if(length(parlist)>0){
+	if(length(procChanged)>0){
 		
 		if(isTRUE(save)){
 			save <- c("last", "java")
 		}
 
-		# Get changed parameters, and discard ..., since it has been accounted for in getParlist(). This function simpy returns a list of the new parameters and indices for which parameters have been changed, and does not actually alter the parameters in Java memory:
-		newpar <- modifyBaselineParameters(projectName, javapar, parlist=parlist)
+		### # Get changed parameters, and discard ..., since it has been accounted for in getParlist(). This function simpy returns a list of the new parameters and indices for which parameters have been changed, and does not actually alter the parameters in Java memory:
+		### newpar <- modifyBaselineParameters(projectName, javapar, parlist=parlist)
 		# The following line (temp <- getRstoxEnv()) is needed to assure that the RstoxEnv environment is loaded:
 		temp <- getRstoxEnv()
 		
@@ -1310,7 +1384,7 @@ setBaselineParameters <- function(projectName, msg=FALSE, parlist=list(), save=c
 				#if(length(temp)==0){
 					#warning(paste("The parameter", newpar$changeParameters[i], "of process", newpar$changeProcesses[i], "was not defined in the original baseline model, and cannot be changed in the current version of Rstox."))
 					#}
-				# Change the parameter value in Java:
+				# Change the parameter value in Java. Note that the input values need to be characters:
 				if(isTRUE(newpar$changeModelTypes[i] == "baseline")){
 					baseline$getProcessList()$get(as.integer(newpar$changeProcessesIdx[i]))$setParameterValue(newpar$changeParameters[i], newpar$changeValues[i])
 				}
@@ -1346,7 +1420,8 @@ setBaselineParameters <- function(projectName, msg=FALSE, parlist=list(), save=c
 #' @keywords internal
 #' @rdname setBaselineParameters
 #' 
-readBaselineParametersJava <- function(projectName, out="baseline", keepMissing=TRUE){
+readBaselineParametersJava <- function(projectName, keepMissing=TRUE){
+	
 	# Function for getting the parameters of one process:
 	getParametersOfProcess <- function(processNr, baseline, keepMissing=TRUE, modelType="baseline"){
 		# Add modelType, function name and 'enabled':
@@ -1360,14 +1435,28 @@ readBaselineParametersJava <- function(projectName, out="baseline", keepMissing=
 		L = baseline$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$size()
 		if(L>0){
 			# Get parameter names and values:
-			parameterNames = unlist(lapply(seq(0,L-1), function(j) baseline$getProcessList()$get(as.integer(processNr))$getMetaFunction()$getMetaParameters()$get(as.integer(j))$getName()))
-			parameterValues = lapply(seq(1,L), function(j) baseline$getProcessList()$get(as.integer(processNr))$getParameterValue(parameterNames[j]))
+			thisProcess <- baseline$getProcessList()$get(as.integer(processNr))
+			parameterNames <- unlist(lapply(seq(0, L - 1), function(j) thisProcess$getMetaFunction()$getMetaParameters()$get(as.integer(j))$getName()))
+			parameterValues <- lapply(seq(1, L), function(j) thisProcess$getParameterValue(parameterNames[j]))
+			
+			getPredefinedValues <- function(parameterName, thisProcess){
+				out <- thisProcess$getMetaFunction()$findMetaParameter(parameterName)$getValues()
+				if(length(out)){
+					JavaString2vector(out$toString())
+				}
+				else{
+					NULL
+				}
+			}
+			parameterPredefinedValues <- lapply(parameterNames, getPredefinedValues, thisProcess=thisProcess)
+			parameterValues <- lapply(seq_along(parameterValues), function(j) setAttributes(parameterValues[[j]], att=list(predefinedValues = parameterPredefinedValues[[j]])))
+			
 			# Convert to a list:
 			names(parameterValues) <- parameterNames
-			empty = sapply(parameterValues, length)==0
+			empty <- sapply(parameterValues, length) == 0
 			if(sum(empty)){
 				if(keepMissing){
-					parameterValues[empty] = rep(list(NA),sum(empty))
+					parameterValues[empty] <- rep(list(NA), sum(empty))
 				}
 				else{
 					parameterValues <- parameterValues[!empty]
@@ -1379,7 +1468,8 @@ readBaselineParametersJava <- function(projectName, out="baseline", keepMissing=
 		}
 		
 		# Convert from character to logical ("true" to TRUE) (added on 2018-09-21):
-		out <- character2logical(out)
+		#out <- character2logical(out)
+		out <- Java2Rpar(out)
 		out
 	}
 	
@@ -1407,6 +1497,7 @@ readBaselineParametersJava <- function(projectName, out="baseline", keepMissing=
 		processList <- JavaString2vector(processList)
 		out <- lapply(seq_along(processList) - 1L, getParametersOfProcess, baseline, keepMissing=keepMissing, modelType=modelType[1])
 		names(out) <- processList
+		
 		out
 	}
 	
@@ -1419,106 +1510,11 @@ readBaselineParametersJava <- function(projectName, out="baseline", keepMissing=
 	out
 }
 #'
-#' @importFrom XML xmlDoc getNodeSet xmlValue xpathSApply xmlGetAttr xmlRoot xmlNamespaceDefinitions xmlParse
-#' @export
-#' @keywords internal
-#' @rdname setBaselineParameters
-#' 
-readBaselineParameters <- function(projectName, rver="1"){
-	# Function for extracting a parameter name and value:
-	getParamPV <- function(x){
-		ret <- list()
-
-		# Get a node name
-		#paramName<- xmlGetAttr(xmlRoot(x[[1]]), 'name')
-		paramName<- xmlGetAttr(x, 'name')
-		
-		# Get a node value
-		paramVal <- xmlValue(x[[1]])
-		# Convert missing values to empty strings:
-		if(is.na(paramVal)){
-			paramVal <- ""
-		}
-
-		# Construct a vector of name -> value
-		ret[[paramName]] <- paramVal
-
-		return(ret)
-	}
-	# Function for extracting one baseline process:
-	getbaselineProcess <- function(x, namespace){
-		ret <- list()
-
-		# Process as a standalone XML doc
-		subDoc <- xmlDoc(x)
-
-		# Check whether a process is enabled
-		r <- getNodeSet(subDoc, "//ns:enabled", namespaces = c(ns=namespace))
-		isEnabled <- xmlValue(r[[1]])
-
-		### # If a process is marked as disabled, stop and return NA instead
-		### if(toupper(isEnabled)!="TRUE"){
-		### 	return(c(DISABLED=NA))
-		### }
-		
-		# Extract the attribute 'name' from the process node
-		processName<- xmlGetAttr(xmlRoot(subDoc), 'name')
-
-		# Extract the function node's value
-		r <- getNodeSet(subDoc, "//ns:function", namespaces = c(ns=namespace))
-		functionName <- xmlValue(r[[1]])
-
-		# Extract parameters name and value
-		r <- xpathSApply(subDoc, "//ns:parameter", getParamPV , namespaces = c(ns=namespace))
-		
-		# Append function name and parameters
-		ret[[processName]] <- c(list(functionName=functionName, enabled=toupper(isEnabled)=="TRUE"), r)
-		
-		return(ret)
-	}
-	
-	# Construct the used namespace
-	selectedNS = paste0("http://www.imr.no/formats/stox/v", rver)
-
-	# Read project.xml:
-	projectPaths <- getProjectPaths(projectName)
-
-	# Parse the XML
-	doc <- xmlParse(projectPaths$projectXML)
-	#doc <- xmlParse(projectXML)
-
-	# Extract all available namespace(s)
-	nsDefs <- xmlNamespaceDefinitions(doc)
-	ns <- structure(sapply(nsDefs, function(x) x$uri), names = names(nsDefs))
-
-	# If selectedNS is not available, fallback to the first default namespace
-	if(!length(grep(paste0("^",selectedNS,"$"), ns))){
-	  selectedNS <- ns[[1]]
-	}
-
-	# Get the the baseline model's process nodes
-	baselineProcess <- getNodeSet(doc, "//ns:model[@name='baseline']//ns:process", namespaces = c(ns=selectedNS))
-	
-	# Process the baseline nodes and extract name and parameters
-	parameters <- sapply(baselineProcess, getbaselineProcess, selectedNS)
-
-	# Filter out write process data
-	parameters[["WriteProcessData"]] <- NULL
-
-	# Remove all disabled process
-	parameters <- parameters[!is.na(parameters)]
-	
-	# Convert from character to logical ("true" to TRUE) (added on 2018-09-21):
-	parameters <- character2logical(parameters)
-
-	return(parameters)
-}
-#'
 #' @export
 #' @keywords internal
 #' @rdname setBaselineParameters
 #'
-getBaselineParameters <- function(projectName, out="all"){
+getBaselineParameters <- function(projectName, modelType="all"){
 	
 	# Get the project name:
 	projectName <- getProjectPaths(projectName)$projectName
@@ -1531,14 +1527,14 @@ getBaselineParameters <- function(projectName, out="all"){
 		last     = getRstoxEnv()$Projects[[projectName]][["lastParameters"]]
 		)
 	
-	# Get all model types:
+	# Get all model types of the parameters:
 	modelTypes <- sapply(parameters$original, "[[", "modelType")
 	
-	if(tolower(out)=="all"){
+	if(tolower(modelType)=="all"){
 		select <- seq_along(modelTypes)
 	}
 	else{
-		select <- which(modelTypes==getModelType(out[1])$name)
+		select <- which(modelTypes==getModelType(modelType[1])$name)
 	}
 	
 	# Select the requested parameter lists:
@@ -1562,50 +1558,36 @@ modifyBaselineParameters <- function(projectName, parameters, parlist=list(), ..
 	changeValues       <- NULL
 	changed            <- NULL
 	changeModelTypes   <- NULL
+	
+	
+	# First identify processes in the baseline or baseline report, and remove the unrecognized:
 	if(length(parlist)){
-		
-		# Identify the proceses, either from the process or funciton names:
-		processesIdxBaseline <- getProcess(projectName, proc=names(parlist), modelType="baseline", dropNA=FALSE, msg=FALSE)
-		processesIdxBaselineReport <- getProcess(projectName, proc=names(parlist), modelType="baseline-report", dropNA=FALSE, msg=FALSE)
-		processesIdx <- pmax(
-			processesIdxBaseline, 
-			processesIdxBaselineReport, 
-			na.rm=TRUE
-		)
-		
-		# Update the names of the parlist by the identified process names:
-		names(parlist) <- names(parameters)[processesIdx]
+		# Do this by creating a vector of NA representing the names use for the parlist, filling in from the recognized processes, and then removing NA names from the parlist:
+		insertNames <- rep(NA, length(parlist))
+		# Insert from baseline:
+		processesNameBaseline <- getProcess(projectName, proc=names(parlist), modelType="baseline", dropNA=FALSE, msg=FALSE, proc.out=TRUE)
+		insertNames[!is.na(processesNameBaseline)] <- processesNameBaseline[!is.na(processesNameBaseline)]
+		# Insert from baseline report:
+		processesNameBaselineReport <- getProcess(projectName, proc=names(parlist), modelType="baseline-report", dropNA=FALSE, msg=FALSE, proc.out=TRUE)
+		insertNames[!is.na(processesNameBaselineReport)] <- processesNameBaselineReport[!is.na(processesNameBaselineReport)]
+		names(parlist) <- insertNames
 		
 		# Remove non-recognized processes:
 		parlist <- parlist[!is.na(names(parlist))]
-		
-		
-		## Update process names:
-		#processNames <- names(parameters)
-		#functionNames <- sapply(parameters, "[[", "functionName")
-		#
-		## Remove elements of the parlist which names are not present in the list of parameters:
-		##if(any(!names(parlist) %in% processNames)){
-		#parlist <- parlist[names(parlist) %in% c(processNames, functionNames)]
-		##}
-		
+	}
+	
+	# Continue if there are still elements in 'parlist':
+	if(length(parlist)){
 		# Get names and indices of processes to change, and names and values of the parameters to change in those processes:
-		changeProcesses    <- names(parlist)
-		numParameters      <- pmax(0, unlist(lapply(parlist, length))) # Allow for no parameters given
-		changeProcesses    <- rep(changeProcesses, numParameters)
+		changeProcesses <- names(parlist)
+		numParameters   <- pmax(0, unlist(lapply(parlist, length))) # Allow for no parameters given
+		changeProcesses <- rep(changeProcesses, numParameters)
 		
 		#modelTypes <- sapply(parameters, "[[", "modelType") # 2018-06-21: This was an error, since there could be more processes in 'parameters' than in 'parlist':
 		modelTypes <- sapply(parameters[names(parlist)], "[[", "modelType")
 		changeModelTypes <- rep(modelTypes, numParameters)
 	
 		# Set the changeProcessesIdx to be the indices in either the baseline or the baseline report (the match returns NAs for the modelType not present, and the pmax discards NA):
-		#changeProcessesIdx <- match(changeProcesses, processNames)
-		#changeProcessesIdx <- pmax(
-		#	match(changeProcesses, processNames[modelTypes == getModelType("baseline")$name]), 
-		#	match(changeProcesses, processNames[modelTypes == getModelType("baseline-report")$name]), 
-		#	na.rm=TRUE
-		#)
-		#
 		changeProcessesIdxBaseline <- getProcess(projectName, proc=changeProcesses, modelType="baseline", dropNA=FALSE, msg=FALSE)
 		changeProcessesIdxBaselineReport <- getProcess(projectName, proc=changeProcesses, modelType="baseline-report", dropNA=FALSE, msg=FALSE)
 		changeProcessesIdx <- pmax(
@@ -1614,34 +1596,10 @@ modifyBaselineParameters <- function(projectName, parameters, parlist=list(), ..
 			na.rm=TRUE
 		)
 		
-		
-		# 2018-07-09: Attempt to solve a problem with processes in 'parlist' not recognized in the list 'parameters', but this was solved by removing those in 'parlist':
-		#changeProcessesIdx <- rep(NA, length(changeProcesses))
-		#baselineIndices <- which(changeModelTypes == getModelType("baseline")$name)
-		#baselineProcesses <- processNames[modelTypes == getModelType("baseline")$name]
-		#baselineReportIndices <- which(changeModelTypes == getModelType("baseline-report")$name)
-		#baselineReportProcesses <- processNames[modelTypes == getModelType("baseline-report")$name]
-		#changeProcessesIdx[baselineIndices] <- match(changeProcesses[baselineIndices], baselineProcesses)
-		#changeProcessesIdx[baselineReportIndices] <- match(changeProcesses[baselineReportIndices], baselineReportProcesses)
-		
 		changeParameters   <- unlist(lapply(parlist, names))
 
 		# Unlist using recursive=FALSE since it can hold different types (logical, string), and collapse to a vector after converting to logical strings as used in StoX: 
 		changeValues <- unlist(parlist, recursive=FALSE)
-		
-		### # Set logical values to "true"/"false":
-		### is.TRUEorFALSE <- function(x){
-		### 	is.logical(x) & !is.na(x)
-		### }
-		### logicalValues <- sapply(changeValues, is.TRUEorFALSE)
-		### changeValues[logicalValues] <- lapply(changeValues[logicalValues], function(xx) if(xx) "true" else "false")
-		### 
-		### # ?????????? Convert parameter values given as a data frame to a string:
-		### data.frameValues <- sapply(changeValues, is.data.frame)
-		### changeValues[data.frameValues] <- lapply(changeValues[data.frameValues], data.frame2parString)
-		
-		### # Collapse to a vector as the other three change vectors:
-		### changeValues <- as.character(unlist(changeValues, use.names=FALSE))
 		
 		# Issue a warning if there are non-existent processes, and remove these:
 		nonExistent <- is.na(changeProcessesIdx)
@@ -1665,14 +1623,8 @@ modifyBaselineParameters <- function(projectName, parameters, parlist=list(), ..
 			changeValues       <- changeValues[valid]
 		}
 		
-		# If any parameter values are strings with the name of a process, convert to Process(processName)
-		#atProcess <- changeValues %in% processNames
-		#if(any(atProcess)){
-		#	changeValues[atProcess] <- paste0("Process(", changeValues[atProcess], ")")
-		#}
-		
-		changed <- logical(length(changeValues))
 		# Change the parameters in the list of parameters:
+		changed <- logical(length(changeValues))
 		for(i in seq_along(changeProcessesIdx)){
 			# Changed on 2017-08-28 to comparing old and new parameter value (which must have been the intension):
 			#if(length(parameters[[changeProcessesIdx[i]]] [[changeParameters[i]]])){
@@ -1687,11 +1639,21 @@ modifyBaselineParameters <- function(projectName, parameters, parlist=list(), ..
 		}
 		
 		# Convert the changeValues to a vector of characters:
-		changeValues <- unlist(logical2character(changeValues))
+		#changeValues <- unlist(logical2character(changeValues))
+		changeValues <- unlist(R2Javapar(changeValues))
 	}
 	
 	# Subtract 1 form the 'changeProcessesIdx' to prepare for use in java:
 	list(parameters=parameters, changeProcesses=changeProcesses, changeModelTypes=changeModelTypes, changeProcessesIdx=changeProcessesIdx - 1, changeParameters=changeParameters, changeValues=changeValues, changed=changed)
+}
+#'
+#' @export
+#' @keywords internal
+#' @rdname setBaselineParameters
+#'
+getBaselineParameterDefaults <- function(projectName, modelType="all"){
+	
+	baseline <- getProject(projectName, out="baseline")
 }
 # Functions for converting from character "true" and "false" to logicals TRUE and FALSE, and backwards:
 character2logical <- function(x){
@@ -1718,6 +1680,33 @@ logical2character <- function(x){
 	}
 	rapply(x, logical2characterOne, how="replace")
 }
+
+
+# Functions for converting from character "true" and "false" to logicals TRUE and FALSE, and backwards:
+Java2Rpar <- function(x){
+	# Convert character to logical:
+	x <- character2logical(x)
+	# Convert character to numeric:
+	as.numericIfNumericButNotLogical <- function(x){
+		convert <- suppressWarnings(!is.na(as.numeric(x))) & !is.logical(x)
+		if(convert){
+			x <- as.numeric(x)
+		}
+		return(x)
+	}
+	x <- lapply(x, as.numericIfNumericButNotLogical)
+	return(x)
+}
+R2Javapar <- function(x){
+	# Convert logical to character:
+	x <- logical2character(x)
+	# Convert numeric to character:
+	x <- lapply(x, as.character)
+	return(x)
+}
+
+
+
 
 #*********************************************
 #*********************************************
@@ -2400,9 +2389,9 @@ getRstoxDef <- function(name=NULL, ...){
 initiateRstoxEnv <- function(){
 	
 	# Function used for extracting defaults and possible values of functions:
-	getDefaultsAndPossibleValues <- function(data){
+	getDefaultsAndPredefinedValues <- function(data){
 		
-		getDefaultsAndPossibleValuesOne <- function(data){
+		getDefaultsAndPredefinedValuesOne <- function(data){
 			fun_formals <- formals(data$Name)
 			# Remove the first the projectName:
 			fun_formals <- fun_formals[names(fun_formals) != "projectName"]
@@ -2422,7 +2411,7 @@ initiateRstoxEnv <- function(){
 			data
 		}
 		
-		lapply(data, getDefaultsAndPossibleValuesOne)
+		lapply(data, getDefaultsAndPredefinedValuesOne)
 	}
 	
 	# Create a Rstox environment in which the baseline objects of the various projects are placed. This allows for a check for previously run baseline models and avoids memory leakage:", 
@@ -2583,7 +2572,7 @@ initiateRstoxEnv <- function(){
 			)
 		)	
 	)
-	RFunctions <- getDefaultsAndPossibleValues(RFunctions)
+	RFunctions <- getDefaultsAndPredefinedValues(RFunctions)
 	
 	
 	# Define functions passed to the "R" and "R report" pane of StoX, along with associated aliases (function names that should still work for backwards compatibility):
@@ -2621,7 +2610,7 @@ initiateRstoxEnv <- function(){
 			)
 		)	
 	)
-	RReportFunctions <- getDefaultsAndPossibleValues(RReportFunctions)
+	RReportFunctions <- getDefaultsAndPredefinedValues(RReportFunctions)
 	
 		
 	# Assign to RstoxEnv and return the definitions:

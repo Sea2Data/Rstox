@@ -286,7 +286,8 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		covparam <- as.dataFrame_full(covparam)
 		rownames(covparam) <- covparamNames
 		# Convert character to logical:
-		covparam <- character2logical(covparam)
+		#covparam <- character2logical(covparam)
+		covparam <- Java2Rpar(covparam)
 		
 		# Combine into the covariate info data frame:
 		covariateInfo <- data.frame(

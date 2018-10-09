@@ -14,7 +14,7 @@
 #'	\item{"sts"}{List of survey time series. Can be given as a two element vector as for "cs".}
 #'	\item{"v"}{List of vessels, where the first line of the platform information is extracted and presented in a matrix with vessels in the rows. Use "platform" to preserve all details about the platforms/vessels}
 #'	}
-#' @param ver					The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef2("ver", API=list(biotic=1, reference=1)).
+#' @param ver					The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)).
 #' @param API					The path to the API.
 #' @param recursive				Logical, special for type \%in\% c("cs","sts"); if FALSE only the list of cruise series or survey time series is returned.
 #' @param msg					Logical: if TRUE a message is printed to the consolle stating the estimated time left for the funciton.
@@ -1780,6 +1780,10 @@ as.numericDataFrame <- function(data){
 	#suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x[!is.na(x)])))) as.numeric(x) else x))
 	suppressWarnings(data <- lapply(data, function(x) if(convertableToNumeric(x)) as.numeric(x) else x))
 	data <- as.data.frame(data, stringsAsFactors=FALSE)
+}
+
+getNMDAPIVersion <- function(ver=getRstoxDef("ver")){
+	
 }
 
 

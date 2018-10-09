@@ -7,7 +7,7 @@
 #' @param i				The boostrap iteration number.
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param assignments	Trawl assignment from baseline.
-#' @param strata		The strata of the survey.
+#' @param strataNames	The strata names of the survey.
 #' @param psuNASC		MeanNASC from baseline.
 #' @param stratumNASC	Strata NASC estimates from getNASCDistr(baseline).
 #' @param resampledNASC	Resampled NASC distribution.
@@ -22,10 +22,10 @@
 #' @export
 #' @keywords internal
 #'
-bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
+bootstrapOneIteration <- function(i, projectName, assignments, strataNames, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	
 	
-	# NOTE: Weneed to use ... to accommodate changes in parameters in the bootstrap. This function can be run in parallel, so we cannot change the parameters before the bootstrap. However, some data are extracted from the baseline, and these will also need ..., or that the parameters are chcanged "globally":
+	# NOTE: We need to use ... to accommodate changes in parameters in the bootstrap. This function can be run in parallel, so we cannot change the parameters before the bootstrap. However, some data are extracted from the baseline, and these will also need ..., or that the parameters are chcanged "globally":
 	
 	
 	# Load Rstox if not already loaded:
@@ -39,9 +39,9 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 	# Not effective if psuNASC has length 0:
 	meanNASC <- psuNASC
 	# Loop per strata:
-	for(j in 1:length(strata)){
+	for(j in 1:length(strataNames)){
 		# Get all stations with assignment to one or more PSUs in the current stratum:
-		stations <- unique(getVar(assignments, "StID")[getVar(assignments, "Stratum")==strata[j]])
+		stations <- unique(getVar(assignments, "StID")[getVar(assignments, "Stratum")==strataNames[j]])
 		# Change suggested for a problem with strata with no stations. The change was discarded, since there should be stations in all strata:
 		if(length(stations)==0){
 			warning(paste("No biotic stations in stratum", j))
@@ -56,19 +56,19 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		
 		# Count weights from resample (resulting in a data frame with columns "Var1" and "Freq"):
 		count <- as.data.frame(table(StID))
-		count$Stratum <- strata[j]
+		count$Stratum <- strataNames[j]
 		BootWeights <- rbind(BootWeights,count)
 		
 		# Find NASC scaling factor. This is not directly related to the sampling of biotic stations above. The NASC values have actually been resampled outside of this function, in the resampledNASC <- getResampledNASCDistr() command in runBootstrap():
 		if(length(psuNASC)>0){
 			# Pick out the NASC value of the current stratum j of the current bootstrap replicate i:
-			sm <- stratumNASC$NASC.by.strata$strata.mean[stratumNASC$NASC.by.strata$Stratum==strata[j]]
+			sm <- stratumNASC$NASC.by.strata$strata.mean[stratumNASC$NASC.by.strata$Stratum==strataNames[j]]
 			# Change introduced in the output from getResampledNASCDistr(), which form 2017-11-03 returns a list of elements NASC and seed:
 			if(is.list(resampledNASC)){
 				resampledNASC <- resampledNASC$NASC
 			}
 			# Scaling factor. This is a factor to multiply all NASC vaules inside the current stratum/bootstrap replicate with:
-			meanNASC$NASC.scale.f[meanNASC$Stratum==strata[j]] <- ifelse(sm>0, resampledNASC[i,j]/sm, 0)
+			meanNASC$NASC.scale.f[meanNASC$Stratum==strataNames[j]] <- ifelse(sm>0, resampledNASC[i,j]/sm, 0)
 		}
 	}
 	# Update biostation weighting
@@ -153,8 +153,8 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	seedV <- getSeedV(seed, nboot=nboot)
 	
 	
-	# Define strata, either by acoustic values (if psuNASC is given) or by the trawl assignments:
-	strata <- unique(if(length(psuNASC)>0) getVar(psuNASC, "Stratum") else getVar(assignments, "Stratum"))
+	# Define strataNames, either by acoustic values (if psuNASC is given) or by the trawl assignments:
+	strataNames <- unique(if(length(psuNASC)>0) getVar(psuNASC, "Stratum") else getVar(assignments, "Stratum"))
 	
 	# Store the SuperIndAbundance from the original model:
 	# base.SuperIndAbundance <- getBaseline(baseline, fun="SuperIndAbundance", input=FALSE, msg=msg, drop=FALSE)$outputData$SuperIndAbundance
@@ -178,18 +178,18 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
 		cl<-makeCluster(cores)
 		# Bootstrap:
-		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ..., cl=cl)
+		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strataNames=strataNames, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ..., cl=cl)
 		# End the parallel bootstrapping:
 		stopCluster(cl)
 	}
 	else{
 		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ...)
+		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strataNames=strataNames, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ...)
 	}
 	
 	
 	
-	#out <- papply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, cores=cores)
+	#out <- papply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strataNames=strataNames, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, cores=cores)
 	
 	
 	out <- unlist(out, recursive=FALSE)

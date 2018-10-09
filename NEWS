@@ -694,7 +694,11 @@ Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a 
 
 Avoided strange behavior by rgeos::readWKT() on Windows, where long strings were "unable to parse" (500 charaters).
 
-Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process.
+Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process. 
+
+Cleaned up how startProcess and endProcess interacts with 'reset' and the unrun and changed processes. The documentation updated with the following: The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
+
+Added the predefined values as attributes to the parameter values returned from getBaseline().
 
 
 ########## Version 1.10 (2018-07-06) ##########
@@ -739,5 +743,9 @@ Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a 
 
 Avoided strange behavior by rgeos::readWKT() on Windows, where long strings were "unable to parse" (500 charaters).
 
-Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process.
+Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process. 
+
+Cleaned up how startProcess and endProcess interacts with 'reset' and the unrun and changed processes. The documentation updated with the following: The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
+
+Added the predefined values as attributes to the parameter values returned from getBaseline().
 

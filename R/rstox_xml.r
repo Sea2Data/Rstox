@@ -591,6 +591,7 @@ validateHIXSD <- function(x, xsd, strict=TRUE, discardSimple=FALSE){
 #' @param Attr,Var		Inices of the columns which are variables and attributes at the current level.
 #' @param onlyfirst		Not sure why this is included...
 #' @param add			The list to add to the existinf list.
+#' @param att			A named list of attributes.
 #'
 #' @export
 #' @rdname data.frame2nestedList
