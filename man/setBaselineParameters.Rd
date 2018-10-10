@@ -5,7 +5,6 @@
 \alias{readBaselineParametersJava}
 \alias{getBaselineParameters}
 \alias{modifyBaselineParameters}
-\alias{getBaselineParameterDefaults}
 \title{Set, read, get or modify baseline parameters.}
 \usage{
 setBaselineParameters(projectName, msg = FALSE, parlist = list(),
@@ -16,8 +15,6 @@ readBaselineParametersJava(projectName, keepMissing = TRUE)
 getBaselineParameters(projectName, modelType = "all")
 
 modifyBaselineParameters(projectName, parameters, parlist = list(), ...)
-
-getBaselineParameterDefaults(projectName, modelType = "all")
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

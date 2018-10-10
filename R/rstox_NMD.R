@@ -14,7 +14,7 @@
 #'	\item{"sts"}{List of survey time series. Can be given as a two element vector as for "cs".}
 #'	\item{"v"}{List of vessels, where the first line of the platform information is extracted and presented in a matrix with vessels in the rows. Use "platform" to preserve all details about the platforms/vessels}
 #'	}
-#' @param ver					The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)).
+#' @param ver					The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)), or simply ver = list(API=1) or even simpler ver = 1.
 #' @param API					The path to the API.
 #' @param recursive				Logical, special for type \%in\% c("cs","sts"); if FALSE only the list of cruise series or survey time series is returned.
 #' @param msg					Logical: if TRUE a message is printed to the consolle stating the estimated time left for the funciton.
@@ -622,6 +622,9 @@ getNMDinfo <- function(type=NULL, ver=getRstoxDef("ver"), API="http://tomcat7.im
 	##### <<<Internal functions #####
 	###############################
 	
+	
+	# Interpret the version info:
+	ver <- getNMDver(ver)
 	
 	# Get the list of reference data types:
 	if(length(type)==0){
@@ -1395,6 +1398,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	#######################################
 	############ Preparations: ############
 	#######################################
+	# Interpret the version info:
+	ver <- getNMDver(ver)
+	
 	# Define the valid types:
 	NMD_data_sources <- getRstoxDef("NMD_data_sources")
 	NMD_API_versions <- getRstoxDef("NMD_API_versions")[NMD_data_sources]
@@ -1782,8 +1788,31 @@ as.numericDataFrame <- function(data){
 	data <- as.data.frame(data, stringsAsFactors=FALSE)
 }
 
-getNMDAPIVersion <- function(ver=getRstoxDef("ver")){
-	
+getNMDver <- function(ver=NULL){
+	out <- getRstoxDef("ver")
+	if(length(ver)==1 && is.numeric(ver)){
+		out <- rapply(out, function(x) ver, how="replace")
+	}
+	else if(is.list(ver)){
+		# If ver is a list with one element API, use this value for all APIs:
+		if(length(ver) == 1 && names(ver)=="API"){
+			out$API <- rapply(out$API, function(x) ver$API, how="replace")
+		}
+		else{
+			#out <- getRstoxDef("ver", unlist(ver, recursive=FALSE))
+		
+			# Get the list indices by unlisting and splitting by the dots introduced by unlist():
+			u <- unlist(ver)
+			ind <- strsplit(names(u), ".", fixed=TRUE)
+			# Remove the names on u:
+			u <- unname(u)
+		
+			for(i in seq_along(ind)){
+				out[[ind[[i]]]] <- u[i]
+			}
+		}		
+	}
+	out
 }
 
 

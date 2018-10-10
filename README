@@ -1,4 +1,4 @@
-# Rstox version: 1.9.1 (latest alpha, 2018-10-09)
+# Rstox version: 1.9.1 (latest alpha, 2018-10-10)
 # R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -91,6 +91,10 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # 22. Cleaned up how startProcess and endProcess interacts with 'reset' and the unrun and changed processes. The documentation updated with the following: The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
 
 # 23. Added the predefined values as attributes to the parameter values returned from getBaseline().
+
+# 24. Added the function closeAllProjects().
+
+# 25. Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
 
 
 

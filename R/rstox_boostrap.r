@@ -284,6 +284,8 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 	}
 	### End of backwards compatibility: ###
 	
+	# Open the project:
+	openProject(projectName)
 	# Get the baseline parameters, which will be used to reset the project after the bootstrapping, since ... may contain changes in parameters:
 	parameters <- getBaselineParameters(projectName)$java
 	

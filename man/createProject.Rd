@@ -11,6 +11,7 @@
 \alias{saveasProject}
 \alias{resetProject}
 \alias{closeProject}
+\alias{closeAllProjects}
 \alias{isProject}
 \alias{getAvailableProjects}
 \alias{readXMLfiles}
@@ -42,6 +43,8 @@ saveasProject(projectName, newProjectName, dir = NULL, ow = NULL,
 resetProject(projectName, to = "original")
 
 closeProject(projectName)
+
+closeAllProjects()
 
 isProject(projectName, subset.out = FALSE)
 
@@ -107,6 +110,7 @@ A project object
 \code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr
 \code{resetProject} resets a project to the original settings. \cr \cr
 \code{closeProject} removes the project from memory. \cr \cr
+\code{closeAllProjects} removes all projects from memory. \cr \cr
 \code{isProject} checks whether the project exists on file. \cr \cr
 \code{getAvailableProjects} lists available projects. \cr \cr
 \code{readXMLfiles} reads XML data via a temporary project. \cr \cr

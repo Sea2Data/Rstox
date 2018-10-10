@@ -700,6 +700,10 @@ Cleaned up how startProcess and endProcess interacts with 'reset' and the unrun 
 
 Added the predefined values as attributes to the parameter values returned from getBaseline().
 
+Added the function closeAllProjects().
+
+Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
+
 
 ########## Version 1.10 (2018-07-06) ##########
 
@@ -748,4 +752,8 @@ Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later 
 Cleaned up how startProcess and endProcess interacts with 'reset' and the unrun and changed processes. The documentation updated with the following: The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
 
 Added the predefined values as attributes to the parameter values returned from getBaseline().
+
+Added the function closeAllProjects().
+
+Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
 
