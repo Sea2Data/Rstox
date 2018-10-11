@@ -818,7 +818,6 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
   formatPlot(projectName, "RECA_results", function(){plot_RECA_results_panel(rundata$runRECA$pred, prep$prepareRECA$StoxExport$biotic, ...)}, verbose=verbose, format=format, height=height, width=width, res=res, ...)
   
   warning("Implement save catch matrix")
-  warning("Fix defaults for units kt and mt. Consider adding lengthunits")
   #save catch matrix
 }
 
