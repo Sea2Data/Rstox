@@ -265,10 +265,10 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		}
 		browser("Clean up implementation of getCovparam ?")
 		# Add a data frame with meta information about the covariates:
-		covType <- unlist(lapply(covariateNames, function(xx) getCovparam(projectname, "CovariateType")[[xx]]))
+		covType <- unlist(lapply(covariateNames, function(xx) getCovparam(projectName, "CovariateType")[[xx]]))
 		CAR <- rep(NA, length(covType))
 		# This process assigns TRUE to CAR only if the parameter 'ConditionalAutoRegression' exists and is equal to the string "true". All other values except empty values (NULL) implies FALSE. If the parameter 'ConditionalAutoRegression' is not present, NA is used:
-		temp <- lapply(covariateNames, function(xx) getCovparam(projectname, "ConditionalAutoRegression")[[xx]] %in% TRUE)
+		temp <- lapply(covariateNames, function(xx) getCovparam(projectName, "ConditionalAutoRegression")[[xx]] %in% TRUE)
 		CAR[unlist(lapply(temp, length))>0] <- unlist(temp)
 		 	# Make sure that CAR is a logical:
 		CAR[is.na(CAR)] <- FALSE
@@ -774,6 +774,16 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   }
   else{
     ## Estimate model
+    write("#########", stdout())
+    write("Running ECA with model configuration:", stdout())
+    write("Length given age model:", stdout())
+    print(AgeLength$info)
+    write(paste("individuals:", nrow(AgeLength$DataMatrix)), stdout())
+    write("Weight given length model:", stdout())
+    print(WeightLength$info)
+    write(paste("individuals:", nrow(WeightLength$DataMatrix)), stdout())
+    write("#########", stdout())
+    
     fit <- eca.estimate(AgeLength,WeightLength,Landings,GlobalParameters)
     
     ## Predict
