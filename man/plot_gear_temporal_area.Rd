@@ -12,3 +12,4 @@ plot_gear_temporal_area(eca,
 \description{
 show samples wrp common covariates gear, area and temporal
 }
+\keyword{internal}

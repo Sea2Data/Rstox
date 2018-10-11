@@ -585,7 +585,7 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters){
   eca$covariateMatrixBiotic <- eca$covariateMatrixBiotic[valid, , drop=FALSE]
   
   ### 1. DataMatrix: ###
-  temp <- getDataMatrixANDCovariateMatrix(eca, var=c("age", "yearday"), ecaParameters)
+  temp <- getDataMatrixANDCovariateMatrix(eca, vars=c("age", "yearday"), ecaParameters)
   DataMatrix <- temp$DataMatrix
   CovariateMatrix <- temp$CovariateMatrix
   
@@ -632,7 +632,7 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters){
   eca$covariateMatrixBiotic <- eca$covariateMatrixBiotic[valid, , drop=FALSE]
   
   ### 1. DataMatrix: ###
-  temp <- getDataMatrixANDCovariateMatrix(eca, var=var, ecaParameters)
+  temp <- getDataMatrixANDCovariateMatrix(eca, vars=var, ecaParameters)
   DataMatrix <- temp$DataMatrix
   CovariateMatrix <- temp$CovariateMatrix
   
@@ -675,10 +675,14 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 
 #' Convert data to eca format and test. Save results to project data 'prepareRECA'
 #' parameters not described below are defined in eca.estimate and eca.predict
+#'
+#' @param projectName name of stox project
+#' @param minage see specification for GlobalParameters in eca::estimate
+#' @param maxage see specification for GlobalParameters in eca::estimate
+#' @param delta.age see specification for GlobalParameters in eca::estimate
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @export
-#' @rdname prepareRECA
 prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, use_otolithtype=TRUE, hatchDaySlashMonth="01/01"){
   
   if (is.null(resultdir)){
@@ -734,10 +738,22 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
 
 #' run RECA fit and prediction. Save results to project data 'runRECA'
 #' parameters not described below are defined in eca.estimate and eca.predict
+#'
+#' @param projectName name of stox project
+#' @param burnin see specification for GlobalParameters in eca::estimate
+#' @param caa.burnin see specification for GlobalParameters in eca::predict
+#' @param nSamples see specification for GlobalParameters in eca::estimate
+#' @param thin see specification for GlobalParameters in eca::estimate
+#' @param fitfile see specification for GlobalParameters in eca::estimate
+#' @param predfile see specification for GlobalParameters in eca::predict
+#' @param CC see specification for GlobalParameters in eca::estimate
+#' @param CCError see specification for GlobalParameters in eca::estimate
+#' @param seed see specification for GlobalParameters in eca::estimate
+#' @param age.error see specification for GlobalParameters in eca::estimate
 #' @param export_only if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only
 #' @export
 runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin=1, fitfile="fit", predfile="pred", lgamodel="log-linear", CC=FALSE, CCError=FALSE, seed=NULL, age.error=FALSE, export_only=NULL){
-  require(eca)
+  requireNamespace("eca")
   # Sett kjøreparametere her, sett dataparametere i prep_eca
   prepdata <- loadProjectData(projectName, var="prepareRECA")   
   prepareRECA <- prepdata$prepareRECA
@@ -784,10 +800,10 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
     write(paste("individuals:", nrow(WeightLength$DataMatrix)), stdout())
     write("#########", stdout())
     
-    fit <- eca.estimate(AgeLength,WeightLength,Landings,GlobalParameters)
+    fit <- eca::eca.estimate(AgeLength,WeightLength,Landings,GlobalParameters)
     
     ## Predict
-    pred <- eca.predict(AgeLength,WeightLength,Landings,GlobalParameters)
+    pred <- eca::eca.predict(AgeLength,WeightLength,Landings,GlobalParameters)
     
     setProjectData(projectName=projectName, var=list(fit=fit, pred=pred), name="runRECA")
   }
@@ -798,7 +814,7 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
 #
 
 #' Generates plots and reports from RECA prediction
-#' @param projectname name of stox project
+#' @param projectName name of stox project
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on plot function and format
@@ -956,7 +972,7 @@ diagnosticsRECA <-
   }
 
 #' Defines which plots to plot to R report for RECA. Fails silently on errors.
-#' @param project name
+#' @param projectName name of stox project
 #' @export
 plotRECA <- function(projectName){
   tryCatch({diagnosticsRECA(projectName)},

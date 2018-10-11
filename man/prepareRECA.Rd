@@ -10,9 +10,19 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
   hatchDaySlashMonth = "01/01")
 }
 \arguments{
+\item{projectName}{name of stox project}
+
 \item{resultdir}{location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist}
 
+\item{minage}{see specification for GlobalParameters in eca::estimate}
+
+\item{maxage}{see specification for GlobalParameters in eca::estimate}
+
+\item{delta.age}{see specification for GlobalParameters in eca::estimate}
+
 \item{maxlength}{maximum length of fish in the data set in cm. If null the value will be extracted from the data.}
+
+\item{use_otolithtype}{see specification for GlobalParameters in eca::estimate}
 }
 \description{
 Convert data to eca format and test. Save results to project data 'prepareRECA'

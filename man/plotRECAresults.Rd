@@ -7,13 +7,13 @@
 plotRECAresults(projectName, verbose = F, format = "png", ...)
 }
 \arguments{
+\item{projectName}{name of stox project}
+
 \item{verbose}{logical, if TRUE info is written to stderr()}
 
 \item{format}{function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp}
 
 \item{...}{parameters passed on plot function and format}
-
-\item{projectname}{name of stox project}
 }
 \description{
 Generates plots and reports from RECA prediction

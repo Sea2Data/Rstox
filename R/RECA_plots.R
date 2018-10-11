@@ -415,7 +415,7 @@ get_gta_landings <- function(stoxexport) {
 }
 
 #' show samples wrp common covariates gear, area and temporal
-#' @keyword internal
+#' @keywords internal
 plot_gear_temporal_area <-
   function(eca,
            titletext = "gear/temporal - area\nlanded (kt)\nage samples: #vessels,#catches,#individuals",
@@ -425,7 +425,7 @@ plot_gear_temporal_area <-
            colbad = "orange",
            colempty = "gray",
            colwrong = "white") {
-    require(plotrix)
+    requireNamespace("plotrix")
     m <- get_g_s_a_frame(eca)
     m$desc <-
       paste(m$landed_kt, "\n", m$vessels, ", ", m$hauls, ",", m$aged, sep = "")
@@ -462,7 +462,7 @@ plot_gear_temporal_area <-
     #deal with sizing and such when output device is clear
     #calculate plot size
     plot.new()
-    addtable2plot(
+    plotrix::addtable2plot(
       x = "topleft",
       table = descr,
       bty = "o",
@@ -644,7 +644,7 @@ plot_fixed_effect_coverage <-
            wrongcol = "white",
            undersampledcol = "red"
   ) {
-    require(plotrix)
+    requireNamespace("plotrix")
     fixed_effects <-
       stoxexport$resources$covariateInfo[stoxexport$resources$covariateInfo$covType ==
                                            "Fixed", "name"]
@@ -692,7 +692,7 @@ plot_fixed_effect_coverage <-
     names(agg)[names(agg)=="catchsamples"] <- "catch samples"
     names(agg)[names(agg)=="landed_kt"] <- "landed kt"
     plot.new()
-    addtable2plot(
+    plotrix::addtable2plot(
       x = "topleft",
       table = agg,
       bty = "o",

@@ -11,6 +11,28 @@ runRECA(projectName, burnin = 100, caa.burnin = 100, nSamples = 1000,
   export_only = NULL)
 }
 \arguments{
+\item{projectName}{name of stox project}
+
+\item{burnin}{see specification for GlobalParameters in eca::estimate}
+
+\item{caa.burnin}{see specification for GlobalParameters in eca::predict}
+
+\item{nSamples}{see specification for GlobalParameters in eca::estimate}
+
+\item{thin}{see specification for GlobalParameters in eca::estimate}
+
+\item{fitfile}{see specification for GlobalParameters in eca::estimate}
+
+\item{predfile}{see specification for GlobalParameters in eca::predict}
+
+\item{CC}{see specification for GlobalParameters in eca::estimate}
+
+\item{CCError}{see specification for GlobalParameters in eca::estimate}
+
+\item{seed}{see specification for GlobalParameters in eca::estimate}
+
+\item{age.error}{see specification for GlobalParameters in eca::estimate}
+
 \item{export_only}{if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only}
 }
 \description{

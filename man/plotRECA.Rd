@@ -7,7 +7,7 @@
 plotRECA(projectName)
 }
 \arguments{
-\item{project}{name}
+\item{projectName}{name of stox project}
 }
 \description{
 Defines which plots to plot to R report for RECA. Fails silently on errors.
