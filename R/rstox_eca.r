@@ -674,7 +674,6 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 
 
 #' Convert data to eca format and test. Save results to project data 'prepareRECA'
-#' parameters not described below are defined in eca.estimate and eca.predict
 #'
 #' @param projectName name of stox project
 #' @param minage see specification for GlobalParameters in eca::estimate
@@ -737,7 +736,6 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
 }
 
 #' run RECA fit and prediction. Save results to project data 'runRECA'
-#' parameters not described below are defined in eca.estimate and eca.predict
 #'
 #' @param projectName name of stox project
 #' @param burnin see specification for GlobalParameters in eca::estimate
