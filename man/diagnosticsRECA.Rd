@@ -15,6 +15,9 @@ diagnosticsRECA(projectName, verbose = T, format = "png", ...)
 
 \item{...}{parameters passed on plot function and format}
 }
+\value{
+list, with at least one named element 'filename', a vector of file-paths to generated plots.
+}
 \description{
 Generate plots for diagnosis of RECA model configuration. Compares sampling effort to fisheries along covariates selected in the model , and along some standard covariate choices if available (gear, temporal and spatial)
 }

@@ -2,8 +2,7 @@
 % Please edit documentation in R/rstox_eca.r
 \name{runRECA}
 \alias{runRECA}
-\title{run RECA fit and prediction. Save results to project data 'runRECA'
-parameters not described below are defined in eca.estimate and eca.predict}
+\title{run RECA fit and prediction. Save results to project data 'runRECA'}
 \usage{
 runRECA(projectName, burnin = 100, caa.burnin = 100, nSamples = 1000,
   thin = 1, fitfile = "fit", predfile = "pred", lgamodel = "log-linear",
@@ -37,5 +36,4 @@ runRECA(projectName, burnin = 100, caa.burnin = 100, nSamples = 1000,
 }
 \description{
 run RECA fit and prediction. Save results to project data 'runRECA'
-parameters not described below are defined in eca.estimate and eca.predict
 }

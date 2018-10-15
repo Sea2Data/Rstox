@@ -2,8 +2,7 @@
 % Please edit documentation in R/rstox_eca.r
 \name{prepareRECA}
 \alias{prepareRECA}
-\title{Convert data to eca format and test. Save results to project data 'prepareRECA'
-parameters not described below are defined in eca.estimate and eca.predict}
+\title{Convert data to eca format and test. Save results to project data 'prepareRECA'}
 \usage{
 prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
   delta.age = 0.001, maxlength = NULL, use_otolithtype = TRUE,
@@ -24,5 +23,4 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 }
 \description{
 Convert data to eca format and test. Save results to project data 'prepareRECA'
-parameters not described below are defined in eca.estimate and eca.predict
 }
