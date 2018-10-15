@@ -21,8 +21,6 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 \item{delta.age}{see specification for GlobalParameters in eca::estimate}
 
 \item{maxlength}{maximum length of fish in the data set in cm. If null the value will be extracted from the data.}
-
-\item{use_otolithtype}{see specification for GlobalParameters in eca::estimate}
 }
 \description{
 Convert data to eca format and test. Save results to project data 'prepareRECA'

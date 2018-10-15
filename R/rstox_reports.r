@@ -786,6 +786,8 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		outList$filename[[level]] <- filename
 		outList$data[[level]] <- temp[[i]]
 	}
+	
+	invisible(outList)
 }
 #'
 #' @export
@@ -884,6 +886,8 @@ plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, 
 		outList$filename[[level]] <- filename
 		outList$data[[level]] <- temp[[i]]
 	}
+	
+	invisible(outList)
 }
 #'
 #' @export
