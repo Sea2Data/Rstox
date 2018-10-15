@@ -1298,6 +1298,9 @@ runFunsRstox <- function(projectName, string, out="all", options="", all.out=FAL
 		#out <- lapply(funs, function(xx) do.call(xx, c(list(projectName=projectName), dotlist))$filename)
 	}
 	
+	# Name the output list by the funs:
+	names(out) <- funs
+	
 	out <- out[unlist(lapply(out, length))>0]
 	
 	
