@@ -38,9 +38,10 @@ formatPlot <-
         if (length(format)) {
           dev.off()
         }
+        return(filename)
       }
     )
-    
+    return(NULL)
   }
 
 #

@@ -149,7 +149,6 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		#######################################################
 		### (3) Get covariate definitions and change names: ###
 		#######################################################
-		browser()
 	
 		covariateDefinition <- lapply(baselineOutput$proc[covariateNames], getCovDef)
 		# Add year covariate definitions if present:
@@ -191,7 +190,6 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		
 		# Match the levels of each covariate with the unique values of the union of biotic and landing:
 		matchToBioticAndLanding <- function(i, allLevels, covariateDefinition){
-			browser()
 			allValues <- sort(unique(union(covariateDefinition[[i]]$biotic[,2], covariateDefinition[[i]]$landing[,2])))
 			link <- match(allLevels[[i]], allValues)
 			data.frame(Numeric=seq_along(link), Covariate=allValues[link], stringsAsFactors=FALSE)
@@ -263,7 +261,6 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		    stop(paste0("Table \"", "covparam", "\" missing in the project.xml file"))
 		  }
 		}
-		browser("Clean up implementation of getCovparam ?")
 		# Add a data frame with meta information about the covariates:
 		covType <- unlist(lapply(covariateNames, function(xx) getCovparam(projectName, "CovariateType")[[xx]]))
 		CAR <- rep(NA, length(covType))
@@ -816,8 +813,13 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on plot function and format
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
 plotRECAresults <- function(projectName, verbose=F, format="png", ...){
+  
+  out <- list()
+  out$filename <- c()
+  
   rundata <- loadProjectData(projectName, var="runRECA")
   
   if(length(rundata)==0){
@@ -839,10 +841,11 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
     res=NULL
   }
   
-  formatPlot(projectName, "RECA_results", function(){plot_RECA_results_panel(rundata$runRECA$pred, prep$prepareRECA$StoxExport$biotic, ...)}, verbose=verbose, format=format, height=height, width=width, res=res, ...)
-  
+  fn <- formatPlot(projectName, "RECA_results", function(){plot_RECA_results_panel(rundata$runRECA$pred, prep$prepareRECA$StoxExport$biotic, ...)}, verbose=verbose, format=format, height=height, width=width, res=res, ...)
+  out$filename <- c(fn, out$filename)
   warning("Implement save catch matrix")
   #save catch matrix
+  return(out)
 }
 
 #' Generate plots for diagnosis of RECA model configuration. Compares sampling effort to fisheries along covariates selected in the model , and along some standard covariate choices if available (gear, temporal and spatial)
@@ -850,12 +853,17 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on plot function and format
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
 diagnosticsRECA <-
   function(projectName,
            verbose = T,
            format = "png",
            ...) {
+    
+    out <- list()
+    out$filename <- c()
+    
     prep <- loadProjectData(projectName, var = "prepareRECA")
 	
     if(length(prep)==0){
@@ -880,10 +888,11 @@ diagnosticsRECA <-
         height = 10
         res = NULL
       }
-      formatPlot(projectName, "RECA_cell_coverage", function() {
+      fn <- formatPlot(projectName, "RECA_cell_coverage", function() {
         diagnosticsCoverageRECA(stoxexp, ...)
       }, verbose = verbose, format = format, height = height, width = width, res =
         res, ...)
+      out$filename <- c(fn, out$filename)
     }
     else{
       write(
@@ -919,10 +928,11 @@ diagnosticsRECA <-
         res = NULL
       }
       
-      formatPlot(projectName, "RECA_samples_by_cells", function() {
+      fn <- formatPlot(projectName, "RECA_samples_by_cells", function() {
         diagnosticsSamplesRECA(stoxexp, ...)
       }, verbose = verbose, format = format, height = height, width = width, res =
         res, ...)
+      out$filename <- c(fn, out$filename)
     }
     else{
       write(
@@ -962,25 +972,37 @@ diagnosticsRECA <-
       res = NULL
     }
     
-    formatPlot(projectName, "RECA_model_configuration", function() {
+    fn <- formatPlot(projectName, "RECA_model_configuration", function() {
       diagnostics_model_configuration(stoxexp, ...)
     }, verbose = verbose, format = format, height = height, width = width, res =
       res, ...)
-    
+    out$filename <- c(fn, out$filename)
+    return(out)
   }
 
-#' Defines which plots to plot to R report for RECA. Fails silently on errors.
+#' Produces plots for R report for RECA. Fails silently on errors.
 #' @param projectName name of stox project
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
 plotRECA <- function(projectName){
-  tryCatch({diagnosticsRECA(projectName)},
+  
+  out <- list()
+  out$filename <- c()
+  
+  tryCatch({
+    fn <- diagnosticsRECA(projectName)
+    out$filename <- c(fn$filename, out$filename)
+            },
            finally={
            }
   )
   
-  tryCatch({plotRECAresults(projectName)},
+  tryCatch({
+    fn <- plotRECAresults(projectName)
+    out$filename <- c(fn$filename, out$filename)
+    },
     finally={
     }
   )
-  
+  return(out)
 }
