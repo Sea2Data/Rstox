@@ -786,6 +786,8 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		outList$filename[[level]] <- filename
 		outList$data[[level]] <- temp[[i]]
 	}
+	
+	invisible(outList)
 }
 #'
 #' @export
@@ -884,6 +886,8 @@ plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, 
 		outList$filename[[level]] <- filename
 		outList$data[[level]] <- temp[[i]]
 	}
+	
+	invisible(outList)
 }
 #'
 #' @export
@@ -1293,6 +1297,9 @@ runFunsRstox <- function(projectName, string, out="all", options="", all.out=FAL
 		out <- lapply(funs, function(xx) tryCatch({do.call(xx, c(list(projectName=projectName), dotlist))}, error=function(err) err)$filename)
 		#out <- lapply(funs, function(xx) do.call(xx, c(list(projectName=projectName), dotlist))$filename)
 	}
+	
+	# Name the output list by the funs:
+	names(out) <- funs
 	
 	out <- out[unlist(lapply(out, length))>0]
 	

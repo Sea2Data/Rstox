@@ -30,6 +30,4 @@ Imports:
 		XML
 Suggests: ggmap,
     ncdf4,
-    pgirmess,
-    eca,
-    plotrix
+    pgirmess
