@@ -6,8 +6,9 @@
 \usage{
 plot_gear_temporal_area(eca,
   titletext = "gear/temporal - area\\nlanded (kt)\\nage samples: #vessels,#catches,#individuals",
-  colgood = "green4", colok = "green2", colbarely = "yellow",
-  colbad = "orange", colempty = "gray", colwrong = "white")
+  colgood = default_color_good, colok = default_color_ok,
+  colbarely = default_color_barely, colbad = default_color_bad,
+  colempty = default_color_empty, colwrong = default_color_wrong)
 }
 \description{
 show samples wrp common covariates gear, area and temporal

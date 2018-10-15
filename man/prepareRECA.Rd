@@ -13,11 +13,11 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 
 \item{resultdir}{location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist}
 
-\item{minage}{see specification for GlobalParameters in eca::estimate}
+\item{minage}{see specification for GlobalParameters in \code{\link{eca.estimate}}}
 
-\item{maxage}{see specification for GlobalParameters in eca::estimate}
+\item{maxage}{see specification for GlobalParameters in \code{\link{eca.estimate}}}
 
-\item{delta.age}{see specification for GlobalParameters in eca::estimate}
+\item{delta.age}{see specification for GlobalParameters in \code{\link{eca.estimate}}}
 
 \item{maxlength}{maximum length of fish in the data set in cm. If null the value will be extracted from the data.}
 }

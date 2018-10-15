@@ -4,7 +4,7 @@
 \alias{plotRECA}
 \title{Produces plots for R report for RECA. Fails silently on errors.}
 \usage{
-plotRECA(projectName)
+plotRECA(projectName, ...)
 }
 \arguments{
 \item{projectName}{name of stox project}

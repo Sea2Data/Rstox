@@ -10,7 +10,7 @@ plot_catch_at_age_ci(pred, var, unit, alpha = 0.1, xlab = "age",
 \arguments{
 \item{pred}{RECA prediction object as returned by eca::eca.predict}
 
-\item{var}{A key string indicating the variable to plot. ´Abundance´ and ´Weight´ is implemented.}
+\item{var}{A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented.}
 
 \item{unit}{A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)}
 }

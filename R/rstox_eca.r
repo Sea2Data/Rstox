@@ -673,9 +673,9 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 #' Convert data to eca format and test. Save results to project data 'prepareRECA'
 #'
 #' @param projectName name of stox project
-#' @param minage see specification for GlobalParameters in eca::estimate
-#' @param maxage see specification for GlobalParameters in eca::estimate
-#' @param delta.age see specification for GlobalParameters in eca::estimate
+#' @param minage see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param maxage see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param delta.age see specification for GlobalParameters in \code{\link{eca.estimate}}
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @export
@@ -735,16 +735,16 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
 #' run RECA fit and prediction. Save results to project data 'runRECA'
 #'
 #' @param projectName name of stox project
-#' @param burnin see specification for GlobalParameters in eca::estimate
-#' @param caa.burnin see specification for GlobalParameters in eca::predict
-#' @param nSamples see specification for GlobalParameters in eca::estimate
-#' @param thin see specification for GlobalParameters in eca::estimate
-#' @param fitfile see specification for GlobalParameters in eca::estimate
-#' @param predfile see specification for GlobalParameters in eca::predict
-#' @param CC see specification for GlobalParameters in eca::estimate
-#' @param CCError see specification for GlobalParameters in eca::estimate
-#' @param seed see specification for GlobalParameters in eca::estimate
-#' @param age.error see specification for GlobalParameters in eca::estimate
+#' @param burnin see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param caa.burnin see specification for GlobalParameters in \code{\link{eca.predict}}
+#' @param nSamples see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param thin see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param fitfile see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param predfile see specification for GlobalParameters in \code{\link{eca.predict}}
+#' @param CC see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param CCError see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param seed see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param age.error see specification for GlobalParameters in \code{\link{eca.estimate}}
 #' @param export_only if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only
 #' @export
 runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin=1, fitfile="fit", predfile="pred", lgamodel="log-linear", CC=FALSE, CCError=FALSE, seed=NULL, age.error=FALSE, export_only=NULL){
@@ -977,6 +977,27 @@ diagnosticsRECA <-
     }, verbose = verbose, format = format, height = height, width = width, res =
       res, ...)
     out$filename <- c(fn, out$filename)
+    
+    
+    if (format=="png"){
+      #dimension in pixels
+      width=5000
+      height=5000
+      res=500
+    }
+    if (format=="pdf"){
+      #dimension in inches
+      width=10
+      height=10
+      res=NULL
+    }
+    
+    fn <- formatPlot(projectName, "RECA_sample_composition", function() {
+      plotSampleCompositionRECA(stoxexp$biotic, ...)
+    }, verbose = verbose, format = format, height = height, width = width, res =
+      res, ...)
+    out$filename <- c(fn, out$filename)
+    
     return(out)
   }
 
@@ -984,13 +1005,13 @@ diagnosticsRECA <-
 #' @param projectName name of stox project
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
-plotRECA <- function(projectName){
+plotRECA <- function(projectName, ...){
   
   out <- list()
   out$filename <- c()
   
   tryCatch({
-    fn <- diagnosticsRECA(projectName)
+    fn <- diagnosticsRECA(projectName, ...)
     out$filename <- c(fn$filename, out$filename)
             },
            finally={
@@ -998,7 +1019,7 @@ plotRECA <- function(projectName){
   )
   
   tryCatch({
-    fn <- plotRECAresults(projectName)
+    fn <- plotRECAresults(projectName, ...)
     out$filename <- c(fn$filename, out$filename)
     },
     finally={

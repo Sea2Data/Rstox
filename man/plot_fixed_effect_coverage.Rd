@@ -5,8 +5,8 @@
 \title{Plot table of coverage for fixed effects}
 \usage{
 plot_fixed_effect_coverage(stoxexport, indparameters = c("age"),
-  titletext = "Samples for fixed effects", okcol = "green",
-  wrongcol = "white", undersampledcol = "red")
+  titletext = "Samples for fixed effects", okcol = default_color_ok,
+  wrongcol = default_color_wrong, undersampledcol = default_color_empty)
 }
 \arguments{
 \item{indparameter}{the parameters for which data needs to be available}

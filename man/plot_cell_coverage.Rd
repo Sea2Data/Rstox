@@ -7,8 +7,9 @@
 plot_cell_coverage(eca, xlab = "sample clusteredness",
   ylab = "Fraction landed (vekt-\%)",
   titletext = "Coverage w age\\ncells (gear/temp/spatial)",
-  colgood = "green4", colok = "green2", colbarely = "yellow",
-  colbad = "orange", colempty = "gray", colwrong = "white",
+  colgood = default_color_good, colok = default_color_ok,
+  colbarely = default_color_barely, colbad = default_color_bad,
+  colempty = default_color_empty, colwrong = default_color_wrong,
   gooddesc = "> 1 vessel", okdesc = "> 1 catch", barelydesc = "> 0 catch",
   baddesc = "0 samples")
 }
