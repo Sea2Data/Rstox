@@ -92,7 +92,7 @@ plot_ci <- function(x, means, upper_ci, lower_ci, ...){
 
 #' Plot catch by age prediction as boxplots
 #' @param pred RECA prediction object as returned by eca::eca.predict
-#' @param var A key string indicating the variable to plot. ´Abundance´ and ´Weight´ is implemented. 
+#' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @keywords internal
 plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior catch", unit), ...){
@@ -130,7 +130,7 @@ plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior cat
 
 #' Plot equal tailed credible intervals for a catch by age prediction
 #' @param pred RECA prediction object as returned by eca::eca.predict
-#' @param var A key string indicating the variable to plot. ´Abundance´ and ´Weight´ is implemented. 
+#' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @param alpha
 #' @keywords internal
