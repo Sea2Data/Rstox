@@ -370,7 +370,7 @@ getHardCoded <- function(info){
   
   hardcoded <- as.data.frame(matrix(
     c(
-      # Boat is always random whereas constant and haulcount is always fixed:
+      #add constant
       "random", "constant", 0, 
       # Include slope for the constant:
       "in.slopeModel", "constant", 1
@@ -670,12 +670,13 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 #
 
 
-#' Convert data to eca format and test. Save results to project data 'prepareRECA'
-#'
+#' @title Prepare data for RECA
+#' @description Convert data to exported from stox to eca format and run tests on model configuration. Save results to project data 'prepareRECA'
+#' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
 #' @param projectName name of stox project
-#' @param minage see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param maxage see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param delta.age see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param minage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param maxage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param delta.age see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @export
@@ -732,19 +733,21 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
   setProjectData(projectName=projectName, var=list(GlobalParameters=GlobalParameters, Landings=Landings, WeightLength=WeightLength, AgeLength=AgeLength, StoxExport=eca), name="prepareRECA")
 }
 
-#' run RECA fit and prediction. Save results to project data 'runRECA'
-#'
+#' @title run RECA 
+#' @description Loads data produced by \code{\link{prepareRECA}} runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
+#' @details Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}.
+#'     For purposes of testing and running ECA detached from StoX, Data files accepted by code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}} can be exported using the option export_only. In this case the analysis is not run, but data files and parameter files are stored at the designated location.
 #' @param projectName name of stox project
-#' @param burnin see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param caa.burnin see specification for GlobalParameters in \code{\link{eca.predict}}
-#' @param nSamples see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param thin see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param fitfile see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param predfile see specification for GlobalParameters in \code{\link{eca.predict}}
-#' @param CC see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param CCError see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param seed see specification for GlobalParameters in \code{\link{eca.estimate}}
-#' @param age.error see specification for GlobalParameters in \code{\link{eca.estimate}}
+#' @param burnin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param caa.burnin see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
+#' @param nSamples see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param thin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param fitfile see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param predfile see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
+#' @param CC see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param CCError see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param seed see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param age.error see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param export_only if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only
 #' @export
 runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin=1, fitfile="fit", predfile="pred", lgamodel="log-linear", CC=FALSE, CCError=FALSE, seed=NULL, age.error=FALSE, export_only=NULL){
@@ -1003,6 +1006,7 @@ diagnosticsRECA <-
 
 #' Produces plots for R report for RECA. Fails silently on errors.
 #' @param projectName name of stox project
+#' @param ... arguments passed to \code{\link{diagnosticsRECA}} and \code{\link{plotRECAresults}}
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
 plotRECA <- function(projectName, ...){

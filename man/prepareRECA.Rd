@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstox_eca.r
 \name{prepareRECA}
 \alias{prepareRECA}
-\title{Convert data to eca format and test. Save results to project data 'prepareRECA'}
+\title{Prepare data for RECA}
 \usage{
 prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
   delta.age = 0.001, maxlength = NULL, use_otolithtype = TRUE,
@@ -13,14 +13,17 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 
 \item{resultdir}{location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist}
 
-\item{minage}{see specification for GlobalParameters in \code{\link{eca.estimate}}}
+\item{minage}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{maxage}{see specification for GlobalParameters in \code{\link{eca.estimate}}}
+\item{maxage}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{delta.age}{see specification for GlobalParameters in \code{\link{eca.estimate}}}
+\item{delta.age}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
 \item{maxlength}{maximum length of fish in the data set in cm. If null the value will be extracted from the data.}
 }
 \description{
-Convert data to eca format and test. Save results to project data 'prepareRECA'
+Convert data to exported from stox to eca format and run tests on model configuration. Save results to project data 'prepareRECA'
+}
+\details{
+Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
 }

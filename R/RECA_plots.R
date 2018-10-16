@@ -4,8 +4,8 @@
 #' @param draw function for drawing the plot. Takes no arguments
 #' @param format function defining plotting device and file suffix, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param verbose logical, if TRUE info is written to stderr()
-#' @param ... parameters to be passed on to format
-#' @internal
+#' @param ... parameters to be passed on to \code{\link{format}}
+#' @keywords internal
 formatPlot <-
   function(projectname,
            plotname,
@@ -424,16 +424,22 @@ get_gta_landings <- function(stoxexport) {
 }
 
 #' show samples wrp common covariates gear, area and temporal
+#' @param titletext title text for plot. If null a default title is used, set to "" to supress
 #' @keywords internal
 plot_gear_temporal_area <-
   function(eca,
-           titletext = "gear/temporal - area\nlanded (kt)\nage samples: #vessels,#catches,#individuals",
+           titletext = NULL,
            colgood = default_color_good,
            colok = default_color_ok,
            colbarely = default_color_barely,
            colbad = default_color_bad,
            colempty = default_color_empty,
            colwrong = default_color_wrong) {
+    
+    if (is.null(titletext)){
+      titletext="gear/temporal - area\nlanded (kt)\nage samples: #vessels,#catches,#individuals"
+    }
+    
     requireNamespace("plotrix")
     m <- get_g_s_a_frame(eca)
     m$desc <-
@@ -768,7 +774,7 @@ diagnostics_model_configuration <- function(stoxexport, okcol = default_color_ok
 
 default_blankcode="--"
 
-#' Composition of sample types (Fangstnivå: prøvetype) in data
+#' Composition of catch sample types in data
 #' @param catchsample
 #' @param title title for plot
 #' @param xlab label for x axis
@@ -830,26 +836,6 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
     pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""))
   }
   
-  
-}
-
-#' Composition of taxa types (Fangstnivå: prøvetype) in data
-#' @param catchsample
-#' @param title title for plot
-#' @param xlab label for x axis
-#' @param blankcode code for NA / not registered
-#' @param cex.names expansion factor for bar labels
-#' @keywords internal
-plot_taxa_comp <- function(biotic, title="taxa", xlab="# catch samples", blankcode=default_blankcode, cex.names=0.8){
-  catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialno", "samplenumber", "species")]),]
-  tt <- table(as.character(catchsample$noname))
-  
-  if (length(tt)>1){
-    barplot(tt, xlab=xlab, names=names(tt), horiz = T, las=1, main=title, cex.names = cex.names)  
-  }
-  else{
-    pie(tt)
-  }
   
 }
 

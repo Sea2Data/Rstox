@@ -8,6 +8,8 @@ plotRECA(projectName, ...)
 }
 \arguments{
 \item{projectName}{name of stox project}
+
+\item{...}{arguments passed to \code{\link{diagnosticsRECA}} and \code{\link{plotRECAresults}}}
 }
 \value{
 list, with at least one named element 'filename', a vector of file-paths to generated plots.

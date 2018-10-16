@@ -4,11 +4,13 @@
 \alias{plot_gear_temporal_area}
 \title{show samples wrp common covariates gear, area and temporal}
 \usage{
-plot_gear_temporal_area(eca,
-  titletext = "gear/temporal - area\\nlanded (kt)\\nage samples: #vessels,#catches,#individuals",
-  colgood = default_color_good, colok = default_color_ok,
-  colbarely = default_color_barely, colbad = default_color_bad,
-  colempty = default_color_empty, colwrong = default_color_wrong)
+plot_gear_temporal_area(eca, titletext = NULL, colgood = default_color_good,
+  colok = default_color_ok, colbarely = default_color_barely,
+  colbad = default_color_bad, colempty = default_color_empty,
+  colwrong = default_color_wrong)
+}
+\arguments{
+\item{titletext}{title text for plot. If null a default title is used, set to "" to supress}
 }
 \description{
 show samples wrp common covariates gear, area and temporal
