@@ -919,12 +919,12 @@ diagnosticsRECA <-
         #dimension in pixels
         res = 500
         width = (res / 3) * (cols + 2)
-        height = (res / 4) * (rows + 7)
+        height = (res / 4) * (rows + 12)
       }
       if (format == "pdf") {
         #dimension in inches
         width = (cols + 2) / 3
-        height = (rows + 7) / 4
+        height = (rows + 12) / 4
         res = NULL
       }
       

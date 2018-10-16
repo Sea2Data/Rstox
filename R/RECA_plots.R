@@ -214,7 +214,7 @@ plot_weight_at_age <- function(biotic, pred, unit, alpha=0.01, xlab="age", ylab=
     args$lty="dotted"
   }
   if (!("ylim" %in% names(args))){
-    args$ylim=c(min(min(lower, na.rm=T), 0), max(0,max(upper, na.rm=T)))
+    args$ylim=c(min(min(comp$lower, na.rm=T), 0), max(0,max(comp$upper, na.rm=T)))
   }
   if (!("main" %in% names(args))){
     args$main="Weight at age"
@@ -485,7 +485,6 @@ plot_gear_temporal_area <-
       cex = 0.5
     )
     title(titletext)
-    
     return(descr)
   }
 
@@ -535,7 +534,8 @@ plot_cell_landings <-
       "topright",
       legend = c(gooddesc, okdesc, barelydesc, baddesc),
       fill = c(colgood, colok, colbarely, colbad),
-      title = legendtitle
+      title = legendtitle,
+      bty = "n"
     )
   }
 
@@ -544,7 +544,7 @@ plot_cell_landings <-
 plot_cell_coverage <-
   function(eca,
            xlab = "sample clusteredness",
-           ylab = "Fraction landed (vekt-%)",
+           ylab = "Fraction landed (weight-%)",
            titletext = "Coverage w age\ncells (gear/temp/spatial)",
            colgood = default_color_good,
            colok = default_color_ok,
@@ -724,10 +724,23 @@ diagnosticsCoverageRECA <- function(stoxexport) {
   plot_cell_landings(stoxexport)
   par(par.old)
 }
+
 #' Plot table showing coverage of gear, temporal and spatial combinations
 #' @keywords internal
 diagnosticsSamplesRECA <- function(stoxexport) {
   plot_gear_temporal_area(stoxexport)
+  gooddesc = "> 1 vessel"
+  okdesc = "> 1 catch"
+  barelydesc = "> 0 catch"
+  baddesc = "0 samples"
+  legend(
+    "bottom",
+    legend = c(gooddesc, okdesc, barelydesc, baddesc),
+    fill = c(default_color_good, default_color_ok, default_color_barely, default_color_bad),
+    bty = "n",
+    ncol=4,
+    xpd=NA
+  )
 }
 
 #' Plots diagnostics for model configuration. Whether all combinations of fixed effects are sampled

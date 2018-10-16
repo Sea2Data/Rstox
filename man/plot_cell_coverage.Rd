@@ -5,7 +5,7 @@
 \title{Plot aggregated landings for different kind of sampling level in cells}
 \usage{
 plot_cell_coverage(eca, xlab = "sample clusteredness",
-  ylab = "Fraction landed (vekt-\%)",
+  ylab = "Fraction landed (weight-\%)",
   titletext = "Coverage w age\\ncells (gear/temp/spatial)",
   colgood = default_color_good, colok = default_color_ok,
   colbarely = default_color_barely, colbad = default_color_bad,
