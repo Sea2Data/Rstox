@@ -24,6 +24,8 @@ runRECA(projectName, burnin = 100, caa.burnin = 100, nSamples = 1000,
 
 \item{predfile}{see specification for GlobalParameters in \code{\link[eca]{eca.predict}}}
 
+\item{lgamodel}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
+
 \item{CC}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
 \item{CCError}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
