@@ -776,10 +776,6 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   GlobalParameters$CC <- CC
   GlobalParameters$CCerror <- CCError
   GlobalParameters$age.error=age.error
-  
-  if (is.null(seed)){
-    seed=""
-  }
   GlobalParameters$seed <- seed
   
   AgeLength <- AgeLength
