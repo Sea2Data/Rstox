@@ -471,8 +471,8 @@ getDataMatrixANDCovariateMatrix <- function(eca, vars=c("age", "yearday"), ecaPa
   #partcount
   
   # Define variables to include in the DataMatrix, where the variable specified in the input 'var' is included:
-  getnames <- c("length", "serialno", "samplenumber", "lengthsamplecount", "lengthsampleweight", "catchweight", if(ecaParameters$use_otolithtype) "otolithtype")
-  usenames <- c("lengthCM", "samplingID", "partnumber", "samplecount", "sampleweight", "catchweight", if(ecaParameters$use_otolithtype) "otolithtype")
+  getnames <- c("length", "serialno", "samplenumber", "lengthsamplecount", "lengthsampleweight", "catchweight", "otolithtype")
+  usenames <- c("lengthCM", "samplingID", "partnumber", "samplecount", "sampleweight", "catchweight", "otolithtype")
   getnames <- c(vars, getnames)
   usenames <- c(vars, usenames)
   
@@ -613,9 +613,8 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters){
     info = info$info, 
     resources = eca$resources
   )
-  if (ecaParameters$use_otolithtype){
-    out$ClassificationErrorVector <- eca$otholiterror
-  }
+  
+  out$ClassificationErrorVector <- eca$otholiterror
   return(out)
 }
 
@@ -656,9 +655,7 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters){
     info = info$info, 
     resources = eca$resources
   )
-  if (ecaParameters$use_otolithtype){
     out$ClassificationErrorVector <- eca$otholiterror
-  }
   return(out)
 }
 
@@ -680,10 +677,10 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 #' @param maxage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param delta.age see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
+#' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @export
-prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, use_otolithtype=TRUE, hatchDaySlashMonth="01/01"){
-  
+prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, hatchDaySlashMonth="01/01"){
   if (is.null(resultdir)){
     resultdir <- get_default_result_dir(projectName)
     if(!(file.exists(resultdir))){
@@ -706,7 +703,7 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
   }
   #consider if it makes sense to extract from data for minage and maxage as well
   
-  ecaParameters <- list(resultdir=resultdir, minage=minage, maxage=maxage, delta.age=delta.age, maxlength=maxlength, use_otolithtype=use_otolithtype, hatchDaySlashMonth=hatchDaySlashMonth)
+  ecaParameters <- list(resultdir=resultdir, minage=minage, maxage=maxage, delta.age=delta.age, maxlength=maxlength, hatchDaySlashMonth=hatchDaySlashMonth)
   
   #
   # convert data
