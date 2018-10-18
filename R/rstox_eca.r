@@ -746,6 +746,7 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
 #' @param thin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param fitfile see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param predfile see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
+#' @param lgamodel see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param CC see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param CCError see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param seed see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}

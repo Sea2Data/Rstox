@@ -795,7 +795,9 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
   labels <- labels[match(labels$code, names(tt)),]
   
   names(tt)[names(tt)==""] <- blankcode
-  labels[labels$code=="","code"] <- blankcode
+  if (sum(labels$code=="")>0){
+    labels[labels$code=="","code"] <- blankcode  
+  }
   
   if (length(tt)>1){
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)    
