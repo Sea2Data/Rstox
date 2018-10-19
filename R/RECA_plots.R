@@ -776,13 +776,23 @@ default_blankcode="--"
 
 #' Composition of mission types in the data
 #' @biotic as exported from stox (one line pr individual)
+#' @pal palette for coloring sections
 #' @keywords internal
-plot_mission_types <- function(biotic, title="mission types\n# stations"){
+plot_mission_types <- function(biotic, title="mission types\n# stations", blankcode=default_blankcode, pal=c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999')){
   stations <- biotic[!duplicated(biotic[,c("cruise", "serialno")]),]
-
-  counts = aggregate(list(count=stations$serialno), by=list(cruise=stations$cruise), FUN=length)
-  counts$label <- unlist(lapply(counts$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]}))
-  pie(counts$count, labels=counts$label, main=title)
+  stations$missiontype <- unlist(lapply(stations$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]}))
+  
+  tt <- as.character(stations$missiontype)
+  tt[is.na(tt)]<-""
+  tt <- table(tt)
+  tt <- sort(tt, decreasing=T)
+  
+  labels <- getNMDinfo("missiontype")
+  labels <- labels[labels$code %in% names(tt),c("code", "name")]
+  labels <- labels[match(labels$code, names(tt)),]
+  
+  names(tt)[names(tt)==""] <- blankcode
+  pie(tt, labels=paste(labels$name, " (", names(tt), ")", sep=""), main=title, col=pal)
 }
 
 #' Composition of catch sample types in data
@@ -814,7 +824,7 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)    
   }
   else{
-    pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""))  
+    pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""), main=title)  
   }
 }
 
@@ -846,7 +856,7 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)  
   }
   else{
-    pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""))
+    pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""), main=title)
   }
   
   
@@ -920,7 +930,7 @@ plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch s
 plotSampleCompositionRECA <- function(biotic, ...){
   old.par <- par(no.readonly = T)
   par(mfrow=c(2,2))
-  par(mar=c(5.1,7,4.1,2.1))
+  par(mar=c(5.1,7,4.1,8.1))
   plot_mission_types(biotic)
   par(mar=c(5.1,4.1,4.1,2.1))
   plot_catch_fractions(biotic, blankcode = "Uknown")
