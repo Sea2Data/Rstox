@@ -109,11 +109,6 @@ check_cov_vs_info <- function(modelobj){
 #'
 #' @keywords internal
 check_data_matrix <- function(modelobj){
-  #if ("otolithtype" %in% names(modelobj$DataMatrix)){
-  #  check_none_missing(modelobj$DataMatrix, c("otolithtype"))
-  #}
-  
-  warning("Check otolith requirements after R-ECA is revised")
   lastsample <- max(modelobj$DataMatrix$samplingID)
   if (!lastsample==nrow(modelobj$CovariateMatrix)){
     stop("sampling ids does not equal the number of rows in covariate matrix")
