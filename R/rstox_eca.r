@@ -680,7 +680,8 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 #' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @export
-prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, hatchDaySlashMonth="01/01"){
+prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, hatchDaySlashMonth="01/01", use_otolithtype = NULL){
+  warning("use_otolithtype is deprecated and has no effect.")
   if (is.null(resultdir)){
     resultdir <- get_default_result_dir(projectName)
     if(!(file.exists(resultdir))){
