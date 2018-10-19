@@ -774,8 +774,19 @@ diagnostics_model_configuration <- function(stoxexport, okcol = default_color_ok
 
 default_blankcode="--"
 
+#' Composition of mission types in the data
+#' @biotic as exported from stox (one line pr individual)
+#' @keywords internal
+plot_mission_types <- function(biotic, title="mission types\n# stations"){
+  stations <- biotic[!duplicated(biotic[,c("cruise", "serialno")]),]
+
+  counts = aggregate(list(count=stations$serialno), by=list(cruise=stations$cruise), FUN=length)
+  counts$label <- unlist(lapply(counts$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]}))
+  pie(counts$count, labels=counts$label, main=title)
+}
+
 #' Composition of catch sample types in data
-#' @param catchsample
+#' @biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param blankcode code for NA / not registered
@@ -808,7 +819,7 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
 }
 
 #' Composition of station types (Stasjons: stasjonstype) in data
-#' @param catchsample
+#' @biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param blankcode code for NA / not registered
@@ -842,8 +853,7 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
 }
 
 #' Plots composition in catchsamples of parameters that determines what kind fraction of catches or landings are sampled
-#' @param station
-#' @param catchsample
+#' @biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param allname name to use for samples where all catch was sampled
@@ -911,7 +921,7 @@ plotSampleCompositionRECA <- function(biotic, ...){
   old.par <- par(no.readonly = T)
   par(mfrow=c(2,2))
   par(mar=c(5.1,7,4.1,2.1))
-  plot_catch_fractions(biotic, barplot=T, title="missiontype/quality/group", blankcode = "Uknown")
+  plot_mission_types(biotic)
   par(mar=c(5.1,4.1,4.1,2.1))
   plot_catch_fractions(biotic, blankcode = "Uknown")
   par(mar=c(5.1,7,4.1,2.1))
