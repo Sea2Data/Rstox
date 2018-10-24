@@ -764,6 +764,11 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   WeightLength <- prepareRECA$WeightLength
   Landings <- prepareRECA$Landings
   
+  write("######", stdout())
+  write("Running ECA with model configuration:", stdout())
+  writeRecaConfiguration(GlobalParameters, Landings, WeightLength, AgeLength, file=stdout())
+  write("######", stdout())
+  
   GlobalParameters$caa.burnin <- burnin
   GlobalParameters$burnin <- caa.burnin
   GlobalParameters$nSamples <- nSamples
@@ -785,16 +790,6 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   }
   else{
     ## Estimate model
-    write("#########", stdout())
-    write("Running ECA with model configuration:", stdout())
-    write("Length given age model:", stdout())
-    print(AgeLength$info)
-    write(paste("individuals:", nrow(AgeLength$DataMatrix)), stdout())
-    write("Weight given length model:", stdout())
-    print(WeightLength$info)
-    write(paste("individuals:", nrow(WeightLength$DataMatrix)), stdout())
-    write("#########", stdout())
-    
     fit <- eca::eca.estimate(AgeLength,WeightLength,Landings,GlobalParameters)
     
     ## Predict
@@ -843,8 +838,6 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
   
   fn <- formatPlot(projectName, "RECA_results", function(){plot_RECA_results_panel(rundata$runRECA$pred, prep$prepareRECA$StoxExport$biotic, ...)}, verbose=verbose, format=format, height=height, width=width, res=res, ...)
   out$filename <- c(fn, out$filename)
-  warning("Implement save catch matrix")
-  #save catch matrix
   return(out)
 }
 
@@ -852,7 +845,7 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
 #' @param projectName name of stox project
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
-#' @param ... parameters passed on plot function and format
+#' @param ... parameters passed on to plot function and format
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
 diagnosticsRECA <-
@@ -1025,6 +1018,170 @@ plotRECA <- function(projectName, ...){
     },
     finally={
     }
+  )
+  return(out)
+}
+
+#' @title Writes RECA configuration
+#' @description Writes details about the model configuration to a text file or open connection
+#' @details Configuration are saved reflecting the parameters as passed to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}, even if it is possible to have for instance the GlobalParameters differ between the two for a valid execution.
+#' @param GlobalParameters defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @param Landings defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @param WeightLength defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @param AgeLength defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @param fileobj filename or open connection
+#' @param main header to write before configuration
+#' @keywords internal
+writeRecaConfiguration <- function(GlobalParameters, Landings, WeightLength, AgeLength, fileobj, main=NULL){
+  if (length(class(fileobj))>1){
+    if ("connection" %in% class(fileobj)){
+      f <- fileobj
+    }
+    else{
+      stop(paste("Unsupported class for parameter fileobj: ", class(fileobj)))
+    }
+  }
+  else if (class(fileobj)=="character"){
+    f <- file(fileobj, open="w")
+  }
+  else{
+    stop(paste("Unsupported class for parameter fileobj: ", class(fileobj)))
+  }
+  if (!is.null(main)){
+    write(main, f)    
+  }
+  formatinfo <- function(info){
+    info <- as.data.frame(info)
+    info$covariate <- row.names(info)
+    info <- info[,c(length(names(info)), seq(1,length(names(info))-1))]
+    return(info)
+  }
+  write("Length given age model:", f)
+  write.table(formatinfo(AgeLength$info), sep="\t", dec=".", row.names=F, file = f)
+  write(paste("individuals:", nrow(AgeLength$DataMatrix)), f)
+  write("Weight given length model:", f)
+  write.table(formatinfo(WeightLength$info),sep="\t", dec=".", row.names=F, file = f)
+  write(paste("individuals:", nrow(WeightLength$DataMatrix)), f)
+  
+  if (length(class(fileobj))==1){
+    if(class(fileobj)=="character"){
+      close(f)
+    } 
+  }
+}
+
+#' @title Save catch at age matrix
+#' @description Write catch at age predicted by \code{\link[eca]{eca.predict}} as csv file.
+#' @details Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
+#'    Each row correspond to an age group, and columns to either means or an iteration of the Monte Carlo simulation.
+#'    Units are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
+#' @param pred as returned by \code{\link[eca]{eca.predict}}
+#' @param filename name of file to save to.
+#' @param var Variable to extract. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @param savemeans If True, only means for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.
+#' @keywords internal
+saveCatchMatrix <- function(pred, filename, var="Abundance", unit="ones", main="", savemeans=F){
+  comments <- c()
+  if (savemeans){
+    title <- "Mean catch at age estimates"
+  }
+  else{
+    title <- "Catch at age estimates"
+  }
+  
+  if (var=="Abundance" | var=="Count"){
+    plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="ones", def.out = F)
+    caa <- round(apply(pred$TotalCount, c(2,3), sum))
+    
+    if (unit=="ones"){
+      comments <- c(paste(title, "as", var))
+    }
+    if (unit!="ones"){
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    
+  }
+  else if (var=="Weight"){
+    caa <- apply(pred$TotalCount, c(2,3), sum)*pred$MeanWeight
+    plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="kilograms", def.out = F)
+    comments <- c(paste(title, "as", var, "in", unit))
+  }
+  else{
+    stop("Not implemented")
+  }
+
+  comments <- c(main, comments)
+  caa_scaled <- as.data.frame(caa/plottingUnit$scale)
+  means <- as.data.frame(list(Age=pred$AgeCategories, mean=rowMeans(caa_scaled)))
+  colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
+  caa_scaled$Age <- pred$AgeCategories
+  caa_scaled <- caa_scaled[,names(caa_scaled)[order(names(caa_scaled))]]
+  
+  f <- file(filename, open="w")
+  write(paste("#", comments), f)
+  if (savemeans){
+    write.table(means, file=f, sep="\t", dec=".", row.names=F)
+    close(f)
+  }
+  else{
+    write.table(caa_scaled, file=f, sep="\t", dec=".", row.names=F)
+    close(f)
+  }
+}
+
+#' @title Report RECA.
+#' @description Produces reports for for RECA. Fails silently on errors.
+#' @details Exports a tab separated file with means of catch at age (produced by \code{\link{saveCatchMatrix}}), one for the posterior distribution of catch at age (produced by \code{\link{saveCatchMatrix}}), and a file summarizing the model configuration (produced by \code{\link{writeRecaConfiguration}})
+#'    This function is intended for use with \code{\link{getReports}}, and contain parameters like write in order to adhere to that contract.
+#' @param projectName name of stox project
+#' @param var Variable to extract. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param write logical determining if report is written to files. If false the function return immidiatly with NULL.
+#' @param ... arguments passed to \code{\link{saveCatchMatrix}} and \code{\link{writeRecaConfiguration}}
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
+#' @export
+reportRECA <- function(projectName, var="Abundance", unit="ones", write=T, ...){
+  
+  if (!write){
+    return(NULL)
+  }
+  
+  out <- list()
+  out$filename <- c()
+  get_filename <- function(stat){paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(stat, var, unit), collapse="_")), ".txt")}
+  tryCatch({
+  pd<-loadProjectData(projectName, var="runRECA") 
+  },
+  finally={
+  }
+  )
+  
+  tryCatch({
+    saveCatchMatrix(pd$runRECA$pred, get_filename("means"), main=projectName, savemeans = T, var=var, unit=unit, ...)
+    out$filename <- c(get_filename("means"), out$filename)
+  },
+  finally={
+  }
+  )
+
+  tryCatch({
+    saveCatchMatrix(pd$runRECA$pred, get_filename("distribution"), main=projectName, savemeans = F, var=var, unit=unit, ...)
+    out$filename <- c(get_filename("distribution"), out$filename)
+  },
+  finally={
+  }
+  )
+  
+  tryCatch({
+    pd<-loadProjectData(projectName, var="prepareRECA") 
+    filename <- file.path(getProjectPaths(projectName)$RReportDir, "eca_configuration.txt")
+    writeRecaConfiguration(pd$prepareRECA$GlobalParameters, pd$prepareRECA$Landings, pd$prepareRECA$WeightLength, pd$prepareRECA$AgeLength, fileobj=filename, main=projectName, ...)
+    out$filename <- c(filename, out$filename)
+  },
+  finally={
+  }
   )
   return(out)
 }

@@ -13,7 +13,7 @@ diagnosticsRECA(projectName, verbose = T, format = "png", ...)
 
 \item{format}{function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp}
 
-\item{...}{parameters passed on plot function and format}
+\item{...}{parameters passed on to plot function and format}
 }
 \value{
 list, with at least one named element 'filename', a vector of file-paths to generated plots.

@@ -5,7 +5,8 @@
 \title{Prepare data for RECA}
 \usage{
 prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
-  delta.age = 0.001, maxlength = NULL, hatchDaySlashMonth = "01/01")
+  delta.age = 0.001, maxlength = NULL, hatchDaySlashMonth = "01/01",
+  use_otolithtype = NULL)
 }
 \arguments{
 \item{projectName}{name of stox project}

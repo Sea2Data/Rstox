@@ -1276,7 +1276,6 @@ getReports <- function(projectName, out="all", options="", ...){
 runFunsRstox <- function(projectName, string, out="all", options="", all.out=FALSE, drop.out=TRUE, ...){
 	# Get the available functions:
 	funs <- getFunsRstox(string=string, out=out)
-	
 	# Get the parameters
 	dotlist <- list(...)
 	if(nchar(options)>0){
