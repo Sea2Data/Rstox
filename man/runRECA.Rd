@@ -37,7 +37,7 @@ runRECA(projectName, burnin = 100, caa.burnin = 100, nSamples = 1000,
 \item{export_only}{if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only}
 }
 \description{
-Loads data produced by \code{\link{prepareRECA}} runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
+Loads data produced by \code{\link{prepareRECA}}, run tests on model configuration, runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
 }
 \details{
 Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}.

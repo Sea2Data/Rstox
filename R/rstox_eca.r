@@ -650,7 +650,7 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 
 
 #' @title Prepare data for RECA
-#' @description Convert data to exported from stox to eca format and run tests on model configuration. Save results to project data 'prepareRECA'
+#' @description Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
 #' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
 #' @param projectName name of stox project
 #' @param minage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
@@ -696,17 +696,6 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
   WeightLength <- getWeightGivenLength_Biotic(eca, ecaParameters)
   
   #
-  # Run checks
-  #
-  
-  checkAgeLength(AgeLength)
-  checkWeightLength(WeightLength)
-  checkCovariateConsistency(AgeLength, Landings$AgeLengthCov)
-  checkCovariateConsistency(WeightLength, Landings$WeightLengthCov)
-  checkLandings(Landings)
-  checkGlobalParameters(GlobalParameters)
-  
-  #
   # store results
   #
   
@@ -714,7 +703,7 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
 }
 
 #' @title run RECA 
-#' @description Loads data produced by \code{\link{prepareRECA}} runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
+#' @description Loads data produced by \code{\link{prepareRECA}}, run tests on model configuration, runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
 #' @details Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}.
 #'     For purposes of testing and running ECA detached from StoX, Data files accepted by code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}} can be exported using the option export_only. In this case the analysis is not run, but data files and parameter files are stored at the designated location.
 #' @param projectName name of stox project
@@ -744,6 +733,17 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   AgeLength <- prepareRECA$AgeLength
   WeightLength <- prepareRECA$WeightLength
   Landings <- prepareRECA$Landings
+  
+  #
+  # Run checks
+  #
+  
+  checkAgeLength(AgeLength)
+  checkWeightLength(WeightLength)
+  checkCovariateConsistency(AgeLength, Landings$AgeLengthCov)
+  checkCovariateConsistency(WeightLength, Landings$WeightLengthCov)
+  checkLandings(Landings)
+  checkGlobalParameters(GlobalParameters)
   
   write("######", stdout())
   write("Running ECA with model configuration:", stdout())

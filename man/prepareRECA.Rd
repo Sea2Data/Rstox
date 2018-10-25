@@ -24,7 +24,7 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 \item{hatchDaySlashMonth}{reference day for assumed spawning time of fish, formatted as day / month}
 }
 \description{
-Convert data to exported from stox to eca format and run tests on model configuration. Save results to project data 'prepareRECA'
+Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
 }
 \details{
 Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
