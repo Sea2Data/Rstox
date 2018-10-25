@@ -63,28 +63,6 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		landing <- x[x$CovariateSourceType=="Landing", , drop=FALSE]
 		list(biotic=biotic, landing=landing)
 	}
-	# Function for aggregating landing data in each covariate cell:
-	aggregateLanding <- function(x, names, covariateDefinition){
-		# Replace missing values by "-" to include these levels in the aggregation, and change back to NA at the end. This is because by() does not like NAs in the indices. We should find a better way later...:
-		x[names][is.na(x[names])] <- "-"
-		# Convert to tonnes from the hg definition in the landing data:
-		weight_hektogram = by(x$rundvekt, x[,names], sum, na.rm=TRUE)
-			weight_tonnes <- weight_hektogram/10000
-			covariates <- attributes(weight_tonnes)$dimnames
-			suppressWarnings(covariates <- lapply(covariates, as.numeric))
-			covariates <- expand.grid(covariates)
-			#covariates = expand.grid(attributes(weight_tonnes)$dimnames)
-			covariatesFactor <- lapply(seq_along(names), function(xx) covariateDefinition[[xx]]$biotic[covariates[[xx]], "Covariate"])
-			names(covariatesFactor) <- names(covariateDefinition)
-			# Aggregate by the covariates:
-		out = data.frame(covariates, covariatesFactor, weight_tonnes=c(weight_tonnes), stringsAsFactors=FALSE)
-		# Remove empty cells and order:
-		out = out[!is.na(out$weight_tonnes),,drop=FALSE]
-		out = out[do.call(order, c(out[names], list(na.last=FALSE))),,drop=FALSE]
-		out[out=="-"] <- NA
-		rownames(out) <- seq_len(nrow(out))
-			out
-	}
 	
 	# Define covariate processes and returned process data:
 	# covariateProcessesData <- c("temporal", "season", "gearfactor", "spatial") # Changed on 2018-08-28 according to Jira STOX-153:
@@ -108,6 +86,10 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		# 2018-08-28: Changed to using 'sistefangstdato' as per comment from Edvin:
 		#landing <- addYearday(landing, datecar="formulardato", tz="UTC", format="%d/%m/%Y")
 		landing <- addYearday(landing, datecar="sistefangstdato", tz="UTC", format="%d/%m/%Y")
+		
+		warning("Correcting weight in landings from hg to kg: Change with format transition.")
+		landing$rundvekt <- landing$rundvekt/10
+		
 		#####################################
 	
 		############################################################
@@ -237,8 +219,6 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		}
 		lapply(names(covariateMatrixLanding), testCovariate, covariateMatrixLanding=covariateMatrixLanding)
 		
-		#landingAggOrig <- aggregateLanding(landing, covariateNames, covariateDefinition=covariateDefinition)
-		#landingAgg <- aggregateLanding(landing, covariateNames, covariateDefinition=covariateDefinition)
 		# Aggregate the rundvekt by covariates:
 		landingAggregated <- by(landing$rundvekt, as.data.frame(covariateMatrixLanding, stringsAsFactors=FALSE), sum)
 		# Combine into a data frame with covariates and the rundvekt in the last column:

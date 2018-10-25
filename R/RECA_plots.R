@@ -336,7 +336,7 @@ get_g_s_a_frame <- function(eca) {
   
   totland <-
     aggregate(
-      list(landed_kt = eca$landing$rundvekt / (1000 * 1000)),
+      list(landed_kt = round(eca$landing$rundvekt / (1000 * 1000))),
       by = list(
         temporal = eca$landing$temporal,
         gearfactor = eca$landing$gearfactor,
@@ -417,7 +417,7 @@ get_gta_landings <- function(stoxexport) {
   )
   names(landedcol) = gta
   aggland <-
-    aggregate(list(landed_kt = stoxexport$landing$rundvekt),
+    aggregate(list(landed_kt = round(stoxexport$landing$rundvekt/(1000*1000))),
               by = landedcol,
               FUN = sum)
   return(aggland)
@@ -641,7 +641,7 @@ get_fixed_effects_landings <- function(stoxexport) {
     )
   names(landedcol) = fixed_effects
   aggland <-
-    aggregate(list(landed_kt = stoxexport$landing$rundvekt),
+    aggregate(list(landed_kt = round(stoxexport$landing$rundvekt/(1000*1000))),
               by = landedcol,
               FUN = sum)
   return(aggland)
