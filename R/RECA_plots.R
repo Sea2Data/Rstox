@@ -336,7 +336,7 @@ get_g_s_a_frame <- function(eca) {
   
   totland <-
     aggregate(
-      list(landed_kt = round(eca$landing$rundvekt / (1000 * 1000))),
+      list(landed_kt = eca$landing$rundvekt / (1000 * 1000)),
       by = list(
         temporal = eca$landing$temporal,
         gearfactor = eca$landing$gearfactor,
@@ -417,7 +417,7 @@ get_gta_landings <- function(stoxexport) {
   )
   names(landedcol) = gta
   aggland <-
-    aggregate(list(landed_kt = round(stoxexport$landing$rundvekt/(1000*1000))),
+    aggregate(list(landed_kt = stoxexport$landing$rundvekt/(1000*1000)),
               by = landedcol,
               FUN = sum)
   return(aggland)
@@ -529,7 +529,7 @@ plot_cell_landings <-
          mm$hauls > 1, "col"] <- colgood
     
     barplot(
-      mm$landed_kt,
+      round(mm$landed_kt),
       col = mm$col,
       xlab = xlab,
       ylab = ylab,
@@ -641,7 +641,7 @@ get_fixed_effects_landings <- function(stoxexport) {
     )
   names(landedcol) = fixed_effects
   aggland <-
-    aggregate(list(landed_kt = round(stoxexport$landing$rundvekt/(1000*1000))),
+    aggregate(list(landed_kt = stoxexport$landing$rundvekt/(1000*1000)),
               by = landedcol,
               FUN = sum)
   return(aggland)
@@ -704,8 +704,10 @@ plot_fixed_effect_coverage <-
     color[agg$catchsamples == 0 & agg$landed_kt > 0] <-
       undersampledcol
     color[agg$catchsamples > 0 & agg$landed_kt == 0] <- wrongcol
+    agg$landed_kt <- round(agg$landed_kt)
     names(agg)[names(agg)=="catchsamples"] <- "catch samples"
     names(agg)[names(agg)=="landed_kt"] <- "landed kt"
+    
     plot.new()
     plotrix::addtable2plot(
       x = "topleft",
