@@ -753,12 +753,13 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
 #' @export
 runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin=1, fitfile="fit", predfile="pred", lgamodel="log-linear", CC=FALSE, CCError=FALSE, seed=NULL, age.error=FALSE, export_only=NULL){
   requireNamespace("eca")
+
   # Sett kjøreparametere her, sett dataparametere i prep_eca
   prepdata <- loadProjectData(projectName, var="prepareRECA")   
-  prepareRECA <- prepdata$prepareRECA
   if (is.null(prepdata)){
     stop("Could not load project data")
   }
+  prepareRECA <- prepdata$prepareRECA
   GlobalParameters <- prepareRECA$GlobalParameters
   AgeLength <- prepareRECA$AgeLength
   WeightLength <- prepareRECA$WeightLength
@@ -766,7 +767,7 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   
   write("######", stdout())
   write("Running ECA with model configuration:", stdout())
-  writeRecaConfiguration(GlobalParameters, Landings, WeightLength, AgeLength, file=stdout())
+  writeRecaConfiguration(GlobalParameters, Landings, WeightLength, AgeLength, fileobj=stdout())
   write("######", stdout())
   
   GlobalParameters$caa.burnin <- burnin
@@ -778,15 +779,12 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   GlobalParameters$lgamodel <- lgamodel
   GlobalParameters$CC <- CC
   GlobalParameters$CCerror <- CCError
-  GlobalParameters$age.error=age.error
+  GlobalParameters$age.error <- age.error
   GlobalParameters$seed <- seed
-  
-  AgeLength <- AgeLength
-  WeightLength <- WeightLength
-  Landings <- Landings
-  
+
   if (!is.null(export_only)){
     save(GlobalParameters, AgeLength, WeightLength, Landings, file=export_only)
+    return(NULL)
   }
   else{
     ## Estimate model
@@ -795,7 +793,7 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
     ## Predict
     pred <- eca::eca.predict(AgeLength,WeightLength,Landings,GlobalParameters)
     
-    setProjectData(projectName=projectName, var=list(fit=fit, pred=pred), name="runRECA")
+    return(setProjectData(projectName=projectName, var=list(fit=fit, pred=pred), name="runRECA"))
   }
 }
 
