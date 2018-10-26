@@ -213,8 +213,17 @@ checkLandings <- function(landings){
 
 #' 
 #' @keywords internal
-checkGlobalParameters <- function(globalparameters){
+checkGlobalParameters <- function(globalparameters, agelength, weightlength){
   if (is.na(globalparameters$lengthresCM)){
     stop("Length resolution not set (lengthresCM)")
+  }
+  if (max(agelength$DataMatrix$age, na.rm=T)>globalparameters$maxage){ #ages is checked for nas elsewere
+    stop(paste("Parameter maxage", globalparameters$maxage, "is smaller than maximal age in samples (", max(agelength$DataMatrix$age, na.rm=T), ")"))
+  }
+  if (min(agelength$DataMatrix$age, na.rm=T)<globalparameters$minage){ #ages is checked for nas elsewere
+    stop(paste("Parameter minage", globalparameters$minage, " is larger than minimal age in samples (", min(agelength$DataMatrix$age, na.rm=T), ")"))
+  }
+  if (max(weightlength$DataMatrix$lengthCM, na.rm=T)>globalparameters$maxlength){ #lengths are checked for nas elsewere
+    stop(paste("Parameter maxlength (", globalparameters$maxlength, ") is smaller than maximal length in samples (", max(weightlength$DataMatrix$lengthCM, na.rm=T), ")"))
   }
 }

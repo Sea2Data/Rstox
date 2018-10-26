@@ -13,7 +13,7 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 
 \item{resultdir}{location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist}
 
-\item{minage}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
+\item{minage}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}.}
 
 \item{maxage}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
@@ -21,11 +21,12 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 
 \item{maxlength}{maximum length of fish in the data set in cm. If null the value will be extracted from the data.}
 
-\item{hatchDaySlashMonth}{reference day for assumed spawning time of fish, formatted as day / month}
+\item{hatchDaySlashMonth}{reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.}
 }
 \description{
 Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
 }
 \details{
 Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
+   The parameters minage and maxage define the range of ages that are considered possible in the model. Because R-ECA integrates weight and length measurements, and allows for modelling errors in age determination, predicted ages might fall outside the age range in samples. minage and maxage should be set with this in mind.
 }

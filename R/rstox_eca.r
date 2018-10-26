@@ -652,12 +652,13 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 #' @title Prepare data for RECA
 #' @description Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
 #' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
+#'    The parameters minage and maxage define the range of ages that are considered possible in the model. Because R-ECA integrates weight and length measurements, and allows for modelling errors in age determination, predicted ages might fall outside the age range in samples. minage and maxage should be set with this in mind.
 #' @param projectName name of stox project
-#' @param minage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param minage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}.
 #' @param maxage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param delta.age see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
-#' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month
+#' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @export
 prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, hatchDaySlashMonth="01/01", use_otolithtype = NULL){
@@ -743,7 +744,7 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   checkCovariateConsistency(AgeLength, Landings$AgeLengthCov)
   checkCovariateConsistency(WeightLength, Landings$WeightLengthCov)
   checkLandings(Landings)
-  checkGlobalParameters(GlobalParameters)
+  checkGlobalParameters(GlobalParameters, AgeLength, WeightLength)
   
   write("######", stdout())
   write("Running ECA with model configuration:", stdout())
