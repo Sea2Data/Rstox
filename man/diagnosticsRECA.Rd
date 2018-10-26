@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstox_eca.r
 \name{diagnosticsRECA}
 \alias{diagnosticsRECA}
-\title{Generate plots for diagnosis of RECA model configuration. Compares sampling effort to fisheries along covariates selected in the model , and along some standard covariate choices if available (gear, temporal and spatial)}
+\title{Diagonostics RECA}
 \usage{
 diagnosticsRECA(projectName, verbose = T, format = "png", ...)
 }
@@ -19,5 +19,8 @@ diagnosticsRECA(projectName, verbose = T, format = "png", ...)
 list, with at least one named element 'filename', a vector of file-paths to generated plots.
 }
 \description{
-Generate plots for diagnosis of RECA model configuration. Compares sampling effort to fisheries along covariates selected in the model , and along some standard covariate choices if available (gear, temporal and spatial)
+Generate plots for diagnosis of RECA model configuration.
+}
+\details{
+Plots are made conditional on problems. E.g. Fixed effects plot is not made, if all combinations of fixed effects were sampled.
 }

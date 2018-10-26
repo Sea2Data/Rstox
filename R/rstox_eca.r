@@ -735,6 +735,18 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   WeightLength <- prepareRECA$WeightLength
   Landings <- prepareRECA$Landings
   
+  GlobalParameters$caa.burnin <- burnin
+  GlobalParameters$burnin <- caa.burnin
+  GlobalParameters$nSamples <- nSamples
+  GlobalParameters$thin <- thin
+  GlobalParameters$fitfile <- fitfile
+  GlobalParameters$predictfile <- predfile
+  GlobalParameters$lgamodel <- lgamodel
+  GlobalParameters$CC <- CC
+  GlobalParameters$CCerror <- CCError
+  GlobalParameters$age.error <- age.error
+  GlobalParameters$seed <- seed
+
   #
   # Run checks
   #
@@ -751,18 +763,6 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   writeRecaConfiguration(GlobalParameters, Landings, WeightLength, AgeLength, fileobj=stdout())
   write("######", stdout())
   
-  GlobalParameters$caa.burnin <- burnin
-  GlobalParameters$burnin <- caa.burnin
-  GlobalParameters$nSamples <- nSamples
-  GlobalParameters$thin <- thin
-  GlobalParameters$fitfile <- fitfile
-  GlobalParameters$predictfile <- predfile
-  GlobalParameters$lgamodel <- lgamodel
-  GlobalParameters$CC <- CC
-  GlobalParameters$CCerror <- CCError
-  GlobalParameters$age.error <- age.error
-  GlobalParameters$seed <- seed
-
   if (!is.null(export_only)){
     save(GlobalParameters, AgeLength, WeightLength, Landings, file=export_only)
     return(NULL)
@@ -820,7 +820,9 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
   return(out)
 }
 
-#' Generate plots for diagnosis of RECA model configuration. Compares sampling effort to fisheries along covariates selected in the model , and along some standard covariate choices if available (gear, temporal and spatial)
+#' @title Diagonostics RECA
+#' @description Generate plots for diagnosis of RECA model configuration.
+#' @details Plots are made conditional on problems. E.g. Fixed effects plot is not made, if all combinations of fixed effects were sampled.
 #' @param projectName name of stox project
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
@@ -841,7 +843,88 @@ diagnosticsRECA <-
     if(length(prep)==0){
      return(NULL)
     }
+    
+    covariateConsistencyIssues <- T
+    tryCatch({
+      checkCovariateConsistency(prep$prepareRECA$AgeLength, prep$prepareRECA$Landings$AgeLengthCov)
+      checkCovariateConsistency(prep$prepareRECA$WeightLength, prep$prepareRECA$Landings$WeightLengthCov)
+      covariateConsistencyIssues <- F  
+      }, 
+      error = function(e){},
+      finally = function(e){}
+    )
   
+    stoxexp <- prep$prepareRECA$StoxExpor
+    
+    #
+    # Plots for dealing with covariate consistency issues
+    #
+    if (covariateConsistencyIssues){
+      #calculate plot dimensions for table
+      rows = nrow(get_fixed_effects_landings(stoxexp))
+      cols = ncol(get_fixed_effects_landings(stoxexp)) + 2
+      
+      if (format == "png") {
+        #dimension in pixels
+        res = 500
+        width = (res / 1.5) * (cols + 2) * 2
+        height = (res / 4.9) * (rows + 10)
+      }
+      if (format == "pdf") {
+        #dimension in inches
+        width = (cols + 2) * 2 / 1.3
+        height = (rows + 7) / 5
+        res = NULL
+      }
+      
+      fn <- formatPlot(projectName, "RECA_config_issue_fixed_effects", function() {
+        diagnostics_model_configuration(stoxexp, ...)
+      }, verbose = verbose, format = format, height = height, width = width, res =
+        res, ...)
+      out$filename <- c(fn, out$filename)
+      
+      
+      if (format=="png"){
+        #dimension in pixels
+        width=5000
+        height=5000
+        res=500
+      }
+      if (format=="pdf"){
+        #dimension in inches
+        width=10
+        height=10
+        res=NULL
+      } 
+    }
+    
+    return(out)
+  }
+
+#' @title plotSamplingOverview
+#' @description Generate plots to show composition of samples wrp activity in fisheries
+#' @details Compares sampling effort to fisheries along covariates selected in the model, and along some standard covariate choices if available (gear, temporal and spatial). Plots compositions of samples with respect to some important variables informative of sampling heterogenety
+#' @param projectName name of stox project
+#' @param verbose logical, if TRUE info is written to stderr()
+#' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
+#' @param ... parameters passed on to plot function and format
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
+#' @export
+plotSamplingOverview <-
+  function(projectName,
+           verbose = T,
+           format = "png",
+           ...) {
+    
+    out <- list()
+    out$filename <- c()
+    
+    prep <- loadProjectData(projectName, var = "prepareRECA")
+    
+    if(length(prep)==0){
+      return(NULL)
+    }
+    
     stoxexp <- prep$prepareRECA$StoxExpor
     
     #
@@ -919,38 +1002,6 @@ diagnosticsRECA <-
       )
     }
     
-    #
-    # Fixed effect plot
-    #
-    
-    #for testing different configs
-    #stoxexp$resources$covariateInfo[2,"covType"] <- "Fixed"
-    #stoxexp$resources$covariateInfo[3,"covType"] <- "Fixed"
-    
-    #calculate plot dimensions for table
-    rows = nrow(get_fixed_effects_landings(stoxexp))
-    cols = ncol(get_fixed_effects_landings(stoxexp)) + 2
-    
-    if (format == "png") {
-      #dimension in pixels
-      res = 500
-      width = (res / 1.5) * (cols + 2) * 2
-      height = (res / 4.9) * (rows + 10)
-    }
-    if (format == "pdf") {
-      #dimension in inches
-      width = (cols + 2) * 2 / 1.3
-      height = (rows + 7) / 5
-      res = NULL
-    }
-    
-    fn <- formatPlot(projectName, "RECA_model_configuration", function() {
-      diagnostics_model_configuration(stoxexp, ...)
-    }, verbose = verbose, format = format, height = height, width = width, res =
-      res, ...)
-    out$filename <- c(fn, out$filename)
-    
-    
     if (format=="png"){
       #dimension in pixels
       width=5000
@@ -984,7 +1035,7 @@ plotRECA <- function(projectName, ...){
   out$filename <- c()
   
   tryCatch({
-    fn <- diagnosticsRECA(projectName, ...)
+    fn <- plotSamplingOverview(projectName, ...)
     out$filename <- c(fn$filename, out$filename)
             },
            finally={
@@ -998,6 +1049,15 @@ plotRECA <- function(projectName, ...){
     finally={
     }
   )
+  
+  tryCatch({
+    fn <- diagnosticsRECA(projectName, ...)
+    out$filename <- c(fn$filename, out$filename)
+  },
+  finally={
+  }
+  )
+  
   return(out)
 }
 
@@ -1041,6 +1101,8 @@ writeRecaConfiguration <- function(GlobalParameters, Landings, WeightLength, Age
   write("Weight given length model:", f)
   write.table(formatinfo(WeightLength$info),sep="\t", dec=".", row.names=F, file = f)
   write(paste("individuals:", nrow(WeightLength$DataMatrix)), f)
+  write("Run-parameters:", f)
+  write.table(t(as.data.frame(GlobalParameters)), col.names = F, f)
   
   if (length(class(fileobj))==1){
     if(class(fileobj)=="character"){

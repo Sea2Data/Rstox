@@ -9,6 +9,8 @@ plot_fixed_effect_coverage(stoxexport, indparameters = c("age"),
   wrongcol = default_color_wrong, undersampledcol = default_color_empty)
 }
 \arguments{
+\item{stoxexport}{as returned from \code{\link{baseline2eca}}}
+
 \item{indparameter}{the parameters for which data needs to be available}
 }
 \description{

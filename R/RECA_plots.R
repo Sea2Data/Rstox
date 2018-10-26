@@ -648,7 +648,7 @@ get_fixed_effects_landings <- function(stoxexport) {
 }
 
 #' Plot table of coverage for fixed effects
-#' @param stoxexport
+#' @param stoxexport as returned from \code{\link{baseline2eca}}
 #' @param indparameter the parameters for which data needs to be available
 #' @keywords internal
 plot_fixed_effect_coverage <-
