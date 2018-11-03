@@ -2041,3 +2041,88 @@ abbrevWords <- function(x, p=1/2, collapse="_", keep=c("capital", "numeric", "pu
 	### s <- unlist(lapply(seq_along(s), function(i) substr(s[i], 1, n[i])))
 	### paste(s, collapse=collapse)
 }
+
+#' Composing a single year Survey Time Series from scratch
+#'
+#' \code{NMDcomposeSTS} returns the created StoX project path.
+#'
+#' @param STSname Name of the survey time series. Must be a character vector.
+#' @param year Year of the survey time searies. Must be a character vector.
+#' @param APIversion Placeholder, not used yet (see below TODO).
+#' @param DATAversion Placeholder, not used yet (see below TODO).
+#'
+#' @return A character vector containing the newly created StoX project directory
+#'
+#' @examples
+#' \dontrun{
+#' NMDcomposeSTS("Barents Sea Beaked redfish and Sebastes sp in Subareas
+#'	I and II bottom trawl index in winter", "2017")
+#' }
+#' @export
+#' @importFrom XML xmlNamespaceDefinitions getNodeSet
+NMDcomposeSTS <- function(STSname, year, APIversion = NULL, DATAversion = NULL) {
+	# TODO: Versioning and dynamic API path and data version
+
+	# Getting the source cruise
+	getSource <- function(stsRef, STSname) {
+		return (stsRef[[STSname]]$cruiseSeries$cruiseSeries$cruiseSeries)
+	}
+
+	# Extract ship name and cruise
+	extract <- function(node, type) {
+		fileName <- tools::file_path_sans_ext(basename(node))
+		tmp <- tail(strsplit(fileName, "[_]")[[1]], 2)
+		url <- searchNMDCruise(tmp[[1]], tmp[[2]], type)[[1]]
+		# For G.O. Sars, (G+O+Sars to G.O.Sars)
+		if(is.na(url)) {
+			tmp[[2]] <- gsub("[+]", ".", tmp[[2]])
+			url <- searchNMDCruise(tmp[[1]], tmp[[2]], type)[[1]]
+		}
+		return(url)
+	}
+
+	# Get STS ref
+	stsRef <- xmlToList("http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/dataset/surveytimeseries/?version=2.0")
+	names(stsRef) <- lapply(stsRef, function(x) x$name)
+
+	# Getting the name of the source cruise for the picked STS (NB: Not used as for now, it's not accurate?)
+	sourceCruise <- getSource(stsRef, STSname)
+
+	# Getting the StoX project file
+	stoxProjectName <- lapply(stsRef[[STSname]]$cruiseSeries$cruiseSeries$samples, function(x) if(x$sampleTime==year) return(x$stoxProject) else return(NULL))
+	stoxProjectName <- unlist(stoxProjectName)
+
+	if(length(stoxProjectName) < 1) {
+		message("Survey Time Series not found, please check the name and/or the year again.")
+		return(NA)
+	}
+
+	downloadStox <- paste0("http://tomcat7.imr.no:8080/apis/nmdapi/stox/v1/", stoxProjectName)
+
+	# Parse the project file to get the file names
+	stoxProjectXML <- xmlParse(downloadStox)
+	nsDefs = xmlNamespaceDefinitions(stoxProjectXML)
+	ns = structure(sapply(nsDefs, function(x) x$uri), names = names(nsDefs))[[1]]
+
+	# Extract names
+	bioticFiles <- sapply(getNodeSet(stoxProjectXML, "/x:project/x:model/x:process[@name='ReadBioticXML']/x:parameter[contains(@name,'FileName')]", c("x"=ns)), xmlValue)
+	acousticFiles <- sapply(getNodeSet(stoxProjectXML, "/x:project/x:model/x:process[@name='ReadAcousticXML']/x:parameter[contains(@name,'FileName')]", c("x"=ns)), xmlValue)
+
+	# Get the URLs
+	downloadBiotic <- sapply(bioticFiles, extract, "biotic")
+	downloadAcoustic <- sapply(acousticFiles, extract, "echosounder")
+
+	# Create structure
+	tmpDir <- tempfile(pattern="dir")
+	dirStruct <- c("output", "process", "input/biotic", "input/acoustic")
+	lapply(paste0(tmpDir, "/", dirStruct), dir.create, recursive = TRUE)
+
+	# Download files
+	tmp <- t(data.frame(c(bioticFiles, acousticFiles)))
+	tmp <- cbind(tmp, t(data.frame(c(downloadBiotic, downloadAcoustic))))
+	for (i in 1:nrow(tmp)) {
+		download.file(URLencode(tmp[i,2]), paste0(tmpDir, "/", tmp[i,1]))
+	}
+	download.file(URLencode(downloadStox), paste0(tmpDir, "/process/project.xml"))
+	return(tmpDir)
+}
