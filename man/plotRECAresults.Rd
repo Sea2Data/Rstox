@@ -15,6 +15,9 @@ plotRECAresults(projectName, verbose = F, format = "png", ...)
 
 \item{...}{parameters passed on plot function and format}
 }
+\value{
+list, with at least one named element 'filename', a vector of file-paths to generated plots.
+}
 \description{
 Generates plots and reports from RECA prediction
 }

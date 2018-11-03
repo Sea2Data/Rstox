@@ -1,3 +1,24 @@
+#' Extract the covaraite definitions
+#' @keywords internal
+getCovparam <- function(projectName, parameter) {
+  # Get the project object:
+  project <- openProject(projectName, out="project")
+  s <- project$getProcessData()$asTable("covparam")
+  if(nchar(s)>0){
+    out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8")
+    if (!(parameter %in% out$Parameter)){
+      stop(paste0("Parameter ", parameter, " not found in covparam"))
+    }
+    out <- out[out$Parameter==parameter, c("CovariateTable", "Value")]
+    l <- as.list(out$Value)
+    names(l) <- out$CovariateTable
+    return(l)
+  }
+  else{
+    stop(paste0("Table \"", "covparam", "\" missing in the project.xml file"))
+  }
+}
+
 #*********************************************
 #*********************************************
 #' Prepare data from a project to the ECA model
@@ -42,28 +63,6 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		landing <- x[x$CovariateSourceType=="Landing", , drop=FALSE]
 		list(biotic=biotic, landing=landing)
 	}
-	# Function for aggregating landing data in each covariate cell:
-	aggregateLanding <- function(x, names, covariateDefinition){
-		# Replace missing values by "-" to include these levels in the aggregation, and change back to NA at the end. This is because by() does not like NAs in the indices. We should find a better way later...:
-		x[names][is.na(x[names])] <- "-"
-		# Convert to tonnes from the hg definition in the landing data:
-		weight_hektogram = by(x$rundvekt, x[,names], sum, na.rm=TRUE)
-			weight_tonnes <- weight_hektogram/10000
-			covariates <- attributes(weight_tonnes)$dimnames
-			suppressWarnings(covariates <- lapply(covariates, as.numeric))
-			covariates <- expand.grid(covariates)
-			#covariates = expand.grid(attributes(weight_tonnes)$dimnames)
-			covariatesFactor <- lapply(seq_along(names), function(xx) covariateDefinition[[xx]]$biotic[covariates[[xx]], "Covariate"])
-			names(covariatesFactor) <- names(covariateDefinition)
-			# Aggregate by the covariates:
-		out = data.frame(covariates, covariatesFactor, weight_tonnes=c(weight_tonnes), stringsAsFactors=FALSE)
-		# Remove empty cells and order:
-		out = out[!is.na(out$weight_tonnes),,drop=FALSE]
-		out = out[do.call(order, c(out[names], list(na.last=FALSE))),,drop=FALSE]
-		out[out=="-"] <- NA
-		rownames(out) <- seq_len(nrow(out))
-			out
-	}
 	
 	# Define covariate processes and returned process data:
 	# covariateProcessesData <- c("temporal", "season", "gearfactor", "spatial") # Changed on 2018-08-28 according to Jira STOX-153:
@@ -87,6 +86,10 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		# 2018-08-28: Changed to using 'sistefangstdato' as per comment from Edvin:
 		#landing <- addYearday(landing, datecar="formulardato", tz="UTC", format="%d/%m/%Y")
 		landing <- addYearday(landing, datecar="sistefangstdato", tz="UTC", format="%d/%m/%Y")
+		
+		warning("Correcting weight in landings from hg to kg: Change with format transition.")
+		landing$rundvekt <- landing$rundvekt/10
+		
 		#####################################
 	
 		############################################################
@@ -118,8 +121,8 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		#implementedCovariateDescriptions <- c("The temporal covariate", "The gear covariate given as groups of gear codes", "The spatial covariate giving polygons or locations")
 		#implementedCovariateProcesses <- c("DefineTemporalLanding", "DefineGearLanding", "DefineSpatialLanding")
 		ECACovariates <- getRstoxDef("ECACovariates")
-		
-		present <- which(ECACovariates$Name %in% names(biotic))
+		configuredCovariates <- names(getCovparam(projectName, "CovariateType"))
+		present <- which(ECACovariates$Name %in% configuredCovariates)
 		covariateNames <- ECACovariates$Name[present]
 		covariateDescriptions <- ECACovariates$Description[present]
 		covariateProcesses <- ECACovariates$Processe[present]
@@ -149,7 +152,6 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		#######################################################
 		### (3) Get covariate definitions and change names: ###
 		#######################################################
-		
 		covariateDefinition <- lapply(baselineOutput$proc[covariateNames], getCovDef)
 		# Add year covariate definitions if present:
 		if("year" %in% covariateNames){
@@ -217,8 +219,6 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		}
 		lapply(names(covariateMatrixLanding), testCovariate, covariateMatrixLanding=covariateMatrixLanding)
 		
-		#landingAggOrig <- aggregateLanding(landing, covariateNames, covariateDefinition=covariateDefinition)
-		#landingAgg <- aggregateLanding(landing, covariateNames, covariateDefinition=covariateDefinition)
 		# Aggregate the rundvekt by covariates:
 		landingAggregated <- by(landing$rundvekt, as.data.frame(covariateMatrixLanding, stringsAsFactors=FALSE), sum)
 		# Combine into a data frame with covariates and the rundvekt in the last column:
@@ -241,29 +241,8 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		
 		# Changes on 2018-10-03 / 2018-10-11:
 		# As of Rstox 1.10 the covariate info (covType and CAR) are stored as a process data output generated by the function bioticCovData (maybe to be changed to landingCovData?), as the data frame 'covparam':
-		
-		
-		browser()
 	
-		getCovparam <- function(projectName, parameter) {
-		  # Get the project object:
-		  project <- openProject(projectName, out="project")
-		  s <- project$getProcessData()$asTable("covparam")
-		  if(nchar(s)>0){
-		    out <- read.csv(textConnection(s), sep='\t', row.names=NULL, stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8")
-		    if (!(parameter %in% out$Parameter)){
-		      stop(paste0("Parameter ", parameter, " not found in covparam"))
-		    }
-		    out <- out[out$Parameter==parameter, c("CovariateTable", "Value")]
-		    l <- as.list(out$Value)
-		    names(l) <- out$CovariateTable
-		    return(l)
-		  }
-		  else{
-		    stop(paste0("Table \"", "covparam", "\" missing in the project.xml file"))
-		  }
-		}
-		
+
 		# Add a data frame with meta information about the covariates:
 		covType <- unlist(lapply(covariateNames, function(xx) getCovparam(projectName, "CovariateType")[[xx]]))
 		CAR <- rep(NA, length(covType))
@@ -373,7 +352,7 @@ getHardCoded <- function(info){
   
   hardcoded <- as.data.frame(matrix(
     c(
-      # Boat is always random whereas constant and haulcount is always fixed:
+      #add constant
       "random", "constant", 0, 
       # Include slope for the constant:
       "in.slopeModel", "constant", 1
@@ -472,8 +451,8 @@ getDataMatrixANDCovariateMatrix <- function(eca, vars=c("age", "yearday"), ecaPa
   #partcount
   
   # Define variables to include in the DataMatrix, where the variable specified in the input 'var' is included:
-  getnames <- c("length", "serialno", "samplenumber", "lengthsamplecount", "lengthsampleweight", "catchweight", if(ecaParameters$use_otolithtype) "otolithtype")
-  usenames <- c("lengthCM", "samplingID", "partnumber", "samplecount", "sampleweight", "catchweight", if(ecaParameters$use_otolithtype) "otolithtype")
+  getnames <- c("length", "serialno", "samplenumber", "lengthsamplecount", "lengthsampleweight", "catchweight", "otolithtype")
+  usenames <- c("lengthCM", "samplingID", "partnumber", "samplecount", "sampleweight", "catchweight", "otolithtype")
   getnames <- c(vars, getnames)
   usenames <- c(vars, usenames)
   
@@ -614,9 +593,8 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters){
     info = info$info, 
     resources = eca$resources
   )
-  if (ecaParameters$use_otolithtype){
-    out$ClassificationErrorVector <- eca$otholiterror
-  }
+  
+  out$ClassificationErrorVector <- eca$otholiterror
   return(out)
 }
 
@@ -657,9 +635,7 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters){
     info = info$info, 
     resources = eca$resources
   )
-  if (ecaParameters$use_otolithtype){
     out$ClassificationErrorVector <- eca$otholiterror
-  }
   return(out)
 }
 
@@ -673,18 +649,20 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 #
 
 
-#' Convert data to eca format and test. Save results to project data 'prepareRECA'
-#' parameters not described below are defined in eca.estimate and eca.predict
-#'
+#' @title Prepare data for RECA
+#' @description Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
+#' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
+#'    The parameters minage and maxage define the range of ages that are considered possible in the model. Because R-ECA integrates weight and length measurements, and allows for modelling errors in age determination, predicted ages might fall outside the age range in samples. minage and maxage should be set with this in mind.
 #' @param projectName name of stox project
-#' @param minage see specification for GlobalParameters in eca::estimate
-#' @param maxage see specification for GlobalParameters in eca::estimate
-#' @param delta.age see specification for GlobalParameters in eca::estimate
+#' @param minage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}.
+#' @param maxage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param delta.age see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
+#' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @export
-prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, use_otolithtype=TRUE, hatchDaySlashMonth="01/01"){
-  
+prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, hatchDaySlashMonth="01/01", use_otolithtype = NULL){
+  warning("use_otolithtype is deprecated and has no effect.")
   if (is.null(resultdir)){
     resultdir <- get_default_result_dir(projectName)
     if(!(file.exists(resultdir))){
@@ -707,7 +685,7 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
   }
   #consider if it makes sense to extract from data for minage and maxage as well
   
-  ecaParameters <- list(resultdir=resultdir, minage=minage, maxage=maxage, delta.age=delta.age, maxlength=maxlength, use_otolithtype=use_otolithtype, hatchDaySlashMonth=hatchDaySlashMonth)
+  ecaParameters <- list(resultdir=resultdir, minage=minage, maxage=maxage, delta.age=delta.age, maxlength=maxlength, hatchDaySlashMonth=hatchDaySlashMonth)
   
   #
   # convert data
@@ -719,47 +697,39 @@ prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.
   WeightLength <- getWeightGivenLength_Biotic(eca, ecaParameters)
   
   #
-  # Run checks
-  #
-  
-  checkAgeLength(AgeLength)
-  checkWeightLength(WeightLength)
-  checkCovariateConsistency(AgeLength, Landings$AgeLengthCov)
-  checkCovariateConsistency(WeightLength, Landings$WeightLengthCov)
-  checkLandings(Landings)
-  checkGlobalParameters(GlobalParameters)
-  
-  #
   # store results
   #
   
   setProjectData(projectName=projectName, var=list(GlobalParameters=GlobalParameters, Landings=Landings, WeightLength=WeightLength, AgeLength=AgeLength, StoxExport=eca), name="prepareRECA")
 }
 
-#' run RECA fit and prediction. Save results to project data 'runRECA'
-#' parameters not described below are defined in eca.estimate and eca.predict
-#'
+#' @title run RECA 
+#' @description Loads data produced by \code{\link{prepareRECA}}, run tests on model configuration, runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
+#' @details Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}.
+#'     For purposes of testing and running ECA detached from StoX, Data files accepted by code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}} can be exported using the option export_only. In this case the analysis is not run, but data files and parameter files are stored at the designated location.
 #' @param projectName name of stox project
-#' @param burnin see specification for GlobalParameters in eca::estimate
-#' @param caa.burnin see specification for GlobalParameters in eca::predict
-#' @param nSamples see specification for GlobalParameters in eca::estimate
-#' @param thin see specification for GlobalParameters in eca::estimate
-#' @param fitfile see specification for GlobalParameters in eca::estimate
-#' @param predfile see specification for GlobalParameters in eca::predict
-#' @param CC see specification for GlobalParameters in eca::estimate
-#' @param CCError see specification for GlobalParameters in eca::estimate
-#' @param seed see specification for GlobalParameters in eca::estimate
-#' @param age.error see specification for GlobalParameters in eca::estimate
+#' @param burnin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param caa.burnin see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
+#' @param nSamples see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param thin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param fitfile see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param predfile see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
+#' @param lgamodel see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param CC see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param CCError see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param seed see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param age.error see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param export_only if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only
 #' @export
 runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin=1, fitfile="fit", predfile="pred", lgamodel="log-linear", CC=FALSE, CCError=FALSE, seed=NULL, age.error=FALSE, export_only=NULL){
   requireNamespace("eca")
+
   # Sett kjøreparametere her, sett dataparametere i prep_eca
   prepdata <- loadProjectData(projectName, var="prepareRECA")   
-  prepareRECA <- prepdata$prepareRECA
   if (is.null(prepdata)){
     stop("Could not load project data")
   }
+  prepareRECA <- prepdata$prepareRECA
   GlobalParameters <- prepareRECA$GlobalParameters
   AgeLength <- prepareRECA$AgeLength
   WeightLength <- prepareRECA$WeightLength
@@ -774,38 +744,37 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
   GlobalParameters$lgamodel <- lgamodel
   GlobalParameters$CC <- CC
   GlobalParameters$CCerror <- CCError
-  GlobalParameters$age.error=age.error
-  
-  if (is.null(seed)){
-    seed=""
-  }
+  GlobalParameters$age.error <- age.error
   GlobalParameters$seed <- seed
+
+  #
+  # Run checks
+  #
   
-  AgeLength <- AgeLength
-  WeightLength <- WeightLength
-  Landings <- Landings
+  checkAgeLength(AgeLength)
+  checkWeightLength(WeightLength)
+  checkCovariateConsistency(AgeLength, Landings$AgeLengthCov)
+  checkCovariateConsistency(WeightLength, Landings$WeightLengthCov)
+  checkLandings(Landings)
+  checkGlobalParameters(GlobalParameters, AgeLength, WeightLength)
+  
+  write("######", stdout())
+  write("Running ECA with model configuration:", stdout())
+  writeRecaConfiguration(GlobalParameters, Landings, WeightLength, AgeLength, fileobj=stdout())
+  write("######", stdout())
   
   if (!is.null(export_only)){
     save(GlobalParameters, AgeLength, WeightLength, Landings, file=export_only)
+    return(NULL)
   }
   else{
     ## Estimate model
-    write("#########", stdout())
-    write("Running ECA with model configuration:", stdout())
-    write("Length given age model:", stdout())
-    print(AgeLength$info)
-    write(paste("individuals:", nrow(AgeLength$DataMatrix)), stdout())
-    write("Weight given length model:", stdout())
-    print(WeightLength$info)
-    write(paste("individuals:", nrow(WeightLength$DataMatrix)), stdout())
-    write("#########", stdout())
-    
     fit <- eca::eca.estimate(AgeLength,WeightLength,Landings,GlobalParameters)
     
     ## Predict
     pred <- eca::eca.predict(AgeLength,WeightLength,Landings,GlobalParameters)
     
-    setProjectData(projectName=projectName, var=list(fit=fit, pred=pred), name="runRECA")
+    return(setProjectData(projectName=projectName, var=list(fit=fit, pred=pred), name="runRECA"))
   }
 }
 
@@ -818,8 +787,13 @@ runRECA <- function(projectName, burnin=100, caa.burnin=100, nSamples=1000, thin
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on plot function and format
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
 plotRECAresults <- function(projectName, verbose=F, format="png", ...){
+  
+  out <- list()
+  out$filename <- c()
+  
   rundata <- loadProjectData(projectName, var="runRECA")
   
   if(length(rundata)==0){
@@ -841,29 +815,116 @@ plotRECAresults <- function(projectName, verbose=F, format="png", ...){
     res=NULL
   }
   
-  formatPlot(projectName, "RECA_results", function(){plot_RECA_results_panel(rundata$runRECA$pred, prep$prepareRECA$StoxExport$biotic, ...)}, verbose=verbose, format=format, height=height, width=width, res=res, ...)
-  
-  warning("Implement save catch matrix")
-  #save catch matrix
+  fn <- formatPlot(projectName, "RECA_results", function(){plot_RECA_results_panel(rundata$runRECA$pred, prep$prepareRECA$StoxExport$biotic, ...)}, verbose=verbose, format=format, height=height, width=width, res=res, ...)
+  out$filename <- c(fn, out$filename)
+  return(out)
 }
 
-#' Generate plots for diagnosis of RECA model configuration. Compares sampling effort to fisheries along covariates selected in the model , and along some standard covariate choices if available (gear, temporal and spatial)
+#' @title Diagonostics RECA
+#' @description Generate plots for diagnosis of RECA model configuration.
+#' @details Plots are made conditional on problems. E.g. Fixed effects plot is not made, if all combinations of fixed effects were sampled.
 #' @param projectName name of stox project
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
-#' @param ... parameters passed on plot function and format
+#' @param ... parameters passed on to plot function and format
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
 diagnosticsRECA <-
   function(projectName,
            verbose = T,
            format = "png",
            ...) {
+    
+    out <- list()
+    out$filename <- c()
+    
     prep <- loadProjectData(projectName, var = "prepareRECA")
 	
     if(length(prep)==0){
      return(NULL)
     }
+    
+    covariateConsistencyIssues <- T
+    tryCatch({
+      checkCovariateConsistency(prep$prepareRECA$AgeLength, prep$prepareRECA$Landings$AgeLengthCov)
+      checkCovariateConsistency(prep$prepareRECA$WeightLength, prep$prepareRECA$Landings$WeightLengthCov)
+      covariateConsistencyIssues <- F  
+      }, 
+      error = function(e){},
+      finally = function(e){}
+    )
   
+    stoxexp <- prep$prepareRECA$StoxExpor
+    
+    #
+    # Plots for dealing with covariate consistency issues
+    #
+    if (covariateConsistencyIssues){
+      #calculate plot dimensions for table
+      rows = nrow(get_fixed_effects_landings(stoxexp))
+      cols = ncol(get_fixed_effects_landings(stoxexp)) + 2
+      
+      if (format == "png") {
+        #dimension in pixels
+        res = 500
+        width = (res / 1.5) * (cols + 2) * 2
+        height = (res / 4.9) * (rows + 10)
+      }
+      if (format == "pdf") {
+        #dimension in inches
+        width = (cols + 2) * 2 / 1.3
+        height = (rows + 7) / 5
+        res = NULL
+      }
+      
+      fn <- formatPlot(projectName, "RECA_config_issue_fixed_effects", function() {
+        diagnostics_model_configuration(stoxexp, ...)
+      }, verbose = verbose, format = format, height = height, width = width, res =
+        res, ...)
+      out$filename <- c(fn, out$filename)
+      
+      
+      if (format=="png"){
+        #dimension in pixels
+        width=5000
+        height=5000
+        res=500
+      }
+      if (format=="pdf"){
+        #dimension in inches
+        width=10
+        height=10
+        res=NULL
+      } 
+    }
+    
+    return(out)
+  }
+
+#' @title plotSamplingOverview
+#' @description Generate plots to show composition of samples wrp activity in fisheries
+#' @details Compares sampling effort to fisheries along covariates selected in the model, and along some standard covariate choices if available (gear, temporal and spatial). Plots compositions of samples with respect to some important variables informative of sampling heterogenety
+#' @param projectName name of stox project
+#' @param verbose logical, if TRUE info is written to stderr()
+#' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
+#' @param ... parameters passed on to plot function and format
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
+#' @export
+plotSamplingOverview <-
+  function(projectName,
+           verbose = T,
+           format = "png",
+           ...) {
+    
+    out <- list()
+    out$filename <- c()
+    
+    prep <- loadProjectData(projectName, var = "prepareRECA")
+    
+    if(length(prep)==0){
+      return(NULL)
+    }
+    
     stoxexp <- prep$prepareRECA$StoxExpor
     
     #
@@ -882,10 +943,11 @@ diagnosticsRECA <-
         height = 10
         res = NULL
       }
-      formatPlot(projectName, "RECA_cell_coverage", function() {
+      fn <- formatPlot(projectName, "RECA_cell_coverage", function() {
         diagnosticsCoverageRECA(stoxexp, ...)
       }, verbose = verbose, format = format, height = height, width = width, res =
         res, ...)
+      out$filename <- c(fn, out$filename)
     }
     else{
       write(
@@ -912,19 +974,20 @@ diagnosticsRECA <-
         #dimension in pixels
         res = 500
         width = (res / 3) * (cols + 2)
-        height = (res / 4) * (rows + 7)
+        height = (res / 4) * (rows + 12)
       }
       if (format == "pdf") {
         #dimension in inches
         width = (cols + 2) / 3
-        height = (rows + 7) / 4
+        height = (rows + 12) / 4
         res = NULL
       }
       
-      formatPlot(projectName, "RECA_samples_by_cells", function() {
+      fn <- formatPlot(projectName, "RECA_samples_by_cells", function() {
         diagnosticsSamplesRECA(stoxexp, ...)
       }, verbose = verbose, format = format, height = height, width = width, res =
         res, ...)
+      out$filename <- c(fn, out$filename)
     }
     else{
       write(
@@ -939,50 +1002,227 @@ diagnosticsRECA <-
       )
     }
     
-    #
-    # Fixed effect plot
-    #
-    
-    #for testing different configs
-    #stoxexp$resources$covariateInfo[2,"covType"] <- "Fixed"
-    #stoxexp$resources$covariateInfo[3,"covType"] <- "Fixed"
-    
-    #calculate plot dimensions for table
-    rows = nrow(get_fixed_effects_landings(stoxexp))
-    cols = ncol(get_fixed_effects_landings(stoxexp)) + 2
-    
-    if (format == "png") {
+    if (format=="png"){
       #dimension in pixels
-      res = 500
-      width = (res / 1.5) * (cols + 2) * 2
-      height = (res / 4.9) * (rows + 10)
+      width=5000
+      height=5000
+      res=500
     }
-    if (format == "pdf") {
+    if (format=="pdf"){
       #dimension in inches
-      width = (cols + 2) * 2 / 1.3
-      height = (rows + 7) / 5
-      res = NULL
+      width=10
+      height=10
+      res=NULL
     }
     
-    formatPlot(projectName, "RECA_model_configuration", function() {
-      diagnostics_model_configuration(stoxexp, ...)
+    fn <- formatPlot(projectName, "RECA_sample_composition", function() {
+      plotSampleCompositionRECA(stoxexp$biotic, ...)
     }, verbose = verbose, format = format, height = height, width = width, res =
       res, ...)
+    out$filename <- c(fn, out$filename)
     
+    return(out)
   }
 
-#' Defines which plots to plot to R report for RECA. Fails silently on errors.
+#' Produces plots for R report for RECA. Fails silently on errors.
 #' @param projectName name of stox project
+#' @param ... arguments passed to \code{\link{diagnosticsRECA}} and \code{\link{plotRECAresults}}
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
-plotRECA <- function(projectName){
-  tryCatch({diagnosticsRECA(projectName)},
+plotRECA <- function(projectName, ...){
+  
+  out <- list()
+  out$filename <- c()
+  
+  tryCatch({
+    fn <- plotSamplingOverview(projectName, ...)
+    out$filename <- c(fn$filename, out$filename)
+            },
            finally={
            }
   )
   
-  tryCatch({plotRECAresults(projectName)},
+  tryCatch({
+    fn <- plotRECAresults(projectName, ...)
+    out$filename <- c(fn$filename, out$filename)
+    },
     finally={
     }
   )
   
+  tryCatch({
+    fn <- diagnosticsRECA(projectName, ...)
+    out$filename <- c(fn$filename, out$filename)
+  },
+  finally={
+  }
+  )
+  
+  return(out)
+}
+
+#' @title Writes RECA configuration
+#' @description Writes details about the model configuration to a text file or open connection
+#' @details Configuration are saved reflecting the parameters as passed to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}, even if it is possible to have for instance the GlobalParameters differ between the two for a valid execution.
+#' @param GlobalParameters defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @param Landings defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @param WeightLength defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @param AgeLength defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @param fileobj filename or open connection
+#' @param main header to write before configuration
+#' @keywords internal
+writeRecaConfiguration <- function(GlobalParameters, Landings, WeightLength, AgeLength, fileobj, main=NULL){
+  if (length(class(fileobj))>1){
+    if ("connection" %in% class(fileobj)){
+      f <- fileobj
+    }
+    else{
+      stop(paste("Unsupported class for parameter fileobj: ", class(fileobj)))
+    }
+  }
+  else if (class(fileobj)=="character"){
+    f <- file(fileobj, open="w")
+  }
+  else{
+    stop(paste("Unsupported class for parameter fileobj: ", class(fileobj)))
+  }
+  if (!is.null(main)){
+    write(main, f)    
+  }
+  formatinfo <- function(info){
+    info <- as.data.frame(info)
+    info$covariate <- row.names(info)
+    info <- info[,c(length(names(info)), seq(1,length(names(info))-1))]
+    return(info)
+  }
+  write("Length given age model:", f)
+  write.table(formatinfo(AgeLength$info), sep="\t", dec=".", row.names=F, file = f)
+  write(paste("individuals:", nrow(AgeLength$DataMatrix)), f)
+  write("Weight given length model:", f)
+  write.table(formatinfo(WeightLength$info),sep="\t", dec=".", row.names=F, file = f)
+  write(paste("individuals:", nrow(WeightLength$DataMatrix)), f)
+  write("Run-parameters:", f)
+  write.table(t(as.data.frame(GlobalParameters)), col.names = F, f)
+  
+  if (length(class(fileobj))==1){
+    if(class(fileobj)=="character"){
+      close(f)
+    } 
+  }
+}
+
+#' @title Save catch at age matrix
+#' @description Write catch at age predicted by \code{\link[eca]{eca.predict}} as csv file.
+#' @details Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
+#'    Each row correspond to an age group, and columns to either means or an iteration of the Monte Carlo simulation.
+#'    Units are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
+#' @param pred as returned by \code{\link[eca]{eca.predict}}
+#' @param filename name of file to save to.
+#' @param var Variable to extract. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @param savemeans If True, only means for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.
+#' @keywords internal
+saveCatchMatrix <- function(pred, filename, var="Abundance", unit="ones", main="", savemeans=F){
+  comments <- c()
+  if (savemeans){
+    title <- "Mean catch at age estimates"
+  }
+  else{
+    title <- "Catch at age estimates"
+  }
+  
+  if (var=="Abundance" | var=="Count"){
+    plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="ones", def.out = F)
+    caa <- round(apply(pred$TotalCount, c(2,3), sum))
+    
+    if (unit=="ones"){
+      comments <- c(paste(title, "as", var))
+    }
+    if (unit!="ones"){
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    
+  }
+  else if (var=="Weight"){
+    caa <- apply(pred$TotalCount, c(2,3), sum)*pred$MeanWeight
+    plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="kilograms", def.out = F)
+    comments <- c(paste(title, "as", var, "in", unit))
+  }
+  else{
+    stop("Not implemented")
+  }
+
+  comments <- c(main, comments)
+  caa_scaled <- as.data.frame(caa/plottingUnit$scale)
+  means <- as.data.frame(list(Age=pred$AgeCategories, mean=rowMeans(caa_scaled)))
+  colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
+  caa_scaled$Age <- pred$AgeCategories
+  caa_scaled <- caa_scaled[,names(caa_scaled)[order(names(caa_scaled))]]
+  
+  f <- file(filename, open="w")
+  write(paste("#", comments), f)
+  if (savemeans){
+    write.table(means, file=f, sep="\t", dec=".", row.names=F)
+    close(f)
+  }
+  else{
+    write.table(caa_scaled, file=f, sep="\t", dec=".", row.names=F)
+    close(f)
+  }
+}
+
+#' @title Report RECA.
+#' @description Produces reports for for RECA. Fails silently on errors.
+#' @details Exports a tab separated file with means of catch at age (produced by \code{\link{saveCatchMatrix}}), one for the posterior distribution of catch at age (produced by \code{\link{saveCatchMatrix}}), and a file summarizing the model configuration (produced by \code{\link{writeRecaConfiguration}})
+#'    This function is intended for use with \code{\link{getReports}}, and contain parameters like write in order to adhere to that contract.
+#' @param projectName name of stox project
+#' @param var Variable to extract. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param write logical determining if report is written to files. If false the function return immidiatly with NULL.
+#' @param ... arguments passed to \code{\link{saveCatchMatrix}} and \code{\link{writeRecaConfiguration}}
+#' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
+#' @export
+reportRECA <- function(projectName, var="Abundance", unit="ones", write=T, ...){
+  
+  if (!write){
+    return(NULL)
+  }
+  
+  out <- list()
+  out$filename <- c()
+  get_filename <- function(stat){paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(stat, var, unit), collapse="_")), ".txt")}
+  tryCatch({
+  pd<-loadProjectData(projectName, var="runRECA") 
+  },
+  finally={
+  }
+  )
+  
+  tryCatch({
+    saveCatchMatrix(pd$runRECA$pred, get_filename("means"), main=projectName, savemeans = T, var=var, unit=unit, ...)
+    out$filename <- c(get_filename("means"), out$filename)
+  },
+  finally={
+  }
+  )
+
+  tryCatch({
+    saveCatchMatrix(pd$runRECA$pred, get_filename("distribution"), main=projectName, savemeans = F, var=var, unit=unit, ...)
+    out$filename <- c(get_filename("distribution"), out$filename)
+  },
+  finally={
+  }
+  )
+  
+  tryCatch({
+    pd<-loadProjectData(projectName, var="prepareRECA") 
+    filename <- file.path(getProjectPaths(projectName)$RReportDir, "eca_configuration.txt")
+    writeRecaConfiguration(pd$prepareRECA$GlobalParameters, pd$prepareRECA$Landings, pd$prepareRECA$WeightLength, pd$prepareRECA$AgeLength, fileobj=filename, main=projectName, ...)
+    out$filename <- c(filename, out$filename)
+  },
+  finally={
+  }
+  )
+  return(out)
 }

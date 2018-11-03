@@ -17,8 +17,9 @@ formatPlot(projectname, plotname, draw, format = "png", verbose = F, ...)
 
 \item{verbose}{logical, if TRUE info is written to stderr()}
 
-\item{...}{parameters to be passed on to format}
+\item{...}{parameters to be passed on to \code{\link{format}}}
 }
 \description{
 Saves plot to stox project location (getProjectPaths(projectname)$RReportDir) to be localised by getPlots in stox.
 }
+\keyword{internal}

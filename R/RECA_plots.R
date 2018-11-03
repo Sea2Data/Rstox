@@ -4,8 +4,8 @@
 #' @param draw function for drawing the plot. Takes no arguments
 #' @param format function defining plotting device and file suffix, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param verbose logical, if TRUE info is written to stderr()
-#' @param ... parameters to be passed on to format
-#' @internal
+#' @param ... parameters to be passed on to \code{\link{format}}
+#' @keywords internal
 formatPlot <-
   function(projectname,
            plotname,
@@ -38,9 +38,10 @@ formatPlot <-
         if (length(format)) {
           dev.off()
         }
+        return(filename)
       }
     )
-    
+    return(NULL)
   }
 
 #
@@ -91,7 +92,7 @@ plot_ci <- function(x, means, upper_ci, lower_ci, ...){
 
 #' Plot catch by age prediction as boxplots
 #' @param pred RECA prediction object as returned by eca::eca.predict
-#' @param var A key string indicating the variable to plot. ´Abundance´ and ´Weight´ is implemented. 
+#' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @keywords internal
 plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior catch", unit), ...){
@@ -129,7 +130,7 @@ plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior cat
 
 #' Plot equal tailed credible intervals for a catch by age prediction
 #' @param pred RECA prediction object as returned by eca::eca.predict
-#' @param var A key string indicating the variable to plot. ´Abundance´ and ´Weight´ is implemented. 
+#' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @param alpha
 #' @keywords internal
@@ -213,7 +214,7 @@ plot_weight_at_age <- function(biotic, pred, unit, alpha=0.01, xlab="age", ylab=
     args$lty="dotted"
   }
   if (!("ylim" %in% names(args))){
-    args$ylim=c(min(min(lower, na.rm=T), 0), max(0,max(upper, na.rm=T)))
+    args$ylim=c(min(min(comp$lower, na.rm=T), 0), max(0,max(comp$upper, na.rm=T)))
   }
   if (!("main" %in% names(args))){
     args$main="Weight at age"
@@ -305,6 +306,14 @@ plot_RECA_results_panel <- function(pred, biotic, ...){
 #
 # Diagnostics plots 
 #
+
+#default colors for sampling quality
+default_color_good = "#238443"
+default_color_ok = "#78c679"
+default_color_barely = "#c2e699"
+default_color_bad = "#ffffcc"
+default_color_empty = "gray"
+default_color_wrong = "white"
 
 #' get matrix of sample and landings from the subset of biotic that contains aged individuals
 #' @keywords internal
@@ -408,23 +417,29 @@ get_gta_landings <- function(stoxexport) {
   )
   names(landedcol) = gta
   aggland <-
-    aggregate(list(landed_kt = stoxexport$landing$rundvekt),
+    aggregate(list(landed_kt = stoxexport$landing$rundvekt/(1000*1000)),
               by = landedcol,
               FUN = sum)
   return(aggland)
 }
 
 #' show samples wrp common covariates gear, area and temporal
+#' @param titletext title text for plot. If null a default title is used, set to "" to supress
 #' @keywords internal
 plot_gear_temporal_area <-
   function(eca,
-           titletext = "gear/temporal - area\nlanded (kt)\nage samples: #vessels,#catches,#individuals",
-           colgood = "green4",
-           colok = "green2",
-           colbarely = "yellow",
-           colbad = "orange",
-           colempty = "gray",
-           colwrong = "white") {
+           titletext = NULL,
+           colgood = default_color_good,
+           colok = default_color_ok,
+           colbarely = default_color_barely,
+           colbad = default_color_bad,
+           colempty = default_color_empty,
+           colwrong = default_color_wrong) {
+    
+    if (is.null(titletext)){
+      titletext="gear/temporal - area\nlanded (kt)\nage samples: #vessels,#catches,#individuals"
+    }
+    
     requireNamespace("plotrix")
     m <- get_g_s_a_frame(eca)
     m$desc <-
@@ -476,7 +491,6 @@ plot_gear_temporal_area <-
       cex = 0.5
     )
     title(titletext)
-    
     return(descr)
   }
 
@@ -489,12 +503,12 @@ plot_cell_landings <-
            frac = 0.001,
            titletext = paste("top", 100 - frac * 100, "weigth-% cells"),
            legendtitle = "sample clusteredness",
-           colgood = "green4",
-           colok = "green2",
-           colbarely = "yellow",
-           colbad = "orange",
-           colempty = "gray",
-           colwrong = "white",
+           colgood = default_color_good,
+           colok = default_color_ok,
+           colbarely = default_color_barely,
+           colbad = default_color_bad,
+           colempty = default_color_empty,
+           colwrong = default_color_wrong,
            gooddesc = "> 1 vessel",
            okdesc = "> 1 catch",
            barelydesc = "> 0 catch",
@@ -515,7 +529,7 @@ plot_cell_landings <-
          mm$hauls > 1, "col"] <- colgood
     
     barplot(
-      mm$landed_kt,
+      round(mm$landed_kt),
       col = mm$col,
       xlab = xlab,
       ylab = ylab,
@@ -526,7 +540,8 @@ plot_cell_landings <-
       "topright",
       legend = c(gooddesc, okdesc, barelydesc, baddesc),
       fill = c(colgood, colok, colbarely, colbad),
-      title = legendtitle
+      title = legendtitle,
+      bty = "n"
     )
   }
 
@@ -535,14 +550,14 @@ plot_cell_landings <-
 plot_cell_coverage <-
   function(eca,
            xlab = "sample clusteredness",
-           ylab = "Fraction landed (vekt-%)",
+           ylab = "Fraction landed (weight-%)",
            titletext = "Coverage w age\ncells (gear/temp/spatial)",
-           colgood = "green4",
-           colok = "green2",
-           colbarely = "yellow",
-           colbad = "orange",
-           colempty = "gray",
-           colwrong = "white",
+           colgood = default_color_good,
+           colok = default_color_ok,
+           colbarely = default_color_barely,
+           colbad = default_color_bad,
+           colempty = default_color_empty,
+           colwrong = default_color_wrong,
            gooddesc = "> 1 vessel",
            okdesc = "> 1 catch",
            barelydesc = "> 0 catch",
@@ -626,23 +641,23 @@ get_fixed_effects_landings <- function(stoxexport) {
     )
   names(landedcol) = fixed_effects
   aggland <-
-    aggregate(list(landed_kt = stoxexport$landing$rundvekt),
+    aggregate(list(landed_kt = stoxexport$landing$rundvekt/(1000*1000)),
               by = landedcol,
               FUN = sum)
   return(aggland)
 }
 
 #' Plot table of coverage for fixed effects
-#' @param stoxexport
+#' @param stoxexport as returned from \code{\link{baseline2eca}}
 #' @param indparameter the parameters for which data needs to be available
 #' @keywords internal
 plot_fixed_effect_coverage <-
   function(stoxexport,
            indparameters = c("age"),
            titletext = "Samples for fixed effects",
-           okcol = "green",
-           wrongcol = "white",
-           undersampledcol = "red"
+           okcol = default_color_ok,
+           wrongcol = default_color_wrong,
+           undersampledcol = default_color_empty
   ) {
     requireNamespace("plotrix")
     fixed_effects <-
@@ -689,8 +704,10 @@ plot_fixed_effect_coverage <-
     color[agg$catchsamples == 0 & agg$landed_kt > 0] <-
       undersampledcol
     color[agg$catchsamples > 0 & agg$landed_kt == 0] <- wrongcol
+    agg$landed_kt <- round(agg$landed_kt)
     names(agg)[names(agg)=="catchsamples"] <- "catch samples"
     names(agg)[names(agg)=="landed_kt"] <- "landed kt"
+    
     plot.new()
     plotrix::addtable2plot(
       x = "topleft",
@@ -715,17 +732,30 @@ diagnosticsCoverageRECA <- function(stoxexport) {
   plot_cell_landings(stoxexport)
   par(par.old)
 }
+
 #' Plot table showing coverage of gear, temporal and spatial combinations
 #' @keywords internal
 diagnosticsSamplesRECA <- function(stoxexport) {
   plot_gear_temporal_area(stoxexport)
+  gooddesc = "> 1 vessel"
+  okdesc = "> 1 catch"
+  barelydesc = "> 0 catch"
+  baddesc = "0 samples"
+  legend(
+    "bottom",
+    legend = c(gooddesc, okdesc, barelydesc, baddesc),
+    fill = c(default_color_good, default_color_ok, default_color_barely, default_color_bad),
+    bty = "n",
+    ncol=4,
+    xpd=NA
+  )
 }
 
 #' Plots diagnostics for model configuration. Whether all combinations of fixed effects are sampled
 #' @keywords internal
-diagnostics_model_configuration <- function(stoxexport, okcol = "green",
-                                            wrongcol = "white",
-                                            undersampledcol = "red",
+diagnostics_model_configuration <- function(stoxexport, okcol = default_color_ok,
+                                            wrongcol = default_color_wrong,
+                                            undersampledcol = default_color_empty,
                                             oktext="OK", undersampledtext="no samples", wrongtext="no landings") {
   par.old <- par(no.readonly = T)
   par(mfrow = c(1, 2), mar=c(1, 4.1, 4.1, 2.1))
@@ -737,4 +767,178 @@ diagnostics_model_configuration <- function(stoxexport, okcol = "green",
                              indparameters = c("weight", "length"),
                              titletext = "Weight samples for fixed effects", okcol=okcol, wrongcol=wrongcol, undersampledcol=undersampledcol)
   par(par.old)
+}
+
+
+#
+# Diverse plot for å vise prøveheterogenitet og enkle feilsjekker som bør håndteres med datafiltrering, datakorreksjon eller datakonvertering.
+#
+
+default_blankcode="--"
+
+#' Composition of mission types in the data
+#' @biotic as exported from stox (one line pr individual)
+#' @pal palette for coloring sections
+#' @keywords internal
+plot_mission_types <- function(biotic, title="mission types\n# stations", blankcode=default_blankcode, pal=c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999')){
+  stations <- biotic[!duplicated(biotic[,c("cruise", "serialno")]),]
+  stations$missiontype <- unlist(lapply(stations$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]}))
+  
+  tt <- as.character(stations$missiontype)
+  tt[is.na(tt)]<-""
+  tt <- table(tt)
+  tt <- sort(tt, decreasing=T)
+  
+  labels <- getNMDinfo("missiontype")
+  labels <- labels[labels$code %in% names(tt),c("code", "name")]
+  labels <- labels[match(labels$code, names(tt)),]
+  
+  names(tt)[names(tt)==""] <- blankcode
+  pie(tt, labels=paste(labels$name, " (", names(tt), ")", sep=""), main=title, col=pal)
+}
+
+#' Composition of catch sample types in data
+#' @biotic as exported from stox (one line pr individual)
+#' @param title title for plot
+#' @param xlab label for x axis
+#' @param blankcode code for NA / not registered
+#' @param cex.names expansion factor for bar labels
+#' @keywords internal
+plot_sample_types <- function(biotic, title="sample types", xlab="# catch samples", blankcode=default_blankcode, cex.names=0.8){
+  
+  catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialno", "samplenumber", "species")]),]
+  
+  tt <- as.character(catchsample$sampletype)
+  tt[is.na(tt)]<-""
+  tt <- table(tt)
+  tt <- sort(tt, decreasing=T)
+  
+  labels <- getNMDinfo("sampletype")
+  labels <- labels[labels$code %in% names(tt),c("code", "shortname")]
+  labels <- labels[match(labels$code, names(tt)),]
+  
+  names(tt)[names(tt)==""] <- blankcode
+  if (sum(labels$code=="")>0){
+    labels[labels$code=="","code"] <- blankcode  
+  }
+  
+  if (length(tt)>1){
+    barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)    
+  }
+  else{
+    pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""), main=title)  
+  }
+}
+
+#' Composition of station types (Stasjons: stasjonstype) in data
+#' @biotic as exported from stox (one line pr individual)
+#' @param title title for plot
+#' @param xlab label for x axis
+#' @param blankcode code for NA / not registered
+#' @param cex.names expansion factor for bar labels
+#' @keywords internal
+plot_station_types <- function(biotic, title="station types", xlab="# stations", blankcode=default_blankcode, cex.names=0.8){
+  station <- biotic[!duplicated(biotic[,c("cruise", "serialno")]),]
+  
+  tt <- as.character(station$fishstationtype)
+  tt[is.na(tt)]<-""
+  tt <- table(tt)
+  tt <- sort(tt, decreasing=T)
+  
+  labels <- getNMDinfo("fishstationtype")
+  labels <- labels[labels$name %in% names(tt),c("code", "shortname")]
+  labels <- labels[match(labels$name, names(tt)),]
+  
+  names(tt)[names(tt)==""] <- blankcode
+  if (sum(labels$code=="")>0){
+    labels[labels$code=="","code"] <- blankcode  
+  }
+  
+  if(length(tt)>1){
+    barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)  
+  }
+  else{
+    pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""), main=title)
+  }
+  
+  
+}
+
+#' Plots composition in catchsamples of parameters that determines what kind fraction of catches or landings are sampled
+#' @biotic as exported from stox (one line pr individual)
+#' @param title title for plot
+#' @param xlab label for x axis
+#' @param allname name to use for samples where all catch was sampled
+#' @param landname name to use for samples where only landed fraction was sampled
+#' @param discname name to use for discared fraction of cathc when samples where taken after sorting
+#' @param blankcode code to use when fraction is not coded in data.
+#' @param allcol color to use for samples where all catch was sampled
+#' @param landcol color to use for samples where only landed fraction was sampled
+#' @param disccolcolor to use for samples where only discared fraction was sampled
+#' @param unkwoncol color to use when sampled fraction is not coded in data.
+#' @param barplot if T barplot is plotted in stead of pie chart
+#' @keywords internal
+plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch samples", allname="Unsorted", landname="Landed", discname="Not landed", allcol="#fee8c8", disccol="#fdbb84", landcol="#e34a33", unkowncol="white", blankcode=default_blankcode, barplot=F){
+  year <- biotic$year[1]
+  if (length(unique(biotic$year))>1){
+    stop("Does not work with multi-year data.")
+  }
+  catches <- biotic[!duplicated(biotic[,c("cruise", "serialno", "samplenumber", "species")]),]
+  catches[is.na(catches$trawlquality), "trawlquality"] <- rep(blankcode, sum(is.na(catches$trawlquality)))
+  catches[is.na(catches$group), "group"] <- rep(blankcode, sum(is.na(catches$group)))
+  
+  counts = aggregate(list(count=catches$serialno), by=list(cruise=catches$cruise, quality=catches$trawlquality, group=catches$group), FUN=length)
+  counts$label <- paste(unlist(lapply(counts$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]})), counts$quality, counts$group, sep="/")
+  counts$catchrep <- rep(NA, nrow(counts))
+  counts$color <- rep(NA, nrow(counts))
+  
+  counts[counts$quality==8, "catchrep"] <- landname
+  counts[counts$quality==8, "color"] <- landcol
+  
+  #should ideally be missiontype
+  rfh <- paste("2", year, sep="-")
+  
+  counts[counts$cruise==rfh & counts$quality==7, "catchrep"] <- rep(allname, sum(counts$cruise==rfh & counts$quality==7))
+  counts[counts$cruise==rfh & counts$quality==7, "color"] <- rep(allcol, sum(counts$cruise==rfh & counts$quality==7))
+  
+  counts[counts$cruise!=rfh & counts$quality==7 & counts$group %in% c(26,27,28), "catchrep"] <- landname
+  counts[counts$cruise!=rfh & counts$quality==7 & counts$group %in% c(26,27,28), "color"] <- landcol
+  
+  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "catchrep"] <- discname
+  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "color"] <- disccol
+  
+  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & (counts$group==blankcode | !(counts$group %in% c(23,24,25,26,27,28))), "catchrep"] <- allname
+  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & (counts$group==blankcode | !(counts$group %in% c(23,24,25,26,27,28))), "color"] <- allcol
+  
+  counts[is.na(counts$color), "catchrep"] <- rep(blankcode, sum(is.na(counts$color)))
+  counts[is.na(counts$color), "color"] <- rep(unkowncol, sum(is.na(counts$color)))
+  
+  if (barplot){
+    counts <- counts[order(counts$count, decreasing = T),]
+    barplot(counts$count, names=counts$label, col=counts$color, horiz=T, las=1, xlab=xlab, main=title, cex.names = 0.8)
+    leg <- unique(counts[,c("color", "catchrep")])
+    legend("topright", fill=c(unkowncol, landcol, disccol, allcol), legend=c(blankcode, landname, discname, allname), bty="n", ncol=2)
+  }
+  else{
+    piecounts <- aggregate(list(count=counts$count), by=list(catchrep=counts$catchrep, color=counts$color), FUN=sum)
+    pie(piecounts$count, labels=piecounts$catchrep, col=piecounts$color, main=paste(title, xlab, sep="\n"))  
+  }
+  
+}
+
+#' Panelled plot of sample composition wrp potentially problematic heterogenety
+#' @param projectName name of stox project
+#' @keywords internal
+plotSampleCompositionRECA <- function(biotic, ...){
+  old.par <- par(no.readonly = T)
+  par(mfrow=c(2,2))
+  par(mar=c(5.1,7,4.1,8.1))
+  plot_mission_types(biotic)
+  par(mar=c(5.1,4.1,4.1,2.1))
+  plot_catch_fractions(biotic, blankcode = "Uknown")
+  par(mar=c(5.1,7,4.1,2.1))
+  plot_station_types(biotic, blankcode = "blank")
+  par(mar=c(5.1,12,4.1,2.1))
+  plot_sample_types(biotic, xlab="# catch samples", blankcode = "Uknown")
+  par(old.par)
 }

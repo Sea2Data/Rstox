@@ -2,8 +2,7 @@
 % Please edit documentation in R/rstox_eca.r
 \name{runRECA}
 \alias{runRECA}
-\title{run RECA fit and prediction. Save results to project data 'runRECA'
-parameters not described below are defined in eca.estimate and eca.predict}
+\title{run RECA}
 \usage{
 runRECA(projectName, burnin = 100, caa.burnin = 100, nSamples = 1000,
   thin = 1, fitfile = "fit", predfile = "pred", lgamodel = "log-linear",
@@ -13,29 +12,34 @@ runRECA(projectName, burnin = 100, caa.burnin = 100, nSamples = 1000,
 \arguments{
 \item{projectName}{name of stox project}
 
-\item{burnin}{see specification for GlobalParameters in eca::estimate}
+\item{burnin}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{caa.burnin}{see specification for GlobalParameters in eca::predict}
+\item{caa.burnin}{see specification for GlobalParameters in \code{\link[eca]{eca.predict}}}
 
-\item{nSamples}{see specification for GlobalParameters in eca::estimate}
+\item{nSamples}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{thin}{see specification for GlobalParameters in eca::estimate}
+\item{thin}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{fitfile}{see specification for GlobalParameters in eca::estimate}
+\item{fitfile}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{predfile}{see specification for GlobalParameters in eca::predict}
+\item{predfile}{see specification for GlobalParameters in \code{\link[eca]{eca.predict}}}
 
-\item{CC}{see specification for GlobalParameters in eca::estimate}
+\item{lgamodel}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{CCError}{see specification for GlobalParameters in eca::estimate}
+\item{CC}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{seed}{see specification for GlobalParameters in eca::estimate}
+\item{CCError}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
-\item{age.error}{see specification for GlobalParameters in eca::estimate}
+\item{seed}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
+
+\item{age.error}{see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}}
 
 \item{export_only}{if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only}
 }
 \description{
-run RECA fit and prediction. Save results to project data 'runRECA'
-parameters not described below are defined in eca.estimate and eca.predict
+Loads data produced by \code{\link{prepareRECA}}, run tests on model configuration, runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
+}
+\details{
+Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}.
+    For purposes of testing and running ECA detached from StoX, Data files accepted by code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}} can be exported using the option export_only. In this case the analysis is not run, but data files and parameter files are stored at the designated location.
 }

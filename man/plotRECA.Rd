@@ -2,13 +2,18 @@
 % Please edit documentation in R/rstox_eca.r
 \name{plotRECA}
 \alias{plotRECA}
-\title{Defines which plots to plot to R report for RECA. Fails silently on errors.}
+\title{Produces plots for R report for RECA. Fails silently on errors.}
 \usage{
-plotRECA(projectName)
+plotRECA(projectName, ...)
 }
 \arguments{
 \item{projectName}{name of stox project}
+
+\item{...}{arguments passed to \code{\link{diagnosticsRECA}} and \code{\link{plotRECAresults}}}
+}
+\value{
+list, with at least one named element 'filename', a vector of file-paths to generated plots.
 }
 \description{
-Defines which plots to plot to R report for RECA. Fails silently on errors.
+Produces plots for R report for RECA. Fails silently on errors.
 }
