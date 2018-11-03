@@ -40,7 +40,7 @@ runBootstrap_SweptAreaTotal(projectName, acousticMethod = NULL,
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{bootstrapMethod}{The method to use for the bootstrap. Currently implemented are given in the following table:
-\tabular{rrr}{
+\tabular{rr}{
   bootstrapMethod \tab Description\cr
   AcousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
   SweptAreaLength \tab Bootstrap only biotic data with length information\cr

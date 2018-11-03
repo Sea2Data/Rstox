@@ -704,6 +704,8 @@ Added the function closeAllProjects().
 
 Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
 
+Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
+
 
 ########## Version 1.10 (2018-07-06) ##########
 
@@ -756,4 +758,7 @@ Added the predefined values as attributes to the parameter values returned from 
 Added the function closeAllProjects().
 
 Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
+
+Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
+
 

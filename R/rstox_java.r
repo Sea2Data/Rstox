@@ -391,7 +391,8 @@ setNASC <- function(projectName, process="MeanNASC", data){
 #' @export
 #' @rdname setJavaMemory
 #'
-setJavaMemory <- function(size=2e9){
+setJavaMemory <- function(size = 6e9){
+	# Increased default Java memory to 6 GB on 2018-10-15 since the memory is not bounded on Mac or Windows:
 	sizeString <- paste0(round(size * 1e-6), "m")
 	old <- options()$java.parameters
 	options(java.parameters=paste0("-Xmx", sizeString))

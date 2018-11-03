@@ -1,4 +1,4 @@
-# Rstox version: 1.9.1 (latest alpha, 2018-10-15)
+# Rstox version: 1.9.1 (latest alpha, 2018-11-03)
 # R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -95,6 +95,8 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # 24. Added the function closeAllProjects().
 
 # 25. Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
+
+# 26. Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
 
 
 

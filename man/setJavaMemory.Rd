@@ -5,7 +5,7 @@
 \alias{getJavaMemory}
 \title{Get or set the size of the Java memory}
 \usage{
-setJavaMemory(size = 2e+09)
+setJavaMemory(size = 6e+09)
 
 getJavaMemory()
 }

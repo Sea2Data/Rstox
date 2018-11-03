@@ -4,7 +4,7 @@
 \alias{papply}
 \title{Parallel version of lapply}
 \usage{
-papply(X, FUN, ..., cores = 1, outfile = "", msg = "Processing... ")
+papply(X, FUN, ..., cores = 1, outfile = "", msg = NULL, pb = TRUE)
 }
 \arguments{
 \item{X, FUN, ...}{See lapply.}
@@ -13,7 +13,9 @@ papply(X, FUN, ..., cores = 1, outfile = "", msg = "Processing... ")
 
 \item{outfile}{Set this to FALSE to suppress printing from the cores.}
 
-\item{msg}{A string to start the info printed to the console by.}
+\item{msg}{A message to pring to the console, followed by the number of runs (and the number of cores in the case of parallel processing).}
+
+\item{pb}{Logical: If FALSE suppress the progress bar.}
 }
 \description{
 Detects and opens cores for simpler parallel lapply.

@@ -2425,8 +2425,9 @@ initiateRstoxEnv <- function(){
 	
 	##### Define fundamental variables Rstox: #####
 	
-	# Default Java memory:
-	JavaMem = 2e9
+	# Default Java memory (increased this to 6 GB on 2018-10-15 since the memory is not bounded on Mac or Windows):
+	# JavaMem = 2e9
+	JavaMem = 6e9
 	
 	# The folders in a StoX project:
 	StoXFolders = c("input", "output", "process")
@@ -2799,12 +2800,12 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 			# Return from the function if not overwriting:
 			if(temp$jumpToNext){
 				# Added appropriate return value as per notice from Ibrahim on 2018-02-05 (changed from FALSE to 1 (see the Value section of ?download.file) on 2018-03-01):
-				return(list(success = FALSE, ow = output_ow))
+				return(list(downloadSuccess = FALSE, ow = output_ow))
 			}
 		}
 	}
 	# Download the file and record whether it was a success or failure by a logical variable for clearity (and not as an integer as returned by download.file()):
-	success <- download.file(URL, zipPath, mode="wb") == 0
+	downloadSuccess <- download.file(URL, zipPath, mode="wb") == 0
 
 	# Get the path of the unzipped file:
 	ziplist <- unzip(zipPath, list=TRUE)[,1]
@@ -2824,7 +2825,7 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 			# Return from the function if not overwriting:
 			if(temp$jumpToNext){
 				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:
-				return(list(success = FALSE, ow = output_ow))
+				return(list(downloadSuccess = FALSE, ow = output_ow))
 			}
 		}
 	}
@@ -2842,7 +2843,7 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 		unlink(zipPath)
 	}
 	# Return download success:
-	list(success=success, projectPath=projectPath, ow = output_ow)
+	list(downloadSuccess=downloadSuccess, projectPath=projectPath, ow = output_ow)
 }
 
 
@@ -3343,9 +3344,10 @@ getLogStoXid <- function(Log, timevar="start_time"){
 #' Detects and opens cores for simpler parallel lapply.
 #'
 #' @param X,FUN,...	See lapply.
-#' @param cores  	An integer giving the number of cores to run the function FUN over.
+#' @param cores		An integer giving the number of cores to run the function FUN over.
 #' @param outfile	Set this to FALSE to suppress printing from the cores.
-#' @param msg		A string to start the info printed to the console by.
+#' @param msg		A message to pring to the console, followed by the number of runs (and the number of cores in the case of parallel processing).
+#' @param pb		Logical: If FALSE suppress the progress bar.
 #'
 #' @examples
 #' f <- function(i){
@@ -3364,7 +3366,13 @@ getLogStoXid <- function(Log, timevar="start_time"){
 #' @export
 #' @rdname papply
 #'
-papply <- function(X, FUN, ..., cores=1, outfile="", msg="Processing... "){
+papply <- function(X, FUN, ..., cores=1, outfile="", msg=NULL, pb=TRUE){
+	
+	if(!pb){
+		pbo <- pboptions(type = "none")
+		on.exit(pboptions(pbo))
+	}
+	
 	availableCores <- parallel::detectCores()
 	# If memory runs out, a system call to determine number of cores might fail, thus detectCores() could return NA
 	# defaulting to single core if this is the case
@@ -3379,7 +3387,9 @@ papply <- function(X, FUN, ..., cores=1, outfile="", msg="Processing... "){
 	
 	# Generate the clusters of time steps:
 	if(cores>1){
-		cat(paste0(msg, "(", nruns, " runs using ", cores, " cores in parallel):\n"))
+		if(length(msg) && !identical(msg, FALSE)){
+			cat(paste0(msg, "(", nruns, " runs using ", cores, " cores in parallel):\n"))
+		}
 		cl <- parallel::makeCluster(cores)
 		# Bootstrap:
 		out <- pbapply::pblapply(X, FUN, ..., cl=cl)
@@ -3387,7 +3397,9 @@ papply <- function(X, FUN, ..., cores=1, outfile="", msg="Processing... "){
 		parallel::stopCluster(cl)
 	}
 	else{
-		cat(paste0(msg, "(", nruns, " runs):\n"))
+		if(length(msg) && !identical(msg, FALSE)){
+			cat(paste0(msg, "(", nruns, " runs):\n"))
+		}
 		out <- pbapply::pblapply(X, FUN, ...)
 	}
 	return(out)

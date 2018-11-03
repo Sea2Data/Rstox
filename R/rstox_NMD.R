@@ -716,9 +716,13 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		sts <- getNMDinfo("sts", recursive=FALSE, ver=ver)
 		length(cruise)==1 && cruise %in% sts
 	}
-	downloadFailedWarning <- function(x, type=c("file", "sts")){
+	downloadFailedWarning <- function(x, downloadSuccess, type=c("file", "sts")){
 		#warning(paste0("Downloading failed for the following ", if(type[1]=="file") "files" else "Survey Timeseries", ":\n\t", paste(x, collapse="\n\t"), "\nPossible reason: Timeout during downloading, in which case the timeout option could be increased (from the default value getOption(\"timeout\")) by, e.g., options(timeout=600) for UNIX systems, and options(download.file.method=\"internal\", timeout=600) for Windows systems, where the default download method does not repond to setting the timeout option from R)"))
-		warning(paste0("Downloading failed for the following ", if(type[1]=="file") "files" else "Survey Timeseries", ":\n\t", paste(x, collapse="\n\t")))
+		x <- x[which(!downloadSuccess)]
+		if(length(x)){
+			warning(paste0("Downloading failed for the following ", if(type[1]=="file") "files" else "Survey Timeseries", ":\n\t", paste(x, collapse="\n\t")))
+		}
+		invisible(x)
 	}
 	
 	
@@ -907,7 +911,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			# Cruise series <ed by year gets Year in the suffix:
 			if(startsWith(tolower(group), "y")){
 				# Interpret the year from the cruise number:
-				suffix <- getSuffix(Year=getYearFromCruiseNumber(CruiseNumber))
+				suffix <- getSuffix(Year=sapply(CruiseNumber, getYearFromCruiseNumber))
 			}
 			# Cruise series grouped by cruise gets the same suffix as single cruises:
 			else if(startsWith(tolower(group), "c")){
@@ -1084,11 +1088,9 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		}
 		
 		# Check whether the files were downloaded. This could have been done by use of the output from download.file (0 for sucsess and positive for failure), but instead we check the existence of the files, and the size:
-		success <- file.exists(filePaths) & (file.info(filePaths)$size > 0) %in% TRUE
+		downloadSuccess <- file.exists(filePaths) & (file.info(filePaths)$size > 0) %in% TRUE
 		# Warning if any downloads failed:
-		if(any(!success)){
-			downloadFailedWarning(filePaths[!success])
-		}
+		downloadFailedWarning(filePaths, downloadSuccess)
 		
 		# Update and return the project:
 		updateProject(projectName)
@@ -1141,7 +1143,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		# The number of stox projects:
 		nsts <- length(projectPaths)
 		# Store the project names and the success of the downloads:
-		success = logical(nsts)
+		downloadSuccess = logical(nsts)
 		
 		# Get the URLs:
 		URLs <- getSurveyTimeSeriesURLs(sts=sts, stsInfo=stsInfo, ver=ver, format=format)
@@ -1153,15 +1155,13 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			
 			# The following using onlyone=nsts==1 did not work, since typing "ya" did not continue the loop:
 			temp <- downloadProjectZip(URL=URLs[i], projectName=projectPaths[i], cleanup=cleanup, msg=msg, ow=ow, onlyone=nsts==1)
-			success[i] <- temp$success
+			downloadSuccess[i] <- temp$downloadSuccess
 			ow <- temp$ow
-			#success[i] <- downloadProjectZip(URL=URLs[i], projectName=projectPaths[i], cleanup=cleanup, msg=msg, ow=ow)$success
+			#downloadSuccess[i] <- downloadProjectZip(URL=URLs[i], projectName=projectPaths[i], cleanup=cleanup, msg=msg, ow=ow)$downloadSuccess
 		}
 		
 		# Warning if any downloads failed:
-		if(any(!success)){
-			downloadFailedWarning(projectPathsOrig[!success], type="sts")
-		}
+		downloadFailedWarning(projectPathsOrig, downloadSuccess, type="sts")
 		
 		# Report project names if abbreviated:
 		if(!all(projectPaths==projectPathsOrig)){
@@ -1260,8 +1260,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	# Function for downloading cruises:
 	getCruises <- function(cruiseInfo,  model="StationLengthDistTemplate", dir=NA, subdir=NA, subset=NULL, prefix=NA, year=NA, dataSource=NA, ow=NULL, abbrev=FALSE, timeout=NULL, ...){
 		
-		#projectPathElements, cruiseMatrixSplit, StoX_data_sources, model="StationLengthDistTemplate", ow=NULL, abbrev=FALSE, run=TRUE, ...){
-		
 		# First split the cruiseInfo by project ID:
 		cruiseInfoList <- split(cruiseInfo, cruiseInfo$ProjectID)
 		nprojects <- length(cruiseInfoList)
@@ -1276,15 +1274,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		projectPaths <- temp$projectPaths
 		filePaths <- temp$filePaths
 		
-		
-		### # Get project names and create the projects:
-		### projectPaths <- unlist(lapply(projectPathElements, abbrevPath, abbrev=abbrev))
-		### if(!run){
-		### 	return(projectPaths)
-		### }
-		### projectPathsOrig <- unlist(lapply(projectPathElements, abbrevPath, abbrev=FALSE))
-		### # projectPaths <- unlist(lapply(projectPaths, createProject, model=model, ow=ow, ...)) # Here we should implement some way of setting ow=TRUE interactively at first prompt
-		### ##### temp <- unlist(lapply(projectPaths, createProject, model=model, ow=ow, ...)) # Here we should implement some way of setting ow=TRUE interactively at first prompt
 		
 		temp <- createProject(projectPaths, model=model, ow=ow, ...)
 		suppressWarnings(toWrite <- which(!is.na(temp)))
@@ -1325,64 +1314,10 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		filePathsFlat <- filePathsFlat[valid]
 		URLsFlat <- URLsFlat[valid]
 		
-		
-		
-		success <- file.exists(filePathsFlat) & (file.info(filePathsFlat)$size > 0) %in% TRUE
+		# Report download failure in a warning:
+		downloadSuccess <- file.exists(filePathsFlat) & (file.info(filePathsFlat)$size > 0) %in% TRUE
 		# Warning if any downloads failed:
-		if(any(!success)){
-			downloadFailedWarning(URLs[!success])
-		}
-		
-		
-		
-		
-		
-		
-		## Plot a time bar showing the progress of the reading and plotting:
-		#if(msg){
-		#	infostring <- "Downloading files from NMD:"
-		#	cat(infostring,"\n",sep="")
-		#	#totalsteps <- length(cruiseMatrixSplit)
-		#	totalsteps <- sum(sapply(cruiseMatrixSplit[toWrite], nrow) * length(StoX_data_sources))
-		#	stepfact <- nchar(infostring)/totalsteps
-		#	oldvalue <- 0
-		#	index <- 0
-		#}
-		#for(i in toWrite){
-		#	xmlfiles <- matrix(NA, nrow=nrow(cruiseMatrixSplit[[i]]), ncol=length(StoX_data_sources))
-		#	colnames(xmlfiles) <- paste0("file_", StoX_data_sources)
-		#	for(j in seq_along(StoX_data_sources)){
-		#		for(k in seq_len(nrow(cruiseMatrixSplit[[i]]))){
-		#			# Print a dot if the floor of the new value exceeds the old value:
-		#			if(msg){
-		#				index <- index + 1
-		#				thisvalue = floor(index*stepfact)
-		#				if(thisvalue > oldvalue){
-		#					cat(rep(".",thisvalue-oldvalue),if(index == totalsteps) "\n", sep="")
-		#					oldvalue = thisvalue
-		#					}
-		#				}
-		#			# Get the current URL:
-		#			URL <- cruiseMatrixSplit[[i]][k, StoX_data_sources[j]]
-		#			if(!is.na(URL)){
-		#				# Use the naming convention that NMD uses, which is 'dataSource'_cruiseNumber_'cruiseNumber'_'ShipName'
-		#				cruise_shipname <- paste(NMD_data_sources[j], "cruiseNumber", cruiseMatrixSplit[[i]][k,"Cruise"], cruiseMatrixSplit[[i]][k,"ShipName"], sep="_")
-		#				xmlfiles[k,j] <- file.path(projectPaths[i], "input", StoX_data_sources[j], paste0(cruise_shipname, ".xml"))
-		#				suppressWarnings(downloadXML(URL, msg=FALSE, list.out=FALSE, file=xmlfiles[k,j], timeout=timeout))
-		#			}
-		#		}
-		#	}
-		#	# Check whether the files were downloaded. This could have been done by use of the output from download.file (0 for sucsess and positive for failure), but instead we check the existence of the files, and the size:
-		#	valid <- !is.na(xmlfiles)
-		#	URLs <- cruiseMatrixSplit[[i]][, StoX_data_sources][valid]
-		#	success <- file.exists(xmlfiles[valid]) & (file.info(xmlfiles[valid])$size > 0) %in% TRUE
-		#	# Warning if any downloads failed:
-		#	if(any(!success)){
-		#		downloadFailedWarning(URLs[!success])
-		#	}
-		#	
-		#	cruiseMatrixSplit[[i]] <- cbind(cruiseMatrixSplit[[i]], xmlfiles)
-		#}
+		downloadFailedWarning(URLs, downloadSuccess)
 		
 		# Report project names if abbreviated:
 		if(!all(projectPaths==projectPathsOrig)){
