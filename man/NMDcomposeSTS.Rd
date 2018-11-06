@@ -4,7 +4,9 @@
 \alias{NMDcomposeSTS}
 \title{Composing a single year Survey Time Series from scratch}
 \usage{
-NMDcomposeSTS(STSname, year, APIversion = NULL, DATAversion = NULL)
+NMDcomposeSTS(STSname, year, APIversion = NULL, DATAversion = NULL,
+  ver = getRstoxDef("ver"), API = "http://tomcat7.imr.no:8080/apis/nmdapi",
+  msg = FALSE)
 }
 \arguments{
 \item{STSname}{Name of the survey time series. Must be a character vector.}
