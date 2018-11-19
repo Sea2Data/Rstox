@@ -660,7 +660,7 @@ Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
 
 Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
 
-Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns.
+Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns, as well as a column OldNames for old (non-preffered) names, given as strings such as "Norwegian: rødkrabbe, Scientific: Geryon tridens, English: red crab".
 
 Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting transects, whereas transect=NULL did. In the new version all values other than TRUE suppresses plotting transects.
 
@@ -715,7 +715,7 @@ Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
 
 Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
 
-Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns.
+Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns, as well as a column OldNames for old (non-preffered) names, given as strings such as "Norwegian: rødkrabbe, Scientific: Geryon tridens, English: red crab".
 
 Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting transects, whereas transect=NULL did. In the new version all values other than TRUE suppresses plotting transects.
 

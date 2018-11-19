@@ -570,12 +570,10 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #'
 #' # Running surveyPlanner() on a project takes some time, since the project has to be opened and
 #' # the process data read to obtain the strata. A quicker way is to specify the strata definitions 
-#' # directly, either as the path to a file such as 
-#' # file.path(dirname(getProjectPaths()$projectRoot), "polygon", "norwegian_sea2014.txt"), 
-#' # or as a folder or vector of paths to shapefiles:
+#' # directly, either as the path to a file or as a folder or vector of paths to shapefiles:
 #' # This produces a different strata system than that in the Test_Rstox project:
 #' system.time(Parallel <- surveyPlanner(projectName=file.path(dirname(getProjectPaths()$projectRoot),
-#'      "polygon", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
+#'      "reference", "stratum", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
 #'     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 #' dev.new()
 #' plotStratum(Parallel)

@@ -138,6 +138,20 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	nprojects <- length(projectName)
 	projectPath <- rep(NA, nprojects)
 	
+	# Support for the case of generating multiple projects, where 'files' can be a list with one element per project:
+	StoXFoldersRecursiveSansOutput <- getRstoxDef("StoXFoldersRecursiveSansOutput")
+	StoX_data_sources <- basename(StoXFoldersRecursiveSansOutput)
+	
+	# If files is a list with any names equal to StoX_data_sources (acoustic, biotic, landing, process), or if a character vector, convert to a list and repeat to the number of projects:
+	if(is.character(files) || (is.list(files) && any(names(files) %in% StoX_data_sources))){
+		files <- rep(list(files), nprojects)
+	}
+	else{
+		files <- vector("list", nprojects)
+	}
+	
+	
+	# Run through and generate the projects:
 	for(i in seq_len(nprojects)){
 		# Set the project name and the root directory of the project:
 		projectPaths <- getProjectPaths(projectName[i], projectRoot=dir)
@@ -203,12 +217,7 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		project <- J("no.imr.stox.factory.FactoryUtil")$createProject(dir, thisProjectName, template)
 	
 		# Copy files to the project directory:
-		StoX_data_sources <- getRstoxDef("StoX_data_sources")
-		StoXdirs <- file.path(thisProjectPath, "input", StoX_data_sources)
-		# Add the process directory to allow for the project.xml file to be given in the input 'files':
-		StoX_data_sources <- c(StoX_data_sources, "process")	 
-		StoXdirs <- c(StoXdirs, file.path(thisProjectPath, "process"))	 
-		
+		StoXdirs <- file.path(thisProjectPath, StoXFoldersRecursiveSansOutput)
 
 		### Add the files: ####
 		# If the Test_Rstox project is to be created, add the example files, thus overriding any other files specified in the input:
@@ -217,7 +226,7 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 			thisfiles <- system.file("extdata", "Test_Rstox", package="Rstox")
 		}
 		else{
-			thisfiles <- files
+			thisfiles <- files[[i]]
 		}
 		
 		# Get the different files:
@@ -2427,13 +2436,25 @@ initiateRstoxEnv <- function(){
 	
 	# Default Java memory (increased this to 6 GB on 2018-10-15 since the memory is not bounded on Mac or Windows):
 	# JavaMem = 2e9
-	JavaMem = 6e9
+	JavaMem <- 6e9
 	
 	# The folders in a StoX project:
-	StoXFolders = c("input", "output", "process")
+	StoXFolders <- c("input", "output", "process")
+	StoX_data_sources <- c("acoustic", "biotic", "landing")
+	StoXFoldersRecursive <- list(
+		input = file.path("input", StoX_data_sources), 
+		output = file.path("output", outer(c("baseline", "r"), c("data", "report"), file.path)), 
+		process = "process"
+	)
+	StoXFoldersRecursiveSansOutput <- unlist(StoXFoldersRecursive[names(StoXFoldersRecursive) != "output"])
+	
+	# The following key strings are used to detect the data file type:
+	StoX_data_type_keys <- c(acoustic = "echosounder_dataset", biotic = "missions xmlns", landing = "Sluttseddel")
+	StoX_reading_processes <- c(acoustic = "ReadAcousticXML", biotic = "ReadBioticXML", landing = "ReadLandingXML")
+	
 	
 	# NMD and StoX defines different data types (StoX has the more general category "acoustic"):
-	NMD_data_sources = c("echosounder", "biotic", "landing")
+	NMD_data_sources <- c("echosounder", "biotic", "landing")
 	# The implemented NMD APIs for the NMD_data_sources:
 	NMD_API_versions <- list(
 		biotic = c(1, 2), 
@@ -2455,20 +2476,16 @@ initiateRstoxEnv <- function(){
 		landing = NA
 	)
 	
-	StoX_data_sources = c("acoustic", "biotic", "landing")
-	# The following keay strings are used to detect the data file type:
-	StoX_data_type_keys = c(acoustic="echosounder_dataset", biotic="missions xmlns", landing="Sluttseddel")
-	
 	# Define project types:
-	project_types = c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal")
+	project_types <- c("AcousticTrawl", "SweptAreaLength", "SweptAreaTotal")
 	
 	# Define the process levels for the presicion estimate:
-	processLevels = c("bootstrap", "bootstrapImpute")
+	processLevels <- c("bootstrap", "bootstrapImpute")
 	
 	# Define model types, i.e., the panes in StoX, added the project name:
-	modelTypeJavaNames = c("baseline", "baseline-report", "r", "r-report", "name")
+	modelTypeJavaNames <- c("baseline", "baseline-report", "r", "r-report", "name")
 	#modelTypeRstoxNames <- c("baseline", "report", NA, NA), 
-	modelTypeJavaFuns = c("getBaseline", "getBaselineReport", "getRModel", "getRModelReport", "getProjectName")
+	modelTypeJavaFuns <- c("getBaseline", "getBaselineReport", "getRModel", "getRModelReport", "getProjectName")
 	
 	# Define ECA covariates:
 	ECACovariates <- data.frame(
@@ -2624,11 +2641,14 @@ initiateRstoxEnv <- function(){
 	Definitions <- list(
 		JavaMem = JavaMem, 
 		StoXFolders = StoXFolders, 
+		StoXFoldersRecursive = StoXFoldersRecursive, 
+		StoXFoldersRecursiveSansOutput = StoXFoldersRecursiveSansOutput, 
+		StoX_data_sources = StoX_data_sources, 
+		StoX_data_type_keys = StoX_data_type_keys, 
+		StoX_reading_processes = StoX_reading_processes, 
 		NMD_data_sources = NMD_data_sources, 
 		NMD_API_versions = NMD_API_versions, 
 		ver = ver, 
-		StoX_data_sources = StoX_data_sources, 
-		StoX_data_type_keys = StoX_data_type_keys, 
 		project_types = project_types, 
 		processLevels = processLevels, 
 		modelTypeJavaNames = modelTypeJavaNames, 
@@ -3362,15 +3382,15 @@ getLogStoXid <- function(Log, timevar="start_time"){
 #' system.time(p <- papply(1:4, f, cores=2))
 #'
 #' @importFrom parallel makeCluster parLapply stopCluster detectCores
-#' @importFrom pbapply pblapply
+#' @importFrom pbapply pblapply pboptions
 #' @export
 #' @rdname papply
 #'
 papply <- function(X, FUN, ..., cores=1, outfile="", msg=NULL, pb=TRUE){
 	
 	if(!pb){
-		pbo <- pboptions(type = "none")
-		on.exit(pboptions(pbo))
+		pbo <- pbapply::pboptions(type = "none")
+		on.exit(pbapply::pboptions(pbo))
 	}
 	
 	availableCores <- parallel::detectCores()
@@ -3388,7 +3408,7 @@ papply <- function(X, FUN, ..., cores=1, outfile="", msg=NULL, pb=TRUE){
 	# Generate the clusters of time steps:
 	if(cores>1){
 		if(length(msg) && !identical(msg, FALSE)){
-			cat(paste0(msg, "(", nruns, " runs using ", cores, " cores in parallel):\n"))
+			message(paste0(msg, "( ", nruns, " runs using ", cores, " cores in parallel):\n"))
 		}
 		cl <- parallel::makeCluster(cores)
 		# Bootstrap:
@@ -3398,7 +3418,7 @@ papply <- function(X, FUN, ..., cores=1, outfile="", msg=NULL, pb=TRUE){
 	}
 	else{
 		if(length(msg) && !identical(msg, FALSE)){
-			cat(paste0(msg, "(", nruns, " runs):\n"))
+			message(paste0(msg, " (", nruns, " runs):\n"))
 		}
 		out <- pbapply::pblapply(X, FUN, ...)
 	}

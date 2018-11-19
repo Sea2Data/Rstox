@@ -8,14 +8,15 @@
 \usage{
 getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
   API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
-  msg = FALSE, simplify = TRUE)
+  msg = FALSE, simplify = TRUE, return.URL = FALSE)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
   tsn = NULL, dataSource = NULL, dir = NULL, subdir = FALSE,
   group = "default", abbrev = FALSE, subset = NULL, prefix = "NMD",
   ver = getRstoxDef("ver"), API = "http://tomcat7.imr.no:8080/apis/nmdapi",
   cleanup = TRUE, model = "StationLengthDistTemplate", msg = TRUE,
-  ow = NULL, return.URL = FALSE, run = TRUE, timeout = NULL, ...)
+  ow = NULL, return.URL = FALSE, run = TRUE, timeout = NULL,
+  zipSTS = TRUE, ...)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
   method = "auto", timeout = NULL)
@@ -39,6 +40,8 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{msg}{Logical: if TRUE a message is printed to the consolle stating the estimated time left for the funciton.}
 
 \item{simplify}{Logical: if TRUE simplify the data into matrices instead of complicated lists in some cases like taxa.}
+
+\item{return.URL}{Logical: If TRUE, return the URL of the files to download.}
 
 \item{cruise}{Either the code of a cruise, such as "2015116", or the full or short name of a cruise series or survey time series. In the current version, if given as a cruise code, the parameter 'shipname' must be given as well, based on which the path to the cruise is searched for by functionallity provided by NMD. For cruises prior to the year 1995 several vessels can be linked to the same cruise code, and as of version 2 the user will by default be asked to specify which vessel(s) to specify the vessels when this occurs, instead of having to specify the cruise initially.}
 
@@ -70,11 +73,11 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{ow}{Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.}
 
-\item{return.URL}{Logical: If TRUE, return the URL of the files to download.}
-
 \item{run}{Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).}
 
 \item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).}
+
+\item{zipSTS}{Logical: If TRUE, download the zipped survey time series projects.}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
