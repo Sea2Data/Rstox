@@ -246,8 +246,8 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		# Add a data frame with meta information about the covariates:
 		covType <- unlist(lapply(covariateNames, function(xx) getCovparam(projectName, "CovariateType")[[xx]]))
 		CAR <- rep(NA, length(covType))
-		# This process assigns TRUE to CAR only if the parameter 'ConditionalAutoRegression' exists and is equal to the string "true". All other values except empty values (NULL) implies FALSE. If the parameter 'ConditionalAutoRegression' is not present, NA is used:
-		temp <- lapply(covariateNames, function(xx) getCovparam(projectName, "ConditionalAutoRegression")[[xx]] %in% TRUE)
+		# This process assigns TRUE to CAR only if the parameter 'UseStratumNeighbour' exists and is equal to the string "true". All other values except empty values (NULL) implies FALSE. If the parameter 'UseStratumNeighbour' is not present, NA is used:
+		temp <- lapply(covariateNames, function(xx) getCovparam(projectName, "UseStratumNeighbour")[[xx]] %in% TRUE)
 		CAR[unlist(lapply(temp, length))>0] <- unlist(temp)
 		 	# Make sure that CAR is a logical:
 		CAR[is.na(CAR)] <- FALSE
