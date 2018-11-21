@@ -555,7 +555,7 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters){
 #' Function for converting to the input format required by ECA (this is the main function):
 #' @keywords internal
 getLengthGivenAge_Biotic <- function(eca, ecaParameters){
-  
+  warning("Change to keep all fish from length startified (sampletype 21), or all fish where some fish in haul was aged.")
   # Extract the non-NAs:
   var <- "age"
   # Remove missing values from the DataMatrix and from the eca$covariateMatrixBiotic:
