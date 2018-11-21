@@ -14,7 +14,7 @@
 #'	\item{"sts"}{List of survey time series. Can be given as a two element vector as for "cs".}
 #'	\item{"v"}{List of vessels, where the first line of the platform information is extracted and presented in a matrix with vessels in the rows. Use "platform" to preserve all details about the platforms/vessels}
 #'	}
-#' @param ver					The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)), or simply ver = list(API=1) or even simpler ver = 1.
+#' @param ver					The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)), or simply ver = 1. Giving \code{ver} as a single integer imposes this value on all API versions. To set API versions to 1 and at the same time set the version of the data, use e.g. ver = list(API=1, biotic=1.4).
 #' @param API					The path to the API.
 #' @param recursive				Logical, special for type \%in\% c("cs","sts"); if FALSE only the list of cruise series or survey time series is returned.
 #' @param msg					Logical: if TRUE a message is printed to the consolle stating the estimated time left for the funciton.
@@ -1237,7 +1237,6 @@ downloadSerialno <- function(serialno, downloadType, year=NULL, tsn=NULL, prefix
 	#serialnoRange <- paste(range(serialno), collapse="-")
 	#serialno <- getSerialnoRanges(serialno)
 	#serialnoRanges <- apply(serialno, 1, paste, collapse="-")
-	
 	temp <- getPaths(downloadType=downloadType, dir=dir, subdir=NA, name=NA, prefix=prefix, year=year, serialNumber=serialno, tsn=tsn, abbrev=FALSE)
 	projectPaths <- temp$projectPaths
 	filePaths <- temp$filePaths
@@ -1258,13 +1257,8 @@ downloadSerialno <- function(serialno, downloadType, year=NULL, tsn=NULL, prefix
 	# Create the project:
 	projectName <- createProject(projectPaths, dir=dir, model=model, ow=ow, ...)
 
-	#xmlfiles <- rep(NA, nrow(serialno))
-	URLs <-character(nrow(serialno))
-	for(i in seq_len(nrow(serialno))){
-		
-		URLs[i] <- getURLBySerialno(serialno=serialno[i,], year=year[1], tsn=tsn, ver=ver, API=API)
-		#xmlfiles[i] <- file.path(projectPath, "input", "biotic", paste0(serialnoStrings[i], ".xml"))
-		#downloadXML(URL, msg=msg, list.out=FALSE, file=xmlfiles[i], timeout=timeout)
+	# Download the files:
+	for(i in seq_along(URLs)){
 		downloadXML(URLs[i], msg=msg, list.out=FALSE, file=filePaths[i], timeout=timeout)
 	}
 	
@@ -2052,28 +2046,39 @@ as.numericDataFrame <- function(data){
 }
 
 getNMDver <- function(ver=NULL){
+	
+	replaceAllAPIs <- function(out, ver){
+		out$API <- rapply(out$API, function(x) ver, how="replace")
+		out
+	}
+	
 	out <- getRstoxDef("ver")
 	if(length(ver)==1 && is.numeric(ver)){
-		out <- rapply(out, function(x) ver, how="replace")
+		out <- replaceAllAPIs(out=out, ver=ver)
+		#out <- rapply(out, function(x) ver, how="replace")
 	}
 	else if(is.list(ver)){
-		# If ver is a list with one element API, use this value for all APIs:
-		if(length(ver) == 1 && names(ver)=="API"){
-			out$API <- rapply(out$API, function(x) ver$API, how="replace")
+		# If ver is a list with an element API, use this value for all APIs:
+		if("API" %in% names(ver)){
+			out <- replaceAllAPIs(out=out, ver=ver$API)
+			#out$API <- rapply(out$API, function(x) ver$API, how="replace")
+			# Remove the API element of 'ver':
+			ver <- ver[names(ver) != "API"]
 		}
-		else{
-			#out <- getRstoxDef("ver", unlist(ver, recursive=FALSE))
 		
-			# Get the list indices by unlisting and splitting by the dots introduced by unlist():
-			u <- unlist(ver)
+		# Insert any data versions:
+		# Get the list indices by unlisting and splitting by the dots introduced by unlist():
+		u <- unlist(ver)
+		if(length(u)){
 			ind <- strsplit(names(u), ".", fixed=TRUE)
 			# Remove the names on u:
 			u <- unname(u)
-		
+			
+			# Insert each version:
 			for(i in seq_along(ind)){
 				out[[ind[[i]]]] <- u[i]
 			}
-		}		
+		}
 	}
 	out
 }

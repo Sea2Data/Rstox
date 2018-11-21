@@ -31,7 +31,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{"v"}{List of vessels, where the first line of the platform information is extracted and presented in a matrix with vessels in the rows. Use "platform" to preserve all details about the platforms/vessels}
 }}
 
-\item{ver}{The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)), or simply ver = list(API=1) or even simpler ver = 1.}
+\item{ver}{The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)), or simply ver = 1. Giving \code{ver} as a single integer imposes this value on all API versions. To set API versions to 1 and at the same time set the version of the data, use e.g. ver = list(API=1, biotic=1.4).}
 
 \item{API}{The path to the API.}
 

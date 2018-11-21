@@ -6,10 +6,10 @@
 #' \code{writeAcousticXML} Writes a data frame to an acoustic XML file. \cr \cr
 #' \code{readHIXSD} Function for reading an xsd (xml schema file) and returning the structure of the corresponding xml. The output is designed to be used to store the xsd info as colnames of a data frame for use in the funciton frame2nestedList(), but may be useful for reading an arbitraty xsd file. \cr \cr
 #' \code{validateHIXSD} Function for validating the input x against an xsd. \cr \cr
-#' \code{writeXMLusingXSB} Utility function of \code{data.frame2xml} for writing any data frame to an XML file given an XML root and an xsd. \cr \cr
+#' \code{writeXMLusingXSD} Utility function of \code{data.frame2xml} for writing any data frame to an XML file given an XML root and an xsd. \cr \cr
 #' \code{data.frame2nestedList} Utility function of \code{data.frame2xml}  for converting a data frame to a nested list. The data frame must have column names with prefixes such as Level4.Var or Level2.Attr or Level3.AttrReq followed by "." and the variable name (e.g., Level3.AttrReq.serialno). \cr \cr
 #' \code{list2XML} Utility function for converting a list to an xml object. This function is a generalization of the funciton as_xml_document() in the package xml2, which turns a list into anxml object, but not for too deep lists. \cr \cr
-#' \code{data.frame2xml} Utility function of \code{writeXMLusingXSB} for converting a data frame to an xml object. \cr \cr
+#' \code{data.frame2xml} Utility function of \code{writeXMLusingXSD} for converting a data frame to an xml object. \cr \cr
 #'
 #' @param x						The data frame to write to an XML file, validated against the xsd. The data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
 #' @param file					The path to the XML file to write.
@@ -20,9 +20,9 @@
 #' @param declaration			The declaration string heading the XML file.
 #' @param strict				Logical: If TRUE remove columns with names that are not recognized in the xsd.
 #' @param discardSimple			Logical: If TRUE, discard simplecontent from the xsd.
-#' @param maxlines				The number of lines to read from the individual XML files written (in blocks) by \code{writeXMLusingXSB}, to determine which lines to merge between the files.
+#' @param maxlines				The number of lines to read from the individual XML files written (in blocks) by \code{writeXMLusingXSD}, to determine which lines to merge between the files.
 #' @param cores					The number of cores to use to parallel writing of the individual XML files, which are then merged to one file. Set this > 1 to speed up the writing.
-#' @param root					The root of the XML to write. Use in \code{writeXMLusingXSB}, which requires a root to append the XML to.
+#' @param root					The root of the XML to write. Use in \code{writeXMLusingXSD}, which requires a root to append the XML to.
 #' @param xsdtype				The type of XSD, currently one of "biotic" and "acoustic", used when reading an XSD (as used by the Institute of Marine Research).
 #' @param msg				Logical: If TRUE, print messages to the console.
 #'
@@ -111,7 +111,7 @@ writeBioticXML <- function(x, file, xsd="1.4", blocksize=100, addVersion=TRUE, n
 	# Define the root and write the XML:
 	root <- "missions"
 	blockvar <- "serialno"
-	writeXMLusingXSB(x=x, file=file, root=root, blockvar=blockvar, blocksize=blocksize, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, maxlines=maxlines, cores=cores)
+	writeXMLusingXSD(x=x, file=file, root=root, blockvar=blockvar, blocksize=blocksize, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, maxlines=maxlines, cores=cores)
 }
 #'
 #' @export
@@ -123,7 +123,7 @@ writeAcousticXML <- function(x, file, xsd="1", blocksize=100, addVersion=TRUE, n
 	# Define the root and write the XML:
 	root <- "echosounder_dataset"
 	blockvar <- "log_start"
-	writeXMLusingXSB(x=x, file=file, root=root, blockvar=blockvar, blocksize=blocksize, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, maxlines=maxlines, cores=cores)
+	writeXMLusingXSD(x=x, file=file, root=root, blockvar=blockvar, blocksize=blocksize, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, maxlines=maxlines, cores=cores)
 }
 #'
 #' @importFrom XML newXMLNode saveXML xmlAttrs
@@ -131,7 +131,7 @@ writeAcousticXML <- function(x, file, xsd="1", blocksize=100, addVersion=TRUE, n
 #' @rdname writeBioticXML
 #' @keywords internal
 #' 
-writeXMLusingXSB <- function(x, file, root, blockvar=NULL, blocksize=100, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
+writeXMLusingXSD <- function(x, file, root, blockvar=NULL, blocksize=100, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
 	
 	# Function for adding a serial number before the file extension:
 	addIndPreExt <- function(file, n){
@@ -141,7 +141,7 @@ writeXMLusingXSB <- function(x, file, root, blockvar=NULL, blocksize=100, addVer
 	}
 	
 	# Function for wiriting the xml file for one block of the data frame (requires the xsd to be read):
-	writeXMLusingXSBoneBlock <- function(ind, xlist, files, root, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
+	writeXMLusingXSDOneBlock <- function(ind, xlist, files, root, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE){
 	
 		x <- xlist[[ind]]
 		file <- files[ind]
@@ -223,7 +223,7 @@ writeXMLusingXSB <- function(x, file, root, blockvar=NULL, blocksize=100, addVer
 		cores <- 1
 	}
 	# Write the individual blocks as xml:
-	XMLfiles <- papply(seq_along(xlist), writeXMLusingXSBoneBlock, xlist=xlist, file=files, root=root, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, cores=cores)
+	XMLfiles <- papply(seq_along(xlist), writeXMLusingXSDOneBlock, xlist=xlist, file=files, root=root, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, cores=cores)
 	
 	# Merge the xml files:
 	if(length(blockvar)){
@@ -515,7 +515,6 @@ validateHIXSD <- function(x, xsd, strict=TRUE, discardSimple=FALSE){
 		pmax(match(varNamesBeforeDotDot, xsd$x$Var), match(varNamesBeforeDotDot, xsd$x$Var.Level), na.rm=TRUE)
 	}
 	
-		
 	# Read the xsd:
 	if(is.character(xsd) && file.exists(xsd)){
 		xsd <- readHIXSD(xsd, discardSimple=discardSimple)
@@ -635,6 +634,7 @@ data.frame2nestedList <- function(x, pre=NULL, levelnames=NULL, rename=NULL, na.
 	if(thislevel<maxlevel){
 		# Split by the attribute columns:
 		if(length(Attr)){
+			stop("Add a warning here if any of the x[Attr] are all NAs")
 			temp <- split(x, x[Attr], drop=TRUE)
 		}
 		else{

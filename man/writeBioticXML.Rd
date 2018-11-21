@@ -3,7 +3,7 @@
 \name{writeBioticXML}
 \alias{writeBioticXML}
 \alias{writeAcousticXML}
-\alias{writeXMLusingXSB}
+\alias{writeXMLusingXSD}
 \alias{data.frame2xml}
 \alias{getHIXSDfile}
 \alias{readHIXSD}
@@ -20,7 +20,7 @@ writeAcousticXML(x, file, xsd = "1", blocksize = 100, addVersion = TRUE,
   declaration = "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>",
   strict = TRUE, discardSimple = FALSE, maxlines = 10, cores = 1)
 
-writeXMLusingXSB(x, file, root, blockvar = NULL, blocksize = 100,
+writeXMLusingXSD(x, file, root, blockvar = NULL, blocksize = 100,
   addVersion = TRUE, xsd = NULL, na.rm = TRUE,
   declaration = "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>",
   strict = TRUE, discardSimple = FALSE, maxlines = 10, cores = 1)
@@ -54,11 +54,11 @@ validateHIXSD(x, xsd, strict = TRUE, discardSimple = FALSE)
 
 \item{discardSimple}{Logical: If TRUE, discard simplecontent from the xsd.}
 
-\item{maxlines}{The number of lines to read from the individual XML files written (in blocks) by \code{writeXMLusingXSB}, to determine which lines to merge between the files.}
+\item{maxlines}{The number of lines to read from the individual XML files written (in blocks) by \code{writeXMLusingXSD}, to determine which lines to merge between the files.}
 
 \item{cores}{The number of cores to use to parallel writing of the individual XML files, which are then merged to one file. Set this > 1 to speed up the writing.}
 
-\item{root}{The root of the XML to write. Use in \code{writeXMLusingXSB}, which requires a root to append the XML to.}
+\item{root}{The root of the XML to write. Use in \code{writeXMLusingXSD}, which requires a root to append the XML to.}
 
 \item{msg}{Logical: If TRUE, print messages to the console.}
 
@@ -69,10 +69,10 @@ validateHIXSD(x, xsd, strict = TRUE, discardSimple = FALSE)
 \code{writeAcousticXML} Writes a data frame to an acoustic XML file. \cr \cr
 \code{readHIXSD} Function for reading an xsd (xml schema file) and returning the structure of the corresponding xml. The output is designed to be used to store the xsd info as colnames of a data frame for use in the funciton frame2nestedList(), but may be useful for reading an arbitraty xsd file. \cr \cr
 \code{validateHIXSD} Function for validating the input x against an xsd. \cr \cr
-\code{writeXMLusingXSB} Utility function of \code{data.frame2xml} for writing any data frame to an XML file given an XML root and an xsd. \cr \cr
+\code{writeXMLusingXSD} Utility function of \code{data.frame2xml} for writing any data frame to an XML file given an XML root and an xsd. \cr \cr
 \code{data.frame2nestedList} Utility function of \code{data.frame2xml}  for converting a data frame to a nested list. The data frame must have column names with prefixes such as Level4.Var or Level2.Attr or Level3.AttrReq followed by "." and the variable name (e.g., Level3.AttrReq.serialno). \cr \cr
 \code{list2XML} Utility function for converting a list to an xml object. This function is a generalization of the funciton as_xml_document() in the package xml2, which turns a list into anxml object, but not for too deep lists. \cr \cr
-\code{data.frame2xml} Utility function of \code{writeXMLusingXSB} for converting a data frame to an xml object. \cr \cr
+\code{data.frame2xml} Utility function of \code{writeXMLusingXSD} for converting a data frame to an xml object. \cr \cr
 }
 \examples{
 \dontrun{
