@@ -1,5 +1,5 @@
 #
-# Tests for data format to be exported to ECA
+# Tests for data format to be exported to ECA. Organise all test on objects that is accepted by eca here. Tests on stox objects go elsewhere.
 #
 
 #' checks that column names are present on datamatrix

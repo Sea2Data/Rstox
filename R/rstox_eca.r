@@ -246,8 +246,8 @@ baseline2eca <- function(projectName, biotic="BioticCovData", landing="LandingCo
 		# Add a data frame with meta information about the covariates:
 		covType <- unlist(lapply(covariateNames, function(xx) getCovparam(projectName, "CovariateType")[[xx]]))
 		CAR <- rep(NA, length(covType))
-		# This process assigns TRUE to CAR only if the parameter 'ConditionalAutoRegression' exists and is equal to the string "true". All other values except empty values (NULL) implies FALSE. If the parameter 'ConditionalAutoRegression' is not present, NA is used:
-		temp <- lapply(covariateNames, function(xx) getCovparam(projectName, "ConditionalAutoRegression")[[xx]] %in% TRUE)
+		# This process assigns TRUE to CAR only if the parameter 'UseStratumNeighbour' exists and is equal to the string "true". All other values except empty values (NULL) implies FALSE. If the parameter 'UseStratumNeighbour' is not present, NA is used:
+		temp <- lapply(covariateNames, function(xx) getCovparam(projectName, "UseStratumNeighbour")[[xx]] %in% TRUE)
 		CAR[unlist(lapply(temp, length))>0] <- unlist(temp)
 		 	# Make sure that CAR is a logical:
 		CAR[is.na(CAR)] <- FALSE
@@ -555,7 +555,7 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters){
 #' Function for converting to the input format required by ECA (this is the main function):
 #' @keywords internal
 getLengthGivenAge_Biotic <- function(eca, ecaParameters){
-  
+  warning("Change to keep all fish from length startified (sampletype 21), or all fish where some fish in haul was aged.")
   # Extract the non-NAs:
   var <- "age"
   # Remove missing values from the DataMatrix and from the eca$covariateMatrixBiotic:
@@ -661,8 +661,8 @@ get_default_result_dir <- function(projectName, location=getProjectPaths(project
 #' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @export
-prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, hatchDaySlashMonth="01/01", use_otolithtype = NULL){
-  warning("use_otolithtype is deprecated and has no effect.")
+prepareRECA <- function(projectName, resultdir=NULL, minage=1, maxage=20, delta.age=0.001, maxlength=NULL, hatchDaySlashMonth="01/01"){
+
   if (is.null(resultdir)){
     resultdir <- get_default_result_dir(projectName)
     if(!(file.exists(resultdir))){
