@@ -501,7 +501,7 @@ plot_cell_landings <-
            xlab = "Cells (gear/temp/spatial)",
            ylab = "landed (kt)",
            frac = 0.001,
-           titletext = paste("top", 100 - frac * 100, "weigth-% cells"),
+           titletext = paste("top", 100 - frac * 100, "weight-% cells"),
            legendtitle = "sample clusteredness",
            colgood = default_color_good,
            colok = default_color_ok,

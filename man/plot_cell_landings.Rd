@@ -6,7 +6,7 @@
 \usage{
 plot_cell_landings(eca, xlab = "Cells (gear/temp/spatial)",
   ylab = "landed (kt)", frac = 0.001, titletext = paste("top", 100 - frac
-  * 100, "weigth-\% cells"), legendtitle = "sample clusteredness",
+  * 100, "weight-\% cells"), legendtitle = "sample clusteredness",
   colgood = default_color_good, colok = default_color_ok,
   colbarely = default_color_barely, colbad = default_color_bad,
   colempty = default_color_empty, colwrong = default_color_wrong,
