@@ -5,7 +5,8 @@
 \title{Prepare data for RECA}
 \usage{
 prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
-  delta.age = 0.001, maxlength = NULL, hatchDaySlashMonth = "01/01")
+  delta.age = 0.001, maxlength = NULL, hatchDaySlashMonth = "01/01",
+  overwrite = T)
 }
 \arguments{
 \item{projectName}{name of stox project}
@@ -21,6 +22,8 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 \item{maxlength}{maximum length of fish in the data set in cm. If null the value will be extracted from the data.}
 
 \item{hatchDaySlashMonth}{reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.}
+
+\item{overwrite}{logical if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.}
 }
 \description{
 Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'

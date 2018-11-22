@@ -859,6 +859,7 @@ get_default_result_dir <-
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
 #' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
+#' @param overwrite logical if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
 #' @export
 prepareRECA <-
   function(projectName,
@@ -867,7 +868,8 @@ prepareRECA <-
            maxage = 20,
            delta.age = 0.001,
            maxlength = NULL,
-           hatchDaySlashMonth = "01/01") {
+           hatchDaySlashMonth = "01/01",
+           overwrite=T) {
     if (is.null(resultdir)) {
       resultdir <- get_default_result_dir(projectName)
       if (!(file.exists(resultdir))) {
@@ -876,6 +878,41 @@ prepareRECA <-
     }
     if (!(file.exists(resultdir))) {
       stop(paste("Directory", resultdir, "does not exist."))
+    }
+    
+    if (overwrite){
+      warning("Running prepareECA with overwrite=T")
+      setProjectData(
+        projectName = projectName,
+        var = NULL,
+        name = "prepareRECA"
+      )
+      setProjectData(
+        projectName = projectName,
+        var = NULL,
+        name = "runRECA"
+      )
+    }
+    
+    #clean resultdir if needed
+    if (length(list.files(resultdir))>0 & overwrite){
+        for (f in list.files(file.path(resultdir, "cfiles"))){
+          fn <- file.path(resultdir, "cfiles", f)
+          if (file.exists(fn) && !dir.exists(fn)){
+            file.remove(fn)
+          }
+        }
+        file.remove(file.path(resultdir, "cfiles"))
+        for (f in list.files(file.path(resultdir, "resfiles"))){
+          fn <- file.path(resultdir, "resfiles", f)
+          if (file.exists(fn) && !dir.exists(fn)){
+            file.remove(fn)
+          }
+        }
+        file.remove(file.path(resultdir, "resfiles"))
+    }
+    if (length(list.files(resultdir))>0){
+      stop(paste("Directory", resultdir, "contains files."))
     }
     warning("checking filepath char comp")
     if (grepl(" ", resultdir)) {
