@@ -1156,6 +1156,8 @@ saveCatchMatrix <- function(pred, filename, var="Abundance", unit="ones", main="
   comments <- c(main, comments)
   caa_scaled <- as.data.frame(caa/plottingUnit$scale)
   means <- as.data.frame(list(Age=pred$AgeCategories, mean=rowMeans(caa_scaled)))
+  cv <- as.data.frame(list(Age=pred$AgeCategories, cv=apply(caa_scaled, FUN=sd, MARGIN=1)))
+  cv$cv <- cv$cv/means$mean
   colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
   caa_scaled$Age <- pred$AgeCategories
   caa_scaled <- caa_scaled[,names(caa_scaled)[order(names(caa_scaled))]]
@@ -1163,7 +1165,7 @@ saveCatchMatrix <- function(pred, filename, var="Abundance", unit="ones", main="
   f <- file(filename, open="w")
   write(paste("#", comments), f)
   if (savemeans){
-    write.table(means, file=f, sep="\t", dec=".", row.names=F)
+    write.table(merge(means, cv), file=f, sep="\t", dec=".", row.names=F)
     close(f)
   }
   else{
