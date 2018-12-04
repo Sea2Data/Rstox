@@ -634,7 +634,15 @@ data.frame2nestedList <- function(x, pre=NULL, levelnames=NULL, rename=NULL, na.
 	if(thislevel<maxlevel){
 		# Split by the attribute columns:
 		if(length(Attr)){
-			stop("Add a warning here if any of the x[Attr] are all NAs")
+			# Check the attributes for all NAs:
+			areAllNAs <- function(x){
+				all(is.na(x))
+			}
+			allNAs <- sapply(x[Attr], areAllNAs)
+			if(any(allNAs)){
+				warning("The following attributes had all NAs, which leads to dropped levels in the xml: ", paste(names(x[Attr])[allNAs], collapse=", "))
+			}
+			
 			temp <- split(x, x[Attr], drop=TRUE)
 		}
 		else{

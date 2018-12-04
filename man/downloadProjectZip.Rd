@@ -2,7 +2,6 @@
 % Please edit documentation in R/rstox_NMD.R, R/rstox_base.r
 \name{downloadProjectZip}
 \alias{downloadProjectZip}
-\alias{downloadProjectZip}
 \title{Download a zipped StoX project to a specified project path.}
 \usage{
 downloadProjectZip(URL, projectName = NULL, projectRoot = NULL,

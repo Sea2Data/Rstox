@@ -5,8 +5,9 @@
 \title{Composition of mission types in the data}
 \usage{
 plot_mission_types(biotic, title = "mission types\\n# stations",
-  blankcode = default_blankcode, pal = c("#e41a1c", "#377eb8", "#4daf4a",
-  "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf", "#999999"))
+  blankcode = default_blankcode, pal = c("#e41a1c", "#377eb8",
+  "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf",
+  "#999999"))
 }
 \description{
 Composition of mission types in the data

@@ -25,8 +25,8 @@ createProject(projectName = NULL, files = list(), dir = NULL,
 openProject(projectName = NULL, out = c("project", "baseline",
   "baseline-report", "name"), msg = FALSE)
 
-reopenProject(projectName, out = c("project", "baseline", "baseline-report",
-  "name"))
+reopenProject(projectName, out = c("project", "baseline",
+  "baseline-report", "name"))
 
 getProject(projectName, out = c("project", "baseline", "baseline-report",
   "name"), msg = FALSE)

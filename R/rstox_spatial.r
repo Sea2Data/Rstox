@@ -1099,7 +1099,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			}
 			
 		# For parallel transects we need to shift by the half transectSpacing on the retour:
-		if(type == "Parallel" && retour){
+		if(tolower(type) == "parallel" && retour){
 			halfTransectSpacing <- diff(xGrid[1:2]/2)
 			xGrid <- xGrid + halfTransectSpacing
 		}
@@ -1114,7 +1114,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		###grid <- lapply(grid, data.matrix)
 	
 		# For zigzag transects with equal coverage, convert the grid to zigzag lines, by selecting every other point:
-		if(type == "RectEnclZZ"){
+		if(tolower(type) == tolower("RectEnclZZ")){
 			# Order alternately, and if on a retour order oppositely from the default:
 			#grid <- orderTransectsByXY(grid, down=downRandom)
 			#grid <- orderAlternateByY(grid, decreasing=downRandom)
@@ -1138,7 +1138,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		intersectsCoordsList <- linkClosest(intersectsCoordsList)
 		
 		# For zigzag transects, set the end point of each transect to the start point of the next, and remove the last transect:
-		if(type == "EqSpZZ"){
+		if(tolower(type) == tolower("EqSpZZ")){
 			intersectsCoordsList <- parallel2zigzag(intersectsCoordsList)
 			# Add end points to the zigzag transects. For this we need a spatial object:
 			temp <- intersects
@@ -1165,7 +1165,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		intersectsCoordsList <- getIntersectsCoordsList(intersects)
 		
 		# Assure that the new intersects are between the relevant grid lines:
-		if(type == "EqSpZZ"){
+		if(tolower(type) == tolower("EqSpZZ")){
 			selectInsidexGrid <- function(ind, xGrid, margin=0.01){
 				bin <- xGrid_EqSpZZ[ind]
 				width <- xGrid[bin + 1] - xGrid[bin]

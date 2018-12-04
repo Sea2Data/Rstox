@@ -14,7 +14,8 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   hours = 240, nmi = NULL, t0 = NULL, knots = 10, seed = 0,
   angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
   equalEffort = FALSE, byStratum = TRUE, strata = "all",
-  cruise = "surveyPlanner", keepTransport = TRUE, centroid = NULL, ...)
+  cruise = "surveyPlanner", keepTransport = TRUE, centroid = NULL,
+  ...)
 
 addStratum(x, acousticProc = "FilterAcoustic")
 
@@ -28,7 +29,8 @@ plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
 
 readStrataPolygons(projectName, ...)
 
-getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude", "latitude"))
+getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
+  "latitude"))
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}). Can also be the path to a shapefile or folder of shape files, or to a file with polygons given as a two column matrix with stratum name in the first column and a MULTIPOLYGON wkt string in the second conlumn.}

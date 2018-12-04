@@ -5,15 +5,16 @@
 \alias{getBaseline}
 \title{Run a StoX baseline model}
 \usage{
-runBaseline(projectName, out = c("project", "baseline", "baseline-report",
-  "name"), startProcess = 1, endProcess = Inf, reset = FALSE,
-  save = FALSE, modelType = "baseline", msg = TRUE, exportCSV = FALSE,
-  warningLevel = 0, parlist = list(), ...)
+runBaseline(projectName, out = c("project", "baseline",
+  "baseline-report", "name"), startProcess = 1, endProcess = Inf,
+  reset = FALSE, save = FALSE, modelType = "baseline", msg = TRUE,
+  exportCSV = FALSE, warningLevel = 0, parlist = list(), ...)
 
 getBaseline(projectName, input = c("par", "proc"), proc = "all",
   drop = TRUE, startProcess = 1, endProcess = Inf, reset = FALSE,
-  save = FALSE, modelType = "baseline", msg = TRUE, exportCSV = FALSE,
-  warningLevel = 0, parlist = list(), close = FALSE, ...)
+  save = FALSE, modelType = "baseline", msg = TRUE,
+  exportCSV = FALSE, warningLevel = 0, parlist = list(),
+  close = FALSE, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

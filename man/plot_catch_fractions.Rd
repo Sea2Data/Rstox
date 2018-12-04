@@ -5,10 +5,10 @@
 \title{Plots composition in catchsamples of parameters that determines what kind fraction of catches or landings are sampled}
 \usage{
 plot_catch_fractions(biotic, title = "sampling point",
-  xlab = "# catch samples", allname = "Unsorted", landname = "Landed",
-  discname = "Not landed", allcol = "#fee8c8", disccol = "#fdbb84",
-  landcol = "#e34a33", unkowncol = "white", blankcode = default_blankcode,
-  barplot = F)
+  xlab = "# catch samples", allname = "Unsorted",
+  landname = "Landed", discname = "Not landed", allcol = "#fee8c8",
+  disccol = "#fdbb84", landcol = "#e34a33", unkowncol = "white",
+  blankcode = default_blankcode, barplot = F)
 }
 \arguments{
 \item{title}{title for plot}

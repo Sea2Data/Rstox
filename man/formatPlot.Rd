@@ -4,7 +4,8 @@
 \alias{formatPlot}
 \title{Saves plot to stox project location (getProjectPaths(projectname)$RReportDir) to be localised by getPlots in stox.}
 \usage{
-formatPlot(projectname, plotname, draw, format = "png", verbose = F, ...)
+formatPlot(projectname, plotname, draw, format = "png", verbose = F,
+  ...)
 }
 \arguments{
 \item{projectname}{name of stox project}

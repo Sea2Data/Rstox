@@ -16,12 +16,12 @@ readWKTSplit(x, ...)
 
 polyArea(x, requireClosed = TRUE)
 
-polyArea_test(x, par = list(proj = "laea", units = "kmi", lon_0 = NA, lat_0 =
-  NA, x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"), longlat = TRUE,
-  ...)
+polyArea_test(x, par = list(proj = "laea", units = "kmi", lon_0 = NA,
+  lat_0 = NA, x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"),
+  longlat = TRUE, ...)
 
-geo2xy(x, par = list(proj = "aeqd", units = "kmi", lon_0 = NA, lat_0 = NA, x_0
-  = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"), inv = FALSE,
+geo2xy(x, par = list(proj = "aeqd", units = "kmi", lon_0 = NA, lat_0 =
+  NA, x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"), inv = FALSE,
   data.frame.out = FALSE, ...)
 
 getMatrixList(x, drop = TRUE, data.frame.out = FALSE)

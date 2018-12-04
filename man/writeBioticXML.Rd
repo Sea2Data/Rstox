@@ -10,13 +10,13 @@
 \alias{validateHIXSD}
 \title{Write biotic and acoustic XML files from data frames given a (preferably hierarcical) xsd (xml schema file).}
 \usage{
-writeBioticXML(x, file, xsd = "1.4", blocksize = 100, addVersion = TRUE,
-  na.rm = TRUE,
+writeBioticXML(x, file, xsd = "1.4", blocksize = 100,
+  addVersion = TRUE, na.rm = TRUE,
   declaration = "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>",
   strict = TRUE, discardSimple = FALSE, maxlines = 10, cores = 1)
 
-writeAcousticXML(x, file, xsd = "1", blocksize = 100, addVersion = TRUE,
-  na.rm = TRUE,
+writeAcousticXML(x, file, xsd = "1", blocksize = 100,
+  addVersion = TRUE, na.rm = TRUE,
   declaration = "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>",
   strict = TRUE, discardSimple = FALSE, maxlines = 10, cores = 1)
 

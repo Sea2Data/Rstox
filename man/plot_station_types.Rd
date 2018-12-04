@@ -4,8 +4,9 @@
 \alias{plot_station_types}
 \title{Composition of station types (Stasjons: stasjonstype) in data}
 \usage{
-plot_station_types(biotic, title = "station types", xlab = "# stations",
-  blankcode = default_blankcode, cex.names = 0.8)
+plot_station_types(biotic, title = "station types",
+  xlab = "# stations", blankcode = default_blankcode,
+  cex.names = 0.8)
 }
 \arguments{
 \item{title}{title for plot}

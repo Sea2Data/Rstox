@@ -2440,7 +2440,7 @@ initiateRstoxEnv <- function(){
 	
 	# The folders in a StoX project:
 	StoXFolders <- c("input", "output", "process")
-	StoX_data_sources <- c("acoustic", "biotic", "landing")
+	StoX_data_sources <- c(echosounder = "acoustic", biotic = "biotic", landing = "landing")
 	StoXFoldersRecursive <- list(
 		input = file.path("input", StoX_data_sources), 
 		output = file.path("output", outer(c("baseline", "r"), c("data", "report"), file.path)), 
@@ -2454,7 +2454,7 @@ initiateRstoxEnv <- function(){
 	
 	
 	# NMD and StoX defines different data types (StoX has the more general category "acoustic"):
-	NMD_data_sources <- c("echosounder", "biotic", "landing")
+	NMD_data_sources <- c(acoustic = "echosounder", biotic = "biotic", landing = "landing")
 	# The implemented NMD APIs for the NMD_data_sources:
 	NMD_API_versions <- list(
 		biotic = c(1, 2), 

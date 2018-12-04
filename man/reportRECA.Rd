@@ -4,7 +4,8 @@
 \alias{reportRECA}
 \title{Report RECA.}
 \usage{
-reportRECA(projectName, var = "Abundance", unit = "ones", write = T, ...)
+reportRECA(projectName, var = "Abundance", unit = "ones", write = T,
+  ...)
 }
 \arguments{
 \item{projectName}{name of stox project}

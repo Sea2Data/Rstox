@@ -4,8 +4,8 @@
 \alias{abbrevWords}
 \title{Abbreviates StoX project names.}
 \usage{
-abbrevWords(x, p = 1/2, collapse = "_", keep = c("capital", "numeric",
-  "punct"), sub = 0, abbrev = TRUE)
+abbrevWords(x, p = 1/2, collapse = "_", keep = c("capital",
+  "numeric", "punct"), sub = 0, abbrev = TRUE)
 }
 \arguments{
 \item{x}{A vector of strings.}

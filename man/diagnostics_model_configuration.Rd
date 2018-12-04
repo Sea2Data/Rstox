@@ -5,9 +5,9 @@
 \title{Plots diagnostics for model configuration. Whether all combinations of fixed effects are sampled}
 \usage{
 diagnostics_model_configuration(stoxexport, okcol = default_color_ok,
-  wrongcol = default_color_wrong, undersampledcol = default_color_empty,
-  oktext = "OK", undersampledtext = "no samples",
-  wrongtext = "no landings")
+  wrongcol = default_color_wrong,
+  undersampledcol = default_color_empty, oktext = "OK",
+  undersampledtext = "no samples", wrongtext = "no landings")
 }
 \description{
 Plots diagnostics for model configuration. Whether all combinations of fixed effects are sampled

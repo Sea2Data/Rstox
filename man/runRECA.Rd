@@ -5,9 +5,9 @@
 \title{run RECA}
 \usage{
 runRECA(projectName, burnin = 100, caa.burnin = 100, nSamples = 1000,
-  thin = 1, fitfile = "fit", predfile = "pred", lgamodel = "log-linear",
-  CC = FALSE, CCError = FALSE, seed = NULL, age.error = FALSE,
-  export_only = NULL)
+  thin = 1, fitfile = "fit", predfile = "pred",
+  lgamodel = "log-linear", CC = FALSE, CCError = FALSE,
+  seed = NULL, age.error = FALSE, export_only = NULL)
 }
 \arguments{
 \item{projectName}{name of stox project}

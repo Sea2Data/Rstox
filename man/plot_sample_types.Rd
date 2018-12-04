@@ -4,8 +4,9 @@
 \alias{plot_sample_types}
 \title{Composition of catch sample types in data}
 \usage{
-plot_sample_types(biotic, title = "sample types", xlab = "# catch samples",
-  blankcode = default_blankcode, cex.names = 0.8)
+plot_sample_types(biotic, title = "sample types",
+  xlab = "# catch samples", blankcode = default_blankcode,
+  cex.names = 0.8)
 }
 \arguments{
 \item{title}{title for plot}

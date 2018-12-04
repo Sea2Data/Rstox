@@ -10,13 +10,14 @@ getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
   API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
   msg = FALSE, simplify = TRUE, return.URL = FALSE)
 
-getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
-  tsn = NULL, dataSource = NULL, dir = NULL, subdir = FALSE,
-  group = "default", abbrev = FALSE, subset = NULL, prefix = "NMD",
-  ver = getRstoxDef("ver"), API = "http://tomcat7.imr.no:8080/apis/nmdapi",
-  cleanup = TRUE, model = "StationLengthDistTemplate", msg = TRUE,
-  ow = NULL, return.URL = FALSE, run = TRUE, timeout = NULL,
-  zipSTS = TRUE, ...)
+getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
+  serialno = NULL, tsn = NULL, dataSource = NULL, dir = NULL,
+  subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
+  prefix = "NMD", ver = getRstoxDef("ver"),
+  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
+  return.URL = FALSE, run = TRUE, timeout = NULL, zipSTS = TRUE,
+  ...)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
   method = "auto", timeout = NULL)

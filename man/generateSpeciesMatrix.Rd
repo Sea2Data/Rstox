@@ -7,19 +7,20 @@
 \title{Generate species matrix with biotic stations as rows and station information and the species present in the \code{ref} file as columns. One matrix generated per variable \code{var}.}
 \usage{
 generateSpeciesMatrix(projectName, ref, years, check = TRUE,
-  downloadProjects = FALSE, timeout = 600, model = list("ReadBioticXML",
-  FilterBiotic = list(BioticData = "ReadBioticXML")), specVar = "noname",
-  catVar = "Speccat", stationVar = c("cruise", "serialno"),
-  bioticProc = "FilterBiotic", var = c("weight", "count"),
-  max.sampletype = 49, list.out = TRUE, ...)
+  downloadProjects = FALSE, timeout = 600,
+  model = list("ReadBioticXML", FilterBiotic = list(BioticData =
+  "ReadBioticXML")), specVar = "noname", catVar = "Speccat",
+  stationVar = c("cruise", "serialno"), bioticProc = "FilterBiotic",
+  var = c("weight", "count"), max.sampletype = 49, list.out = TRUE,
+  ...)
 
 mergeSpeciesMatrix(...)
 
 aggregateBySpeciesCategory(projectName, ref, specVar = "noname",
   specVar.bio = specVar, specVar.ref = specVar, catVar = "SpecCat",
   bioticProc = "FilterBiotic", stationVar = c("cruise", "serialno"),
-  var = c("weight", "count"), na.as = 0, drop.out = TRUE, close = TRUE,
-  msg = TRUE, ...)
+  var = c("weight", "count"), na.as = 0, drop.out = TRUE,
+  close = TRUE, msg = TRUE, ...)
 }
 \arguments{
 \item{projectName}{A vector of cruise series names providing the data.}

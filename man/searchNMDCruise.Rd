@@ -5,8 +5,8 @@
 \title{Search for a cruise given the cruise number and ship name.}
 \usage{
 searchNMDCruise(cruisenr, shipname = NULL, dataSource = "biotic",
-  ver = getRstoxDef("ver"), API = "http://tomcat7.imr.no:8080/apis/nmdapi",
-  return.URL = FALSE)
+  ver = getRstoxDef("ver"),
+  API = "http://tomcat7.imr.no:8080/apis/nmdapi", return.URL = FALSE)
 }
 \arguments{
 \item{dataSource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. dataSource=NULL (default) returns all possible data.}

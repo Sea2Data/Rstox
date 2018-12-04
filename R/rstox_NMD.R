@@ -158,6 +158,137 @@ getNMDinfo <- function(type=NULL, ver=getRstoxDef("ver"), API="http://tomcat7.im
 	return(data)
 }
 
+#'
+#' @export
+#' @rdname getNMDinfo
+#' 
+getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, dataSource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", ver=getRstoxDef("ver"), API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, zipSTS=TRUE, ...){
+	
+	# Support for giving 'prefix' as 'filebase' for backwards compatibility:
+	l <- list(...)
+	if("filebase" %in% names(l)){
+		prefix <- l$filebase
+	}
+	
+	#######################################
+	############ Preparations: ############
+	#######################################
+	# Interpret the version info:
+	ver <- getNMDver(ver)
+	
+	# Define the valid types:
+	NMD_data_sources <- getRstoxDef("NMD_data_sources")
+	NMD_API_versions <- getRstoxDef("NMD_API_versions")[NMD_data_sources]
+	if(length(dataSource)==0){
+		dataSource <- names(NMD_API_versions[sapply(NMD_API_versions, length) > 0])
+	}
+	# Set the data types used in StoX (differing from NMD in the echosounder/acoustic type):
+	StoX_data_sources <- getRstoxDef("StoX_data_sources")
+	StoX_data_sources <- StoX_data_sources[NMD_data_sources %in% dataSource]
+	
+	# Get the project root:
+	dir <- getProjectPaths(projectName="", projectRoot=dir)$projectRoot
+	#######################################
+	
+	# Get serialno:
+	serialno <- getSerialno(serialno, year)
+	
+	# Get download type:
+	if(isSTS(cruise, ver=ver)){
+		if(zipSTS){
+			downloadType <- "stszip"
+		}
+		else{
+			downloadType <- "sts"
+		}
+	}
+	else if(isCS(cruise, ver=ver)){
+		downloadType <- "cs"
+	}
+	else if(length(serialno)){
+		downloadType <- "serialno"
+	}
+	else{
+		downloadType <- "c"
+	}
+	#######################################
+	
+		
+	########################################
+	########## (1) Serial number: ##########
+	########################################
+	# Download serialno data:
+	#if(length(serialno) && run){
+	if(downloadType == "serialno"){
+		out <- downloadSerialno(serialno=serialno, downloadType=downloadType, year=year, tsn=tsn, prefix=prefix, dir=dir, model=model, ow=ow, ver=ver, API=API, run=run, return.URL=return.URL, msg=msg, timeout=timeout, ...)
+		return(out)
+	}
+	########################################
+	
+	
+	#############################################
+	########## (2) Survey time series: ##########
+	#############################################
+	#else if(isSTS(cruise, ver=ver) && run){
+	else if(downloadType == "stszip"){
+		# Get the info of only the requested survey time series to save time, requiring the [[1]]:
+		stsInfo <- getNMDinfo(c("sts", cruise))[[1]]
+		out <- getSurveyTimeSeriesZip(stsInfo=stsInfo, dir=dir, subdir=subdir, subset=subset, cleanup=cleanup, ow=ow, abbrev=abbrev, run=run, ver=ver, msg=msg, return.URL=return.URL)
+		return(out)
+	}
+	#############################################
+	
+	
+	####################################################
+	########## (3) Cruises and cruise series: ##########
+	####################################################
+	#else if(run){
+	else{
+		if(downloadType == "cs"){
+			# Get the matrix of stoxProjectId and sampleTime (i.e., year), and the name of the survey time series (sts):
+			cruiseInfo <- getNMDinfo(c("cs", cruise))[[1]]
+			# Add both StoX and NMD dataSource:
+			cruiseInfo <- addDataSources(cruiseInfo, dataSource=dataSource)
+		}
+		else if(downloadType == "sts"){
+			stsInfo <- getNMDinfo(c("sts", cruise))[[1]]
+			cruiseInfo <- getCruiseInfoFromStsInfo(stsInfo)
+		}
+		else if(downloadType == "c"){
+			# Define the info needed to get the URLs:
+			cruiseInfo <- data.frame(
+				Year = getYearFromCruiseNumber(cruise), 
+				# Bug fix on 2018-09-28 after comment from Ibrahim. With Cruise named CruiseNr, getPaths() did not find the cruise number:
+				# CruiseNr = cruise, 
+				Cruise = cruise, 
+				ShipName = shipname
+			)
+			# Add both StoX and NMD dataSource:
+			cruiseInfo <- addDataSources(cruiseInfo, dataSource=dataSource)
+		}
+		else{
+			stop("Unknown downloadType")
+		}
+		# Get the URLs as columns named by the data sources given :
+		#cruiseInfo <- getCruiseURLs(cruiseInfo, dataSource=dataSource, StoX_data_sources=StoX_data_sources, ver=ver, API=API)
+		# Report warnings for missing URLs (searchNMDCruise() not finding the file) but only for "sts":
+		cruiseInfo <- getCruiseURLs(cruiseInfo, ver=ver, API=API, checkURL=downloadType == "sts")
+		
+		# Apply the default grouping:
+		cruiseInfo <- getGroup(cruiseInfo, group)
+		
+		# Add the project ID:
+		cruiseInfo <- getProjectID(cruiseInfo)
+		
+		# Download the cruises:
+		out <- getCruises(cruiseInfo, downloadType=downloadType, cruise=cruise, StoX_data_sources=StoX_data_sources, model=model, dir=dir, subdir=subdir, subset=subset, prefix=prefix, dataSource=dataSource, ow=ow, abbrev=abbrev, timeout=timeout, return.URL=return.URL, ...)
+		
+		# Return the project paths:
+		return(out)
+	}
+	####################################################
+}
+
 ###############################################
 ##### Internal functions of getNMDinfo>>> #####
 ###############################################
@@ -713,136 +844,6 @@ getCruiseInfo <- function(ver, API, msg=FALSE){
 ##### <<<Internal functions of getNMDinfo #####
 ###############################################
 
-#'
-#' @export
-#' @rdname getNMDinfo
-#' 
-getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, dataSource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", ver=getRstoxDef("ver"), API="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, zipSTS=TRUE, ...){
-	
-	# Support for giving 'prefix' as 'filebase' for backwards compatibility:
-	l <- list(...)
-	if("filebase" %in% names(l)){
-		prefix <- l$filebase
-	}
-	
-	#######################################
-	############ Preparations: ############
-	#######################################
-	# Interpret the version info:
-	ver <- getNMDver(ver)
-	
-	# Define the valid types:
-	NMD_data_sources <- getRstoxDef("NMD_data_sources")
-	NMD_API_versions <- getRstoxDef("NMD_API_versions")[NMD_data_sources]
-	if(length(dataSource)==0){
-		dataSource <- names(NMD_API_versions[sapply(NMD_API_versions, length) > 0])
-	}
-	# Set the data types used in StoX (differing from NMD in the echosounder/acoustic type):
-	StoX_data_sources <- getRstoxDef("StoX_data_sources")
-	StoX_data_sources <- StoX_data_sources[NMD_data_sources %in% dataSource]
-	
-	# Get the project root:
-	dir <- getProjectPaths(projectName="", projectRoot=dir)$projectRoot
-	#######################################
-	
-	# Get serialno:
-	serialno <- getSerialno(serialno, year)
-	
-	# Get download type:
-	if(isSTS(cruise, ver=ver)){
-		if(zipSTS){
-			downloadType <- "stszip"
-		}
-		else{
-			downloadType <- "sts"
-		}
-	}
-	else if(isCS(cruise, ver=ver)){
-		downloadType <- "cs"
-	}
-	else if(length(serialno)){
-		downloadType <- "serialno"
-	}
-	else{
-		downloadType <- "c"
-	}
-	#######################################
-	
-		
-	########################################
-	########## (1) Serial number: ##########
-	########################################
-	# Download serialno data:
-	#if(length(serialno) && run){
-	if(downloadType == "serialno"){
-		out <- downloadSerialno(serialno=serialno, downloadType=downloadType, year=year, tsn=tsn, prefix=prefix, dir=dir, model=model, ow=ow, ver=ver, API=API, run=run, return.URL=return.URL, msg=msg, timeout=timeout, ...)
-		return(out)
-	}
-	########################################
-	
-	
-	#############################################
-	########## (2) Survey time series: ##########
-	#############################################
-	#else if(isSTS(cruise, ver=ver) && run){
-	else if(downloadType == "stszip"){
-		# Get the info of only the requested survey time series to save time, requiring the [[1]]:
-		stsInfo <- getNMDinfo(c("sts", cruise))[[1]]
-		out <- getSurveyTimeSeriesZip(stsInfo=stsInfo, dir=dir, subdir=subdir, subset=subset, cleanup=cleanup, ow=ow, abbrev=abbrev, run=run, ver=ver, msg=msg, return.URL=return.URL)
-		return(out)
-	}
-	#############################################
-	
-	
-	####################################################
-	########## (3) Cruises and cruise series: ##########
-	####################################################
-	#else if(run){
-	else{
-		if(downloadType == "cs"){
-			# Get the matrix of stoxProjectId and sampleTime (i.e., year), and the name of the survey time series (sts):
-			cruiseInfo <- getNMDinfo(c("cs", cruise))[[1]]
-			# Add both StoX and NMD dataSource:
-			cruiseInfo <- addDataSources(cruiseInfo, dataSource=dataSource)
-		}
-		else if(downloadType == "sts"){
-			stsInfo <- getNMDinfo(c("sts", cruise))[[1]]
-			cruiseInfo <- getCruiseInfoFromStsInfo(stsInfo)
-		}
-		else if(downloadType == "c"){
-			# Define the info needed to get the URLs:
-			cruiseInfo <- data.frame(
-				Year = getYearFromCruiseNumber(cruise), 
-				# Bug fix on 2018-09-28 after comment from Ibrahim. With Cruise named CruiseNr, getPaths() did not find the cruise number:
-				# CruiseNr = cruise, 
-				Cruise = cruise, 
-				ShipName = shipname
-			)
-			# Add both StoX and NMD dataSource:
-			cruiseInfo <- addDataSources(cruiseInfo, dataSource=dataSource)
-		}
-		else{
-			stop("Unknown downloadType")
-		}
-		# Get the URLs as columns named by the data sources given :
-		#cruiseInfo <- getCruiseURLs(cruiseInfo, dataSource=dataSource, StoX_data_sources=StoX_data_sources, ver=ver, API=API)
-		# Report warnings for missing URLs (searchNMDCruise() not finding the file) but only for "sts":
-		cruiseInfo <- getCruiseURLs(cruiseInfo, ver=ver, API=API, checkURL=downloadType == "sts")
-		
-		# Apply the default grouping:
-		cruiseInfo <- getGroup(cruiseInfo, group)
-		
-		# Add the project ID:
-		cruiseInfo <- getProjectID(cruiseInfo)
-		
-		# Download the cruises:
-		out <- getCruises(cruiseInfo, downloadType=downloadType, cruise=cruise, StoX_data_sources=StoX_data_sources, model=model, dir=dir, subdir=subdir, subset=subset, prefix=prefix, dataSource=dataSource, ow=ow, abbrev=abbrev, timeout=timeout, return.URL=return.URL, ...)
-		
-		# Return the project paths:
-		return(out)
-	}
-	####################################################
-}
 
 ###############################################
 ##### Internal functions of getNMDdata>>> #####
@@ -971,7 +972,7 @@ addDataSources <- function(cruiseInfo, dataSource){
 	StoX_data_source <- getRstoxDef("StoX_data_sources")[dataSource]
 	dataSourceDF <- data.frame(
 		StoX_data_source = StoX_data_source, 
-		NMD_data_source = dataSource
+		NMD_data_source = dataSource, stringsAsFactors=FALSE
 	)
 	
 	# Merge with the cruiseInfo:
@@ -1250,7 +1251,7 @@ downloadSerialno <- function(serialno, downloadType, year=NULL, tsn=NULL, prefix
 		URLs[i] <- getURLBySerialno(serialno=serialno[i,], year=year[1], tsn=tsn, ver=ver, API=API)
 	}
 	if(return.URL){
-		return(data.frame(year=year, serialno, URL=URLs))
+		return(data.frame(year=year, serialno, URL=URLs, stringsAsFactors=FALSE))
 	}
 	
 	
@@ -1344,7 +1345,7 @@ getSurveyTimeSeriesZip <- function(stsInfo, dir, subdir, subset, cleanup, ow, ab
 	# Get the URLs (hard coded to use the zip download, since the preferred non-zip download will be incorporated as a cruise series):
 	URLs <- getSurveyTimeSeriesZipURLs(stsInfo=stsInfo, ver=ver, format="zip")
 	if(return.URL){
-		return(data.frame(stsInfo, URL=URLs))
+		return(data.frame(stsInfo, URL=URLs, stringsAsFactors=FALSE))
 	}
 	
 	# Run through the projects and download:
@@ -1630,7 +1631,7 @@ getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL,
 	projectPaths <- projectPaths[toWrite]
 	projectPathsOrig <- projectPathsOrig[toWrite]
 	cruiseInfo <- cruiseInfo[toWrite]
-
+	
 	# Download for all projects:
 	#papply(seq_along(cruiseInfo), downloadOneCruise, filePaths=filePaths, URLs=URLs, timeout=timeout, msg="Downloading...")
 	papply(cruiseInfo, downloadOneCruise, timeout=timeout, msg="Downloading...")
@@ -1640,8 +1641,8 @@ getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL,
 		valid <- !is.na(cruiseInfo$URL)
 	}
 	
-	filePathsFlat <- unlist(lapply(cruiseInfo, "[[", "fileURL"))
-	URLsFlat <- unlist(lapply(cruiseInfo, "[[", "FilePath"))
+	URLsFlat <- unlist(lapply(cruiseInfo, "[[", "fileURL"))
+	filePathsFlat <- unlist(lapply(cruiseInfo, "[[", "FilePath"))
 	valid <- !is.na(URLsFlat)
 	filePathsFlat <- filePathsFlat[valid]
 	URLsFlat <- URLsFlat[valid]
@@ -1660,6 +1661,9 @@ getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL,
 	if(length(cruiseInfo[[1]]$projectXmlFile) == 0){
 		lapply(projectPaths, updateProject)
 	}
+	
+	# Close the projects:
+	lapply(projectPaths, closeProject)
 	
 	return(projectPaths)
 }
@@ -1848,6 +1852,9 @@ addQuery <- function(URL, ...){
 }
 # Get the URL base string:
 getURLbase <- function(ver, API, dataSource, model=NULL, dataset=NULL, unnamed=NULL){
+	# Make sure that 'datasource' is character, to avoid confusion when selecting the API version below:
+	dataSource <- as.character(dataSource)
+	
 	version <- paste0("v", ver$API[[dataSource]])
 	query <- paste0("version=", ver[[dataSource]])
 	if(length(model)){
@@ -2045,7 +2052,7 @@ as.numericDataFrame <- function(data){
 	data <- as.data.frame(data, stringsAsFactors=FALSE)
 }
 
-getNMDver <- function(ver=NULL){
+getNMDver <- function(ver=NULL, name=NULL){
 	
 	replaceAllAPIs <- function(out, ver){
 		out$API <- rapply(out$API, function(x) ver, how="replace")
@@ -2058,8 +2065,8 @@ getNMDver <- function(ver=NULL){
 		#out <- rapply(out, function(x) ver, how="replace")
 	}
 	else if(is.list(ver)){
-		# If ver is a list with an element API, use this value for all APIs:
-		if("API" %in% names(ver)){
+		# If ver is a list with one element API, use this value for all APIs:
+		if("API" %in% names(ver) && !is.list(ver$API) && length(ver$API)==1){
 			out <- replaceAllAPIs(out=out, ver=ver$API)
 			#out$API <- rapply(out$API, function(x) ver$API, how="replace")
 			# Remove the API element of 'ver':
@@ -2080,8 +2087,15 @@ getNMDver <- function(ver=NULL){
 			}
 		}
 	}
-	out
+	
+	if(length(name)){
+		out[[as.character(name)]]
+	}
+	else{
+		out
+	}
 }
+
 
 
 #*********************************************
@@ -2099,59 +2113,6 @@ getNMDver <- function(ver=NULL){
 #' @importFrom tools file_ext
 #' @keywords internal
 #' 
-### searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=getRstoxDef("ver"), API="http://tomcat7.imr.no:8080/apis/nmdapi"){
-### 	
-### 	# Function for extacting the URL of the cruise. In version 1 this URL was given directly, whereas in version 2 it has to be constructed from the downloaded table:
-### 	findCruiseURL <- function(x, ver=getRstoxDef("ver"), dataSource="biotic"){
-### 		# Download the result from the search query:
-### 		suppressWarnings(out <- downloadXML(URLencode(x), msg=FALSE))
-### 		if(length(out)==0){
-### 			return(NA)
-### 		}
-### 		if(ver$API[[dataSource]] == 1){
-### 			# Version 1 returns the cruise URL directly:
-### 			out <- out$element$text
-### 		}
-### 		else if(ver$API[[dataSource]] == 2){
-### 			# In version 2 the elements of the cruise URL are given and must be combined to get the URL:
-### 			g <- getRowElementValueWithName(out, row="row", value="text", name=".attrs")
-### 			# Build the URL:
-### 			relativePath <- g$path
-### 			APIverString <- paste0("v", ver$API[[dataSource]])
-### 			query <- paste0("version=", ver[[dataSource]])
-### 			out <- paste(API, dataSource, APIverString, relativePath, "dataset", sep="/")
-### 			# Add dataSource version:
-### 			out <- paste(out, query, sep="?")
-### 		}
-### 		else{
-### 			stop("Invalid version")
-### 		}
-### 		out
-### 	}
-### 	
-### 	# Add support for giving 'ver' as a single numeric, as was done prior to Rstox_1.10:
-### 	if(!is.list(ver)){
-### 		ver <- list(API=ver[1])
-### 	}
-### 	
-### 	if(length(cruisenr)==2 && length(shipname)==0){
-### 		shipname <- cruisenr[2]
-### 		cruisenr <- cruisenr[1]
-### 	}
-### 	
-### 	# Get the search URL:
-### 	searchURL <- paste(
-### 		API, 
-### 		dataSource, 
-### 		paste0("v", ver$API[[dataSource]]), 
-### 		paste0("find?cruisenr=", cruisenr, "&shipname=", shipname), 
-### 		sep="/"
-### 	)
-### 	# Get the URLs:
-### 	out <- sapply(searchURL, findCruiseURL, ver=ver, dataSource=dataSource)
-### 
-### 	out
-### }
 searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=getRstoxDef("ver"), API="http://tomcat7.imr.no:8080/apis/nmdapi", return.URL=FALSE){
 	
 	# Function for extacting the URL of the cruise. In version 1 this URL was given directly, whereas in version 2 it has to be constructed from the downloaded table:
@@ -2168,6 +2129,9 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 			)
 		}
 		
+		# Make sure that 'datasource' is character, to avoid confusion when selecting the API version below:
+		dataSource <- as.character(dataSource)
+
 		# Get the search URL:
 		searchURL <- getSearchURL(ind=ind, cruisenr=cruisenr, shipname=shipname, API=API, dataSource=dataSource, ver=ver)
 		#paste(
@@ -2232,15 +2196,17 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 	}
 	
 	
-	# Add support for giving 'ver' as a single numeric, as was done prior to Rstox_1.10:
-	if(!is.list(ver)){
-		ver <- list(API=ver[1])
-	}
+	### # Add support for giving 'ver' as a single numeric, as was done prior to Rstox_1.10:
+	### if(!is.list(ver)){
+	### 	ver <- list(API=ver[1])
+	### }
 	
 	if(length(cruisenr)==2 && length(shipname)==0){
 		shipname <- cruisenr[2]
 		cruisenr <- cruisenr[1]
 	}
+	
+	# 2018-12-03: It was discrovered that the 
 	
 	
 	# Get the URLs:

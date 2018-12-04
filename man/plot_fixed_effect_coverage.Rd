@@ -6,7 +6,8 @@
 \usage{
 plot_fixed_effect_coverage(stoxexport, indparameters = c("age"),
   titletext = "Samples for fixed effects", okcol = default_color_ok,
-  wrongcol = default_color_wrong, undersampledcol = default_color_empty)
+  wrongcol = default_color_wrong,
+  undersampledcol = default_color_empty)
 }
 \arguments{
 \item{stoxexport}{as returned from \code{\link{baseline2eca}}}

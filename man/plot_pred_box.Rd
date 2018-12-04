@@ -4,8 +4,8 @@
 \alias{plot_pred_box}
 \title{Plot catch by age prediction as boxplots}
 \usage{
-plot_pred_box(pred, var, unit, xlab = "age", ylab = paste("posterior catch",
-  unit), ...)
+plot_pred_box(pred, var, unit, xlab = "age",
+  ylab = paste("posterior catch", unit), ...)
 }
 \arguments{
 \item{pred}{RECA prediction object as returned by eca::eca.predict}
