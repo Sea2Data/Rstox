@@ -76,7 +76,6 @@
 #' # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
 #' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
 #' 
-#' @importFrom utils head tail
 #' @importFrom XML getNodeSet xmlValue xmlParse xmlNamespaceDefinitions
 #' @export
 #' @rdname getNMDinfo
@@ -401,13 +400,45 @@ getSeriesInfo <- function(ver, API, type, msg=FALSE, recursive=TRUE){
 		}
 	}
 	else if(ver$API$reference==2){
+		
+		 nestedList2data.frame<- function(x, except=".attrs"){
+			# Unlist, obtaining a vector with names recursively separated by dots:
+			u <- unlist(x)
+			
+			# Remove except:
+			u <- u[!grepl(except, names(u))]
+			
+			# Create a list with unique names:
+			s <- split(u, names(u))
+			
+			# Convert to a data frame and return:
+			out <- suppressWarnings(as.data.frame(s, stringsAsFactors=FALSE))
+			names(out) <- sapply(strsplit(names(out), ".", fixed=TRUE), utils::tail, 1)
+			out
+		}
+		
 		# Function used to extracting the year, cruise code and ship name of a cruise series:
 		getCruiseSeriesCruises_V2 <- function(x){
-			Year <- NAsapply(x$samples, function(y) y$sampleTime)
-			Cruise <- NAsapply(x$samples, function(y) y$cruises$cruise$cruisenr)
-			ShipName <- NAsapply(x$samples, function(y) y$cruises$cruise$shipName)
-			data.frame(Year=Year, Cruise=Cruise, ShipName=ShipName, stringsAsFactors=FALSE)
+			# Get a data frame of each CS:
+			out <- lapply(x$samples, nestedList2data.frame)
+			# Merge the CSs:
+			out <- do.call(rbind, out)
+			row.names(out) <- NULL
+			# Rename to comply with naming used in getNMDinfo():
+			old <- c("sampleTime", "cruisenr", "shipName")
+			new <- c("Year", "Cruise", "ShipName")
+			names(out) <- replace(names(out), match(old, names(out)), new)
+			
+			# Order by year and then code (order inside year):
+			o <- order(out$Year, out$code)
+			out[o,]
 		}
+		#getCruiseSeriesCruises_V2 <- function(x){
+		#	Year <- NAsapply(x$samples, function(y) y$sampleTime)
+		#	Cruise <- NAsapply(x$samples, function(y) y$cruises$cruise$cruisenr)
+		#	ShipName <- NAsapply(x$samples, function(y) y$cruises$cruise$shipName)
+		#	data.frame(Year=Year, Cruise=Cruise, ShipName=ShipName, stringsAsFactors=FALSE)
+		#}
 		# Function used for extracting a data frame of the StoX projects used in a survey time series:
 		getSurveyTimeSeriesProjects_V2 <- function(x, URLbase){
 			sampleTime <- NAsapply(x$cruiseSeries$cruiseSeries$samples, function(y) y$sampleTime)
@@ -595,16 +626,17 @@ platformExtract <- function(x){
 	x <- x[sapply(x, length)>1]
 	lapply(x, platformExtractOne)
 }
+#' @importFrom utils head tail
 getPlatformV1 <- function(x){
 	x <- platformExtract(x)
 	# Changed to extracting all info from the latest velidTo:
 	extractLatestValidTo <- function(x){
 		if(length(x$validTo)==0){
-			return(head(x, 1))
+			return(utils::head(x, 1))
 		}
-		latestValidTo <- tail(sort(x$validTo), 1)
+		latestValidTo <- utils::tail(sort(x$validTo), 1)
 		equalToLatestValidTo <- x$validTo==latestValidTo
-		as.data.frame(t(apply(x[equalToLatestValidTo,], 2, function(x) head(x[!is.na(x)], 1))))
+		as.data.frame(t(apply(x[equalToLatestValidTo,], 2, function(x) utils::head(x[!is.na(x)], 1))))
 	}
 	x <- lapply(x, extractLatestValidTo)
 	x <- as.matrix_full(x)
@@ -1426,6 +1458,7 @@ downloadProjectXmlToTemp <- function(stsInfo, dir=NULL){
 	stsInfo
 }
 # Function for extracting ship name and cruise
+#' @importFrom utils tail
 extractCruiseAndShipame <- function(x){
 	
 	# Accept string input:
@@ -1623,6 +1656,9 @@ getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL,
 	# Create projects and control overwriting:
 	# Here the project.xml file paths are looked for in the 'cruiseInfo', and if missing 'process' will be an empty list, resulting in no files added to the project through the 'files' argument of createProject():
 	process <- lapply(cruiseInfo, function(x) list(process=x$projectXmlFile[1]))
+	print(projectPaths)
+	print(model)
+	print(process)
 	temp <- createProject(projectPaths, model=model, ow=ow, files=process, ...)
 	suppressWarnings(toWrite <- which(!is.na(temp)))
 	if(length(toWrite)==0){
@@ -2389,6 +2425,7 @@ abbrevWords <- function(x, p=1/2, collapse="_", keep=c("capital", "numeric", "pu
 #'	I and II bottom trawl index in winter", "2017")
 #' }
 #' @export
+#' @importFrom utils tail
 #' @importFrom XML xmlNamespaceDefinitions getNodeSet
 NMDcomposeSTS <- function(STSname, year, APIversion = NULL, DATAversion = NULL) {
 	# TODO: Versioning and dynamic API path and data version
@@ -2399,7 +2436,7 @@ NMDcomposeSTS <- function(STSname, year, APIversion = NULL, DATAversion = NULL) 
  	# Extract ship name and cruise
 	extract <- function(node, type) {
 		fileName <- tools::file_path_sans_ext(basename(node))
-		tmp <- tail(strsplit(fileName, "[_]")[[1]], 2)
+		tmp <- utils::tail(strsplit(fileName, "[_]")[[1]], 2)
 		url <- searchNMDCruise(tmp[[1]], tmp[[2]], type)[[1]]
 		# For G.O. Sars, (G+O+Sars to G.O.Sars)
 		if(is.na(url)) {
