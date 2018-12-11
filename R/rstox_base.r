@@ -447,12 +447,21 @@ getProject <- function(projectName, out=c("project", "baseline", "baseline-repor
 	# Check for the existence of the project object in the RstoxEnv evnironment (getProjectPaths(projectName)$projectName assures that the project name is used and not the full project path if given in 'projectName'):
 	#else if(is.character(projectName) && nchar(projectName)>0 && length(getRstoxEnv()[[getProjectPaths(projectName)$projectName]]$projectObject)>0){
 	else if(is.character(projectName) && nchar(projectName)>0){
-		projectName <- getProjectPaths(projectName)$projectName
-		if(length(getRstoxEnv()$Projects[[projectName]]$projectObject)){
-			if(msg){
+		# Get the project paths from the projectName:
+		projectPaths <- getProjectPaths(projectName)
+		
+		# List open projects:
+		projectList <- listOpenProjects()
+		
+		#projectName <- temp$projectName
+		#projectPath <- temp$projectPath
+		#if(length(getRstoxEnv()$Projects[[projectName]]$projectObject)){
+		if(projectPaths$projectName %in% projectList$projectName){
+			if(msg || !projectPaths$projectPath %in% projectList$projectPath){
 				warning(paste0("Project retrieved from RstoxEnv$Projects[['", projectName, "']]. To reopen the project use reopenProject(", projectName, ")"))
 			}
-			project <- getRstoxEnv()$Projects[[projectName]]$projectObject
+			#project <- getRstoxEnv()$Projects[[projectName]]$projectObject
+			project <- getRstoxEnv()$Projects[[projectPaths$projectName]]$projectObject
 		}
 		else{
 			return(NULL)

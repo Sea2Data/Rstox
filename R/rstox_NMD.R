@@ -174,7 +174,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	#######################################
 	# Interpret the version info:
 	ver <- getNMDver(ver)
-	
 	# Define the valid types:
 	NMD_data_sources <- getRstoxDef("NMD_data_sources")
 	NMD_API_versions <- getRstoxDef("NMD_API_versions")[NMD_data_sources]
@@ -336,8 +335,8 @@ getNMDver <- function(ver=NULL, name=NULL){
 	out$API <- lapply(out$API, as.integer)
 	out$API <- lapply(out$API, as.character)
 	notAPI <- names(out) != "API"
-	# Suppress warning when 
-	out[notAPI] <- lapply(out[notAPI], as.numeric)
+	# Suppress warning when converting form "NA" to NA (this is a smal bug, but with no apparent consequences):
+	suppressWarnings(out[notAPI] <- lapply(out[notAPI], as.numeric))
 	out[notAPI] <- lapply(out[notAPI], format, nsmall=1)
 	
 	# Return all or some of the data:
@@ -643,11 +642,11 @@ getReference <- function(x, ver, element="element"){
 getPlatform <- function(x, ver){
 	if(ver$API$reference == 1){
 		warning("Requesting platform data from version 1 returns only the latest information and is deprecated.")
-		getPlatformV1(x)
+		out <- getPlatformV1(x)
 	}
 	#else if(ver$API$reference==2){
 	else if(ver$API$reference >= 2){
-		getPlatformV2(x)
+		out <- getPlatformV2(x)
 	}
 	if(ver$API$reference > 2){
 		warning("API version > 2 for reference has not been fully tested")
@@ -655,6 +654,7 @@ getPlatform <- function(x, ver){
 	#else{
 	#	stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
 	#}
+	out
 }
 # Version 1 of the API:
 platformExtract <- function(x){
@@ -830,12 +830,12 @@ getPlatformV2 <- function(x){
 getTaxa <- function(x, ver){
 	if(ver$API$reference == 1){
 		warning("Requesting taxa data from version 1 is no longer available.")
-		return(NULL)
+		out <- NULL
 		#getTaxaV1(x)
 	}
 	#else if(ver$API$reference==2){
 	else if(ver$API$reference >= 2){
-		getTaxaV2(x)
+		out <- getTaxaV2(x)
 	}
 	if(ver$API$reference > 2){
 		warning("API version > 2 for reference has not been fully tested")
@@ -843,6 +843,7 @@ getTaxa <- function(x, ver){
 	#else{
 	#	stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
 	#}
+	out
 }
 # Function used for simplifiying taxa data into a matrix:
 gettaxaMatrix <- function(x, name=".attrs"){
@@ -1193,7 +1194,7 @@ getPaths <- function(downloadType=c("serialno", "sts", "stszip", "cs", "c"), dir
 		suffix <- sapply(cruiseInfo, function(x) x$Year[1])
 	}
 	else if(tolower(downloadType[1]) == "cs"){
-		# Cruise series <ed by year gets Year in the suffix:
+		# Cruise series grouped by year gets Year in the suffix:
 		if(startsWith(tolower(group), "y")){
 			# Interpret the year from the cruise number:
 			suffix <- getSuffix(Year=sapply(CruiseNumber, getYearFromCruiseNumber))
@@ -1224,6 +1225,8 @@ getPaths <- function(downloadType=c("serialno", "sts", "stszip", "cs", "c"), dir
 		suffix = suffix
 	)
 	projectPaths <- sapply(projectPathElements, abbrevPath, abbrev=abbrev)
+	# Uniquefy the projectPaths, since there can be several data sources, which results in several identical paths:
+	projectPaths <- unique(projectPaths)
 	
 	
 	##### Get file paths: #####
@@ -1420,7 +1423,7 @@ getSurveyTimeSeriesZipURLs <- function(stsInfo, ver=getRstoxDef("ver"), API="htt
 	URLs
 }
 # Function for downloading a surveytimeseries:
-getSurveyTimeSeriesZip <- function(stsInfo, dir, subdir, subset, cleanup, ow, abbrev, run, ver, msg, return.URL=FALSE){
+getSurveyTimeSeriesZip <- function(stsInfo, dir, subdir, subset, cleanup, ow, abbrev, run, ver, msg, prefix=NA, return.URL=FALSE){
 	# Get the matrix of stoxProjectId and sampleTime (i.e., year), and the name of the survey time series (sts):
 	sts <- attr(stsInfo, "seriesName")
 	
@@ -1429,7 +1432,7 @@ getSurveyTimeSeriesZip <- function(stsInfo, dir, subdir, subset, cleanup, ow, ab
 	projectPathElements <- getProjectPathElements(
 		dir = dir, 
 		subdir = getSubdir(subdir=subdir, name=sts), 
-		prefix = NA, 
+		prefix = prefix, 
 		name = sts, 
 		suffix = stsInfo$sampleTime
 	)
