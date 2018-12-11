@@ -146,10 +146,10 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	if(is.character(files) || (is.list(files) && any(names(files) %in% StoX_data_sources))){
 		files <- rep(list(files), nprojects)
 	}
-	else{
+	# If files is not a list with length equal to the number projects, create an empty list:
+	else if(!(is.list(files) && length(files) == nprojects)){
 		files <- vector("list", nprojects)
 	}
-	
 	
 	# Run through and generate the projects:
 	for(i in seq_len(nprojects)){
@@ -837,39 +837,7 @@ generateRScripts <- function(projectName){
 #' @keywords internal
 #' 
 pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
-	# Function used for extracting the files located in a StoX project (getFiles does lapply of getFilesOfDataType):
-	getFilesOfDataType <- function(data_type, projectPath){
-		# Get the input data folder of the specified data type, and the files in that folder:
-		dir <- file.path(projectPath, "input", data_type)
-		files <- list.files(dir, full.names=TRUE)
-		# Remove project path (2016-11-08):
-		gsub(projectPath, "", files, fixed=TRUE)
-	}
-	getFiles <- function(projectPath, StoX_data_sources, files=NULL){
-		if(length(files)==0){
-			files <- lapply(StoX_data_sources, getFilesOfDataType, projectPath=projectPath)
-			names(files) <- StoX_data_sources
-		}
-		if(!all(names(files) %in% StoX_data_sources)){
-			warning(paste0("'files' must be a list with one or more of the names ", paste(StoX_data_sources, collapse=", "), ". Each element of the list must contain a vector of file paths."))
-			files <- files[names(files) %in% StoX_data_sources]
-		}
-		lapply(files, path.expand)
-	}
-	# Function that points to the files[[data_type]] in the project. Lapply this:
-	#pointToStoXFilesSingle <- function(data_type, project, files){
-	#	# Get the files of the specified type:
-	#	thesefiles <- files[[data_type]]
-	#	# Get the StoX-function name for reading these files:
-	#	fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
-	#	for(i in seq_along(thesefiles)){
-	#		proc <- project$getBaseline()$findProcessByFunction(fun)
-	#		if(length(names(proc))){
-	#			proc$setParameterValue(paste0("FileName",i), thesefiles[i])
-	#		}
-	#	}
-	#	thesefiles
-	#}
+	
 	pointToStoXFilesSingle <- function(data_type, baseline, files){
 		# Get the files of the specified type:
 		thesefiles <- files[[data_type]]
@@ -884,24 +852,17 @@ pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 		thesefiles
 	}
 	
-	#  # Get the project name (possibly interpreted from a project or baseline object):
-	#  projectName <- getProjectPaths(projectName)$projectName
 	# Open the project:
-	#project <- openProject(projectName, out="project")
 	baseline <- openProject(projectName, out="baseline")
-	projectPath <- getProjectPaths(projectName)$projectPath
-	# Get the currently defined StoX data types:
-	StoX_data_sources <- getRstoxDef("StoX_data_sources")
+	
 	# Get the files if not specified in the input:
-	#files <- getFiles(project$getProjectFolder(), StoX_data_sources, files)
-	files <- getFiles(projectPath, StoX_data_sources=StoX_data_sources, files=files)
+	files <- listInputFiles(projectName, full.names=TRUE)
+	
 	# Point to the files, save and return:
-	#out <- lapply(StoX_data_sources, pointToStoXFilesSingle, project, files)
-	out <- lapply(StoX_data_sources, pointToStoXFilesSingle, baseline=baseline, files=files)
-	names(out) <- StoX_data_sources
+	out <- lapply(names(files), pointToStoXFilesSingle, baseline=baseline, files=files)
+	names(out) <- names(files)
 	
 	# Save the project:
-	#project$save()
 	saveProject(projectName)
 	if(close){
 		closeProject(projectName)
@@ -909,6 +870,94 @@ pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 	
 	# Return the file paths:
 	out
+}
+#pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
+#	# Function used for extracting the files located in a StoX project (getFiles does lapply of getFilesOfDataType):
+#	getFilesOfDataType <- function(data_type, projectPath){
+#		# Get the input data folder of the specified data type, and the files in that folder:
+#		dir <- file.path(projectPath, "input", data_type)
+#		files <- list.files(dir, full.names=TRUE)
+#		# Remove project path (2016-11-08):
+#		gsub(projectPath, "", files, fixed=TRUE)
+#	}
+#	getFiles <- function(projectPath, StoX_data_sources, files=NULL){
+#		if(length(files)==0){
+#			files <- lapply(StoX_data_sources, getFilesOfDataType, projectPath=projectPath)
+#			names(files) <- StoX_data_sources
+#		}
+#		if(!all(names(files) %in% StoX_data_sources)){
+#			warning(paste0("'files' must be a list with one or more of the names ", paste(StoX_data_sources, collapse=", "), ". Each element of the list must contain a vector of file paths."))
+#			files <- files[names(files) %in% StoX_data_sources]
+#		}
+#		lapply(files, path.expand)
+#	}
+#	# Function that points to the files[[data_type]] in the project. Lapply this:
+#	#pointToStoXFilesSingle <- function(data_type, project, files){
+#	#	# Get the files of the specified type:
+#	#	thesefiles <- files[[data_type]]
+#	#	# Get the StoX-function name for reading these files:
+#	#	fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
+#	#	for(i in seq_along(thesefiles)){
+#	#		proc <- project$getBaseline()$findProcessByFunction(fun)
+#	#		if(length(names(proc))){
+#	#			proc$setParameterValue(paste0("FileName",i), thesefiles[i])
+#	#		}
+#	#	}
+#	#	thesefiles
+#	#}
+#	pointToStoXFilesSingle <- function(data_type, baseline, files){
+#		# Get the files of the specified type:
+#		thesefiles <- files[[data_type]]
+#		# Get the StoX-function name for reading these files:
+#		fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
+#		for(i in seq_along(thesefiles)){
+#			proc <- baseline$findProcessByFunction(fun)
+#			if(length(names(proc))){
+#				proc$setParameterValue(paste0("FileName",i), thesefiles[i])
+#			}
+#		}
+#		thesefiles
+#	}
+#	
+#	#  # Get the project name (possibly interpreted from a project or baseline object):
+#	#  projectName <- getProjectPaths(projectName)$projectName
+#	# Open the project:
+#	#project <- openProject(projectName, out="project")
+#	baseline <- openProject(projectName, out="baseline")
+#	projectPath <- getProjectPaths(projectName)$projectPath
+#	# Get the currently defined StoX data types:
+#	StoX_data_sources <- getRstoxDef("StoX_data_sources")
+#	# Get the files if not specified in the input:
+#	#files <- getFiles(project$getProjectFolder(), StoX_data_sources, files)
+#	files <- getFiles(projectPath, StoX_data_sources=StoX_data_sources, files=files)
+#	# Point to the files, save and return:
+#	#out <- lapply(StoX_data_sources, pointToStoXFilesSingle, project, files)
+#	out <- lapply(StoX_data_sources, pointToStoXFilesSingle, baseline=baseline, files=files)
+#	names(out) <- StoX_data_sources
+#	
+#	# Save the project:
+#	#project$save()
+#	saveProject(projectName)
+#	if(close){
+#		closeProject(projectName)
+#	}
+#	
+#	# Return the file paths:
+#	out
+#}
+#' 
+#' @export
+#' @keywords internal
+#' 
+listInputFiles <- function(projectName, full.names=TRUE){
+	# Get input directory and subfolders:
+	inputDir <- getProjectPaths(projectName)$inputDir
+	
+	files <- list.files(inputDir, recursive=TRUE, full.names=full.names)
+	files <- split(files, dirname(files))
+	names(files) <- basename(names(files))
+	
+	files
 }
 
 
@@ -1965,8 +2014,12 @@ getProjectPaths <- function(projectName=NULL, projectRoot=NULL, recursive=2){
 	
 	projectXML <- file.path(projectPath, "process", "project.xml")
 	
+	inputDir <- file.path(projectPath, "input")
 	
-	return(list(projectName=projectName, projectRoot=projectRoot, projectPath=projectPath, RDataDir=RDataDir, RReportDir=RReportDir, projectXML=projectXML))
+	outputDir <- file.path(projectPath, "output")
+	
+	
+	return(list(projectName=projectName, projectRoot=projectRoot, projectPath=projectPath, RDataDir=RDataDir, RReportDir=RReportDir, projectXML=projectXML, inputDir=inputDir, outputDir=outputDir))
 }
 #' 
 #' @export

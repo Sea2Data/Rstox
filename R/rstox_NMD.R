@@ -288,6 +288,68 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	####################################################
 }
 
+#'
+#' @export
+#' @rdname getNMDinfo
+#' 
+getNMDver <- function(ver=NULL, name=NULL){
+	
+	replaceAllAPIs <- function(out, ver){
+		out$API <- rapply(out$API, function(x) ver, how="replace")
+		out
+	}
+	
+	out <- getRstoxDef("ver")
+	
+	if(length(ver)==1 && is.integer(ver)){
+		out <- rapply(out, function(x) ver, how="replace")
+	}
+	else if(length(ver)==1 && is.numeric(ver)){
+		out <- replaceAllAPIs(out=out, ver=ver)
+		#out <- rapply(out, function(x) ver, how="replace")
+	}
+	else if(is.list(ver)){
+		# If ver is a list with one element API, use this value for all APIs:
+		if("API" %in% names(ver) && !is.list(ver$API) && length(ver$API)==1){
+			out <- replaceAllAPIs(out=out, ver=ver$API)
+			#out$API <- rapply(out$API, function(x) ver$API, how="replace")
+			# Remove the API element of 'ver':
+			ver <- ver[names(ver) != "API"]
+		}
+		
+		# Insert any data versions:
+		# Get the list indices by unlisting and splitting by the dots introduced by unlist():
+		u <- unlist(ver)
+		if(length(u)){
+			ind <- strsplit(names(u), ".", fixed=TRUE)
+			# Remove the names on u:
+			u <- unname(u)
+			
+			# Insert each version:
+			for(i in seq_along(ind)){
+				out[[ind[[i]]]] <- u[i]
+			}
+		}
+	}
+	
+	# Make sure that the data versions are decimal numbers and API versions are integers:
+	out$API <- lapply(out$API, as.integer)
+	out$API <- lapply(out$API, as.character)
+	notAPI <- names(out) != "API"
+	# Suppress warning when 
+	out[notAPI] <- lapply(out[notAPI], as.numeric)
+	out[notAPI] <- lapply(out[notAPI], format, nsmall=1)
+	
+	# Return all or some of the data:
+	if(length(name)){
+		out[[as.character(name)]]
+	}
+	else{
+		out
+	}
+}
+
+
 ###############################################
 ##### Internal functions of getNMDinfo>>> #####
 ###############################################
@@ -341,7 +403,7 @@ getSeriesInfo <- function(ver, API, type, msg=FALSE, recursive=TRUE){
 	# V2: http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/dataset/surveytimeseries?version=2.0
 
 	# If the user requests info from cruise or surveytimeseries in version 1 of the API, this must be specified in ver$API$reference, even though these data are not in reference in version 1. 
-	if(ver$API$reference==1){
+	if(ver$API$reference == 1){
 
 		# Function used for extracting a data frame of the element of a cruise series:
 		downloadAndGetOneCruiseSeriesCruises_V1 <- function(x, URLbase, msg=FALSE){
@@ -399,9 +461,10 @@ getSeriesInfo <- function(ver, API, type, msg=FALSE, recursive=TRUE){
 			names(data) <- requestedSeries
 		}
 	}
-	else if(ver$API$reference==2){
+	#else if(ver$API$reference==2){
+	else if(ver$API$reference >= 2){
 		
-		 nestedList2data.frame<- function(x, except=".attrs"){
+		 nestedList2data.frame <- function(x, except=".attrs"){
 			# Unlist, obtaining a vector with names recursively separated by dots:
 			u <- unlist(x)
 			
@@ -490,9 +553,13 @@ getSeriesInfo <- function(ver, API, type, msg=FALSE, recursive=TRUE){
 			data <- getElements(data, levels=list("row", c("name")), data.frame.out=FALSE)
 		}
 	}
-	else{
-		stop("Invalid NMD API version. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
+	if(ver$API$reference > 2){
+		warning("API version > 2 for reference has not been fully tested")
 	}
+	
+	#else{
+	#	stop("Invalid NMD API version. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
+	#}
 
 	return(data)
 }
@@ -555,17 +622,21 @@ getReference <- function(x, ver, element="element"){
 		# Convert to data frame with numerics where this is appropriate:
 		x <- as.numericDataFrame(x)
 	}
-	else if(ver$API$reference == 2){
+	#else if(ver$API$reference==2){
+	else if(ver$API$reference >= 2){
 		x <- getElements(x, levels=list("row", NA))
 		if(!is.data.frame(x)){
 			x <- as.dataFrame_full(x)
 			x <- as.numericDataFrame(x)
 		}
 	}
-	else{
-		stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
+	if(ver$API$reference > 2){
+		warning("API version > 2 for reference has not been fully tested")
 	}
-return(x)	
+	#else{
+	#	stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
+	#}
+	return(x)	
 }
 
 # Extract the relevant data from the platform reference data:
@@ -574,12 +645,16 @@ getPlatform <- function(x, ver){
 		warning("Requesting platform data from version 1 returns only the latest information and is deprecated.")
 		getPlatformV1(x)
 	}
-	else if(ver$API$reference == 2){
+	#else if(ver$API$reference==2){
+	else if(ver$API$reference >= 2){
 		getPlatformV2(x)
 	}
-	else{
-		stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
+	if(ver$API$reference > 2){
+		warning("API version > 2 for reference has not been fully tested")
 	}
+	#else{
+	#	stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
+	#}
 }
 # Version 1 of the API:
 platformExtract <- function(x){
@@ -758,12 +833,16 @@ getTaxa <- function(x, ver){
 		return(NULL)
 		#getTaxaV1(x)
 	}
-	else if(ver$API$reference == 2){
+	#else if(ver$API$reference==2){
+	else if(ver$API$reference >= 2){
 		getTaxaV2(x)
 	}
-	else{
-		stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
+	if(ver$API$reference > 2){
+		warning("API version > 2 for reference has not been fully tested")
 	}
+	#else{
+	#	stop("Invalid NMD API version for reference. See getRstoxDef(\"NMD_API_versions\") for implemented APIs for the different data sources.")
+	#}
 }
 # Function used for simplifiying taxa data into a matrix:
 gettaxaMatrix <- function(x, name=".attrs"){
@@ -1568,8 +1647,10 @@ getCruiseInfoFromStsInfo <- function(stsInfo){
 replaceFirstOfRepeatedChar <- function(x, pattern="+", replacement="."){
 	reg <- paste0("[", pattern, "]+")
 	at <- gregexpr(reg, x)[[1]]
-	for(i in at){
-		substr(x, i, i) <- replacement
+	if(!identical(at, -1)){
+		for(i in at){
+			substr(x, i, i) <- replacement
+		}
 	}
 	x
 }
@@ -1590,7 +1671,7 @@ replaceFirstOfRepeatedChar <- function(x, pattern="+", replacement="."){
 getCruiseURLs <- function(cruiseInfo, ver=getRstoxDef("ver"), API="http://tomcat7.imr.no:8080/apis/nmdapi", checkURL=FALSE, return.URL=FALSE){
 	# Pick out the first element of 'x', since a list is always returned from getNMDinfo():
 	#message("Searching for cruises...\n")
-	URL <- searchNMDCruise(cruisenr=cruiseInfo$Cruise, shipname=cruiseInfo$ShipName, dataSource=cruiseInfo$NMD_data_source, ver=ver, return.URL=return.URL)
+	URL <- searchNMDCruise(cruisenr=cruiseInfo$Cruise, shipname=cruiseInfo$ShipName, dataSource=cruiseInfo$NMD_data_source, ver=ver, API=API, return.URL=return.URL)
 	
 	# Report files not found:
 	areNA_URL <- which(is.na(URL))
@@ -1656,9 +1737,9 @@ getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL,
 	# Create projects and control overwriting:
 	# Here the project.xml file paths are looked for in the 'cruiseInfo', and if missing 'process' will be an empty list, resulting in no files added to the project through the 'files' argument of createProject():
 	process <- lapply(cruiseInfo, function(x) list(process=x$projectXmlFile[1]))
-	print(projectPaths)
-	print(model)
-	print(process)
+	#process <- lapply(cruiseInfo, function(x) x$projectXmlFile[1])
+	#names(process) <- rep("process", length(process))
+	
 	temp <- createProject(projectPaths, model=model, ow=ow, files=process, ...)
 	suppressWarnings(toWrite <- which(!is.na(temp)))
 	if(length(toWrite)==0){
@@ -2088,49 +2169,7 @@ as.numericDataFrame <- function(data){
 	data <- as.data.frame(data, stringsAsFactors=FALSE)
 }
 
-getNMDver <- function(ver=NULL, name=NULL){
-	
-	replaceAllAPIs <- function(out, ver){
-		out$API <- rapply(out$API, function(x) ver, how="replace")
-		out
-	}
-	
-	out <- getRstoxDef("ver")
-	if(length(ver)==1 && is.numeric(ver)){
-		out <- replaceAllAPIs(out=out, ver=ver)
-		#out <- rapply(out, function(x) ver, how="replace")
-	}
-	else if(is.list(ver)){
-		# If ver is a list with one element API, use this value for all APIs:
-		if("API" %in% names(ver) && !is.list(ver$API) && length(ver$API)==1){
-			out <- replaceAllAPIs(out=out, ver=ver$API)
-			#out$API <- rapply(out$API, function(x) ver$API, how="replace")
-			# Remove the API element of 'ver':
-			ver <- ver[names(ver) != "API"]
-		}
-		
-		# Insert any data versions:
-		# Get the list indices by unlisting and splitting by the dots introduced by unlist():
-		u <- unlist(ver)
-		if(length(u)){
-			ind <- strsplit(names(u), ".", fixed=TRUE)
-			# Remove the names on u:
-			u <- unname(u)
-			
-			# Insert each version:
-			for(i in seq_along(ind)){
-				out[[ind[[i]]]] <- u[i]
-			}
-		}
-	}
-	
-	if(length(name)){
-		out[[as.character(name)]]
-	}
-	else{
-		out
-	}
-}
+
 
 
 
@@ -2202,7 +2241,8 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 			# Version 1 returns the cruise URL directly:
 			out <- out$element$text
 		}
-		else if(ver$API[[dataSource[ind]]] == 2){
+		#else if(ver$API[[dataSource[ind]]] == 2){
+		else if(ver$API[[dataSource[ind]]] >= 2){
 			# In version 2 the elements of the cruise URL are given and must be combined to get the URL:
 			g <- getRowElementValueWithName(out, row="row", value="text", name=".attrs")
 			# Build the URL:

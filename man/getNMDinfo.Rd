@@ -3,6 +3,7 @@
 \name{getNMDinfo}
 \alias{getNMDinfo}
 \alias{getNMDdata}
+\alias{getNMDver}
 \alias{downloadXML}
 \title{Get NMD API data and reference information}
 \usage{
@@ -18,6 +19,8 @@ getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
   return.URL = FALSE, run = TRUE, timeout = NULL, zipSTS = TRUE,
   ...)
+
+getNMDver(ver = NULL, name = NULL)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
   method = "auto", timeout = NULL)
