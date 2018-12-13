@@ -116,9 +116,6 @@ baseline2eca <-
                    tz = "UTC",
                    format = "%d/%m/%Y")
       
-      warning("Correcting weight in landings from hg to kg: Change with format transition.")
-      landing$rundvekt <- landing$rundvekt / 10
-      
       #####################################
       
       ############################################################
@@ -923,7 +920,6 @@ prepareRECA <-
         ") contain no spaces."
       ))
     }
-    
     eca <- baseline2eca(projectName)
     
     #max length in cm
