@@ -288,7 +288,7 @@ baseline2eca <-
       }
       testCovariate <- function(name, covariateMatrixLanding) {
         if (any(is.na(covariateMatrixLanding[[name]]))) {
-          stop(paste0("Missing values in covariate ", name, "."))
+          stop(paste0("Missing values in covariate ", name, " (landings)."))
         }
       }
       lapply(names(covariateMatrixLanding),
