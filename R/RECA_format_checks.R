@@ -124,7 +124,7 @@ check_covariates <- function(modelobject){
 #' checks that agelenght is configured correctly
 #' @keywords internal
 checkAgeLength<-function(agelength, num_tolerance = 1e-10){
-  check_columns_present(agelength$DataMatrix, c("age", "realage", "part.year", "lengthCM", "samplingID", "partnumber", "partcount"))
+  check_columns_present(agelength$DataMatrix, c("age", "part.year", "lengthCM", "samplingID", "partnumber", "partcount"))
   check_none_missing(agelength$DataMatrix, c("lengthCM", "samplingID", "partnumber"))
   if (any(is.na(agelength$DataMatrix$partcount))){
     stop("Missing values for partcount (derived from lengthsamplecount, lengthsampleweight and cathcweight)")

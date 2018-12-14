@@ -762,12 +762,10 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
   
   #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
   
-  # Estimate the real age by use of the hatchDaySlashMonth:
+  # Estimate the remainder tp real age by use of the hatchDaySlashMonth:
   numDaysOfYear <- 365
-  DataMatrix$realage <-
-    DataMatrix$age + (DataMatrix$yearday - getMidSeason(ecaParameters$hatchDaySlashMonth)) / numDaysOfYear
+  DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(ecaParameters$hatchDaySlashMonth)) / numDaysOfYear
   DataMatrix$yearday <- NULL
-  DataMatrix$part.year <- DataMatrix$realage - DataMatrix$age
   
   ### 2. CovariateMatrix: ###
   #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
