@@ -116,9 +116,6 @@ baseline2eca <-
                    tz = "UTC",
                    format = "%d/%m/%Y")
       
-      warning("Correcting weight in landings from hg to kg: Change with format transition.")
-      landing$rundvekt <- landing$rundvekt / 10
-      
       #####################################
       
       ############################################################
@@ -288,7 +285,7 @@ baseline2eca <-
       }
       testCovariate <- function(name, covariateMatrixLanding) {
         if (any(is.na(covariateMatrixLanding[[name]]))) {
-          stop(paste0("Missing values in covariate ", name, "."))
+          stop(paste0("Missing values in covariate ", name, " (landings)."))
         }
       }
       lapply(names(covariateMatrixLanding),
@@ -742,16 +739,27 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
               CARNeighbours = CARNeighbours))
 }
 
+#' Identifies whichindividuals are from catchsamples with some age readings.
+#' @return logical vector identifying which individuals belong to a catchsample where age was sampled
+#' @keywords internal
+hasAgeInSample <- function(biotic){
+  hasage<-biotic[!is.na(biotic$age),c("serialno", "species", "samplenumber")]
+  return(paste(biotic$serialno, biotic$species, biotic$samplenumber, sep="/") %in% paste(hasage$serialno, hasage$species, hasage$samplenumber, sep="/"))
+}
+
 #' Function for converting to the input format required by ECA (this is the main function):
 #' @keywords internal
 getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
-  warning(
-    "Change to keep all fish from length startified (sampletype 21), or all fish where some fish in haul was aged."
-  )
+  
   # Extract the non-NAs:
   var <- "age"
-  # Remove missing values from the DataMatrix and from the eca$covariateMatrixBiotic:
-  valid <- !is.na(eca$biotic[[var]])
+  # Remove non-usable catchsamples from the DataMatrix and from the eca$covariateMatrixBiotic:
+  # This is necessary to handle length-stratified sampling
+  # The procedure for handling length-stratified sampling is also sound for unstratified simple random subsampling (ref Hanne), 
+  # so the approach implemented in hasAgeInSample is more roboust to data issues and additions of stratified codes to the format.
+  # filtering by biotic$sampletype might be faster.
+  # This filtering should arguably be done in stox, but it is even less justified to put it here if we filter by sampletype (because of the potential for additional code stratifications be added)
+  valid <- hasAgeInSample(eca$biotic)
   eca$biotic <- eca$biotic[valid, , drop = FALSE]
   eca$covariateMatrixBiotic <-
     eca$covariateMatrixBiotic[valid, , drop = FALSE]
@@ -765,12 +773,10 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
   
   #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
   
-  # Estimate the real age by use of the hatchDaySlashMonth:
+  # Estimate the remainder for real age by use of the hatchDaySlashMonth:
   numDaysOfYear <- 365
-  DataMatrix$realage <-
-    DataMatrix$age + (DataMatrix$yearday - getMidSeason(ecaParameters$hatchDaySlashMonth)) / numDaysOfYear
+  DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(ecaParameters$hatchDaySlashMonth)) / numDaysOfYear
   DataMatrix$yearday <- NULL
-  DataMatrix$part.year <- DataMatrix$realage - DataMatrix$age
   
   ### 2. CovariateMatrix: ###
   #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
@@ -923,7 +929,6 @@ prepareRECA <-
         ") contain no spaces."
       ))
     }
-    
     eca <- baseline2eca(projectName)
     
     #max length in cm
