@@ -292,7 +292,7 @@ baseline2eca <-
       lapply(names(covariateMatrixLanding),
              testCovariate,
              covariateMatrixLanding = covariateMatrixLanding)
-      browser()
+      
       # Aggregate the rundvekt by covariates:
       landing$tempslot <- landing$yearday %/% landingresolution
       landingAggregated <-
