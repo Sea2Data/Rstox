@@ -98,6 +98,8 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 
 # 26. Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
 
+# 27. Renamed the parameter API to server in getNMDinfo() and getNMDdata(). No backwards compatibility.
+
 
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS

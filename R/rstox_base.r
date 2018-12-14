@@ -3426,10 +3426,10 @@ getLogStoXid <- function(Log, timevar="start_time"){
 #'
 #' Detects and opens cores for simpler parallel lapply.
 #'
-#' @param X,FUN,...	See lapply.
+#' @param X,FUN,...	See \code{\link{pbapply::pblapply}}.
 #' @param cores		An integer giving the number of cores to run the function FUN over.
 #' @param outfile	Set this to FALSE to suppress printing from the cores.
-#' @param msg		A message to pring to the console, followed by the number of runs (and the number of cores in the case of parallel processing).
+#' @param info.msg	A message to print to the console, followed by the number of runs (and the number of cores in the case of parallel processing).
 #' @param pb		Logical: If FALSE suppress the progress bar.
 #'
 #' @examples
@@ -3449,7 +3449,7 @@ getLogStoXid <- function(Log, timevar="start_time"){
 #' @export
 #' @rdname papply
 #'
-papply <- function(X, FUN, ..., cores=1, outfile="", msg=NULL, pb=TRUE){
+papply <- function(X, FUN, ..., cores=1, outfile="", info.msg=NULL, pb=TRUE){
 	
 	if(!pb){
 		pbo <- pbapply::pboptions(type = "none")
@@ -3470,8 +3470,8 @@ papply <- function(X, FUN, ..., cores=1, outfile="", msg=NULL, pb=TRUE){
 	
 	# Generate the clusters of time steps:
 	if(cores>1){
-		if(length(msg) && !identical(msg, FALSE)){
-			message(paste0(msg, "( ", nruns, " runs using ", cores, " cores in parallel):\n"))
+		if(length(info.msg) && !identical(info.msg, FALSE)){
+			message(paste0(info.msg, "( ", nruns, " runs using ", cores, " cores in parallel):\n"))
 		}
 		cl <- parallel::makeCluster(cores)
 		# Bootstrap:
@@ -3480,8 +3480,8 @@ papply <- function(X, FUN, ..., cores=1, outfile="", msg=NULL, pb=TRUE){
 		parallel::stopCluster(cl)
 	}
 	else{
-		if(length(msg) && !identical(msg, FALSE)){
-			message(paste0(msg, " (", nruns, " runs):\n"))
+		if(length(info.msg) && !identical(info.msg, FALSE)){
+			message(paste0(info.msg, " (", nruns, " runs):\n"))
 		}
 		out <- pbapply::pblapply(X, FUN, ...)
 	}

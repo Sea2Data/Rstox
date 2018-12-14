@@ -706,6 +706,8 @@ Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus inc
 
 Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
 
+Renamed the parameter API to server in getNMDinfo() and getNMDdata(). No backwards compatibility.
+
 
 ########## Version 1.10 (2018-07-06) ##########
 
@@ -761,4 +763,4 @@ Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus inc
 
 Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
 
-
+Renamed the parameter API to server in getNMDinfo() and getNMDdata(). No backwards compatibility.
