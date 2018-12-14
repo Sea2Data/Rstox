@@ -147,7 +147,6 @@ plot_catch_at_age_ci <- function(pred, var, unit, alpha=0.1, xlab="age", ylab=pa
     stop("Not implemented")
   }
   caa_scaled <- caa/plottingUnit$scale
-
   res <- get_eq_tail_ci(pred$AgeCategories, caa_scaled, alpha)
 
   args <- alist(...)
@@ -172,7 +171,7 @@ plot_catch_at_age_ci <- function(pred, var, unit, alpha=0.1, xlab="age", ylab=pa
   args$lower_ci <- res$lower_ci
   
   do.call(plot_ci, args)
-  legend("topright", pch=c(args$pch, NA), lty=c(NA, args$lty), legend=c("mean", paste(100-alpha*100, "% interval", sep="")), bty="n")
+  legend("topright", pch=c(args$pch, NA, NA), lty=c(NA, args$lty, NA), legend=c("mean", paste(100-alpha*100, "% interval", sep=""), paste("tot:", round(sum(res$means, na.rm = T)), unit)), bty="n")
   
 }
 
