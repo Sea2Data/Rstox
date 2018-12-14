@@ -6,16 +6,17 @@
 \usage{
 searchNMDCruise(cruisenr, shipname = NULL, dataSource = "biotic",
   ver = getRstoxDef("ver"),
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", return.URL = FALSE)
+  server = "http://tomcat7.imr.no:8080/apis/nmdapi",
+  return.URL = FALSE, snapshot = FALSE)
 }
 \arguments{
 \item{dataSource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. dataSource=NULL (default) returns all possible data.}
 
 \item{ver}{The version of the API. As of 2015-05 only version 1 is available. Version 2 will include the possibility to return a list of all cruises.}
 
-\item{API}{The path to the API.}
-
 \item{cruisenrANDshipname}{A vector of two elements, the first being the cruise number and the second the ship name.}
+
+\item{API}{The path to the API.}
 }
 \description{
 The NMD API enables searching for a cruise identifyer given the cruise number and ship name.

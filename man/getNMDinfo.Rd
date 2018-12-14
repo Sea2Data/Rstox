@@ -8,17 +8,17 @@
 \title{Get NMD API data and reference information}
 \usage{
 getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
+  server = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
   msg = FALSE, simplify = TRUE, return.URL = FALSE)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
   serialno = NULL, tsn = NULL, dataSource = NULL, dir = NULL,
   subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
   prefix = "NMD", ver = getRstoxDef("ver"),
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+  server = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
   return.URL = FALSE, run = TRUE, timeout = NULL, zipSTS = TRUE,
-  ...)
+  snapshot = FALSE, ...)
 
 getNMDver(ver = NULL, name = NULL)
 
@@ -37,7 +37,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{ver}{The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)), or simply ver = 1. Giving \code{ver} as a single integer imposes this value on all API versions. To set API versions to 1 and at the same time set the version of the data, use e.g. ver = list(API=1, biotic=1.4).}
 
-\item{API}{The path to the API.}
+\item{server}{The path of the server.}
 
 \item{recursive}{Logical, special for type \%in\% c("cs","sts"); if FALSE only the list of cruise series or survey time series is returned.}
 
