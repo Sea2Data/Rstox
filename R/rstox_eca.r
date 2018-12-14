@@ -40,6 +40,7 @@ getCovparam <- function(projectName, parameter) {
 #' @param temporal		Optional definition of the temporal covariate (not yet implemented).
 #' @param gearfactor	Optional definition of the gearfactor covariate (not yet implemented).
 #' @param spatial		Optional definition of the spatial covariate (not yet implemented).
+#' @param landingresolution The temporal resolution in days to use for aggregating the landing data.
 #' @param ...			Parameters passed to \code{\link{getBaseline}}.
 #'
 #' @return A reference to the StoX Java baseline object
@@ -54,6 +55,7 @@ baseline2eca <-
            temporal = NULL,
            gearfactor = NULL,
            spatial = NULL,
+           landingresolution=92,
            ...) {
     # Function that retreives year, month, day, yearday:
     addYearday <-
@@ -109,12 +111,11 @@ baseline2eca <-
       names(landing) <- tolower(names(landing))
       
       # 2018-08-28: Changed to using 'sistefangstdato' as per comment from Edvin:
-      #landing <- addYearday(landing, datecar="formulardato", tz="UTC", format="%d/%m/%Y")
       landing <-
         addYearday(landing,
                    datecar = "sistefangstdato",
                    tz = "UTC",
-                   format = "%d/%m/%Y")
+                   format = "%Y-%m-%d")
       
       #####################################
       
@@ -293,10 +294,11 @@ baseline2eca <-
              covariateMatrixLanding = covariateMatrixLanding)
       
       # Aggregate the rundvekt by covariates:
+      landing$tempslot <- landing$yearday %/% landingresolution
       landingAggregated <-
         by(
           landing$rundvekt,
-          as.data.frame(covariateMatrixLanding, stringsAsFactors = FALSE),
+          as.data.frame(cbind(covariateMatrixLanding, landing$tempslot), stringsAsFactors = FALSE),
           sum
         )
       # Combine into a data frame with covariates and the rundvekt in the last column:
@@ -305,6 +307,15 @@ baseline2eca <-
         cbind(expand.grid(lapply(
           dimnames(landingAggregated), as.integer
         )), rundvekt = c(landingAggregated))
+      
+      # set the day of the year in the middle of each cell
+      numDaysOfYear <- 366 #use max, since this is converted to fractino of the year later, consider looking up in calendar
+      landingAggregated$midday <- landingAggregated$`landing$tempslot`*landingresolution + landingresolution/2.0
+      landingAggregated$`landing$tempslot`<-NULL
+      landingAggregated$midseason <-
+        landingAggregated$midday / numDaysOfYear
+      landingAggregated$midday <- NULL
+      
       # Discard empty covariate combinations:
       landingAggregated <-
         landingAggregated[!is.na(landingAggregated$rundvekt), ]
@@ -475,6 +486,8 @@ getHardCoded <- function(info) {
 }
 
 #' Function for setting getting appropriate value for the midSeason column in Landings
+#' @param x string representing a yearless date range as dd/mm-dd/mm or as a single day dd/mm
+#' @return the day number in the year for the given day, or the mean day number in the year for the endpoints of the range
 #' @keywords internal
 getMidSeason <- function(x, tz = "UTC", format = "%d/%m/%Y") {
   x <- as.Date(strsplit(x, "-")[[1]], "%d/%m")
@@ -551,7 +564,6 @@ getGlobalParameters <- function (eca, ecaParameters) {
 #' @keywords internal
 getLandings <- function(eca, ecaParameters) {
   ### landingAggregated: ###
-  numDaysOfYear <- 365
   warning("Re-implement setting of midseason once NR updates documentation.")
   landingAggregated <-
     cbind(
@@ -567,8 +579,6 @@ getLandings <- function(eca, ecaParameters) {
         getMidSeason
       )
     )
-  landingAggregated$midseason <-
-    landingAggregated$midseason / numDaysOfYear
   
   weight <- landingAggregated$rundvekt
   landingAggregated$rundvekt <- NULL
@@ -774,7 +784,7 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
   #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
   
   # Estimate the remainder for real age by use of the hatchDaySlashMonth:
-  numDaysOfYear <- 365
+  numDaysOfYear <- 366
   DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(ecaParameters$hatchDaySlashMonth)) / numDaysOfYear
   DataMatrix$yearday <- NULL
   
@@ -864,6 +874,7 @@ get_default_result_dir <-
 #' @param delta.age see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
 #' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
+#' @param temporalresolution temporal resolution for the aggregated landings in days (used to set midSeason the Landings object for \code{\link[eca]{eca.predict}})
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @param overwrite logical if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
 #' @export
@@ -875,6 +886,7 @@ prepareRECA <-
            delta.age = 0.001,
            maxlength = NULL,
            hatchDaySlashMonth = "01/01",
+           temporalresolution = 92,
            overwrite=T) {
     if (is.null(resultdir)) {
       resultdir <- get_default_result_dir(projectName)
@@ -929,7 +941,7 @@ prepareRECA <-
         ") contain no spaces."
       ))
     }
-    eca <- baseline2eca(projectName)
+    eca <- baseline2eca(projectName, landingresolution = temporalresolution)
     
     #max length in cm
     if (is.null(maxlength)) {
