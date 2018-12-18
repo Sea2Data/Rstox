@@ -564,7 +564,6 @@ getGlobalParameters <- function (eca, ecaParameters) {
 #' @keywords internal
 getLandings <- function(eca, ecaParameters) {
   ### landingAggregated: ###
-  warning("Re-implement setting of midseason once NR updates documentation.")
   landingAggregated <-
     cbind(
       constant = 1,
