@@ -17,8 +17,8 @@ getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
   prefix = "NMD", ver = getRstoxDef("ver"),
   server = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, run = TRUE, timeout = NULL, zipSTS = TRUE,
-  snapshot = FALSE, ...)
+  return.URL = FALSE, info.out = FALSE, run = TRUE, timeout = NULL,
+  zipSTS = TRUE, snapshot = FALSE, ...)
 
 getNMDver(ver = NULL, name = NULL)
 

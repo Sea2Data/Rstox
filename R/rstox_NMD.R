@@ -161,7 +161,7 @@ getNMDinfo <- function(type=NULL, ver=getRstoxDef("ver"), server="http://tomcat7
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, dataSource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, run=TRUE, timeout=NULL, zipSTS=TRUE, snapshot=FALSE, ...){
+getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, dataSource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, info.out=FALSE, run=TRUE, timeout=NULL, zipSTS=TRUE, snapshot=FALSE, ...){
 	
 	# Support for giving 'prefix' as 'filebase' for backwards compatibility:
 	l <- list(...)
@@ -242,6 +242,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	####################################################
 	#else if(run){
 	else{
+		message(paste0("Downloading '", cruise, "' ..."))
 		if(downloadType == "cs"){
 			# Get the matrix of stoxProjectId and sampleTime (i.e., year), and the name of the survey time series (sts):
 			cruiseInfo <- getNMDinfo(c("cs", cruise))[[1]]
@@ -282,7 +283,12 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		out <- getCruises(cruiseInfo, downloadType=downloadType, cruise=cruise, StoX_data_sources=StoX_data_sources, model=model, dir=dir, subdir=subdir, subset=subset, prefix=prefix, dataSource=dataSource, ow=ow, abbrev=abbrev, timeout=timeout, return.URL=return.URL, ...)
 		
 		# Return the project paths:
-		return(out)
+		if(info.out){
+			return(list(projectPaths=out, info=cruiseInfo))
+		}
+		else{
+			return(out)
+		}
 	}
 	####################################################
 }
@@ -2279,6 +2285,7 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 					from <- "snapshot/latest"
 				}
 				else{
+					#message("Using shapshot ", snapshotDateTimes[latest])
 					latest <- max(latest)
 					from <- paste("snapshot", snapshotDateTimes[latest], sep="/")
 				}
@@ -2345,7 +2352,7 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 	
 	
 	# Get the URLs:
-	out <- sapply(seq_along(cruisenr), findCruiseURL, cruisenr=cruisenr, shipname=shipname, dataSource=dataSource, server=server, ver=ver, snapshot=snapshot)
+	out <- unlist(papply(seq_along(cruisenr), findCruiseURL, cruisenr=cruisenr, shipname=shipname, dataSource=dataSource, server=server, ver=ver, snapshot=snapshot, info.msg="Searching for files"))
 
 	out
 }

@@ -6,6 +6,12 @@
 \usage{
 getMidSeason(x, tz = "UTC", format = "\%d/\%m/\%Y")
 }
+\arguments{
+\item{x}{string representing a yearless date range as dd/mm-dd/mm or as a single day dd/mm}
+}
+\value{
+the day number in the year for the given day, or the mean day number in the year for the endpoints of the range
+}
 \description{
 Function for setting getting appropriate value for the midSeason column in Landings
 }

@@ -6,7 +6,7 @@
 \usage{
 baseline2eca(projectName, biotic = "BioticCovData",
   landing = "LandingCovData", temporal = NULL, gearfactor = NULL,
-  spatial = NULL, ...)
+  spatial = NULL, landingresolution = 92, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -20,6 +20,8 @@ baseline2eca(projectName, biotic = "BioticCovData",
 \item{gearfactor}{Optional definition of the gearfactor covariate (not yet implemented).}
 
 \item{spatial}{Optional definition of the spatial covariate (not yet implemented).}
+
+\item{landingresolution}{The temporal resolution in days to use for aggregating the landing data.}
 
 \item{...}{Parameters passed to \code{\link{getBaseline}}.}
 }
