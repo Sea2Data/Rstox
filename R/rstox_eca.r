@@ -916,17 +916,17 @@ prepareRECA <-
         for (f in list.files(file.path(resultdir, "cfiles"))){
           fn <- file.path(resultdir, "cfiles", f)
           if (file.exists(fn) && !dir.exists(fn)){
-            file.remove(fn)
+            unlink(fn)
           }
         }
-        file.remove(file.path(resultdir, "cfiles"))
+        unlink(file.path(resultdir, "cfiles"), recursive=T)
         for (f in list.files(file.path(resultdir, "resfiles"))){
           fn <- file.path(resultdir, "resfiles", f)
           if (file.exists(fn) && !dir.exists(fn)){
-            file.remove(fn)
+            unlink(fn)
           }
         }
-        file.remove(file.path(resultdir, "resfiles"))
+        unlink(file.path(resultdir, "resfiles"), recursive = T)
     }
     if (length(list.files(resultdir))>0){
       stop(paste("Directory", resultdir, "contains files."))
