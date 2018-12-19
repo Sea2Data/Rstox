@@ -1076,7 +1076,7 @@ runRECA <-
       
       return(setProjectData(
         projectName = projectName,
-        var = list(fit = fit, pred = pred),
+        var = list(fit = fit, pred = pred, GlobalParameters=GlobalParameters),
         name = "runRECA"
       ))
     }
@@ -1085,6 +1085,46 @@ runRECA <-
 #
 # Functions for plotting data and results from RECA
 #
+
+#' Splits a prediction object from running coastal cod analysis into two prediction objects, one for each stock
+#' @param prediction object for CC analysis
+#' @return list with members 'coastal' and 'atlantic' containing prediction objects for coastal and atlantic cod respectively
+#' @keywords internal
+splitPredCC <- function(pred){
+  ret <- list()
+  ncat <- length(unique(pred$AgeCategories))
+  ret$coastal <- pred
+  ret$atlantic <- pred
+  
+  ret$atlantic$AgeCategories <- ret$atlantic$AgeCategories[1:ncat]
+  ret$coastal$AgeCategories <- ret$coastal$AgeCategories[(ncat+1):(2*ncat)]
+  
+  ret$atlantic$TotalCount <- ret$atlantic$TotalCount[,1:ncat,]
+  ret$coastal$TotalCount <- ret$coastal$TotalCount[,(ncat+1):(2*ncat),]
+  
+  ret$atlantic$MeanWeight <- ret$atlantic$MeanWeight[1:ncat,]
+  ret$coastal$MeanWeight <- ret$coastal$MeanWeight[(ncat+1):(2*ncat),]
+
+  ret$atlantic$MeanLength <- ret$atlantic$MeanLength[1:ncat,]
+  ret$coastal$MeanLength <- ret$coastal$MeanLength[(ncat+1):(2*ncat),]
+  
+  return(ret)  
+}
+
+#' Splits biotic frame by otolith type
+#' @param biotic frame
+#' @return list with members 'coastal' and 'atlantic' containing biotic entries for coastal and atlantic cod respectively
+#' @keywords internal
+splitBioticCC <- function(biotic){
+  ret <- list()
+  ret$coastal <- biotic
+  ret$atlantic <- biotic
+  
+  ret$coastal <- ret$coastal[!is.na(ret$coastal$otolithtype) & ret$coastal$otolithtype %in% c(1,2),]
+  ret$atlantic <- ret$atlantic[!is.na(ret$atlantic$otolithtype) & ret$atlantic$otolithtype %in% c(4,5),]
+  
+  return(ret)
+}
 
 #' Generates plots and reports from RECA prediction
 #' @param projectName name of stox project
@@ -1122,14 +1162,43 @@ plotRECAresults <-
       res = NULL
     }
     
-    fn <-
-      formatPlot(projectName, "RECA_results", function() {
-        plot_RECA_results_panel(rundata$runRECA$pred,
-                                prep$prepareRECA$StoxExport$biotic,
-                                ...)
-      }, verbose = verbose, format = format, height = height, width = width, res =
-        res, ...)
-    out$filename <- c(fn, out$filename)
+    #different plot if stock splitting (CC) is used
+    if (is.null(rundata$runRECA$GlobalParameters$CC) || !rundata$runRECA$GlobalParameters$CC){
+      fn <-
+        formatPlot(projectName, "RECA_results", function() {
+          plot_RECA_results_panel(rundata$runRECA$pred,
+                                  prep$prepareRECA$StoxExport$biotic,
+                                  ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+    }
+    else if(rundata$runRECA$GlobalParameters$CC){
+      
+      ccpred <- splitPredCC(rundata$runRECA$pred)
+      ccbiotic <- splitBioticCC(prep$prepareRECA$StoxExport$biotic)
+      
+      fn <-
+        formatPlot(projectName, "RECA_results_coastal", function() {
+          plot_RECA_results_panel(ccpred$coastal,
+                                  ccbiotic$coastal,
+                                  main="Coastal cod",
+                                  ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+      
+      fn <-
+        formatPlot(projectName, "RECA_results_atlantic", function() {
+          plot_RECA_results_panel(ccpred$atlantic,
+                                  ccbiotic$atlantic,
+                                  main="Atlantic cod",
+                                  ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+    }
+    
     return(out)
   }
 
