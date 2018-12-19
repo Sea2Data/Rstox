@@ -1604,8 +1604,7 @@ reportRECA <-
         main = projectName,
         savemeans = T,
         var = var,
-        unit = unit,
-        ...
+        unit = unit
       )
       out$filename <- c(get_filename("means"), out$filename)
     },
@@ -1620,8 +1619,7 @@ reportRECA <-
         main = projectName,
         savemeans = F,
         var = var,
-        unit = unit,
-        ...
+        unit = unit
       )
       out$filename <- c(get_filename("distribution"), out$filename)
     },
@@ -1640,8 +1638,7 @@ reportRECA <-
         pd$prepareRECA$WeightLength,
         pd$prepareRECA$AgeLength,
         fileobj = filename,
-        main = projectName,
-        ...
+        main = projectName
       )
       out$filename <- c(filename, out$filename)
     },
