@@ -193,8 +193,14 @@ check_landings_cov <- function(cov){
   if (!all(cov$midseason>0 & cov$midseason<=1)){
     stop("midseason must be in <0,1]")
   }
-  if (any(is.na(cov))){
-    stop("NAs in landings")
+  naerrors <- c()
+  for (i in 1:ncol(cov)){
+    if (any(is.na(cov[,1]))){
+      naerrors <- c(naerrors, names(cov)[i])
+    }
+    if (length(naerrors)>0){
+      stop(paste("NAs in landings: ", paste(naerrors, collapse=",")))
+    }
   }
 }
 
