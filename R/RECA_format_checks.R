@@ -67,7 +67,7 @@ check_cov_vs_info <- function(modelobj){
       stop(paste("Interaction specified for covariate that are not in landings", co))
     }
     if (modelobj$info[co,"random"]==0 & modelobj$info[co,"continuous"]==0 & num_unique!=modelobj$info[co,"nlev"]){
-      stop(paste("Not all values present for fixed covariate", co))
+      stop(paste("Not all values present for fixed covariate", co, "(samples)"))
     }
     if (modelobj$info[co,"CAR"]==1 & is.null(modelobj$CARNeighbours)){
       stop(paste("CAR variable specified as", co, "but CARneighbours not specified"))
@@ -153,7 +153,6 @@ checkWeightLength<-function(weightlength, landings){
 #' checks that covariates are compatible between model and landings
 #' @keywords internal
 checkCovariateConsistency <- function(modelobj, landingscov){
-  
   inlandings <- rownames(modelobj$info[modelobj$info[,"in.landings"]==1,])
   if (any(!(inlandings %in% names(landingscov)))){
     stop("some covariates labeled as in.landings are not found in corresponding covariate matrix in landings")
