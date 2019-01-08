@@ -67,7 +67,7 @@ check_cov_vs_info <- function(modelobj){
       stop(paste("Interaction specified for covariate that are not in landings", co))
     }
     if (modelobj$info[co,"random"]==0 & modelobj$info[co,"continuous"]==0 & num_unique!=modelobj$info[co,"nlev"]){
-      stop(paste("Not all values present for fixed covariate", co))
+      stop(paste("Not all values present for fixed covariate", co, "(samples)"))
     }
     if (modelobj$info[co,"CAR"]==1 & is.null(modelobj$CARNeighbours)){
       stop(paste("CAR variable specified as", co, "but CARneighbours not specified"))
@@ -153,7 +153,6 @@ checkWeightLength<-function(weightlength, landings){
 #' checks that covariates are compatible between model and landings
 #' @keywords internal
 checkCovariateConsistency <- function(modelobj, landingscov){
-  
   inlandings <- rownames(modelobj$info[modelobj$info[,"in.landings"]==1,])
   if (any(!(inlandings %in% names(landingscov)))){
     stop("some covariates labeled as in.landings are not found in corresponding covariate matrix in landings")
@@ -193,8 +192,14 @@ check_landings_cov <- function(cov){
   if (!all(cov$midseason>0 & cov$midseason<=1)){
     stop("midseason must be in <0,1]")
   }
-  if (any(is.na(cov))){
-    stop("NAs in landings")
+  naerrors <- c()
+  for (i in 1:ncol(cov)){
+    if (any(is.na(cov[,1]))){
+      naerrors <- c(naerrors, names(cov)[i])
+    }
+    if (length(naerrors)>0){
+      stop(paste("NAs in landings: ", paste(naerrors, collapse=",")))
+    }
   }
 }
 
@@ -232,8 +237,8 @@ checkGlobalParameters <- function(globalparameters, agelength, weightlength){
   if (globalparameters$age.error & is.null(agelength$AgeErrorMatrix)){
     stop("Age error matrix not set, but age.error parameter set to TRUE.")
   }
-  if (globalparameters$age.error & nrow(agelength$AgeErrorMatrix) != globalparameters$maxage-globalparameters$minage){
-    stop("Rows of age matrix does not match minage maxage parameters")
+  if (globalparameters$age.error & nrow(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
+    stop(paste0("Rows of age matrix does not match minage maxage parameters (", nrow(agelength$AgeErrorMatrix), " vs ", globalparameters$maxage, ":", globalparameters$minage, ")"))
   }
   if (globalparameters$age.error & as.numeric(row.names(agelength$AgeErrorMatrix))[1] != globalparameters$minage){
     stop("First age of age error matrix does not correspond to minage")
@@ -241,8 +246,8 @@ checkGlobalParameters <- function(globalparameters, agelength, weightlength){
   if (globalparameters$age.error & as.numeric(row.names(agelength$AgeErrorMatrix))[length(row.names(agelength$AgeErrorMatrix))] != globalparameters$maxage){
     stop("Last age of age error matrix does not correspond to maxage")
   }
-  if (globalparameters$age.error & ncol(agelength$AgeErrorMatrix) != globalparameters$maxage-globalparameters$minage){
-    stop("Columns of age error matrix does not match minage maxage parameters")
+  if (globalparameters$age.error & ncol(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
+    stop(paste0("Columns of age matrix does not match minage maxage parameters (", ncol(agelength$AgeErrorMatrix), " vs ", globalparameters$maxage, ":", globalparameters$minage, ")"))
   }
   
 }

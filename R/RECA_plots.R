@@ -291,15 +291,21 @@ plot_length_at_age <- function(biotic, pred, xlab="age", alpha=0.01, ylab=paste(
 #' Plots a panel of RECA results
 #' @param biotic indiviuals as exported by stox
 #' @param pred RECA prediction object as returned by eca::eca.predict
+#' @param main title for paneled plot
 #' @keywords internal
-plot_RECA_results_panel <- function(pred, biotic, ...){
-  par.old <- par(no.readonly = T)
-  par(mfrow=c(2,2))
+plot_RECA_results_panel <- function(pred, biotic, main=NULL, ...){
+  if (!is.null(main)){
+    layout(matrix(c(1,1,2,3,2,3,2,3,4,5,4,5,4,5),ncol=2, byrow=T))
+    plot.new()
+    mtext(main, cex=2)
+  }
+  else{
+    layout(matrix(c(1,2,3,4),ncol=2, byrow=T))
+  }
   plot_catch_at_age_ci(pred, var="Abundance", unit="millions", ...)
   plot_catch_at_age_ci(pred, var="Weight", unit="kt", ...)
   plot_weight_at_age(biotic, pred, unit="kg", ...)
   plot_length_at_age(biotic, pred, ...)
-  par(par.old)
 }
 
 #
