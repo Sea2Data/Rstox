@@ -8,13 +8,14 @@
 runBaseline(projectName, out = c("project", "baseline",
   "baseline-report", "name"), startProcess = 1, endProcess = Inf,
   reset = FALSE, save = FALSE, modelType = "baseline", msg = TRUE,
-  exportCSV = FALSE, warningLevel = 0, parlist = list(), ...)
+  exportCSV = FALSE, warningLevel = 0, tempRScriptFileName = NULL,
+  parlist = list(), ...)
 
 getBaseline(projectName, input = c("par", "proc"), proc = "all",
   drop = TRUE, startProcess = 1, endProcess = Inf, reset = FALSE,
   save = FALSE, modelType = "baseline", msg = TRUE,
   exportCSV = FALSE, warningLevel = 0, parlist = list(),
-  close = FALSE, ...)
+  tempRScriptFileName = NULL, close = FALSE, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -36,6 +37,8 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 \item{exportCSV}{Logical: if TRUE turn on exporting csv files from the baseline run.}
 
 \item{warningLevel}{The warning level used in the baseline run, where 0 stops the baseline for Java warnings, and 1 continues with a warning.}
+
+\item{tempRScriptFileName}{A file name specifying the temporary R script that StoX writes and sources e.g. for stratum area calculation using the accurate method.}
 
 \item{parlist}{List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE.}
 

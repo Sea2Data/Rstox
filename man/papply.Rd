@@ -5,7 +5,7 @@
 \title{Parallel version of lapply}
 \usage{
 papply(X, FUN, ..., cores = 1, outfile = "", info.msg = NULL,
-  pb = TRUE)
+  end.msg = "", appendLF = TRUE, pb = TRUE)
 }
 \arguments{
 \item{X, FUN, ...}{See \code{\link{pbapply::pblapply}}.}

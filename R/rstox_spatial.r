@@ -1047,7 +1047,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 				transport = sum(x$segmentLengths[x$transport==1], na.rm=TRUE), 
 				total = sum(x$segmentLengths, na.rm=TRUE))
 		}
-	
+		
 		# If a data frame, split into strata (if byStratum):
 		if(is.data.frame(x)){
 			x <- split(x, if(byStratum) x$stratum else 1)
@@ -1059,7 +1059,9 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		
 		# Get sailed distances from each stratum
 		out <- lapply(x, getSailedDist_OneStratum)
-		out <- as.data.frame(data.table::rbindlist(out))
+		# WARNING: THIS REMOVED THE STRATA NAMES:
+		# out <- as.data.frame(data.table::rbindlist(out))
+		out <- do.call(rbind, out)
 	
 		# Add in percent if reference sailed distance nmi is given:
 		if(length(nmi)){
@@ -1075,11 +1077,28 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			out <- cbind(out, outPercent)
 		}
 		if(length(area)){
-			out <- cbind(area=area, coverage=out$transect / sqrt(area), out)
+			# Trick:
+			out <- data.frameOrderByName(
+				list(
+					area=area, 
+					coverage=area, 
+					out
+				), stringsAsFactors=FALSE
+			)
+			
+			
+			out$coverage <- out$transect / sqrt(out$area)
+			
+			
+			
+			#out <- cbind(area=area, coverage=out$transect / sqrt(area), out)
 		}
 	
-	
-		rownames(out) <- if(nrow(out)==1) "Survey" else paste0("Stratum ", rownames(out))
+		# THIS ADDED WRONG STRATA NAMES:
+		#rownames(out) <- if(nrow(out)==1) "Survey" else paste0("Stratum ", rownames(out))
+		if(nrow(out)==1){
+			rownames(out) <- "Survey"
+		}
 	
 		out
 	}
@@ -1600,7 +1619,24 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	totalSailedDist <- getSailedDist(Transect, nmi=parameters$nmi, area=area, nmi.out=FALSE, byStratum=TRUE)
 	totalSailedDist1 <- getSailedDist(Transect, nmi=sum(parameters$nmi), area=sum(area), nmi.out=FALSE, byStratum=FALSE)
 	
-	Stratum <- data.frame(stratum=strataNames, stratum_centroid, parameters[parameterNames], totalSailedDist, stringsAsFactors=FALSE)
+	
+	
+	
+	
+	
+	Stratum <- data.frameOrderByName(
+		list(
+			stratum=structure(strataNames, names=strataNames), 
+			stratum_centroid, 
+			parameters[parameterNames], 
+			totalSailedDist
+		), stringsAsFactors=FALSE
+	)
+	
+	#Stratum <- data.frame(stratum=strataNames, orderByNames(stratum_centroid, strataNames), orderByNames(parameters[parameterNames], strataNames), orderByNames(totalSailedDist, strataNames), stringsAsFactors=FALSE)
+	
+	
+	
 	#Stratum <- data.frame(stratum=strataNames, stratum_centroid, parameters[parameterNames], stringsAsFactors=FALSE)
 	#Stratum <- Stratum[validStrata, ]
 	#Stratum <- cbind(Stratum, totalSailedDist, stringsAsFactors=FALSE)
@@ -1726,6 +1762,7 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 	# Add the strata:
 	if(any(c("stratum", "strata") %in% tolower(plot))){
 		p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", fill="stratum", group="stratum"), colour="black", alpha=0.3, inherit.aes=FALSE)
+		#p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", fill="stratum", group="stratum"), colour=NA, alpha=0.3, inherit.aes=FALSE)
 	}
 	
 	
@@ -1754,10 +1791,12 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 	p <- p + xlab(xlab) + ylab(ylab)
 	
 	# Add stratum names:
-	stratum_centroid <- getCentroid(x$Input$lonlat)
 	if(any(c("stratum", "strata") %in% tolower(plot))){
-		#p <- p + geom_text(data=x$Stratum, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"))
-		p <- p + geom_text(data=stratum_centroid, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"), colour=strataNameCol)
+		### stratum_centroid <- getCentroid(x$Input$lonlat)
+		### #p <- p + geom_text(data=x$Stratum, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"))
+		### p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", group="stratum"), fill=NA, colour="black", inherit.aes=FALSE)
+		### p <- p + geom_text(data=stratum_centroid, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"), colour=strataNameCol)
+		p <- addStratumBordersAndNames(p, x, strataNameCol=strataNameCol)
 	}
 	#annotate("text", x=x$Stratum$lon_centroid, y=x$Stratum$lat_centroid, label=x$Stratum$stratum, alpha=0.5, col=)
 	
@@ -1765,6 +1804,17 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 	print(p)
 	
 	return(p)
+}
+#' 
+#' @export
+#' @import ggplot2
+#' @rdname surveyPlanner
+#' 
+addStratumBordersAndNames <- function(p, x, strataNameCol="darkblue"){
+	stratum_centroid <- getCentroid(x$Input$lonlat)
+	p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", group="stratum"), fill=NA, colour="black", inherit.aes=FALSE)
+	p <- p + geom_text(data=stratum_centroid, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"), colour=strataNameCol)
+	p
 }
 #' 
 #' @export
@@ -2236,4 +2286,33 @@ getTransectFileName <- function(x, projectName, prefix="", suffix="", ext="txt",
 		suffix <- paste0("_", suffix)
 	}
 	file.path(dir, paste0(prefix, Transects, if(byStratum) stratum, suffix, ".", ext))
+}
+
+
+data.frameOrderByName <- function(x, ...){
+	orderByNames <- function(x, names){
+		dimx <- dim(x)
+		if(length(dimx)==0){
+			if(length(x)==1){
+				x
+			}
+			else{
+				x[match(names, names(x))]
+			}
+		}
+		else{
+			if(dimx[1]==1){
+				x
+			}
+			else{
+				x[match(names, rownames(x)), ]
+			}
+		}
+	}
+	firstCol <- x[1]
+	rest <- x[-1]
+	
+	rest <- lapply(rest, orderByNames, names=names(firstCol[[1]]))
+	
+	do.call(data.frame, c(firstCol, rest, ...))
 }

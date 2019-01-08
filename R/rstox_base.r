@@ -969,7 +969,6 @@ listInputFiles <- function(projectName, full.names=TRUE){
 	files
 }
 
-
 #*********************************************
 #*********************************************
 #' Run a StoX baseline model
@@ -979,23 +978,24 @@ listInputFiles <- function(projectName, full.names=TRUE){
 #' 
 #' The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
 #' 
-#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
-#' @param startProcess	The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
-#' @param endProcess	The name or number of the end process in the list of processes in the model.
-#' @param reset			Logical; if TRUE rerun the baseline model even if it has been run previously.
-#' @param save			Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.
-#' @param out			The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object). First element used.
-#' @param modelType		The type of model to run, currently one of "baseline" and "baseline-report". First element used.
-#' @param msg			Logical: if TRUE print information about the progress of reading the data.
-#' @param exportCSV		Logical: if TRUE turn on exporting csv files from the baseline run.
-#' @param warningLevel	The warning level used in the baseline run, where 0 stops the baseline for Java warnings, and 1 continues with a warning.
-#' @param parlist		List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE.
-#' @param ...			Same as parlist, but can be specified separately (not in a list but as separate inputs).
-#' @param input			The input data requested in getBaseline(). This is a string vector naming baseline processes and process data. The key words "par" and "proc" returns all parameters and process data, respectively.
-#' @param proc			A string vector naming processes from which data should be returned.
-#' @param par			A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.
-#' @param drop			Logical: if TRUE drop empty list elements (default).
-#' @param close			Logical: if TRUE close the project on exit of the function (for \code{getBaseline}).
+#' @param projectName   		The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param startProcess			The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.
+#' @param endProcess			The name or number of the end process in the list of processes in the model.
+#' @param reset					Logical; if TRUE rerun the baseline model even if it has been run previously.
+#' @param save					Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.
+#' @param out					The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object). First element used.
+#' @param modelType				The type of model to run, currently one of "baseline" and "baseline-report". First element used.
+#' @param msg					Logical: if TRUE print information about the progress of reading the data.
+#' @param exportCSV				Logical: if TRUE turn on exporting csv files from the baseline run.
+#' @param warningLevel			The warning level used in the baseline run, where 0 stops the baseline for Java warnings, and 1 continues with a warning.
+#' @param tempRScriptFileName	A file name specifying the temporary R script that StoX writes and sources e.g. for stratum area calculation using the accurate method.
+#' @param parlist				List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE.
+#' @param ...					Same as parlist, but can be specified separately (not in a list but as separate inputs).
+#' @param input					The input data requested in getBaseline(). This is a string vector naming baseline processes and process data. The key words "par" and "proc" returns all parameters and process data, respectively.
+#' @param proc					A string vector naming processes from which data should be returned.
+#' @param par					A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.
+#' @param drop					Logical: if TRUE drop empty list elements (default).
+#' @param close					Logical: if TRUE close the project on exit of the function (for \code{getBaseline}).
 #'
 #' @return For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "outputData", "processData", where empty elements can be dropped.
 #'
@@ -1024,7 +1024,7 @@ listInputFiles <- function(projectName, full.names=TRUE){
 #' @export
 #' @rdname runBaseline
 #'
-runBaseline <- function(projectName, out=c("project", "baseline", "baseline-report", "name"), startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), ...){
+runBaseline <- function(projectName, out=c("project", "baseline", "baseline-report", "name"), startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, tempRScriptFileName=NULL, parlist=list(), ...){
 	
 	# Function for extracting a range covering a series of ranges:
 	setProcRange <- function(...){
@@ -1051,6 +1051,12 @@ runBaseline <- function(projectName, out=c("project", "baseline", "baseline-repo
 		return(NULL)
 	}
 	
+	# Set the tempRScriptFileName if specified. This can be used when running getBaseline() in parallel, to ensure that each run writes and sources unique R scripts:
+	if(length(tempRScriptFileName) && is.character(tempRScriptFileName)){
+		setTempRScriptFileName(projectName, tempRScriptFileName, msg=msg)
+	}
+	
+	# Avoid breaks in the baseline, and set the warning level (used in bootstrapping to ease warnings):
 	baseline$setBreakable(jBoolean(FALSE))
 	baseline$setWarningLevel(jInt(warningLevel))
 	
@@ -1216,11 +1222,11 @@ runBaseline <- function(projectName, out=c("project", "baseline", "baseline-repo
 #' @export
 #' @rdname runBaseline
 #' 
-getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TRUE, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), close=FALSE, ...){
+getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TRUE, startProcess=1, endProcess=Inf, reset=FALSE, save=FALSE, modelType="baseline", msg=TRUE, exportCSV=FALSE, warningLevel=0, parlist=list(), tempRScriptFileName=NULL, close=FALSE, ...){
 	
 	# Locate/run the baseline object. If rerun=TRUE or if parameters are given different from the parameters used in the last baseline run, rerun the baseline, and if the :
 	#baseline <- runBaseline(projectName, startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, out="baseline", msg=msg, parlist=parlist, ...)
-	baseline <- runBaseline(projectName, out=modelType[1], startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, modelType=modelType[1], msg=msg, exportCSV=exportCSV, warningLevel=warningLevel, parlist=parlist, ...)
+	baseline <- runBaseline(projectName, out=modelType[1], startProcess=startProcess, endProcess=endProcess, reset=reset, save=save, modelType=modelType[1], msg=msg, exportCSV=exportCSV, warningLevel=warningLevel, tempRScriptFileName=tempRScriptFileName, parlist=parlist, ...)
 	
 	if(msg){
 		cat("Reading:\n")
@@ -1283,6 +1289,26 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 	}
 	
 	invisible(out)
+}
+
+setTempRScriptFileName <- function(projectName, tempRScriptFileName, msg=TRUE){
+	
+	# Get projet object:
+	pr <- getProject(projectName, out="project")
+	
+	# Get the old and set the new:
+	oldTempRScriptFileName <- pr$getTempRScriptFileName()
+	if(msg){
+		if(length(oldTempRScriptFileName)){
+			message("tempRScriptFileName changed from '", oldTempRScriptFileName, "' to '", tempRScriptFileName, "'.")
+		}
+		else{
+			message("tempRScriptFileName changed to '", tempRScriptFileName, "'.")
+		}
+	}
+	pr$setTempRScriptFileName(tempRScriptFileName)
+	
+	return(list(old=oldTempRScriptFileName, new=tempRScriptFileName))
 }
 
 
@@ -3449,7 +3475,7 @@ getLogStoXid <- function(Log, timevar="start_time"){
 #' @export
 #' @rdname papply
 #'
-papply <- function(X, FUN, ..., cores=1, outfile="", info.msg=NULL, pb=TRUE){
+papply <- function(X, FUN, ..., cores=1, outfile="", info.msg=NULL, end.msg="", appendLF=TRUE, pb=TRUE){
 	
 	if(!pb){
 		pbo <- pbapply::pboptions(type = "none")
@@ -3471,7 +3497,7 @@ papply <- function(X, FUN, ..., cores=1, outfile="", info.msg=NULL, pb=TRUE){
 	# Generate the clusters of time steps:
 	if(cores>1){
 		if(length(info.msg) && !identical(info.msg, FALSE)){
-			message(paste0(info.msg, "( ", nruns, " runs using ", cores, " cores in parallel):\n"))
+			message(info.msg, "( ", nruns, " runs using ", cores, " cores in parallel):")
 		}
 		cl <- parallel::makeCluster(cores)
 		# Bootstrap:
@@ -3481,10 +3507,12 @@ papply <- function(X, FUN, ..., cores=1, outfile="", info.msg=NULL, pb=TRUE){
 	}
 	else{
 		if(length(info.msg) && !identical(info.msg, FALSE)){
-			message(paste0(info.msg, " (", nruns, " runs):\n"))
+			message(info.msg, " (", nruns, " runs):")
 		}
 		out <- pbapply::pblapply(X, FUN, ...)
 	}
+	
+	message(end.msg, appendLF=appendLF)
 	return(out)
 }
 

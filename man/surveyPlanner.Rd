@@ -5,6 +5,7 @@
 \alias{addStratum}
 \alias{subsetStrata}
 \alias{plotStratum}
+\alias{addStratumBordersAndNames}
 \alias{readStrataPolygons}
 \alias{getCentroid}
 \title{Plan an acoustic-trawl survey.}
@@ -26,6 +27,8 @@ plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
   aspectratio = NULL, xlab = "Longitude", ylab = "Latitude",
   xlim = NULL, ylim = NULL, keep0effort = TRUE, strata = "all",
   strataNameCol = "darkblue", ...)
+
+addStratumBordersAndNames(p, x, strataNameCol = "darkblue")
 
 readStrataPolygons(projectName, ...)
 
