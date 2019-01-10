@@ -1765,10 +1765,6 @@ getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL,
 	papply(cruiseInfo, downloadOneCruise, timeout=timeout, info.msg="Downloading...", end.msg="\n", appendLF=FALSE)
 	
 	# Check whether the files were downloaded. This could have been done by use of the output from download.file (0 for sucsess and positive for failure), but instead we check the existence of the files, and the size:
-	checkDownloadedFiles <- function(cruiseInfo){
-		valid <- !is.na(cruiseInfo$URL)
-	}
-	
 	URLsFlat <- unlist(lapply(cruiseInfo, "[[", "fileURL"))
 	filePathsFlat <- unlist(lapply(cruiseInfo, "[[", "FilePath"))
 	valid <- !is.na(URLsFlat)

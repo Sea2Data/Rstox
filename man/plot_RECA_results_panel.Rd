@@ -4,12 +4,14 @@
 \alias{plot_RECA_results_panel}
 \title{Plots a panel of RECA results}
 \usage{
-plot_RECA_results_panel(pred, biotic, ...)
+plot_RECA_results_panel(pred, biotic, main = NULL, ...)
 }
 \arguments{
 \item{pred}{RECA prediction object as returned by eca::eca.predict}
 
 \item{biotic}{indiviuals as exported by stox}
+
+\item{main}{title for paneled plot}
 }
 \description{
 Plots a panel of RECA results

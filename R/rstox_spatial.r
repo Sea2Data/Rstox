@@ -536,7 +536,6 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' 
 #' @details Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443
 #' The following types are implemented:
-#' @return \code{surveyPlanner} returns a list of the following elements: 
 #' \describe{
 #'	\item{"Parallel"}{"Parallel transects"}
 #'	\item{"EqAngZZ"}{"Equal angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
