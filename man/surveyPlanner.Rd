@@ -101,16 +101,6 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 \value{
 \code{surveyPlanner} returns a list of the following elements: 
 \describe{
-\item{"Parallel"}{"Parallel transects"}
-\item{"EqAngZZ"}{"Equal angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
-\item{"EqSpZZ"}{"Equal space zigzag sampler, Strindberg and Buckland (2004)"}
-\item{"AdjAngZZ"}{"Adjusted angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
-\item{"RectEnclZZ"}{"Rectangular enclosure zigzag sampler, Harbitz and Holmin (2018)"}
-\item{"CurvEnclZZ"}{"Curved enclosure zigzag sampler (not implemented), Harbitz and Holmin (2018)"}
-}
-
-\code{surveyPlanner} returns a list of the following elements: 
-\describe{
 \item{"transects"}{"A data frame with the geographic and Cartesian transect coordinates for all strata, along with start, mid and stop time and sailed distance"}
 \item{"totalSailedDist"}{"A data fram with total, transect, transport and input (nmi) sailed distance, also given in percent of 'nmi'."}
 \item{"lonlat"}{"The input stratum polygons (longitude, latitude) in a list with one matrix per stratum"}
@@ -129,8 +119,17 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 \code{readStrataPolygons} reads a WKT (Well known text) file, shapefiles, or a StoX project and returns the strata system.  \cr \cr
 }
 \details{
+The \code{surveyPlanner} function generates the survey plan (transect lines) in a cartesian coordinate system, and transforms the positions to the geographical coordinate system (longitude, latitude) using the azimuthal equal distance projection, which ensures that distances, and also equal coverage, if the method used is designed with this prerequisite, are preserved in the transformation. 
 Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443
 The following types are implemented:
+\describe{
+\item{"Parallel"}{"Parallel transects"}
+\item{"EqAngZZ"}{"Equal angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
+\item{"EqSpZZ"}{"Equal space zigzag sampler, Strindberg and Buckland (2004)"}
+\item{"AdjAngZZ"}{"Adjusted angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
+\item{"RectEnclZZ"}{"Rectangular enclosure zigzag sampler, Harbitz and Holmin (2018)"}
+\item{"CurvEnclZZ"}{"Curved enclosure zigzag sampler (not implemented), Harbitz and Holmin (2018)"}
+}
 }
 \examples{
 # Generate parallel transects with equal effort in each stratum (proportional to area):

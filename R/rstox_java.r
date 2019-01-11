@@ -411,3 +411,11 @@ getJavaMemory <- function(){
 	out <- out * if(byteChar=="g") 1e9 else 1e6
 	out
 }
+
+
+jobjRef2Character <- function(x){
+	# Convert to string:
+	x <- x$toString()
+	strsplit(gsub("\\[|\\]", "", x), ", ")[[1]]
+}
+

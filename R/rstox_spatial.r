@@ -534,7 +534,9 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param keep0effort		Logical: If FALSE, keep only the strata with positive effort.
 #' @param ...				Used for flexibility, and including shapenames: A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.
 #' 
-#' @details Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443
+#' @details 
+#' The \code{surveyPlanner} function generates the survey plan (transect lines) in a cartesian coordinate system, and transforms the positions to the geographical coordinate system (longitude, latitude) using the azimuthal equal distance projection, which ensures that distances, and also equal coverage, if the method used is designed with this prerequisite, are preserved in the transformation. 
+#' Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443
 #' The following types are implemented:
 #' \describe{
 #'	\item{"Parallel"}{"Parallel transects"}

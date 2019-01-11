@@ -72,7 +72,9 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	##### Functions: #####
 	# Return available templates as default:
 	getTemplates <- function(){
-		templates <- J("no.imr.stox.factory.Factory")$getAvailableTemplates()$toArray()
+		# Changed made on 2019-01-11 after note from Mikko Vihtakari, who had installed Java 11 due to endless problems getting Java 8 and rJava to work. Java 11 seems to have introduced a difference in the behavior of the toArray() function, where the output is not a character vector but a Java Array object. For this reason the utility jobjRef2Character() was created, which converts to string first and then parses the string into a vector:
+		# templates <- J("no.imr.stox.factory.Factory")$getAvailableTemplates()$toArray()
+		templates <- jobjRef2Character(J("no.imr.stox.factory.Factory")$getAvailableTemplates())
 		descriptions <- sapply(templates, J("no.imr.stox.factory.Factory")$getTemplateDescription)
 		templateProcesses <- lapply(templates, function(x) J("no.imr.stox.factory.FactoryUtil")$getTemplateProcessNamesByModel(x, "baseline"))
 		names(templateProcesses) <- templates
@@ -1098,7 +1100,6 @@ runBaseline <- function(projectName, out=c("project", "baseline", "baseline-repo
 	procChanged <- setBaselineParameters(baseline, parlist=parlist, msg=FALSE, save=FALSE, ...)
 	
 	#
-	#browser()
 	#parlist <- getParlist(parlist=parlist, ...)
 	#javapar <- getBaselineParameters(projectName, out=modelType[1])$java # Use out=modelType
 	#newpar  <- modifyBaselineParameters(projectName, javapar, parlist=parlist)$parameters
@@ -1266,7 +1267,10 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 	###########################################
 	##### (3) Get a list of process data: #####
 	project <- openProject(projectName, out="project")
-	processdataNames <- project$getProcessData()$getOutputOrder()$toArray()
+	# Changed made on 2019-01-11 after note from Mikko Vihtakari, who had installed Java 11 due to endless problems getting Java 8 and rJava to work. Java 11 seems to have introduced a difference in the behavior of the toArray() function, where the output is not a character vector but a Java Array object. For this reason the utility jobjRef2Character() was created, which converts to string first and then parses the string into a vector:
+	# processdataNames <- project$getProcessData()$getOutputOrder()$toArray()
+	processdataNames <- jobjRef2Character(project$getProcessData()$getOutputOrder())
+
 	if("proc" %in% input){
 		input <- c(processdataNames, input)
 	}

@@ -192,7 +192,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	serialno <- getSerialno(serialno, year)
 	
 	# Get download type:
-	if(isSTS(cruise, ver=ver)){
+	if(isSTS(cruise, ver=ver, server=server)){
 		if(zipSTS){
 			downloadType <- "stszip"
 		}
@@ -200,7 +200,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 			downloadType <- "sts"
 		}
 	}
-	else if(isCS(cruise, ver=ver)){
+	else if(isCS(cruise, ver=ver, server=server)){
 		downloadType <- "cs"
 	}
 	else if(length(serialno)){
@@ -230,7 +230,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	#else if(isSTS(cruise, ver=ver) && run){
 	else if(downloadType == "stszip"){
 		# Get the info of only the requested survey time series to save time, requiring the [[1]]:
-		stsInfo <- getNMDinfo(c("sts", cruise))[[1]]
+		stsInfo <- getNMDinfo(type=c("sts", cruise), ver=ver, server=server)[[1]]
 		out <- getSurveyTimeSeriesZip(stsInfo=stsInfo, dir=dir, subdir=subdir, subset=subset, cleanup=cleanup, ow=ow, abbrev=abbrev, run=run, ver=ver, msg=msg, return.URL=return.URL)
 		return(out)
 	}
@@ -245,12 +245,12 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		message("Downloading '", cruise, "' ...")
 		if(downloadType == "cs"){
 			# Get the matrix of stoxProjectId and sampleTime (i.e., year), and the name of the survey time series (sts):
-			cruiseInfo <- getNMDinfo(c("cs", cruise))[[1]]
+			cruiseInfo <- getNMDinfo(c("cs", cruise), ver=ver, server=server)[[1]]
 			# Add both StoX and NMD dataSource:
 			cruiseInfo <- addDataSources(cruiseInfo, dataSource=dataSource)
 		}
 		else if(downloadType == "sts"){
-			stsInfo <- getNMDinfo(c("sts", cruise))[[1]]
+			stsInfo <- getNMDinfo(c("sts", cruise), ver=ver, server=server)[[1]]
 			cruiseInfo <- getCruiseInfoFromStsInfo(stsInfo)
 		}
 		else if(downloadType == "c"){
@@ -968,16 +968,16 @@ getCruiseInfo <- function(ver, server, msg=FALSE){
 ###############################################
 
 ##### Basic functions: #####
-isSerialno <- function(cruise, ver){
-	cs <- getNMDinfo("cs", recursive=FALSE, ver=ver)
+#isSerialno <- function(cruise, ver){
+#	cs <- getNMDinfo("cs", recursive=FALSE, ver=ver)
+#	length(cruise)==1 && cruise %in% cs
+#}
+isCS <- function(cruise, ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi"){
+	cs <- getNMDinfo("cs", recursive=FALSE, ver=ver, server=server)
 	length(cruise)==1 && cruise %in% cs
 }
-isCS <- function(cruise, ver){
-	cs <- getNMDinfo("cs", recursive=FALSE, ver=ver)
-	length(cruise)==1 && cruise %in% cs
-}
-isSTS <- function(cruise, ver){
-	sts <- getNMDinfo("sts", recursive=FALSE, ver=ver)
+isSTS <- function(cruise, ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi"){
+	sts <- getNMDinfo("sts", recursive=FALSE, ver=ver, server=server)
 	length(cruise)==1 && cruise %in% sts
 }
 downloadFailedWarning <- function(x, downloadSuccess, type=c("file", "sts")){
