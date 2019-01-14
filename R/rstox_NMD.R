@@ -169,6 +169,11 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		prefix <- l$filebase
 	}
 	
+	# Support for case-insensitive parameter name for shipname:
+	if(any("shipname" %in% tolower(names(l))) && length(shipname)==0){
+		shipname <- l["shipname" %in% tolower(names(l))][[1]]
+	}
+	
 	#######################################
 	############ Preparations: ############
 	#######################################
@@ -1202,8 +1207,11 @@ getPaths <- function(downloadType=c("serialno", "sts", "stszip", "cs", "c"), dir
 	else if(tolower(downloadType[1]) == "cs"){
 		# Cruise series grouped by year gets Year in the suffix:
 		if(startsWith(tolower(group), "y")){
-			# Interpret the year from the cruise number:
-			suffix <- getSuffix(Year=sapply(CruiseNumber, getYearFromCruiseNumber))
+			# Get the suffix with year:
+			suffix <- getSuffix(Year=sapply(cruiseInfo, "[", 1, "Year"))
+			# This was a bug, since CruiseNumber is a list with potentially several cruises:
+			### # Interpret the year from the cruise number:
+			### suffix <- getSuffix(Year=sapply(CruiseNumber, getYearFromCruiseNumber))
 		}
 		# Cruise series grouped by cruise gets the same suffix as single cruises:
 		else if(startsWith(tolower(group), "c")){
@@ -1282,12 +1290,23 @@ getSubset <- function(subset, nprojects, info){
 	}
 	else{
 		# Check whether the subset is a STS sampleTime:
-		if(all(nchar(subset) > 3) && any(subset %in% info[, "sampleTime"])){
-			subset <- which(subset == info[, "sampleTime"])
+		# Changed to using stsInfo$sampleTime after bug reported by Edvin on 2019-01-14:
+		#if(all(nchar(subset) > 3) && any(subset %in% info[, "sampleTime"])){
+		if(all(nchar(subset) > 3) && any(subset %in% info$sampleTime)){
+			present <- which(info$sampleTime %in% subset)
+			if(length(present) < length(subset)){
+				warning("Some of the years specified in 'subset' were not present in the survey time series: ", paste(setdiff(subset, names(info)[present]), collapse=", "))
+			}
+			subset <- present
 		}
 		# Check whether the subset is a year or cruise code:
 		else if(all(nchar(subset) > 3) && any(subset %in% names(info))){
-			subset <- which(subset == names(info))
+			present <- which(names(info) %in% subset)
+			if(length(present) < length(subset)){
+				warning("Some of the years specified in 'subset' were not present in the survey time series: ", paste(setdiff(subset, names(info)[present]), collapse=", "))
+			}
+			subset <- present
+			#subset <- which(subset == names(info))
 		}
 		# Otherwise, restrict 'subset' to the range of projects:
 		else{
@@ -1691,7 +1710,8 @@ getCruiseURLs <- function(cruiseInfo, ver=getRstoxDef("ver"), server="http://tom
 	}
 	
 	# Combine with the cruise info:
-	out <- data.frame(cruiseInfo, fileURL=URL, searchURL=names(URL), stringsAsFactors=FALSE)
+	#out <- data.frame(cruiseInfo, fileURL=URL, searchURL=names(URL), snapshot=attr(URL, "snapshot"), stringsAsFactors=FALSE)
+	out <- data.frame(cruiseInfo, URL, stringsAsFactors=FALSE)
 	rownames(out) <- NULL
 	out
 }
@@ -2212,18 +2232,18 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 		}
 		
 		# Convenience function for building the download URL:
-		getDownloadURL <- function(ind, x, dataSource, server, from, ver){
-			# In version 2 the elements of the cruise URL are given and must be combined to get the URL:
-			g <- getRowElementValueWithName(x, row="row", value="text", name=".attrs")
-			# Build the URL:
-			relativePath <- g$path
-			APIverString <- paste0("v", ver$API[[dataSource[ind]]])
-			query <- paste0("version=", ver[[dataSource[ind]]])
-			x <- paste(server, dataSource[ind], APIverString, relativePath, from, sep="/")
-			# Add dataSource version:
-			x <- paste(x, query, sep="?")
-			x
-		}
+		#getDownloadURL <- function(ind, x, dataSource, server, from, ver){
+		#	# In version 2 the elements of the cruise URL are given and must be combined to get the URL:
+		#	g <- getRowElementValueWithName(x, row="row", value="text", name=".attrs")
+		#	# Build the URL:
+		#	relativePath <- g$path
+		#	APIverString <- paste0("v", ver$API[[dataSource[ind]]])
+		#	query <- paste0("version=", ver[[dataSource[ind]]])
+		#	x <- paste(server, dataSource[ind], APIverString, relativePath, from, sep="/")
+		#	# Add dataSource version:
+		#	x <- paste(x, query, sep="?")
+		#	x
+		#}
 		
 		# Convenience function for building the search URL:
 		getSearchURL <- function(cruisenr, shipname, server, dataSource, ver){
@@ -2254,6 +2274,7 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 				x <- paste(server, dataSource, APIverString, relativePath, from, sep="/")
 				# Add dataSource version:
 				x <- paste(x, query, sep="?")
+				
 				x
 			}
 			
@@ -2306,43 +2327,76 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 			if(isTRUE(snapshot) || (is.character(snapshot) && identical(snapshot, "latest"))){
 				from <- "snapshot/latest"
 			}
-			# If the snapshot is given as a character string, interpret this as either a datetime specifying the snapshot directly, or as a date, in which case the latest snapshot is searched for:
-			else if(is.character(snapshot)){
-				date <- as.Date(snapshot, tz="UTC")
-				dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
-				dateTime <- as.POSIXct(snapshot, format=dateTimeNMDAPIFormat, tz="UTC")
-			
-				# Use the input dateTime string if recognized by the format:
-				if(!is.na(dateTime)){
-					from <- paste("snapshot", snapshot, sep="/")
-				}
-				# If the 'snapshot' can be interpreted as a date, search for the latest snapshot of that date:
-				else if(!is.na(date)){
+			else{
+				# If given as a Date or POSIXct (datetime), convert to POSIXct and pick the latest snapshot before that POSIXct:
+				if(any(c("Date", "POSIXct") %in% class(snapshot))){
+					# The as.character(snapshot) is used since as.POSIXct does not react to the 'tz' argument from a Date object:
+					snapshotTime <- as.POSIXct(as.character(snapshot), tz="UTC")
 					from <- "snapshot"
 					temp <- getDownloadURL(x=out, dataSource=thisDataSource, server=server, from=from, ver=ver)
 					temp <- downloadXML(URLencode(temp), msg=FALSE)
 					snapshotDateTimes <- sapply(temp$row, "[[", "text")
-					snapshotDateTimesPOSIXct <- as.POSIXct(snapshotDateTimes, format=dateTimeNMDAPIFormat, tz="UTC")
-					snapshotDates <- as.Date(snapshotDateTimesPOSIXct)
-					latest <- which(snapshotDates <= date)
+					snapshotDateTimesPOSIXct <- as.POSIXct(snapshotDateTimes, format=getRstoxDef("dateTimeNMDAPIFormat"), tz="UTC")
+					
+					latest <- which(snapshotDateTimesPOSIXct <= snapshotTime)
 					if(!any(latest)){
-						warning(paste0("No snapshots at or before the the specified 'snapshot' date (", shapshot, "). The latest chosen"))
+						warning(paste0("No snapshots at or before the the specified 'snapshot' date/time (", snapshot, "). The latest chosen"))
 						from <- "snapshot/latest"
 					}
 					else{
-						#message("Using shapshot ", snapshotDateTimes[latest])
+						#message("Using snapshot ", snapshotDateTimes[latest])
 						latest <- max(latest)
 						from <- paste("snapshot", snapshotDateTimes[latest], sep="/")
 					}
 				}
+				# If given as a string matching exactly the dateTimeNMDAPIFormat, use this to select the exact snapshot:
+				else if(is.character(snapshot)){
+					dateTime <- as.POSIXct(snapshot, format=getRstoxDef("dateTimeNMDAPIFormat"), tz="UTC")
+					if(!is.na(dateTime)){
+						from <- paste("snapshot", snapshot, sep="/")
+					}
+				}
 				else{
-					warrning("Invalid value of 'snapshot'. Must be the string 'latest' or a date-time string of the format '%Y-%m-%dT%H.%M.%OSZ', e.g., '2018-11-29T19.21.22.768Z'. Latest used.")
-					from <- "snapshot/latest"
+					from <- "dataset"
 				}
 			}
-			else{
-				from <- "dataset"
-			}
+			### # If the snapshot is given as a character string, interpret this as either a datetime specifying the snapshot directly, or as a date, in which case the latest snapshot is searched for:
+			### else if(is.character(snapshot)){
+			### 	date <- as.Date(snapshot, tz="UTC")
+			### 	dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
+			### 	dateTime <- as.POSIXct(snapshot, format=dateTimeNMDAPIFormat, tz="UTC")
+			### 
+			### 	# Use the input dateTime string if recognized by the format:
+			### 	if(!is.na(dateTime)){
+			### 		from <- paste("snapshot", snapshot, sep="/")
+			### 	}
+			### 	# If the 'snapshot' can be interpreted as a date, search for the latest snapshot of that date:
+			### 	else if(!is.na(date)){
+			### 		from <- "snapshot"
+			### 		temp <- getDownloadURL(x=out, dataSource=thisDataSource, server=server, from=from, ver=ver)
+			### 		temp <- downloadXML(URLencode(temp), msg=FALSE)
+			### 		snapshotDateTimes <- sapply(temp$row, "[[", "text")
+			### 		snapshotDateTimesPOSIXct <- as.POSIXct(snapshotDateTimes, format=dateTimeNMDAPIFormat, tz="UTC")
+			### 		snapshotDates <- as.Date(snapshotDateTimesPOSIXct)
+			### 		latest <- which(snapshotDates <= date)
+			### 		if(!any(latest)){
+			### 			warning(paste0("No snapshots at or before the the specified 'snapshot' date (", snapshot, "). The latest chosen"))
+			### 			from <- "snapshot/latest"
+			### 		}
+			### 		else{
+			### 			#message("Using snapshot ", snapshotDateTimes[latest])
+			### 			latest <- max(latest)
+			### 			from <- paste("snapshot", snapshotDateTimes[latest], sep="/")
+			### 		}
+			### 	}
+			### 	else{
+			### 		warrning("Invalid value of 'snapshot'. Must be the string 'latest' or a date-time string of the format '%Y-%m-%dT%H.%M.%OSZ', e.g., '2018-11-29T19.21.22.768Z'. Latest used.")
+			### 		from <- "snapshot/latest"
+			### 	}
+			### }
+			### else{
+			### 	from <- "dataset"
+			### }
 		}
 		else{
 			from <- "dataset"
@@ -2374,7 +2428,10 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 		
 		out <- getDownloadURL(x=out, dataSource=thisDataSource, server=server, from=from, ver=ver)
 		
-		names(out) <- searchURL
+		out <- data.frame(fileURL=out, searchURL=searchURL, snapshot=from, stringsAsFactors=FALSE)
+		
+		#names(out) <- searchURL
+		#attr(out, "snapshot") <- from
 		out
 	}
 	
@@ -2387,24 +2444,18 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, dataSource="biotic", ver=ge
 		dataSource <- x$NMD_data_source
 		cruisenr <- x$Cruise
 	}
-	
-	
-	### # Add support for giving 'ver' as a single numeric, as was done prior to Rstox_1.10:
-	### if(!is.list(ver)){
-	### 	ver <- list(API=ver[1])
-	### }
-	
+
+
 	if(length(cruisenr)==2 && length(shipname)==0){
 		shipname <- cruisenr[2]
 		cruisenr <- cruisenr[1]
 	}
 	
-	# 2018-12-03: It was discrovered that the 
-	
-	
 	# Get the URLs:
-	out <- unlist(papply(seq_along(cruisenr), findCruiseURL, cruisenr=cruisenr, shipname=shipname, dataSource=dataSource, server=server, ver=ver, snapshot=snapshot, info.msg="Searching for files"))
-
+	#out <- unlist(papply(seq_along(cruisenr), findCruiseURL, cruisenr=cruisenr, shipname=shipname, dataSource=dataSource, server=server, ver=ver, snapshot=snapshot, info.msg="Searching for files"))
+	out <- papply(seq_along(cruisenr), findCruiseURL, cruisenr=cruisenr, shipname=shipname, dataSource=dataSource, server=server, ver=ver, snapshot=snapshot, info.msg="Searching for files")
+	out <- do.call(rbind, out)
+	
 	out
 }
 #*********************************************

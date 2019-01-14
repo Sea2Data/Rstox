@@ -73,6 +73,13 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	# Return available templates as default:
 	getTemplates <- function(){
 		# Changed made on 2019-01-11 after note from Mikko Vihtakari, who had installed Java 11 due to endless problems getting Java 8 and rJava to work. Java 11 seems to have introduced a difference in the behavior of the toArray() function, where the output is not a character vector but a Java Array object. For this reason the utility jobjRef2Character() was created, which converts to string first and then parses the string into a vector:
+		# This was the error message:
+		### WARNING: An illegal reflective access operation has occurred
+		### WARNING: Illegal reflective access by RJavaTools to method java.util.Arrays$ArrayList.toArray()
+		### WARNING: Please consider reporting this to the maintainers of RJavaTools
+		### WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+		### WARNING: All illegal access operations will be denied in a future releaseError in as.character.default(new("jrectRef", dimension = 9L, jsig = "[Ljava/lang/Object;",  : 
+		###   no method for coercing this S4 class to a vector
 		# templates <- J("no.imr.stox.factory.Factory")$getAvailableTemplates()$toArray()
 		templates <- jobjRef2Character(J("no.imr.stox.factory.Factory")$getAvailableTemplates())
 		descriptions <- sapply(templates, J("no.imr.stox.factory.Factory")$getTemplateDescription)
@@ -2556,6 +2563,10 @@ initiateRstoxEnv <- function(){
 		landing = NULL
 	)
 	
+	# The format used by NMD for shapshot time:
+	dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
+	
+	# The current API and datasource formats:
 	ver <- list(
 		API = list(
 			biotic = "2", 
@@ -2739,6 +2750,7 @@ initiateRstoxEnv <- function(){
 		StoX_data_sources = StoX_data_sources, 
 		StoX_data_type_keys = StoX_data_type_keys, 
 		StoX_reading_processes = StoX_reading_processes, 
+		dateTimeNMDAPIFormat = dateTimeNMDAPIFormat, 
 		NMD_data_sources = NMD_data_sources, 
 		NMD_API_versions = NMD_API_versions, 
 		ver = ver, 
@@ -2815,9 +2827,16 @@ getModelType <- function(modelType){
 #' @export
 #' @keywords internal
 #'
-getRstoxVersion <- function(out=c("list", "string")){
+getRstoxVersion <- function(out=c("list", "string"), dependencies=c("eca")){
 	Rstox.init()
 	ver <- list(Rstox=as.character(packageVersion("Rstox")), StoXLib=J("no.imr.stox.model.Project")$RESOURCE_VERSION)
+	installed <- installed.packages()[, "Package"]
+	if(any(dependencies %in% installed)){
+		installed <- intersect(dependencies, installed)
+		add <- lapply(installed, function(x) as.character(packageVersion(x)))
+		names(add) <- installed
+		ver <- c(ver, add)
+	}
 	if(out[1]=="string"){
 		ver <- paste(names(ver), unlist(ver), sep="_", collapse="_")
 	}
