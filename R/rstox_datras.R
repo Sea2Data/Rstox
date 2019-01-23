@@ -4,31 +4,23 @@
 #' and the previous submissions in the HH file due to lack of trawl sensor and CTD data:
 #' (HydroStNo, Netopening, DoorSpread, WingSpread) (SurTemp BotTemp SurSal BotSal)
 #'
-#' @param datrasProject                         The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.
-#' @param cruiseNumber                          If not NULL, create a new StoX project for DATRAS conversion with a specific cruise number, must be use together with cruiseShip.
-#' @param cruiseShip                            If not NULL, create a new StoX project for DATRAS conversion with a specific cruise name, must be use together with cruiseNumber.
-#' @param ver                                   The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)), or simply ver = 1. Giving \code{ver} as a single integer imposes this value on all API versions. To set API versions to 1 and at the same time set the version of the data, use e.g. ver = list(API=1, biotic=1.4). Only valid when creating a new StoX project for DATRAS conversion.
-#' @param server                                The path of the server. Only valid when creating a new StoX project for DATRAS conversion.
-#' @param snapshot                              Specifies whether the biotic data is downloaded from snapshot. Only valid when creating a new StoX project for DATRAS conversion.
-#' @param overwrite                             Specifies whether to ovewrite existing project (if any): If TRUE, overwrite; if FALSE, do not overwrite. Only valid when creating a new StoX project for DATRAS conversion.
+#' @param datrasProject The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.
 #'
 #' @examples
 #' # Process existing project
-#' datras <- processDatras("IBTS-Q1_2016")
-#' head(datras$HH)
-#' head(datras$HH)
-#' # Create new project
-#  datras <- processDatras(NULL, "2017614", "Kristine Bonnevie")
+#' datras <- prepDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
+#' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt)
+#' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HL.txt)
 #'
 #' @importFrom XML xmlParse getNodeSet xmlGetAttr
 #' @export
-#' @rdname processDatras
+#' @rdname prepDatras
 #'
-processDatras <- function(datrasProject, cruiseNumber = NULL, cruiseShip = NULL, ver = list(biotic = 3, API = list(biotic = 3)), server = "http://tomcat7.imr.no:8080/apis/nmdapi", snapshot = TRUE, overwrite = FALSE)
+prepDatras <- function(datrasProject)
 {
 	# For getting the ship code
 	# TODO: There is old and new ship code, must think of some way to differentiate that (currently, assuming only new)
-	getShipCode <- function(shipName){
+	getICESShipCode <- function(shipName){
 		# We have to remove "."," " and use uppercase
 		shipName <- toupper(gsub("[[:space:][:punct:]]", "", shipName))
 
@@ -82,11 +74,11 @@ processDatras <- function(datrasProject, cruiseNumber = NULL, cruiseShip = NULL,
 
 	# Get Biotic data using Rstox (if there is a valid project)
 	# TODO: check datras output
-	if(!is.null(cruiseNumber) && !is.null(cruiseShip)) {
-		datrasProject <- getNMDdata(cruise = cruiseNumber, shipname = cruiseShip, model = "DATRASTemplate", ver = ver, server = server, snapshot = snapshot, ow = overwrite)
-		if(is.null(datrasProject))
-			datrasProject <- paste("NMD", "CruiseNumber", cruiseNumber,"ShipName", cruiseShip, sep="_")
-	}
+	#if(!is.null(cruiseNumber) && !is.null(cruiseShip)) {
+	#	datrasProject <- getNMDdata(cruise = cruiseNumber, shipname = cruiseShip, model = "DATRASTemplate", ver = ver, server = server, snapshot = snapshot, ow = overwrite)
+	#	if(is.null(datrasProject))
+	#		datrasProject <- paste("NMD", "CruiseNumber", cruiseNumber,"ShipName", cruiseShip, sep="_")
+	#}
 	rstox.data <- NULL
 
 	# Process StoX baseline
@@ -98,7 +90,7 @@ processDatras <- function(datrasProject, cruiseNumber = NULL, cruiseShip = NULL,
 
 	# Get the DATRAS convert outputs
 	if(is.null(rstox.data$outputData) || is.null(rstox.data$outputData$DATRASConvert)){
-		cat("ERROR: No DATRAS output found. Please double check the project settings!")
+		cat("ERROR: No DATRAS output found. Please double check the project settings and ensure datrasConvert R model is included!")
 		return(NULL)
 	}
 
@@ -133,7 +125,10 @@ processDatras <- function(datrasProject, cruiseNumber = NULL, cruiseShip = NULL,
 	ca$Country<-'NOR'
 
 	## get ship code from ICES
-	shipCode <- getShipCode(cruiseShip)
+	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_FishStation.txt$cruise)
+	Year <- unique(hh$Year)
+	cruiseShip <-  unlist(lapply(getNMDinfo("cs"), function(x) x[x$Cruise==cruiseNo[1] & x$Year==Year[1], "ShipName"]))
+	shipCode <- getICESShipCode(cruiseShip[1])
 
 	hh$Ship <- shipCode
 	hl$Ship <- shipCode
@@ -199,7 +194,7 @@ processDatras <- function(datrasProject, cruiseNumber = NULL, cruiseShip = NULL,
 	hh$KiteDim<-round(hh$KiteDim, 1)
 	hh$Netopening<-round(hh$Netopening, 1)
 	hh$WingSpread<-round(hh$WingSpread, 1)
-	hh$DoorSpread<-round(hh$DoorSpread, 1)
+	hh$DoorSpread<-sprintf("%.1f", round(hh$DoorSpread, 1))
 	hh$DataType<-as.character(as.factor(hh$DataType))
 	hh$HaulVal<-as.character(as.factor(hh$HaulVal))
 	hl$TotalNo<-sprintf("%.2f",round(as.numeric(as.character(hl$TotalNo)), 2))
@@ -314,13 +309,17 @@ processDatras <- function(datrasProject, cruiseNumber = NULL, cruiseShip = NULL,
 	tmp<-list(HH=HH,HL=HL,CA=CA)
 
 	# Prepare output file name and rename previous output file if exists
-	reportFile <- paste0(file.path(getProjectPaths(datrasProject)$RReportDir, paste0(paste0(cruiseNumber, ".", cruiseShip), ".DATRAS.export.txt")))
+	reportFile <- paste0(file.path(getProjectPaths(datrasProject)$RReportDir, paste0(paste0(cruiseNo, ".", cruiseShip), ".DATRAS.export.txt")))
 	if(file.exists(reportFile))
 		file.rename(reportFile, paste0(reportFile,".old"))
 
 	# Write it
 	lapply(tmp, write.table, file = reportFile, append=TRUE, row.names = FALSE, quote = FALSE, sep = ",")
 
-	# Return data as well
-	return(list(HH=HH,HL=HL,CA=CA))
+	# Return Datras data as well, overwrite old data
+	rstox.data$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt <- HH
+	rstox.data$outputData$DATRASConvert$DATRASConvert_BioticData_HL.txt <- HL
+	rstox.data$outputData$DATRASConvert$DATRASConvert_BioticData_CA.txt <- CA
+
+	return(rstox.data)
 }
