@@ -14,13 +14,13 @@ getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
   serialno = NULL, tsn = NULL, dataSource = NULL, dir = NULL,
   subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
-  prefix = "NMD", ver = getRstoxDef("ver"),
+  prefix = "NMD", suffix = NA, ver = getRstoxDef("ver"),
   server = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
   return.URL = FALSE, info.out = FALSE, run = TRUE, timeout = NULL,
-  zipSTS = TRUE, snapshot = FALSE, ...)
+  snapshot = Sys.time(), ...)
 
-getNMDver(ver = NULL, name = NULL)
+getNMDver(ver = NULL)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
   method = "auto", timeout = NULL)
@@ -69,7 +69,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{subset}{An vector giving the subset of the cruises/projects to download in a cruise series/survey time series. Can be given either as indices such as 1:3 or -4 or as a vector of years or cruise numbers such as c(2005, 2007, 2008) or c(2005105, 2007845, 2008809). Get the years and cruise numbers using getNMDinfo("cs").}
 
-\item{prefix}{The prefix to use in the names of the StoX projects to which the data are downloaded.}
+\item{prefix, suffix}{The prefix/suffix to use in the names of the StoX projects to which the data are downloaded, separated from the file name by underscore.}
 
 \item{cleanup}{Logical: if FALSE, zip files containing cruise series or survey time series are not deleted.}
 
@@ -77,11 +77,13 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{ow}{Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.}
 
+\item{info.out}{Logical: If TRUE, return a data frame with download info along with the project paths.}
+
 \item{run}{Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).}
 
 \item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).}
 
-\item{zipSTS}{Logical: If TRUE, download the zipped survey time series projects.}
+\item{snapshot}{A time stamp specifying which snapshot to download. The latest snapshot before this time stamp is found and downloaded. The specific snapshot ID can also be given, as a string in the format returned from getRstoxDef("dateTimeNMDAPIFormat").}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
@@ -103,6 +105,7 @@ If non-standard characters are not shown as expected, it might be an issue of lo
 It may help to run Sys.setlocale(category = "LC_ALL", locale = ""), at least to display nordic characters on a nordic system.
 }
 \examples{
+\dontrun{
 # A list of available reference data:
 g1 <- getNMDinfo()
 # List of cruise series:
@@ -121,6 +124,7 @@ g9 <- getNMDinfo("taxa")
 g9[g9$Norwegian=="torsk",]
 # And all names containing "torsk":
 g9[grep("torsk", g9$Norwegian, ignore.case=TRUE),]
+}
 
 # Download all reference data (takes at lest 5 minutes):
 # system.time(l <- lapply(g1, getNMDinfo, msg=TRUE))

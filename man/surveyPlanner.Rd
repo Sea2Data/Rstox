@@ -13,20 +13,19 @@
 surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   bearing = "N", rev = FALSE, retour = FALSE, toursFirst = FALSE,
   hours = 240, nmi = NULL, t0 = NULL, knots = 10, seed = 0,
-  angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
-  equalEffort = FALSE, byStratum = TRUE, strata = "all",
-  cruise = "surveyPlanner", keepTransport = TRUE, centroid = NULL,
-  ...)
+  angsep = 1/6, distsep = NULL, margin = NULL, equalEffort = FALSE,
+  byStratum = TRUE, strata = "all", cruise = "surveyPlanner",
+  keepTransport = TRUE, centroid = NULL, ...)
 
 addStratum(x, acousticProc = "FilterAcoustic")
 
 subsetStrata(strata, lonlat)
 
 plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
-  transport_alpha = 0.1, google = FALSE, margin = 0.5, zoom = 4,
-  aspectratio = NULL, xlab = "Longitude", ylab = "Latitude",
-  xlim = NULL, ylim = NULL, keep0effort = TRUE, strata = "all",
-  strataNameCol = "darkblue", ...)
+  transport_alpha = 0.1, zoom = 1.5, aspectratio = NULL,
+  xlab = "Longitude", ylab = "Latitude", xlim = NULL, ylim = NULL,
+  keep0effort = TRUE, strata = "all", strataNameCol = "darkblue",
+  ...)
 
 addStratumBordersAndNames(p, x, strataNameCol = "darkblue")
 
@@ -42,7 +41,7 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 
 \item{type}{The type of the transects, repeated to the number of stratums. See details for possible values. Case insensitive.}
 
-\item{bearing}{The survey bearing of each transect, given in one of 4 ways: (1) by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", (2) as angles counter clockwise from EAST on degrees, (3) as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates, or (4) as a data frame with columns "lon_start", "lon_stop", "lat_start", "lat_stop" defining the angles between a start and end point for each stratum.}
+\item{bearing}{The survey bearing of each transect, given in one of 4 ways: (1) by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", (2) as angles counter clockwise from EAST in degrees, (3) as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates, or (4) as a data frame with columns "lon_start", "lon_stop", "lat_start", "lat_stop" defining the angles between a start and end point for each stratum.}
 
 \item{rev}{Logical: If TRUE, the bearing calculated by the funciton when bearing = "along" or "across" is reversed, i.e., going from East to West instead of West to East.}
 
@@ -61,8 +60,6 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 \item{angsep}{The separation in degrees of points populating the stratum polygons (geographical coordinates longitude, latitude). Low values preserve the stratum borders when converting to Cartesian coordinates.}
 
 \item{distsep}{The separation in nautical miles of points populating the transects in Cartesian coordinates before converting back to geographical coordinates. When given, this parameter preserves the shortest travel distance (great-circle distances) of the transects (inducing curved lines in geographical coordinates).}
-
-\item{plot}{Deprecated: Plots the transects in Cartesian coordintes. Use \code{\link{plotStratum}} instead().}
 
 \item{margin}{The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.}
 
@@ -84,9 +81,7 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 
 \item{transport_alpha}{The transparency to use for the transport paths.}
 
-\item{google}{Logical: If TRUE, download Google maps.}
-
-\item{zoom}{The zoom to use for google maps}
+\item{zoom}{The zoom relative to the extent of the range of the transect positions. Default is 1.5.}
 
 \item{aspectratio}{The aspect ratio of the plot, adjusted automatically by default.}
 

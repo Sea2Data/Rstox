@@ -25,3 +25,13 @@ A list with names "Stratum" and "Total" containing dataframes for each species w
 \description{
 Calculates mean, variance, coefficient of variation and 90 % confidence bounds based on Jolly, G. M., & Hampton, I. (1990). A stratified random transect design for acoustic surveys of fish stocks. Canadian Journal of Fisheries and Aquatic Sciences, 47(7), 1282-1291.
 }
+\examples{
+\dontrun{
+# Download an example swept area project:
+# pr <- createProject(
+#     "ftp://ftp.imr.no/StoX/Example\%20projects/Example_sweptarea_BarentsSea_cod_1999.zip"
+# )
+# v <- varianceEstimation(pr)
+}
+
+}

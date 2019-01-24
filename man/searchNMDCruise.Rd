@@ -7,7 +7,7 @@
 searchNMDCruise(cruisenr, shipname = NULL, dataSource = "biotic",
   ver = getRstoxDef("ver"),
   server = "http://tomcat7.imr.no:8080/apis/nmdapi",
-  return.URL = FALSE, snapshot = FALSE)
+  return.URL = FALSE, snapshot = Sys.time())
 }
 \arguments{
 \item{dataSource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. dataSource=NULL (default) returns all possible data.}

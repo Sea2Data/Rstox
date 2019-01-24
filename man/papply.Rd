@@ -8,13 +8,17 @@ papply(X, FUN, ..., cores = 1, outfile = "", info.msg = NULL,
   end.msg = "", appendLF = TRUE, pb = TRUE)
 }
 \arguments{
-\item{X, FUN, ...}{See \code{\link{pbapply::pblapply}}.}
+\item{X, FUN, ...}{See \code{\link[pbapply]{pblapply}}.}
 
 \item{cores}{An integer giving the number of cores to run the function FUN over.}
 
 \item{outfile}{Set this to FALSE to suppress printing from the cores.}
 
 \item{info.msg}{A message to print to the console, followed by the number of runs (and the number of cores in the case of parallel processing).}
+
+\item{end.msg}{A message to print to the consoleat the end of the processing.}
+
+\item{appendLF}{Used for the \code{end.msg}. If TRUE aappend a newline to the end message.}
 
 \item{pb}{Logical: If FALSE suppress the progress bar.}
 }

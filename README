@@ -1,4 +1,4 @@
-# Rstox version: 1.9.1 (latest alpha, 2019-01-14)
+# Rstox version: 1.9.1 (latest alpha, 2019-01-24)
 # R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -16,14 +16,19 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # Install from github using the devtools package:
 # devtools::install_github("Sea2Data/Rstox", ref="develop")
 
-# R should be installed as the 64 bit version. On Windows 10 ONLY the 64 bit version should be used. 
+# R should be installed as the 64 bit version. On Windows 10, ONLY the 64 bit version should be used.
 # To do this, uncheck the box "32-bit Files" when selecting components to install.
-# If you are re-intalling an R that has both 32 and 64 bit, you will need to uninstall R first.
+# If you are re-installing an R that has both 32 and 64 bit, you will need to uninstall R first.
+
 # On Windows systems with adminstrator requirements, it is recommended to install R in C:/users/<user>/documents/R.
+# Also if you are using Rstudio, please make sure that you are using the correct R version (in case you have
+# multiple versions installed). The R version can be selected in Tools > Global Options.
 
 # Note that 64 bit Java is required to run Rstox
+
 # On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp,
 # or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/
+
 # On Mac, getting Java and Rstox to communicate can be challenging.
 # If you run into problems such as "Unsupported major.minor version ...", try the following:
 # Update java, on
@@ -31,6 +36,8 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # If this does not work install first the JDK and then the JRE:
 # 	http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 # 	http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+# Rstox sohuld also work with Java 11, presently available only as Development Kit:
+# 	https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html
 # You may want to check that the downloaded version is first in the list by running the following in the Terminal:
 # 	/usr/libexec/java_home -V
 # 	java -version

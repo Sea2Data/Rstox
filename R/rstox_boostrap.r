@@ -269,6 +269,7 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' \dontrun{
 #' projectName <- "Test_Rstox"
 #' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")
+#' }
 #'
 #' @importFrom stats terms as.formula
 #'
@@ -569,8 +570,11 @@ getBootstrapMethod <- function(bootstrapMethod="AcousticTrawl", acousticMethod=P
 #' @examples
 #' \dontrun{
 #' # Download an example swept area project:
-#' # pr <- createProject("ftp://ftp.imr.no/StoX/Example%20projects/Example_sweptarea_BarentsSea_cod_1999.zip")
+#' # pr <- createProject(
+#' #     "ftp://ftp.imr.no/StoX/Example%20projects/Example_sweptarea_BarentsSea_cod_1999.zip"
+#' # )
 #' # v <- varianceEstimation(pr)
+#' }
 #'
 #' @importFrom utils head
 #' @importFrom data.table rbindlist

@@ -772,3 +772,10 @@ Renamed the parameter API to server in getNMDinfo() and getNMDdata(). No backwar
 Fixed bug with Java v11.
 
 Fixed bug with subset in getNMDdata().
+
+Changed the parameter 'margin' in plotStratum() to the new parameter 'zoom', which has default 1.5 and where 1 indicates no zooming, The old parameter named 'zoom' has been removed along with the parameter 'google' for Google-maps type of plots due to new requirements for users to create an API project and get this authorized.
+
+
+
+
+########### implement sqrt(Area) instead of Area, and add coverage as a parameter similar to hours

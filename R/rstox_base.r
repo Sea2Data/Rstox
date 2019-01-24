@@ -70,29 +70,8 @@
 #' 
 createProject <- function(projectName=NULL, files=list(), dir=NULL, model="StationLengthDistTemplate", ow=NULL, open=TRUE, ignore.processXML=FALSE, parlist=list(), msg=TRUE, ...){
 	##### Functions: #####
-	# Return available templates as default:
-	getTemplates <- function(){
-		# Changed made on 2019-01-11 after note from Mikko Vihtakari, who had installed Java 11 due to endless problems getting Java 8 and rJava to work. Java 11 seems to have introduced a difference in the behavior of the toArray() function, where the output is not a character vector but a Java Array object. For this reason the utility jobjRef2Character() was created, which converts to string first and then parses the string into a vector:
-		# This was the error message:
-		### WARNING: An illegal reflective access operation has occurred
-		### WARNING: Illegal reflective access by RJavaTools to method java.util.Arrays$ArrayList.toArray()
-		### WARNING: Please consider reporting this to the maintainers of RJavaTools
-		### WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
-		### WARNING: All illegal access operations will be denied in a future releaseError in as.character.default(new("jrectRef", dimension = 9L, jsig = "[Ljava/lang/Object;",  : 
-		###   no method for coercing this S4 class to a vector
-		# templates <- J("no.imr.stox.factory.Factory")$getAvailableTemplates()$toArray()
-		templates <- jobjRef2Character(J("no.imr.stox.factory.Factory")$getAvailableTemplates())
-		descriptions <- sapply(templates, J("no.imr.stox.factory.Factory")$getTemplateDescription)
-		templateProcesses <- lapply(templates, function(x) J("no.imr.stox.factory.FactoryUtil")$getTemplateProcessNamesByModel(x, "baseline"))
-		names(templateProcesses) <- templates
-		for(i in seq_along(templateProcesses)){
-			attr(templateProcesses[[i]], "description") <- descriptions[i]
-		}
-		templateProcesses
-		#l <- list(Templates=templateProcesses, Descriptions=cbind(Template=templates, Description=unname(descriptions)))
-		#cbind(Template=templates, Description=unname(descriptions), processNames=sapply(templateProcesses, paste, collapse=", "))
-	}
-	matchTemplates <- function(template, availableTemplates){
+	matchTemplates <- function(template){
+		availableTemplates <- getTemplates(names.only=TRUE)
 		availableTemplates[ which(tolower(substr(availableTemplates, 1, nchar(template))) == tolower(template)) ]
 	}
 	# Function used for detecting URLs:
@@ -139,9 +118,8 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 	# J() and reference to "no/imr/stox/model/Project" requires	Rstox.init():
 	Rstox.init()
 	
-	availableTemplates <- getTemplates()
 	if(length(projectName)==0){
-		return(availableTemplates)
+		return(getTemplates())
 	}
 	
 	nprojects <- length(projectName)
@@ -195,25 +173,39 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		############################################
 		##### 3. Apply the specified template: #####
 		############################################
-		userDefined <- is.list(model) || (length(model)>0 && !model[1] %in% names(availableTemplates))
+		# If the model contains a template string, transform this string to a list:
+		if(length(model)>1 && any(model %in% getTemplates(names.only=TRUE))){
+			# Detect template strings in the 'model':
+			atDetectedTemplates <- which(model %in% getTemplates(names.only=TRUE))
+			detectedTemplates <- unlist(model[atDetectedTemplates])
+			# Remove the detected templates:
+			model <- model[-atDetectedTemplates]
+			# Convert the template strings to partlist:
+			templateParlist <- unlist(lapply(detectedTemplates, template2parlist), recursive=FALSE)
+			# Add the parlist to the start of 'model':
+			model <- c(templateParlist, model)
+		}
+		
+		# Detect whether the model is user defined:
+		userDefined <- is.list(model) || (length(model)>0 && !model[1] %in% getTemplates(names.only=TRUE))
 		# Select the template given the user input:
 		if(userDefined){
-			template <- matchTemplates("UserDefined", names(availableTemplates))
+			template <- matchTemplates("UserDefined")
 		}
 		else if(length(model)){
 			# Find the templates that match the available tempaltes case insensitively and using abbreviation:
-			template <- matchTemplates(model[1], names(availableTemplates))
+			template <- matchTemplates(model[1])
 			if(length(template)>1){
 				template <- template[1]
 				warning(paste0("Multiple templates matched. The first used (", template, ")"))
 			}
 			 else if(length(template)==0){
 				warning(paste0("'template' matches no templates. Run createProject() to get a list of available tempaltes. Default used (", "StationLengthDist", ")"))
-				template <- matchTemplates("StationLengthDist", names(availableTemplates))
+				template <- matchTemplates("StationLengthDist")
 			}
 		}
 		else{
-			template <- matchTemplates("StationLengthDist", names(availableTemplates))
+			template <- matchTemplates("StationLengthDist")
 		}
 		############################################
 		############################################
@@ -350,7 +342,7 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 			else if(length(matches)>1){
 				#warning(paste0("Multiple StoX projects matching \"", projectName, "\". Use the full path, or path relative to the default workspace, to specify the project uniquely. The first of the following list selected:\n", paste0("\t", availableProjects$projectPaths[matches], collapse="\n")))
 				warning.length <- options("warning.length")
-				options(warning.length = 10000L)
+				options(warning.length = 8170L)
 				stop(paste0("Multiple StoX projects matching \"", projectName, "\". Use the full path, or path relative to the default workspace (", getProjectPaths()$projectRoot, ") to specify the project uniquely:\n", paste0("\t", availableProjects$projectPaths[matches], collapse="\n")))
 				options(warning.length = warning.length)
 			}
@@ -841,6 +833,91 @@ generateRScripts <- function(projectName){
 
 #*********************************************
 #*********************************************
+#' Download a zipped StoX project to a specified project path.
+#'
+#' @param URL			The URL of the zipped project.
+#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param projectRoot	The root directory of the project in which to save the downloaded files (set this if you wish to place the files in a project specified by its name, and not in the default root directory).
+#' @param cleanup		Logical: if FALSE, the downloaded zip file is not deleted.
+#' @param ow,msg		See \code{\link{getow}}.
+#' @param onlyone   	Logical: If TRUE, only one project is checked (no for loop).
+#'
+#' @export
+#' @keywords internal
+#' @rdname downloadProjectZip
+#'
+downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=TRUE, ow=TRUE, msg=TRUE, onlyone=TRUE){
+	# Get the project path. If 'projectName' is not given, set this to a temporary name, and use the project name stored in the zip file. If the project path is given in 'projectName', all is good:
+	if(length(projectName)==0){
+		projectPath <- getProjectPaths(projectName="temporaryZipDownload", projectRoot=projectRoot)$projectPath
+	}
+	else{
+		projectPath <- getProjectPaths(projectName=projectName, projectRoot=projectRoot)$projectPath
+	}
+	
+	# Declare the output 'ow':
+	output_ow <- ow
+	
+	# Define the path to the downloaded zip file:
+	zipPath <- paste0(projectPath, ".zip")
+	
+	# Download the zip file, overwriting any existing file with the path 'zipPath'. Added mode="wb" to make the zip openable on Windows:
+	# Treat overwriting before downloading if the projectName was given:
+	if(length(projectName)){
+		if(file.exists(projectPath)){
+			temp <- getow(ow, projectPath, onlyone=onlyone, msg=msg)
+			output_ow <- temp$ow
+			# Return from the function if not overwriting:
+			if(temp$jumpToNext){
+				# Added appropriate return value as per notice from Ibrahim on 2018-02-05 (changed from FALSE to 1 (see the Value section of ?download.file) on 2018-03-01):
+				return(list(downloadSuccess = FALSE, ow = output_ow))
+			}
+		}
+	}
+	# Download the file and record whether it was a success or failure by a logical variable for clearity (and not as an integer as returned by download.file()):
+	downloadSuccess <- download.file(URL, zipPath, mode="wb") == 0
+
+	# Get the path of the unzipped file:
+	ziplist <- unzip(zipPath, list=TRUE)[,1]
+	if(dirname(ziplist[1])!="."){
+		unzipPath <- file.path(dirname(zipPath), dirname(ziplist[1]))
+	}
+	else{
+		unzipPath <- file.path(dirname(zipPath), dirname(ziplist[2]))
+	}
+	# Rename the projectPath to the unzipdir if projectName was not given:
+	if(length(projectName)==0){
+		projectPath <- unzipPath
+		# Treat overwriting:
+		if(file.exists(projectPath)){
+			temp <- getow(ow, projectPath, onlyone=onlyone, msg=msg)
+			output_ow <- temp$ow
+			# Return from the function if not overwriting:
+			if(temp$jumpToNext){
+				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:
+				return(list(downloadSuccess = FALSE, ow = output_ow))
+			}
+		}
+	}
+	
+	# Unzip the downloaded zip file:
+	unzip(zipPath, exdir=dirname(zipPath))
+	
+	# Delete zipPath, and if not equal, delete the projectPath and rename unzipPath:
+	if(length(projectName) && !identical(projectPath, unzipPath)){
+		# Delete the existing project:
+		unlink(projectPath, recursive=TRUE)
+		file.rename(unzipPath, projectPath)
+	}
+	if(cleanup){
+		unlink(zipPath)
+	}
+	# Return download success:
+	list(downloadSuccess=downloadSuccess, projectPath=projectPath, ow = output_ow)
+}
+
+#*********************************************
+#*********************************************
 #' Link to the files in a stox project
 #'
 #' Updates a project with the files located in the "input" directory. Used in updateProject().
@@ -889,84 +966,7 @@ pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 	# Return the file paths:
 	out
 }
-#pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
-#	# Function used for extracting the files located in a StoX project (getFiles does lapply of getFilesOfDataType):
-#	getFilesOfDataType <- function(data_type, projectPath){
-#		# Get the input data folder of the specified data type, and the files in that folder:
-#		dir <- file.path(projectPath, "input", data_type)
-#		files <- list.files(dir, full.names=TRUE)
-#		# Remove project path (2016-11-08):
-#		gsub(projectPath, "", files, fixed=TRUE)
-#	}
-#	getFiles <- function(projectPath, StoX_data_sources, files=NULL){
-#		if(length(files)==0){
-#			files <- lapply(StoX_data_sources, getFilesOfDataType, projectPath=projectPath)
-#			names(files) <- StoX_data_sources
-#		}
-#		if(!all(names(files) %in% StoX_data_sources)){
-#			warning(paste0("'files' must be a list with one or more of the names ", paste(StoX_data_sources, collapse=", "), ". Each element of the list must contain a vector of file paths."))
-#			files <- files[names(files) %in% StoX_data_sources]
-#		}
-#		lapply(files, path.expand)
-#	}
-#	# Function that points to the files[[data_type]] in the project. Lapply this:
-#	#pointToStoXFilesSingle <- function(data_type, project, files){
-#	#	# Get the files of the specified type:
-#	#	thesefiles <- files[[data_type]]
-#	#	# Get the StoX-function name for reading these files:
-#	#	fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
-#	#	for(i in seq_along(thesefiles)){
-#	#		proc <- project$getBaseline()$findProcessByFunction(fun)
-#	#		if(length(names(proc))){
-#	#			proc$setParameterValue(paste0("FileName",i), thesefiles[i])
-#	#		}
-#	#	}
-#	#	thesefiles
-#	#}
-#	pointToStoXFilesSingle <- function(data_type, baseline, files){
-#		# Get the files of the specified type:
-#		thesefiles <- files[[data_type]]
-#		# Get the StoX-function name for reading these files:
-#		fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
-#		for(i in seq_along(thesefiles)){
-#			proc <- baseline$findProcessByFunction(fun)
-#			if(length(names(proc))){
-#				proc$setParameterValue(paste0("FileName",i), thesefiles[i])
-#			}
-#		}
-#		thesefiles
-#	}
-#	
-#	#  # Get the project name (possibly interpreted from a project or baseline object):
-#	#  projectName <- getProjectPaths(projectName)$projectName
-#	# Open the project:
-#	#project <- openProject(projectName, out="project")
-#	baseline <- openProject(projectName, out="baseline")
-#	projectPath <- getProjectPaths(projectName)$projectPath
-#	# Get the currently defined StoX data types:
-#	StoX_data_sources <- getRstoxDef("StoX_data_sources")
-#	# Get the files if not specified in the input:
-#	#files <- getFiles(project$getProjectFolder(), StoX_data_sources, files)
-#	files <- getFiles(projectPath, StoX_data_sources=StoX_data_sources, files=files)
-#	# Point to the files, save and return:
-#	#out <- lapply(StoX_data_sources, pointToStoXFilesSingle, project, files)
-#	out <- lapply(StoX_data_sources, pointToStoXFilesSingle, baseline=baseline, files=files)
-#	names(out) <- StoX_data_sources
-#	
-#	# Save the project:
-#	#project$save()
-#	saveProject(projectName)
-#	if(close){
-#		closeProject(projectName)
-#	}
-#	
-#	# Return the file paths:
-#	out
-#}
-#' 
-#' @export
-#' @keywords internal
-#' 
+# Function for listing input files:
 listInputFiles <- function(projectName, full.names=TRUE){
 	# Get input directory and subfolders:
 	inputDir <- getProjectPaths(projectName)$inputDir
@@ -2557,7 +2557,7 @@ initiateRstoxEnv <- function(){
 	NMD_data_sources <- c(acoustic = "echosounder", biotic = "biotic", landing = "landing")
 	# The implemented NMD APIs for the NMD_data_sources:
 	NMD_API_versions <- list(
-		biotic = c(1, 2), 
+		biotic = c(1, 2, 3), 
 		echosounder = 1, 
 		reference = c(1, 2), 
 		landing = NULL
@@ -2569,13 +2569,15 @@ initiateRstoxEnv <- function(){
 	# The current API and datasource formats:
 	ver <- list(
 		API = list(
-			biotic = "2", 
+			#biotic = "2", 
+			biotic = "3", 
 			echosounder = "1", 
 			reference = "2", 
 			landing = NA
 		),
 		reference = "2.0", 
-		biotic = "1.4",
+		#biotic = "1.4",
+		biotic = "3.0",
 		echosounder = NA, 
 		landing = NA
 	)
@@ -2752,7 +2754,7 @@ initiateRstoxEnv <- function(){
 		StoX_reading_processes = StoX_reading_processes, 
 		dateTimeNMDAPIFormat = dateTimeNMDAPIFormat, 
 		NMD_data_sources = NMD_data_sources, 
-		NMD_API_versions = NMD_API_versions, 
+		#NMD_API_versions = NMD_API_versions, 
 		ver = ver, 
 		project_types = project_types, 
 		processLevels = processLevels, 
@@ -2890,92 +2892,6 @@ parString2data.frame <- function(string){
 	suppressWarnings(table <- lapply(table, function(y) if(!any(is.na(as.numeric(y)))) as.numeric(y) else y))
 	table <- as.data.frame(table)
 	table[,match(ucolnames, colnames(table))]
-}
-
-
-#*********************************************
-#*********************************************
-#' Download a zipped StoX project to a specified project path.
-#'
-#' @param URL			The URL of the zipped project.
-#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
-#' @param projectRoot	The root directory of the project in which to save the downloaded files (set this if you wish to place the files in a project specified by its name, and not in the default root directory).
-#' @param cleanup		Logical: if FALSE, the downloaded zip file is not deleted.
-#' @param ow,msg		See \code{\link{getow}}.
-#' @param onlyone   	Logical: If TRUE, only one project is checked (no for loop).
-#'
-#' @export
-#' @keywords internal
-#' @rdname downloadProjectZip
-#'
-downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=TRUE, ow=TRUE, msg=TRUE, onlyone=TRUE){
-	# Get the project path. If 'projectName' is not given, set this to a temporary name, and use the project name stored in the zip file. If the project path is given in 'projectName', all is good:
-	if(length(projectName)==0){
-		projectPath <- getProjectPaths(projectName="temporaryZipDownload", projectRoot=projectRoot)$projectPath
-	}
-	else{
-		projectPath <- getProjectPaths(projectName=projectName, projectRoot=projectRoot)$projectPath
-	}
-	
-	# Declare the output 'ow':
-	output_ow <- ow
-	
-	# Define the path to the downloaded zip file:
-	zipPath <- paste0(projectPath, ".zip")
-	
-	# Download the zip file, overwriting any existing file with the path 'zipPath'. Added mode="wb" to make the zip openable on Windows:
-	# Treat overwriting before downloading if the projectName was given:
-	if(length(projectName)){
-		if(file.exists(projectPath)){
-			temp <- getow(ow, projectPath, onlyone=onlyone, msg=msg)
-			output_ow <- temp$ow
-			# Return from the function if not overwriting:
-			if(temp$jumpToNext){
-				# Added appropriate return value as per notice from Ibrahim on 2018-02-05 (changed from FALSE to 1 (see the Value section of ?download.file) on 2018-03-01):
-				return(list(downloadSuccess = FALSE, ow = output_ow))
-			}
-		}
-	}
-	# Download the file and record whether it was a success or failure by a logical variable for clearity (and not as an integer as returned by download.file()):
-	downloadSuccess <- download.file(URL, zipPath, mode="wb") == 0
-
-	# Get the path of the unzipped file:
-	ziplist <- unzip(zipPath, list=TRUE)[,1]
-	if(dirname(ziplist[1])!="."){
-		unzipPath <- file.path(dirname(zipPath), dirname(ziplist[1]))
-	}
-	else{
-		unzipPath <- file.path(dirname(zipPath), dirname(ziplist[2]))
-	}
-	# Rename the projectPath to the unzipdir if projectName was not given:
-	if(length(projectName)==0){
-		projectPath <- unzipPath
-		# Treat overwriting:
-		if(file.exists(projectPath)){
-			temp <- getow(ow, projectPath, onlyone=onlyone, msg=msg)
-			output_ow <- temp$ow
-			# Return from the function if not overwriting:
-			if(temp$jumpToNext){
-				# Added appropriate return value as per notice from Ibrahim on 2018-02-05:
-				return(list(downloadSuccess = FALSE, ow = output_ow))
-			}
-		}
-	}
-	
-	# Unzip the downloaded zip file:
-	unzip(zipPath, exdir=dirname(zipPath))
-	
-	# Delete zipPath, and if not equal, delete the projectPath and rename unzipPath:
-	if(length(projectName) && !identical(projectPath, unzipPath)){
-		# Delete the existing project:
-		unlink(projectPath, recursive=TRUE)
-		file.rename(unzipPath, projectPath)
-	}
-	if(cleanup){
-		unlink(zipPath)
-	}
-	# Return download success:
-	list(downloadSuccess=downloadSuccess, projectPath=projectPath, ow = output_ow)
 }
 
 
@@ -3475,10 +3391,12 @@ getLogStoXid <- function(Log, timevar="start_time"){
 #'
 #' Detects and opens cores for simpler parallel lapply.
 #'
-#' @param X,FUN,...	See \code{\link{pbapply::pblapply}}.
+#' @param X,FUN,...	See \code{\link[pbapply]{pblapply}}.
 #' @param cores		An integer giving the number of cores to run the function FUN over.
 #' @param outfile	Set this to FALSE to suppress printing from the cores.
 #' @param info.msg	A message to print to the console, followed by the number of runs (and the number of cores in the case of parallel processing).
+#' @param end.msg	A message to print to the consoleat the end of the processing.
+#' @param appendLF	Used for the \code{end.msg}. If TRUE aappend a newline to the end message.
 #' @param pb		Logical: If FALSE suppress the progress bar.
 #'
 #' @examples
@@ -3570,4 +3488,41 @@ getOptionsText <- function(options, string.out=FALSE){
 	else{
 		options
 	}
+}
+
+
+
+getTemplates <- function(names.only=FALSE){
+	# Changed made on 2019-01-11 after note from Mikko Vihtakari, who had installed Java 11 due to endless problems getting Java 8 and rJava to work. Java 11 seems to have introduced a difference in the behavior of the toArray() function, where the output is not a character vector but a Java Array object. For this reason the utility jobjRef2Character() was created, which converts to string first and then parses the string into a vector:
+	# This was the error message:
+	### WARNING: An illegal reflective access operation has occurred
+	### WARNING: Illegal reflective access by RJavaTools to method java.util.Arrays$ArrayList.toArray()
+	### WARNING: Please consider reporting this to the maintainers of RJavaTools
+	### WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+	### WARNING: All illegal access operations will be denied in a future releaseError in as.character.default(new("jrectRef", dimension = 9L, jsig = "[Ljava/lang/Object;",  : 
+	###   no method for coercing this S4 class to a vector
+	# templates <- J("no.imr.stox.factory.Factory")$getAvailableTemplates()$toArray()
+	templates <- jobjRef2Character(J("no.imr.stox.factory.Factory")$getAvailableTemplates())
+	if(names.only){
+		return(templates)
+	}
+	descriptions <- sapply(templates, J("no.imr.stox.factory.Factory")$getTemplateDescription)
+	templateProcesses <- lapply(templates, function(x) J("no.imr.stox.factory.FactoryUtil")$getTemplateProcessNamesByModel(x, "baseline"))
+	names(templateProcesses) <- templates
+	for(i in seq_along(templateProcesses)){
+		attr(templateProcesses[[i]], "description") <- descriptions[i]
+	}
+	templateProcesses
+	#l <- list(Templates=templateProcesses, Descriptions=cbind(Template=templates, Description=unname(descriptions)))
+	#cbind(Template=templates, Description=unname(descriptions), processNames=sapply(templateProcesses, paste, collapse=", "))
+}
+template2parlist <- function(template){
+	# Create a project with the template:
+	###template <- matchTemplates(template)
+	dir <- tempdir()
+	projectName <- createProject("tempProject", dir=path.expand(dir), model=template, msg=FALSE, ow=TRUE)
+	
+	# Read and return the parameters:
+	par <- getBaselineParameters(projectName)$last
+	par
 }
