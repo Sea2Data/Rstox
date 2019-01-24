@@ -7,16 +7,18 @@
 #' @param datrasProject The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.
 #'
 #' @examples
+#' \dontrun{
 #' # Process existing project
-#' datras <- prepDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
+#' datras <- exportDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt)
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HL.txt)
+#' }
 #'
 #' @importFrom XML xmlParse getNodeSet xmlGetAttr
 #' @export
-#' @rdname prepDatras
+#' @rdname exportDatras
 #'
-prepDatras <- function(datrasProject)
+exportDatras <- function(datrasProject)
 {
 	# For getting the ship code
 	# TODO: There is old and new ship code, must think of some way to differentiate that (currently, assuming only new)
