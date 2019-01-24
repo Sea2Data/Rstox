@@ -819,16 +819,6 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 	unlink(project)
 	return(out)
 }
-#'
-#' @export
-#' @rdname createProject
-#'
-generateRScripts <- function(projectName){
-	project <- openProject(projectName, out="project")
-	project$getRModel()$generateRTrigger()
-	project$getRModelReport()$generateRTrigger()
-	project
-}
 
 
 #*********************************************
@@ -1301,6 +1291,62 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 	
 	invisible(out)
 }
+#'
+#' @export
+#' @rdname runBaseline
+#'
+generateRScripts <- function(projectName, fresh=TRUE){
+	# Get the paths to the r and r-report scripts:
+	projectPath <- getProjectPaths(projectName=projectName)$projectPath
+	r_script <- file.path(projectPath, "output", "R", "r.R")
+	rreport_script <- file.path(projectPath, "output", "R", "r-report.R")
+	
+	generateNewRScript <- fresh || (!fresh && !file.exists(r_script))
+	generateNewRreportScript <- fresh || (!fresh && !file.exists(rreport_script))
+	
+	# Open the project and generate the scripts (if fresh=TRUE or if they are missing):
+	if(any(generateNewRScript, generateNewRreportScript)){
+		project <- openProject(projectName, out="project")
+	}
+	if(generateNewRScript){
+		project$getRModel()$generateRTrigger()
+	}
+	if(generateNewRScript){
+		project$getRModelReport()$generateRTrigger()
+	}
+	closeProject(projectName)
+	
+	list(r_script=r_script, rreport_script=rreport_script)
+}
+#'
+#' @export
+#' @rdname runBaseline
+#'
+runRScripts <- function(projectName, modelType=c("r", "r-report"), fresh=TRUE, msg=TRUE, add.time=FALSE){
+	temp <- generateRScripts(projectName, fresh=fresh)
+	out <- NULL
+	if("r" %in% tolower(modelType)){
+		writeMessageToConsoleOrFile(text="Running r.R", msg=msg, add.time=add.time)
+		source(temp$r_script)
+		out <- c(out, temp$r_script)
+	}
+	if("r-report" %in% tolower(modelType)){
+		writeMessageToConsoleOrFile(text="Running r-report.R", msg=msg, add.time=add.time)
+		source(temp$rreport_script)
+		out <- c(out, temp$rreport_script)
+	}
+	
+	out
+}
+writeMessageToConsoleOrFile <- function(text, msg, add.time=FALSE){
+	if(is.character(msg) && file.exists(msg)){
+		write(paste0(if(add.time) now(TRUE), text), msg, append=TRUE)
+	}
+	else if(isTRUE(msg)){
+		message(text)
+	}
+}
+
 
 setTempRScriptFileName <- function(projectName, tempRScriptFileName, msg=TRUE){
 	

@@ -3,6 +3,8 @@
 \name{runBaseline}
 \alias{runBaseline}
 \alias{getBaseline}
+\alias{generateRScripts}
+\alias{runRScripts}
 \title{Run a StoX baseline model}
 \usage{
 runBaseline(projectName, out = c("project", "baseline",
@@ -16,6 +18,11 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
   save = FALSE, modelType = "baseline", msg = TRUE,
   exportCSV = FALSE, warningLevel = 0, parlist = list(),
   tempRScriptFileName = NULL, close = FALSE, ...)
+
+generateRScripts(projectName, fresh = TRUE)
+
+runRScripts(projectName, modelType = c("r", "r-report"), fresh = TRUE,
+  msg = TRUE, add.time = FALSE)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

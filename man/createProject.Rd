@@ -15,7 +15,6 @@
 \alias{isProject}
 \alias{getAvailableProjects}
 \alias{readXMLfiles}
-\alias{generateRScripts}
 \title{Create, open or save a StoX project}
 \usage{
 createProject(projectName = NULL, files = list(), dir = NULL,
@@ -51,8 +50,6 @@ isProject(projectName, subset.out = FALSE)
 getAvailableProjects()
 
 readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
-
-generateRScripts(projectName)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.}
