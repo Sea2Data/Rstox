@@ -4,21 +4,21 @@
 #' and the previous submissions in the HH file due to lack of trawl sensor and CTD data:
 #' (HydroStNo, Netopening, DoorSpread, WingSpread) (SurTemp BotTemp SurSal BotSal)
 #'
-#' @param datrasProject The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.
+#' @param projectName The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.
 #'
 #' @examples
 #' \dontrun{
 #' # Process existing project
-#' datras <- exportDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
+#' datras <- prepDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt)
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HL.txt)
 #' }
 #'
 #' @importFrom XML xmlParse getNodeSet xmlGetAttr
 #' @export
-#' @rdname exportDatras
+#' @rdname prepDatras
 #'
-exportDatras <- function(datrasProject)
+prepDatras <- function(projectName)
 {
 	# For getting the ship code
 	# TODO: There is old and new ship code, must think of some way to differentiate that (currently, assuming only new)
@@ -84,7 +84,7 @@ exportDatras <- function(datrasProject)
 	rstox.data <- NULL
 
 	# Process StoX baseline
-	rstox.data <- getBaseline(datrasProject)
+	rstox.data <- getBaseline(projectName)
 	if(is.null(rstox.data)){
 		cat("ERROR: Unable to process biotic data!")
 		return(NULL)
@@ -311,7 +311,7 @@ exportDatras <- function(datrasProject)
 	tmp<-list(HH=HH,HL=HL,CA=CA)
 
 	# Prepare output file name and rename previous output file if exists
-	reportFile <- paste0(file.path(getProjectPaths(datrasProject)$RReportDir, paste0(paste0(cruiseNo, ".", cruiseShip), ".DATRAS.export.txt")))
+	reportFile <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(paste0(cruiseNo, ".", cruiseShip), ".DATRAS.export.txt")))
 	if(file.exists(reportFile))
 		file.rename(reportFile, paste0(reportFile,".old"))
 
