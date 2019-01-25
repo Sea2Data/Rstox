@@ -12,7 +12,7 @@ getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
   msg = FALSE, simplify = TRUE, return.URL = FALSE)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
-  serialno = NULL, tsn = NULL, dataSource = NULL, dir = NULL,
+  serialno = NULL, tsn = NULL, datasource = NULL, dir = NULL,
   subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
   prefix = "NMD", suffix = NA, ver = getRstoxDef("ver"),
   server = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
@@ -57,7 +57,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{tsn}{The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.}
 
-\item{dataSource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. dataSource=NULL (default) returns all possible data.}
+\item{datasource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datasource=NULL (default) returns all possible data.}
 
 \item{dir}{The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects}
 

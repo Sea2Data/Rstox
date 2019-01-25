@@ -4,13 +4,13 @@
 \alias{searchNMDCruise}
 \title{Search for a cruise given the cruise number and ship name.}
 \usage{
-searchNMDCruise(cruisenr, shipname = NULL, dataSource = "biotic",
+searchNMDCruise(cruisenr, shipname = NULL, datasource = "biotic",
   ver = getRstoxDef("ver"),
   server = "http://tomcat7.imr.no:8080/apis/nmdapi",
   return.URL = FALSE, snapshot = Sys.time())
 }
 \arguments{
-\item{dataSource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. dataSource=NULL (default) returns all possible data.}
+\item{datasource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datasource=NULL (default) returns all possible data.}
 
 \item{ver}{The version of the API. As of 2015-05 only version 1 is available. Version 2 will include the possibility to return a list of all cruises.}
 

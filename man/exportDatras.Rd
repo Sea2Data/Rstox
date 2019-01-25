@@ -8,10 +8,12 @@ NOTE: There are some differences between the output of this function
 and the previous submissions in the HH file due to lack of trawl sensor and CTD data:
 (HydroStNo, Netopening, DoorSpread, WingSpread) (SurTemp BotTemp SurSal BotSal)}
 \usage{
-exportDatras(datrasProject)
+exportDatras(projectName, fileName = NULL)
 }
 \arguments{
-\item{datrasProject}{The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.}
+
+\item{fileName}{The path to the DATRAS csv file to be written, defaulted to "DATRAS.csv" in the output/r/data directory in the project directory.}
 }
 \description{
 Generate DATRAS output for a specific StoX project  
