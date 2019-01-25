@@ -5,20 +5,21 @@
 #' (HydroStNo, Netopening, DoorSpread, WingSpread) (SurTemp BotTemp SurSal BotSal)
 #'
 #' @param projectName The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.
+#' @param fileName The path to the DATRAS csv file to be written, defaulted to "DATRAS.csv" in the output/r/data directory in the project directory.
 #'
 #' @examples
 #' \dontrun{
 #' # Process existing project
-#' datras <- prepDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
+#' datras <- exportDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt)
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HL.txt)
 #' }
 #'
 #' @importFrom XML xmlParse getNodeSet xmlGetAttr
 #' @export
-#' @rdname prepDatras
+#' @rdname exportDatras
 #'
-prepDatras <- function(projectName, fileName=NULL)
+exportDatras <- function(projectName, fileName=NULL)
 {
 	# For getting the ship code
 	# TODO: There is old and new ship code, must think of some way to differentiate that (currently, assuming only new)
@@ -138,11 +139,13 @@ prepDatras <- function(projectName, fileName=NULL)
 	ca$Ship <- shipCode
 
 	#IU: Transform StatRec into character#
-	transform(hh, StatRec = as.character(StatRec))
+	hh$StatRec <- as.character(hh$StatRec)
+	#transform(hh, StatRec = as.character(StatRec))
 	hh$StatRec <- create.rect.f(hh)
 
 	#IU: Transform into character#
-	transform(hh, TimeShot = as.character(TimeShot))
+	hh$TimeShot <- as.character(hh$TimeShot)
+	#transform(hh, TimeShot = as.character(TimeShot))
 	## add a 0 to the front of TimeShot
 	hh$TimeShot <- ifelse(nchar(hh$TimeShot)==3,paste(0,hh$TimeShot,sep=''),hh$TimeShot);
 

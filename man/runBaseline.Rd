@@ -59,6 +59,10 @@ runRScripts(projectName, modelType = c("r", "r-report"), fresh = TRUE,
 
 \item{close}{Logical: if TRUE close the project on exit of the function (for \code{getBaseline}).}
 
+\item{fresh}{Logical: if TRUE write new r.R and r-report.R scripts to the folder output/r.}
+
+\item{add.time}{Logical: if TRUE add the current time to messages printed to the console in \code{runRScripts}.}
+
 \item{par}{A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.}
 }
 \value{
