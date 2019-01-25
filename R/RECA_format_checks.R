@@ -69,6 +69,9 @@ check_cov_vs_info <- function(modelobj){
     if (modelobj$info[co,"random"]==0 & modelobj$info[co,"continuous"]==0 & num_unique!=modelobj$info[co,"nlev"]){
       stop(paste("Not all values present for fixed covariate", co, "(samples)"))
     }
+    if (modelobj$info[co,"random"]==1 & modelobj$info[co,"in.landings"]==0 & modelobj$info[co,"continuous"]==0 & num_unique!=modelobj$info[co,"nlev"]){
+      stop(paste("Nlev is incorrectly set for random effect not in landings: ", co, "(samples)"))
+    }
     if (modelobj$info[co,"CAR"]==1 & is.null(modelobj$CARNeighbours)){
       stop(paste("CAR variable specified as", co, "but CARneighbours not specified"))
     }
