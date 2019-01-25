@@ -5,21 +5,20 @@
 #' (HydroStNo, Netopening, DoorSpread, WingSpread) (SurTemp BotTemp SurSal BotSal)
 #'
 #' @param projectName The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.
-#' @param fileName The path to the DATRAS csv file to be written, defaulted to "DATRAS.csv" in the output/r/data directory in the project directory.
 #'
 #' @examples
 #' \dontrun{
 #' # Process existing project
-#' datras <- exportDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
+#' datras <- prepDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt)
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HL.txt)
 #' }
 #'
 #' @importFrom XML xmlParse getNodeSet xmlGetAttr
 #' @export
-#' @rdname exportDatras
+#' @rdname prepDatras
 #'
-exportDatras <- function(projectName, fileName=NULL)
+prepDatras <- function(projectName, fileName=NULL)
 {
 	# For getting the ship code
 	# TODO: There is old and new ship code, must think of some way to differentiate that (currently, assuming only new)

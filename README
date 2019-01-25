@@ -111,6 +111,10 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 
 # 29. Fixed bug with subset in getNMDdata().
 
+# 30. Changed the parameter 'margin' in plotStratum() to the new parameter 'zoom', which has default 1.5 and where 1 indicates no zooming, The old parameter named 'zoom' has been removed along with the parameter 'google' for Google-maps type of plots due to new requirements for users to create an API project and get this authorized.
+
+# 31. Added the function exportDatras() which takes the output from a baseline model including the StoX function DATRASConvert and exports a DATRAS file. In the current version only one biotic file can be included in the project.
+
 
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS
