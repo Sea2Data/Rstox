@@ -512,7 +512,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param hours,nmi			The time/traveled distance to spend in each stratum, given in hours/nautical miles (repeated to the number of strata), where \code{nmi} has precedence over \code{hours}. If given as a list of one element, these are interpreted as the hours/nmi for the entire survey, in which case selecting only a subset of the strata using \code{strata} will increase the effort in each of the remaining strata.
 #' @param t0				The start time of the survey, set to Sys.time() formatted to UTC by default. A as.POSIXct object or a string of a recognisable form (such as "\%Y-\%m-\%d \%H:\%M:\%S") are supported.
 #' @param knots				The speed to use in the stratum, given in knots.
-#' @param seed				The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.
+#' @param seed				The seed(s) to use for the random transects. If not given as an integer vector (such as c(2L, 5L)) of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.
 #' @param angsep			The separation in degrees of points populating the stratum polygons (geographical coordinates longitude, latitude). Low values preserve the stratum borders when converting to Cartesian coordinates. 
 #' @param distsep			The separation in nautical miles of points populating the transects in Cartesian coordinates before converting back to geographical coordinates. When given, this parameter preserves the shortest travel distance (great-circle distances) of the transects (inducing curved lines in geographical coordinates). 
 #' @param margin			The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.
@@ -565,7 +565,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
 #'     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 #' dev.new()
-#' plotStratum(Parallel)
+#' p <- plotStratum(Parallel)
 #'
 #' # Running surveyPlanner() on a project takes some time, since the project has to be opened and
 #' # the process data read to obtain the strata. A quicker way is to specify the strata definitions 
@@ -575,7 +575,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #'      "reference", "stratum", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
 #'     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 #' dev.new()
-#' plotStratum(Parallel)
+#' p <- plotStratum(Parallel)
 #'
 #' # Write the transects to one csv file (to write one file per stratum use byStratum=TRUE). 
 #' # Use ext="nc" to write to a NetCDF4 file. Use 'dir' to specify the directory in which to place 
@@ -587,7 +587,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
 #'     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 #' dev.new()
-#' plotStratum(Zigzag)
+#' p <- plotStratum(Zigzag)
 #' 
 #' # The parallel survey use 23.39 percent of sailing distance for transport between transects, 
 #' # whereas the zigzag survey use 10.76 percent.
@@ -604,20 +604,20 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' system.time(Parallel2 <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
 #'     knots=10, seed=0, hours=hours))
 #' dev.new()
-#' plotStratum(Parallel2)
+#' p <- plotStratum(Parallel2)
 #' 
 #' # Tour-retour zigzag in stratum 1 and 3:
 #' system.time(Zigzag2 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
 #'     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE)))
 #' dev.new()
-#' plotStratum(Zigzag2)
+#' p <- plotStratum(Zigzag2)
 #' 
 #' # Populate the transects with points separated by 10 nmi specified by the 'distsep' parameter, 
 #' # for visualizing the true track along the great-circle:
 #' system.time(Zigzag3 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
 #'     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE), distsep=10))
 #' dev.new()
-#' plotStratum(Zigzag3)
+#' p <- plotStratum(Zigzag3)
 #' 
 #' # Write the transects to a NetCDF4 file in the output folder of the project (alternatively specify
 #' # the directory using 'dir', or the filenames using 'filenames'. Also use 'prefix' or 'suffix' 
@@ -795,7 +795,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	}
 	
 	# Function for adding stratum ends:
-	addEndTransects <- function(intersects, poly){
+	addEndTransects <- function(intersects, poly){		
 		# Function for getting a transect at the end with the inverse angle of the first/last transect:
 		getEndTransectOne <- function(poly, intersects, last=FALSE){
 			# If we are actually appending to the last and not the first transect, reverse the transects here for convenience:
@@ -811,15 +811,17 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	
 			# Find intersection point between the line and the polygon:
 			intersectsFirst <- rgeos::gIntersection(poly, spatialLinesEnd)
-			if(length(intersectsFirst)<3){
+			#if(length(intersectsFirst)<3){
+			if(length(intersectsFirst)<1){
 				intersects@coords <- intersects@coords[FALSE,]
 				return(intersects)
 			}
-			# Pick out the point farthes from the intersection point:
+			# Pick out the point farthes from the intersection point. This is done since the transects are regenerated later to incorporate any partial transects due to holes or bows in the polygon:
 			dist <- rowSums((intersectsFirst@coords - matrix(first, nrow=nrow(intersectsFirst@coords), ncol=2, byrow=TRUE))^2)
 			intersectsFirst@coords <- intersectsFirst@coords[which.max(dist), ,drop=FALSE]
 			# Add the first point to obtain a valid transect of two points:
 			intersectsFirst@coords <- if(last) rbind(first, intersectsFirst@coords) else rbind(intersectsFirst@coords, first)
+			
 			# Return the transect:
 			intersectsFirst
 		}
@@ -1165,13 +1167,14 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			intersectsCoordsList <- coords2coordsList(temp@coords)
 			# remove the last value since the last element of intersectsCoordsList was removed in the 
 			#ind_xGrid <- ind_xGrid[-length(ind_xGrid)]
-			xGrid_EqSpZZ <- sapply(sapply(intersectsCoordsList, "[", 1, 1), function(x) which.min(abs(x-xGrid)))
+			####### xGrid_EqSpZZ <- sapply(sapply(intersectsCoordsList, "[", 1, 1), function(x) which.min(abs(x-xGrid)))
 			#xGrid_EqSpZZ <- findInterval(sapply(intersectsCoordsList, "[", 1, 1), xGrid)
 		}
 		
 		# The transects may intersect with the stratum polygon borders more than once, so we need to intersect again and split transects into subtransects when intersecting more than twice (two intersectiins at the borders):
 		#intersectsCoordsList <- lapply(intersectsCoordsList, function(x) )
-		intersectsCoordsList <- lapply(intersectsCoordsList, expand_transect_ends)
+		
+		intersectsCoordsList <- lapply(intersectsCoordsList, expand_transect_ends, fact=1.01)
 		
 		spatialLinesTransects <- lapply(intersectsCoordsList, list)
 		spatialLinesTransects <- Transect2SpatialLines(spatialLinesTransects, prefix="")
@@ -1180,16 +1183,16 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		intersects <- rgeos::gIntersection(spatialLinesPolygon, spatialLinesTransects, byid=TRUE)
 		intersectsCoordsList <- getIntersectsCoordsList(intersects)
 		
-		# Assure that the new intersects are between the relevant grid lines:
-		if(tolower(type) == tolower("EqSpZZ")){
-			selectInsidexGrid <- function(ind, xGrid, margin=0.01){
-				bin <- xGrid_EqSpZZ[ind]
-				width <- xGrid[bin + 1] - xGrid[bin]
-				valid <- xGrid[bin] - margin * width <= intersectsCoordsList[[ind]][,1] & intersectsCoordsList[[ind]][,1] <= xGrid[bin + 1] + margin * width
-				intersectsCoordsList[[ind]][valid, , drop=FALSE]
-			}
-			intersectsCoordsList <- lapply(seq_along(intersectsCoordsList), selectInsidexGrid, xGrid=xGrid)
-		}
+		### Assure that the new intersects are between the relevant grid lines (why this? are the intersections not valid?):
+		###if(tolower(type) == tolower("EqSpZZ")){
+		###	selectInsidexGrid <- function(ind, xGrid, margin=0.01){
+		###		bin <- xGrid_EqSpZZ[ind]
+		###		width <- xGrid[bin + 1] - xGrid[bin]
+		###		valid <- xGrid[bin] - margin * width <= intersectsCoordsList[[ind]][,1] & intersectsCoordsList[[ind]][,1] <= xGrid[bin + 1] + margin * width
+		###		intersectsCoordsList[[ind]][valid, , drop=FALSE]
+		###	}
+		###	intersectsCoordsList <- lapply(seq_along(intersectsCoordsList), selectInsidexGrid, xGrid=xGrid)
+		###}
 		
 		# Do not use dornrandom here, since we have achieved the randomness in the direction of the first line using this variable above:
 		#intersectsCoordsList <- orderTransectsByXY(intersectsCoordsList, down = if(type == "RectEnclZZ") downRandom else FALSE)
@@ -1284,11 +1287,11 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		# Update the segment IDs to account for multiple intersections:
 		coords$segment <- unlist(by(coords$segment, coords$transect, seq_along))
 		
-		#if(plot){
-		#	plot(xyRotated, type="o")
-		#	lines(coords[,c("x", "y")], type="o", col=rainbow(nrow(coords)), lwd=2)
-		#	abline(v=xGrid, col=4)
-		#}
+		if(isTRUE(list(...)$plot)){
+			plot(xyRotated, type="o")
+			lines(coords[,c("x", "y")], type="o", col=rainbow(nrow(coords)), lwd=2)
+			abline(v=xGrid, col=4)
+		}
 	
 		# Expand the data to contain start, mid and stop position, time and sailed distance, as well as segment length:
 		coords <- getXY_StartMidStop(coords)
@@ -1498,7 +1501,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	# Add seed to the parameters:
 	if(length(parameters$seed)==0){
 		# Draw seeds for the transects:
-		if(length(seed) < nstrata){
+		if(!is.integer(seed) || length(seed) < nstrata){
 			set.seed(seed[1])
 			seed <- getSeedV(seed[1], nstrata)
 		}

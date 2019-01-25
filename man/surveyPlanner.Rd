@@ -55,7 +55,7 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 
 \item{knots}{The speed to use in the stratum, given in knots.}
 
-\item{seed}{The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.}
+\item{seed}{The seed(s) to use for the random transects. If not given as an integer vector (such as c(2L, 5L)) of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.}
 
 \item{angsep}{The separation in degrees of points populating the stratum polygons (geographical coordinates longitude, latitude). Low values preserve the stratum borders when converting to Cartesian coordinates.}
 
@@ -132,7 +132,7 @@ projectName <- "Test_Rstox"
 system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 dev.new()
-plotStratum(Parallel)
+p <- plotStratum(Parallel)
 
 # Running surveyPlanner() on a project takes some time, since the project has to be opened and
 # the process data read to obtain the strata. A quicker way is to specify the strata definitions 
@@ -142,7 +142,7 @@ system.time(Parallel <- surveyPlanner(projectName=file.path(dirname(getProjectPa
      "reference", "stratum", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 dev.new()
-plotStratum(Parallel)
+p <- plotStratum(Parallel)
 
 # Write the transects to one csv file (to write one file per stratum use byStratum=TRUE). 
 # Use ext="nc" to write to a NetCDF4 file. Use 'dir' to specify the directory in which to place 
@@ -154,7 +154,7 @@ filename
 system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 dev.new()
-plotStratum(Zigzag)
+p <- plotStratum(Zigzag)
 
 # The parallel survey use 23.39 percent of sailing distance for transport between transects, 
 # whereas the zigzag survey use 10.76 percent.
@@ -171,20 +171,20 @@ hours[2:4] <- hours[2:4] - 50
 system.time(Parallel2 <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
     knots=10, seed=0, hours=hours))
 dev.new()
-plotStratum(Parallel2)
+p <- plotStratum(Parallel2)
 
 # Tour-retour zigzag in stratum 1 and 3:
 system.time(Zigzag2 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE)))
 dev.new()
-plotStratum(Zigzag2)
+p <- plotStratum(Zigzag2)
 
 # Populate the transects with points separated by 10 nmi specified by the 'distsep' parameter, 
 # for visualizing the true track along the great-circle:
 system.time(Zigzag3 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE), distsep=10))
 dev.new()
-plotStratum(Zigzag3)
+p <- plotStratum(Zigzag3)
 
 # Write the transects to a NetCDF4 file in the output folder of the project (alternatively specify
 # the directory using 'dir', or the filenames using 'filenames'. Also use 'prefix' or 'suffix' 
