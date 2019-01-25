@@ -653,7 +653,25 @@ getDataMatrixANDCovariateMatrix <-
       match(DataMatrix$samplingID, CovariateMatrix$samplingID)
     CovariateMatrix$samplingID <- NULL
     
-    return(list(DataMatrix = DataMatrix, CovariateMatrix = CovariateMatrix))
+    
+    #random covariates not in landings should have nlev equal to the observed levels
+      for (n in names(CovariateMatrix)) {
+        
+        if ((n %in% names(eca$covariateMatrixBiotic)) & !(n %in% names(eca$covariateMatrixLanding))) {
+          ecacodes <- unique(CovariateMatrix[[n]])
+          newecacodes <- 1:length(unique(CovariateMatrix[[n]]))
+          
+          # renumber covariates
+          CovariateMatrix[[n]] <- newecacodes[match(CovariateMatrix[[n]], ecacodes)]
+          
+          # update link to stox names
+          eca$resources$covariateLink[[n]] <- eca$resources$covariateLink[[n]][eca$resources$covariateLink[[n]][["Numeric"]] %in% ecacodes,]
+          eca$resources$covariateLink[[n]][["Numeric"]] <- newecacodes[match(eca$resources$covariateLink[[n]][["Numeric"]], ecacodes)]
+          
+        }
+      }
+    
+    return(list(DataMatrix = DataMatrix, CovariateMatrix = CovariateMatrix, resources= eca$resources))
   }
 
 #' Function for extracting the CARNeighbours and info:
@@ -778,6 +796,7 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
     getDataMatrixANDCovariateMatrix(eca, vars = c("age", "yearday"), ecaParameters)
   DataMatrix <- temp$DataMatrix
   CovariateMatrix <- temp$CovariateMatrix
+  resources <- temp$resources
   
   
   #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
@@ -801,7 +820,7 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
     CARNeighbours = info$CARNeighbours,
     AgeErrorMatrix = eca$ageError,
     info = info$info,
-    resources = eca$resources
+    resources = resources
   )
   
   out$ClassificationErrorVector <- eca$otholiterror
@@ -824,6 +843,7 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
     getDataMatrixANDCovariateMatrix(eca, vars = var, ecaParameters)
   DataMatrix <- temp$DataMatrix
   CovariateMatrix <- temp$CovariateMatrix
+  resources <- temp$resources
   
   
   #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
@@ -845,7 +865,7 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
     CARNeighbours = info$CARNeighbours,
     #AgeErrorMatrix = eca$ageError, # This is not needed for WeightGivenLength
     info = info$info,
-    resources = eca$resources
+    resources = resources
   )
   out$ClassificationErrorVector <- eca$otholiterror
   return(out)
