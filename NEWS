@@ -712,6 +712,10 @@ Fixed bug with Java v11.
 
 Fixed bug with subset in getNMDdata().
 
+Changed the parameter 'margin' in plotStratum() to the new parameter 'zoom', which has default 1.5 and where 1 indicates no zooming, The old parameter named 'zoom' has been removed along with the parameter 'google' for Google-maps type of plots due to new requirements for users to create an API project and get this authorized.
+
+Added the function exportDatras() which takes the output from a baseline model including the StoX function DATRASConvert and exports a DATRAS file. In the current version only one biotic file can be included in the project.
+
 
 ########## Version 1.10 (2018-07-06) ##########
 
@@ -775,7 +779,4 @@ Fixed bug with subset in getNMDdata().
 
 Changed the parameter 'margin' in plotStratum() to the new parameter 'zoom', which has default 1.5 and where 1 indicates no zooming, The old parameter named 'zoom' has been removed along with the parameter 'google' for Google-maps type of plots due to new requirements for users to create an API project and get this authorized.
 
-
-
-
-########### implement sqrt(Area) instead of Area, and add coverage as a parameter similar to hours
+Added the function exportDatras() which takes the output from a baseline model including the StoX function DATRASConvert and exports a DATRAS file. In the current version only one biotic file can be included in the project.

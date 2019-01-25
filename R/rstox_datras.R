@@ -5,20 +5,21 @@
 #' (HydroStNo, Netopening, DoorSpread, WingSpread) (SurTemp BotTemp SurSal BotSal)
 #'
 #' @param projectName The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), or a project object (as returned from \code{openProject}). Projects located in sub directories of the default workspace can be given by the relative path, or are searched for by name.
+#' @param fileName The path to the DATRAS csv file to be written, defaulted to "DATRAS.csv" in the output/r/data directory in the project directory.
 #'
 #' @examples
 #' \dontrun{
 #' # Process existing project
-#' datras <- prepDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
+#' datras <- exportDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt)
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HL.txt)
 #' }
 #'
 #' @importFrom XML xmlParse getNodeSet xmlGetAttr
 #' @export
-#' @rdname prepDatras
+#' @rdname exportDatras
 #'
-prepDatras <- function(projectName)
+exportDatras <- function(projectName, fileName=NULL)
 {
 	# For getting the ship code
 	# TODO: There is old and new ship code, must think of some way to differentiate that (currently, assuming only new)
@@ -46,32 +47,32 @@ prepDatras <- function(projectName)
 	}
 
 	# For StatRec calculation
-	create.rect.f<-function(data, var1=data$ShootLong, var2=data$ShootLat) {
-	       data$ices.lon<-ifelse(var1> -1 & var1<0, "E9",
-		  ifelse(var1>  0 & var1<1,"F0",
-		  ifelse(var1> 1 & var1<2,"F1",
-		  ifelse(var1> 2 & var1<3,"F2",
-		  ifelse(var1> 3 & var1<4,"F3",
-		  ifelse(var1> 4 & var1<5,"F4",
-		  ifelse(var1> 5 & var1<6,"F5",
-		  ifelse(var1> 6 & var1<7,"F6",
-		  ifelse(var1> 7 & var1<8,"F7",
-		  ifelse(var1> -3 & var1< -2,"E7",
-		  ifelse(var1> -2 & var1< -1,"E8",NA)))))))))))
+	create.rect.f <- function(data, var1=data$ShootLong, var2=data$ShootLat) {
+	       data$ices.lon <- ifelse(var1> -1 & var1<0, "E9",
+		  ifelse(var1 >  0 & var1 < 1,  "F0",
+		  ifelse(var1 >  1 & var1 < 2,  "F1",
+		  ifelse(var1 >  2 & var1 < 3,  "F2",
+		  ifelse(var1 >  3 & var1 < 4,  "F3",
+		  ifelse(var1 >  4 & var1 < 5,  "F4",
+		  ifelse(var1 >  5 & var1 < 6,  "F5",
+		  ifelse(var1 >  6 & var1 < 7,  "F6",
+		  ifelse(var1 >  7 & var1 < 8,  "F7",
+		  ifelse(var1 > -3 & var1 < -2, "E7",
+		  ifelse(var1 > -2 & var1 < -1, "E8", NA)))))))))))
 	       ##
-	       data$ices.lat<-ifelse(var2>56 &var2<=56.5,41,
-		  ifelse(var2>56.5 &var2<=57,42,
-		  ifelse(var2>57 &var2<=57.5,43,
-		  ifelse(var2>57.5 &var2<=58,44,
-		  ifelse(var2>58 &var2<=58.5,45,
-		  ifelse(var2>58.5 &var2<=59,46,
-		  ifelse(var2>59 &var2<=59.5,47,
-		  ifelse(var2>59.5 &var2<=60,48,
-		  ifelse(var2>60 &var2<=60.5,49,
-		  ifelse(var2>60.5 &var2<=61,50,
-		  ifelse(var2>61 &var2<=61.5,51,
-		  ifelse(var2>61.5 &var2<=62,52,NA))))))))))))
-	       data$ices.rect<-paste(data$ices.lat,data$ices.lon,sep="")
+	       data$ices.lat <- ifelse(var2>56 &var2<=56.5,41,
+		  ifelse(var2 > 56.5 & var2 <= 57, 42,
+		  ifelse(var2 > 57   & var2 <= 57.5, 43,
+		  ifelse(var2 > 57.5 & var2 <= 58, 44,
+		  ifelse(var2 > 58   & var2 <= 58.5, 45,
+		  ifelse(var2 > 58.5 & var2 <= 59, 46,
+		  ifelse(var2 > 59   & var2 <= 59.5, 47,
+		  ifelse(var2 > 59.5 & var2 <= 60, 48,
+		  ifelse(var2 > 60   & var2 <= 60.5, 49,
+		  ifelse(var2 > 60.5 & var2 <= 61, 50,
+		  ifelse(var2 > 61   & var2 <= 61.5, 51,
+		  ifelse(var2 > 61.5 & var2 <= 62, 52, NA))))))))))))
+	       data$ices.rect <- paste(data$ices.lat,data$ices.lon,sep="")
 	}
 
 	# Get Biotic data using Rstox (if there is a valid project)
@@ -122,11 +123,12 @@ prepDatras <- function(projectName)
 	names(ca) <- unlist(strsplit(names(caRaw), split="[.]"))
 
 	## because it was a rental vessel, there are some missing parameters with the Stox conversion
-	hh$Country<-'NOR'
-	hl$Country<-'NOR'
-	ca$Country<-'NOR'
+	hh$Country <- 'NOR'
+	hl$Country <- 'NOR'
+	ca$Country <- 'NOR'
 
 	## get ship code from ICES
+	# Comment: This seems to allow only one biotic file in the project, since the first cruise number is selected:
 	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_FishStation.txt$cruise)
 	Year <- unique(hh$Year)
 	cruiseShip <-  unlist(lapply(getNMDinfo("cs"), function(x) x[x$Cruise==cruiseNo[1] & x$Year==Year[1], "ShipName"]))
@@ -137,13 +139,15 @@ prepDatras <- function(projectName)
 	ca$Ship <- shipCode
 
 	#IU: Transform StatRec into character#
-	transform(hh, StatRec = as.character(StatRec))
+	hh$StatRec <- as.character(hh$StatRec)
+	#transform(hh, StatRec = as.character(StatRec))
 	hh$StatRec <- create.rect.f(hh)
 
 	#IU: Transform into character#
-	transform(hh, TimeShot = as.character(TimeShot))
+	hh$TimeShot <- as.character(hh$TimeShot)
+	#transform(hh, TimeShot = as.character(TimeShot))
 	## add a 0 to the front of TimeShot
-	hh$TimeShot<-ifelse(nchar(hh$TimeShot)==3,paste(0,hh$TimeShot,sep=''),hh$TimeShot);
+	hh$TimeShot <- ifelse(nchar(hh$TimeShot)==3,paste(0,hh$TimeShot,sep=''),hh$TimeShot);
 
 	# Remove specCode "-" in both HL and CA data (if any)
 	hl[hl$SpecCode=="-", "SpecCode"] <- -9
@@ -185,30 +189,30 @@ prepDatras <- function(projectName)
 	hl <- hl[!duplicated(hl),]
 
 	## hl and ca contain 0-tow info - must throw these out
-	hl<-hl[hl$StNo %in% hh$StNo,]
-	ca<-ca[ca$StNo %in% hh$StNo,]
+	hl <- hl[hl$StNo %in% hh$StNo,]
+	ca <- ca[ca$StNo %in% hh$StNo,]
 	# throw out ca records for Invalid hauls
-	ca<-ca[!ca$StNo %in% hh$StNo[hh$HaulVal=='I'],]
+	ca <- ca[!ca$StNo %in% hh$StNo[hh$HaulVal=='I'],]
 
 	# Number formats
-	hh$Distance<-round(hh$Distance)
-	hh$Warpingt<-round(hh$Warpingt)
-	hh$KiteDim<-round(hh$KiteDim, 1)
-	hh$Netopening<-round(hh$Netopening, 1)
-	hh$WingSpread<-round(hh$WingSpread, 1)
-	hh$DoorSpread<-sprintf("%.1f", round(hh$DoorSpread, 1))
-	hh$DataType<-as.character(as.factor(hh$DataType))
-	hh$HaulVal<-as.character(as.factor(hh$HaulVal))
-	hl$TotalNo<-sprintf("%.2f",round(as.numeric(as.character(hl$TotalNo)), 2))
-	hl$HLNoAtLngt<-sprintf("%.2f", round(as.numeric(as.character(hl$HLNoAtLngt)), 2))
-	hl$SubFactor<-sprintf("%.4f", round(as.numeric(as.character(hl$SubFactor)), 4))
-	hl$SubWgt<-sprintf("%d", round(as.numeric(as.character(hl$SubWgt))))
+	hh$Distance <- round(hh$Distance)
+	hh$Warpingt <- round(hh$Warpingt)
+	hh$KiteDim <- round(hh$KiteDim, 1)
+	hh$Netopening <- round(hh$Netopening, 1)
+	hh$WingSpread <- round(hh$WingSpread, 1)
+	hh$DoorSpread <- sprintf("%.1f", round(hh$DoorSpread, 1))
+	hh$DataType <- as.character(as.factor(hh$DataType))
+	hh$HaulVal <- as.character(as.factor(hh$HaulVal))
+	hl$TotalNo <- sprintf("%.2f",round(as.numeric(as.character(hl$TotalNo)), 2))
+	hl$HLNoAtLngt <- sprintf("%.2f", round(as.numeric(as.character(hl$HLNoAtLngt)), 2))
+	hl$SubFactor <- sprintf("%.4f", round(as.numeric(as.character(hl$SubFactor)), 4))
+	hl$SubWgt <- sprintf("%d", round(as.numeric(as.character(hl$SubWgt))))
 
 	##########################################
 	## Removing some benthos - this won't be needed in the future
 	## keep 11725 138139 138482 138483 140600 140621 140624 140625 141443 141444 141449 153083 153131-- these are cephaolopods
 	## required benthos: 107205
-	hl<-hl[!hl$SpecCode %in% c(230,558,830,883,1302,1839,100635,100706,100930,103929,106048,106087,106204,106733,106791,
+	hl <- hl[!hl$SpecCode %in% c(230,558,830,883,1302,1839,100635,100706,100930,103929,106048,106087,106204,106733,106791,
 		            106854,106928,107044,107218,107230,107240,107273,107292,107318,107330,107346,107397,107398,107551,
 		            107616,107643,111374,111597,111604,116986,117302,117809,117815,117890,123117,123867,123920,123970,
 		            123987,124319,124418,124913,124929,124934,125128,125131,125134,129196,129229,130464,130867,132072,
@@ -218,7 +222,7 @@ prepDatras <- function(projectName)
 		            124043,124154,124160,124287,124535,125166,125333,128517,129840,138802,138878,138920,140467,140717,
 		            143755,145541,145546,145548,532031,589677,1762,123082,149),]
 
-	ca<-ca[!ca$SpecCode %in% c(230,558,830,883,1302,1839,100635,100706,100930,103929,106048,106087,106204,106733,106791,
+	ca <- ca[!ca$SpecCode %in% c(230,558,830,883,1302,1839,100635,100706,100930,103929,106048,106087,106204,106733,106791,
 		            106854,106928,107044,107218,107230,107240,107273,107292,107318,107330,107346,107397,107398,107551,
 		            107616,107643,111374,111597,111604,116986,117302,117809,117815,117890,123117,123867,123920,123970,
 		            123987,124319,124418,124913,124929,124934,125128,125131,125134,129196,129229,130464,130867,132072,
@@ -230,30 +234,30 @@ prepDatras <- function(projectName)
 
 
 	#more benthods 10216 = skate egg case
-	hl<-hl[!hl$SpecCode %in% c(443,938,1131,1292,1337,1360,19494,22988,100751,100757,100790,101054,103484,104062,
+	hl <- hl[!hl$SpecCode %in% c(443,938,1131,1292,1337,1360,19494,22988,100751,100757,100790,101054,103484,104062,
 		            106122,106669,107011,107052,107148,107239,107388,107563,110690,110911,110956,111411,117136,
 		            117258,123260,123276,123321,123335,123574,123593 ,123851,123922,123985,124085,125158,125269,
 		            128506,130467,130987,131779,134591,137683,141872,146142 ,149864,445590,510534,105,175,927,1107,
 		            1135,1267,100793),]
-	hl<-hl[!hl$SpecCode %in% c(105,175,927,1107,1135,1267,100793,103443,103692,106057,106835,106903,107558,110908,111361,
+	hl <- hl[!hl$SpecCode %in% c(105,175,927,1107,1135,1267,100793,103443,103692,106057,106835,106903,107558,110908,111361,
 		            117940,122348,123160,123426,124257,125027,125284,131495,135294,135301,135306,138992,140528,140687,
 		            167882,178527,239867,291396,106763,137656,117225,100653,125125,100698,131774,134366,123386,117228,
 		            117994,138923,123127,137701,123320,131629 ,152391,1363,214,103543,106994,103450,129400,140143,
 		            146420,141905,22496,988,103717,107163,982,985,123622,102145,1082,10216,103483),]
 
-	ca<-ca[!ca$SpecCode %in% c(443,938,1131,1292,1337,1360,19494,22988,100751,100757,100790,101054,103484,104062,
+	ca <- ca[!ca$SpecCode %in% c(443,938,1131,1292,1337,1360,19494,22988,100751,100757,100790,101054,103484,104062,
 		            106122,106669,107011,107052,107148,107239,107388,107563,110690,110911,110956,111411,117136,
 		            117258,123260,123276,123321,123335,123574,123593 ,123851,123922,123985,124085,125158,125269,
 		            128506,130467,130987,131779,134591,137683,141872,146142 ,149864,445590,510534,105,175,927,1107,
 		            1135,1267,100793),]
-	ca<-ca[!ca$SpecCode %in% c(105,175,927,1107,1135,1267,100793,103443,103692,106057,106835,106903,107558,110908,111361,
+	ca <- ca[!ca$SpecCode %in% c(105,175,927,1107,1135,1267,100793,103443,103692,106057,106835,106903,107558,110908,111361,
 		            117940,122348,123160,123426,124257,125027,125284,131495,135294,135301,135306,138992,140528,140687,
 		            167882,178527,239867,291396,106763,137656,117225,100653,125125,100698,131774,134366,123386,117228,
 		            117994,138923,123127,137701,123320,131629 ,152391,1363,214,103543,106994,103450,129400,140143,
 		            146420,141905,22496,988,103717,107163,982,985,123622,102145,1082,10216,103483),]
 
-	hl<-hl[!hl$SpecCode %in% c(-9, 101,106769,106782,107010,107726,122478,123506,12437,124951,128539,129402,196221,205077,124373, 123187, 124710),]
-	ca<-ca[!ca$SpecCode %in% c(-9, 101,106769,106782,107010,107726,122478,123506,12437,124951,128539,129402,196221,205077,124373, 123187, 124710),]
+	hl <- hl[!hl$SpecCode %in% c(-9, 101,106769,106782,107010,107726,122478,123506,12437,124951,128539,129402,196221,205077,124373, 123187, 124710),]
+	ca <- ca[!ca$SpecCode %in% c(-9, 101,106769,106782,107010,107726,122478,123506,12437,124951,128539,129402,196221,205077,124373, 123187, 124710),]
 
 	## IU: Filter out additional benthos: 
 	benthosSpecCodes <- c(104,956,966,1128,1296,1367,1608,11707,100782,100839,100854,103439,103732,104040,105865,106041,106673,106702,106789,106834,107152,
@@ -261,8 +265,8 @@ prepDatras <- function(projectName)
 				128490,128503,129563,130057,134691,136025,137710,138018,138068,138477,138631,138749,138938,140166,140173,140480,140625,141904,141929,
 				149854,152997,532035,816800)
 
-	hl<-hl[!hl$SpecCode %in% benthosSpecCodes,]
-	ca<-ca[!ca$SpecCode %in% benthosSpecCodes,]
+	hl <- hl[!hl$SpecCode %in% benthosSpecCodes,]
+	ca <- ca[!ca$SpecCode %in% benthosSpecCodes,]
 
 
 	#########################################################
@@ -279,44 +283,51 @@ prepDatras <- function(projectName)
 	# Use join to find missing value in HL
 	testca <- unique(data.frame(StNo=ca$StNo, SpecCode=ca$SpecCode, ca=TRUE))
 	testhl <- unique(data.frame(StNo=hl$StNo, SpecCode=hl$SpecCode, hl=TRUE))
-	tt <- merge(testca, testhl, by = c("StNo","SpecCode"), all = TRUE)
+	tt <- merge(testca, testhl, by = c("StNo","SpecCode"), all=TRUE)
 	missingHL <- tt[is.na(tt$hl),]
 
-	if(nrow(missingHL)>0) {
+	if(nrow(missingHL) > 0) {
 		# Populate missing value in HL
-		for(idxHL in c(1:nrow(missingHL))){
+		for(idxHL in 1:nrow(missingHL)){
 			r <- missingHL[idxHL,]
-			tmp<-hl[hl$StNo==r$StNo,][1,]
+			tmp <- hl[hl$StNo==r$StNo,][1,]
 			tmp$SpecCode <- r$SpecCode
-			tmp$SpecVal<- 4
-			tmp$TotalNo<- c(hh$HaulDur[hh$StNo==r$StNo])
+			tmp$SpecVal <- 4
+			tmp$TotalNo <- c(hh$HaulDur[hh$StNo==r$StNo])
 			tmp$CatCatchWgt <- -9
-			hl<-rbind(hl,tmp)
+			hl <- rbind(hl,tmp)
 		}
 	}
 
 	# Save output
-	hl<-hl[order(hl$StNo),]
+	hl <- hl[order(hl$StNo),]
 
-	row.names(ca)<-1:nrow(ca)
-	row.names(hl)<-1:nrow(hl)
-	row.names(hh)<-1:nrow(hh)
+	row.names(ca) <- 1:nrow(ca)
+	row.names(hl) <- 1:nrow(hl)
+	row.names(hh) <- 1:nrow(hh)
 
 	# Format to preserve decimal places
-	HL<-format(hl, trim=T, width=0)
-	CA<-format(ca, trim=T, width=0)
-	HH<-format(hh, trim=T, width=0)
+	HL <- format(hl, trim=TRUE, width=0)
+	CA <- format(ca, trim=TRUE, width=0)
+	HH <- format(hh, trim=TRUE, width=0)
 
 	# Collate into a single list
-	tmp<-list(HH=HH,HL=HL,CA=CA)
+	tmp <- list(HH=HH, HL=HL, CA=CA)
 
 	# Prepare output file name and rename previous output file if exists
-	reportFile <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(paste0(cruiseNo, ".", cruiseShip), ".DATRAS.export.txt")))
-	if(file.exists(reportFile))
-		file.rename(reportFile, paste0(reportFile,".old"))
-
+	#exportFileName <- NMDFileName(cruise=cruiseNo, shipname=cruiseShip, datasource="DATRAS", file.ext="csv")
+	if(length(fileName) == 0){
+		fileName <- file.path(getProjectPaths(projectName)$RDataDir, "DATRAS.csv")
+		moveToTrash(fileName)
+	}
+	
+	
+	#reportFile <- paste0(file.path(getProjectPaths(projectName)$RDataDir, paste0(paste0(cruiseNo, ".", cruiseShip), ".DATRAS.export.txt")))
+	#if(file.exists(reportFile))
+	#	file.rename(reportFile, paste0(reportFile,".old"))
+    #
 	# Write it
-	lapply(tmp, write.table, file = reportFile, append=TRUE, row.names = FALSE, quote = FALSE, sep = ",")
+	suppressWarnings(lapply(tmp, write.table, file=fileName, append=TRUE, row.names=FALSE, quote=FALSE, sep=","))
 
 	# Return Datras data as well, overwrite old data
 	rstox.data$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt <- HH

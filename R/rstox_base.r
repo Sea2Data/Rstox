@@ -995,6 +995,8 @@ listInputFiles <- function(projectName, full.names=TRUE){
 #' @param par					A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.
 #' @param drop					Logical: if TRUE drop empty list elements (default).
 #' @param close					Logical: if TRUE close the project on exit of the function (for \code{getBaseline}).
+#' @param fresh					Logical: if TRUE write new r.R and r-report.R scripts to the folder output/r.
+#' @param add.time				Logical: if TRUE add the current time to messages printed to the console in \code{runRScripts}.
 #'
 #' @return For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "outputData", "processData", where empty elements can be dropped.
 #'
@@ -1338,7 +1340,16 @@ runRScripts <- function(projectName, modelType=c("r", "r-report"), fresh=TRUE, m
 	
 	out
 }
+
 writeMessageToConsoleOrFile <- function(text, msg, add.time=FALSE){
+	now <- function(brackets=FALSE){
+		out <- format(Sys.time(),tz="UTC", "%Y-%m-%d_%H.%M.%S")
+		if(brackets){
+			out <- paste0("[", out, "] ")
+		}
+		out
+	}
+	
 	if(is.character(msg) && file.exists(msg)){
 		write(paste0(if(add.time) now(TRUE), text), msg, append=TRUE)
 	}
