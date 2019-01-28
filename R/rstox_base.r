@@ -8,6 +8,7 @@
 #' \code{getProject} gets a project object (one of "project", "baseline", "baseline-report", "name"), either from the input if this is a baseline or project object, or from the project environment. \cr \cr
 #' \code{listOpenProjects} lists all open projects. \cr \cr
 #' \code{updateProject} updates links to xml files in a project. \cr \cr
+#' \code{modifyProject} modifies a project by the inpputs \code{parlist} and \code{...} (reopens, modifies, saves and optionally closes the project). \cr \cr
 #' \code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
 #' \code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr
 #' \code{resetProject} resets a project to the original settings. \cr \cr
@@ -526,16 +527,33 @@ listOpenProjects <- function(){
 #' @export
 #' @rdname createProject
 #' 
-updateProject <- function(projectName, close=FALSE){
+updateProject <- function(projectName, full.names=FALSE, relative.path=TRUE, close=FALSE){
 	# Set the project name and the root directory of the project:
 	projectPaths <- getProjectPaths(projectName)
 	if(file.exists(projectPaths$projectPath)){
-		pointToStoXFiles(projectName, close=close)
+		pointToStoXFiles(projectName, relative.path=relative.path, close=close)
 		TRUE
 	}
 	else{
 		FALSE
 	}
+}
+#' 
+#' @export
+#' @rdname createProject
+#' 
+modifyProject <- function(projectName, close=TRUE, parlist=list(), ...){
+	reopenProject(projectName)
+	
+	procChanged <- setBaselineParameters(projectName, parlist=parlist, save=TRUE, ...)
+	
+	saveProject(projectName)
+	
+	if(close){
+		closeProject(projectName)
+	}
+	
+	projectName
 }
 #' 
 #' @export
@@ -921,7 +939,7 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 #' @export
 #' @keywords internal
 #' 
-pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
+pointToStoXFiles <- function(projectName, files=NULL, relative.path=TRUE, close=FALSE){
 	
 	pointToStoXFilesSingle <- function(data_type, baseline, files){
 		# Get the files of the specified type:
@@ -941,7 +959,7 @@ pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 	baseline <- openProject(projectName, out="baseline")
 	
 	# Get the files if not specified in the input:
-	files <- listInputFiles(projectName, full.names=TRUE)
+	files <- listInputFiles(projectName, full.names=TRUE, relative.path=relative.path)
 	
 	# Point to the files, save and return:
 	out <- lapply(names(files), pointToStoXFilesSingle, baseline=baseline, files=files)
@@ -957,7 +975,7 @@ pointToStoXFiles <- function(projectName, files=NULL, close=FALSE){
 	out
 }
 # Function for listing input files:
-listInputFiles <- function(projectName, full.names=TRUE){
+listInputFiles <- function(projectName, full.names=TRUE, relative.path=TRUE){
 	# Get input directory and subfolders:
 	inputDir <- getProjectPaths(projectName)$inputDir
 	
@@ -965,7 +983,15 @@ listInputFiles <- function(projectName, full.names=TRUE){
 	files <- split(files, dirname(files))
 	names(files) <- basename(names(files))
 	
+	if(relative.path){
+		files <- lapply(files, getRelativeStoXPath)
+	}
+	
 	files
+}
+# Function for converting a path to a relative path starting from "input" or "output":
+getRelativeStoXPath <- function(x, fsep=.Platform$file.sep){
+	sapply(lapply(strsplit(x, "/"), tail, 3), paste, collapse=fsep)
 }
 
 #*********************************************
@@ -1300,8 +1326,8 @@ getBaseline <- function(projectName, input=c("par", "proc"), proc="all", drop=TR
 generateRScripts <- function(projectName, fresh=TRUE){
 	# Get the paths to the r and r-report scripts:
 	projectPath <- getProjectPaths(projectName=projectName)$projectPath
-	r_script <- file.path(projectPath, "output", "R", "r.R")
-	rreport_script <- file.path(projectPath, "output", "R", "r-report.R")
+	r_script <- file.path(projectPath, "output", "r", "r.R")
+	rreport_script <- file.path(projectPath, "output", "r", "r-report.R")
 	
 	generateNewRScript <- fresh || (!fresh && !file.exists(r_script))
 	generateNewRreportScript <- fresh || (!fresh && !file.exists(rreport_script))

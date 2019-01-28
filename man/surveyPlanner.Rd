@@ -120,10 +120,10 @@ The following types are implemented:
 \describe{
 \item{"Parallel"}{"Parallel transects"}
 \item{"EqAngZZ"}{"Equal angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
-\item{"EqSpZZ"}{"Equal space zigzag sampler, Strindberg and Buckland (2004)"}
+\item{"EqSpZZ"}{"Equal space zigzag sampler, Strindberg and Buckland (2004). End transects are generated different from Strindberg and Buckland (2004), by mirroring the last transect around the line perpendicular to the survey direction passing through the last intersection point between the stratum border and the parallel lines used to generate the transects."}
 \item{"AdjAngZZ"}{"Adjusted angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
-\item{"RectEnclZZ"}{"Rectangular enclosure zigzag sampler, Harbitz and Holmin (2018)"}
-\item{"CurvEnclZZ"}{"Curved enclosure zigzag sampler (not implemented), Harbitz and Holmin (2018)"}
+\item{"RectEnclZZ"}{"Rectangular enclosure zigzag sampler, Harbitz (2019)"}
+\item{"CurvEnclZZ"}{"Curved enclosure zigzag sampler (not implemented), Harbitz (2019)"}
 }
 }
 \examples{

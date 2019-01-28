@@ -7,6 +7,7 @@
 \alias{getProject}
 \alias{listOpenProjects}
 \alias{updateProject}
+\alias{modifyProject}
 \alias{saveProject}
 \alias{saveasProject}
 \alias{resetProject}
@@ -32,7 +33,10 @@ getProject(projectName, out = c("project", "baseline", "baseline-report",
 
 listOpenProjects()
 
-updateProject(projectName, close = FALSE)
+updateProject(projectName, full.names = FALSE, relative.path = TRUE,
+  close = FALSE)
+
+modifyProject(projectName, close = TRUE, parlist = list(), ...)
 
 saveProject(projectName, soft = FALSE)
 
@@ -103,6 +107,7 @@ A project object
 \code{getProject} gets a project object (one of "project", "baseline", "baseline-report", "name"), either from the input if this is a baseline or project object, or from the project environment. \cr \cr
 \code{listOpenProjects} lists all open projects. \cr \cr
 \code{updateProject} updates links to xml files in a project. \cr \cr
+\code{modifyProject} modifies a project by the inpputs \code{parlist} and \code{...} (reopens, modifies, saves and optionally closes the project). \cr \cr
 \code{saveProject} saves a StoX project. This implies to save to the project.XML file all changes that are made to the project environment, such as changes in parameter values through the "..." input to runBaseline(). Such changes are only implemented in the project environment (in R memory), and will not be saved to the project.XML file unless saveProject() is run. \cr \cr
 \code{saveasProject} saves the project as a new project (settings in Java memory are saved to the new project but not to the existing project). \cr \cr
 \code{resetProject} resets a project to the original settings. \cr \cr
