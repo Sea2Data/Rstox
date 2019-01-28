@@ -10,16 +10,16 @@
 #' @examples
 #' \dontrun{
 #' # Process existing project
-#' datras <- exportDatras("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
+#' datras <- prepareDATRAS("NMD_CruiseNumber_2018102_ShipName_G.O.Sars")
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HH.txt)
 #' head(datras$outputData$DATRASConvert$DATRASConvert_BioticData_HL.txt)
 #' }
 #'
 #' @importFrom XML xmlParse getNodeSet xmlGetAttr
 #' @export
-#' @rdname exportDatras
+#' @rdname prepareDATRAS
 #'
-exportDatras <- function(projectName, fileName=NULL)
+prepareDATRAS <- function(projectName, fileName=NULL)
 {
 	# For getting the ship code
 	# TODO: There is old and new ship code, must think of some way to differentiate that (currently, assuming only new)
