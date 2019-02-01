@@ -3,22 +3,27 @@
 \name{getNMDinfo}
 \alias{getNMDinfo}
 \alias{getNMDdata}
+\alias{getNMDver}
 \alias{downloadXML}
 \title{Get NMD API data and reference information}
 \usage{
-getNMDinfo(type = NULL, ver = 1,
-  API = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
-  msg = FALSE, simplify = TRUE)
+getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
+  server = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
+  msg = FALSE, simplify = TRUE, return.URL = FALSE)
 
-getNMDdata(cruise = NULL, year = NULL, shipname = NULL, serialno = NULL,
-  tsn = NULL, datatype = NULL, dir = NULL, subdir = FALSE,
-  group = "default", abbrev = FALSE, subset = NULL, filebase = "NMD",
-  ver = 1, API = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
+getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
+  serialno = NULL, tsn = NULL, datasource = NULL, dir = NULL,
+  subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
+  prefix = "NMD", suffix = NA, ver = getRstoxDef("ver"),
+  server = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
   model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, run = TRUE, timeout = NULL, ...)
+  return.URL = FALSE, info.out = FALSE, run = TRUE, timeout = NULL,
+  snapshot = Sys.time(), ...)
+
+getNMDver(ver = NULL)
 
 downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
-  quiet = TRUE, method = "auto", timeout = NULL)
+  method = "auto", timeout = NULL)
 }
 \arguments{
 \item{type}{A character string naming the type of information to return for the specifications given in 'spec'. Possible values are shown in the list below. Any reference data can be requested, and the names of the possible reference data are returned by running getNMDinfo():
@@ -30,15 +35,17 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 \item{"v"}{List of vessels, where the first line of the platform information is extracted and presented in a matrix with vessels in the rows. Use "platform" to preserve all details about the platforms/vessels}
 }}
 
-\item{ver}{The version of the API. As of 2015-05 only version 1 is available. Version 2 will include the possibility to return a list of all cruises.}
+\item{ver}{The version of the APIs and data, given as a list such as that returned by getRstoxDef("ver"). To use version 1 of the API (the only one available prior to Rstox 1.10) use getRstoxDef("ver", API=list(biotic=1, reference=1)), or simply ver = 1. Giving \code{ver} as a single integer imposes this value on all API versions. To set API versions to 1 and at the same time set the version of the data, use e.g. ver = list(API=1, biotic=1.4).}
 
-\item{API}{The path to the API.}
+\item{server}{The path of the server.}
 
 \item{recursive}{Logical, special for type \%in\% c("cs","sts"); if FALSE only the list of cruise series or survey time series is returned.}
 
 \item{msg}{Logical: if TRUE a message is printed to the consolle stating the estimated time left for the funciton.}
 
 \item{simplify}{Logical: if TRUE simplify the data into matrices instead of complicated lists in some cases like taxa.}
+
+\item{return.URL}{Logical: If TRUE, return the URL of the files to download.}
 
 \item{cruise}{Either the code of a cruise, such as "2015116", or the full or short name of a cruise series or survey time series. In the current version, if given as a cruise code, the parameter 'shipname' must be given as well, based on which the path to the cruise is searched for by functionallity provided by NMD. For cruises prior to the year 1995 several vessels can be linked to the same cruise code, and as of version 2 the user will by default be asked to specify which vessel(s) to specify the vessels when this occurs, instead of having to specify the cruise initially.}
 
@@ -50,19 +57,19 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{tsn}{The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.}
 
-\item{datatype}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datatype=NULL (default) returns all possible data.}
+\item{datasource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datasource=NULL (default) returns all possible data.}
 
 \item{dir}{The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects}
 
 \item{subdir}{Either a name of the sub directory in which to put the StoX projects of downloaded data, or TRUE which puts all projects in a sub folder named after the cruise series or survey time series.}
 
-\item{group}{Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is NULL, all data are saved in one StoX project. The default "default" groups by years if several cruises are requested and by cruise otherwise.}
+\item{group}{Specifies how to gruop the data: (1) If given as "year", the data are split into years, and one StoX project is saved for each year; (2) if given as "cruise", one Stox project is generated for each cruise, and (3) group is "all", NULL or NA, all data are saved in one StoX project. Abbreviations are accepted (e.g., group="c"). The default "default" groups by years if several cruises are requested and by cruise otherwise. The projects generated from the downloaded data are named differently depending on the grouping, with, e.g., the suffixes "_Year_2004"/"_CruiseNumber_2004204_ShipName_Johan Hjort"/"_Alldata" for group = "year"/"cruise"/"all". This implies that the projects downloaded using group = "year" are not replaced when using group = "cruise", even if there is only one cruise per year.}
 
-\item{abbrev}{Logical: If TRUE, abbreviate the project names. PArticularly useful when downloading survey time series, which can have long names.}
+\item{abbrev}{Logical: If TRUE, abbreviate the project names. Particularly useful when downloading survey time series, which can have long names.}
 
-\item{subset}{An integer vector giving the subset of the cruises to download in a cruise series (1 meaning the first cruise and c(2,5) cruise nr 2 and 5).}
+\item{subset}{An vector giving the subset of the cruises/projects to download in a cruise series/survey time series. Can be given either as indices such as 1:3 or -4 or as a vector of years or cruise numbers such as c(2005, 2007, 2008) or c(2005105, 2007845, 2008809). Get the years and cruise numbers using getNMDinfo("cs").}
 
-\item{filebase}{The prefix to use in the names of the StoX projects to which the data are downloaded.}
+\item{prefix, suffix}{The prefix/suffix to use in the names of the StoX projects to which the data are downloaded, separated from the file name by underscore.}
 
 \item{cleanup}{Logical: if FALSE, zip files containing cruise series or survey time series are not deleted.}
 
@@ -70,34 +77,35 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{ow}{Specifies whether to ovewrite existing project: If TRUE, overwrite; if FALSE, do not overwrite; if NULL (default), aks the user to confitm overwriting.}
 
-\item{return.URL}{Logical: If TRUE, return the URL of the files to download.}
+\item{info.out}{Logical: If TRUE, return a data frame with download info along with the project paths.}
 
 \item{run}{Logical: If TRUE, download data and generate projects. If FALSE, only generate project names (useful for retrieveing the project names without downloading).}
 
-\item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal".}
+\item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).}
+
+\item{snapshot}{A time stamp specifying which snapshot to download. The latest snapshot before this time stamp is found and downloaded. The specific snapshot ID can also be given, as a string in the format returned from getRstoxDef("dateTimeNMDAPIFormat").}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 
-\item{URL}{The URL(s) to the xml data.}
+\item{URL}{The URL(s) to the xml data, or the path to a local XML file.}
 
 \item{list.out}{Logical: If TRUE, convert the XML data to a list (time consuming).}
 
 \item{file}{The path to a the file to which the data are saved.}
 
-\item{quiet}{Used in download.file().}
-
 \item{method}{The download method. See \code{\link{download.file}}.}
 }
 \description{
-\code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr 
-\code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr 
-\code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming).
+\code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr \cr
+\code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr \cr
+\code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming). \cr \cr
 }
 \details{
 If non-standard characters are not shown as expected, it might be an issue of locale encoding. 
 It may help to run Sys.setlocale(category = "LC_ALL", locale = ""), at least to display nordic characters on a nordic system.
 }
 \examples{
+\dontrun{
 # A list of available reference data:
 g1 <- getNMDinfo()
 # List of cruise series:
@@ -106,7 +114,6 @@ g2 <- getNMDinfo("cs")
 g3 <- getNMDinfo("sts")
 # List of vessels (the first vessel per platform) and the more complicated list of platforms,
 # (where there can be several vessels per platform). These requestes may take tens of seconds:
-g4 <- getNMDinfo("v")
 g5 <- getNMDinfo("platform")
 # Get other types of information:
 g6 <- getNMDinfo("gearcondition")
@@ -114,12 +121,16 @@ g7 <- getNMDinfo("missiontype")
 g8 <- getNMDinfo("person")
 g9 <- getNMDinfo("taxa")
 # Get the tsn code of torsk:
-g9[tolower(g9$synonym.name) == "torsk", ]
+g9[g9$Norwegian=="torsk",]
 # And all names containing "torsk":
-g9[grep("torsk", g9$synonym.name, ignore.case=TRUE),]
+g9[grep("torsk", g9$Norwegian, ignore.case=TRUE),]
+}
+
+# Download all reference data (takes at lest 5 minutes):
+# system.time(l <- lapply(g1, getNMDinfo, msg=TRUE))
 
 # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
-# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
+# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.10.R.
 
 }
 \keyword{NMD-API}

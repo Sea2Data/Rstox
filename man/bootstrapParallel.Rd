@@ -7,8 +7,8 @@
 bootstrapParallel(projectName, assignments, psuNASC = NULL,
   stratumNASC = NULL, resampledNASC = NULL, nboot = 5,
   startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seed = 1, cores = 1, baseline = NULL, msg = TRUE,
-  parameters = list(), sorted = TRUE)
+  seed = 1, cores = 1, msg = TRUE, parameters = list(),
+  sorted = TRUE, JavaMem = getRstoxDef("JavaMem"), ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -31,8 +31,6 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
 
 \item{cores}{An integer giving the number of cores to run the bootstrapping over.}
 
-\item{baseline}{Optional: a StoX baseline object returned from runBaseline().}
-
 \item{msg}{Logical: if TRUE print messages from runBaseline().}
 
 \item{parameters}{Parameters set by user in Stox (only kept for compatibility with older versions);.
@@ -42,6 +40,10 @@ bootstrapParallel(projectName, assignments, psuNASC = NULL,
 }}
 
 \item{sorted}{Should the data be sorted prior to sampling?}
+
+\item{JavaMem}{The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores.}
+
+\item{baseline}{Optional: a StoX baseline object returned from runBaseline().}
 }
 \value{
 list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run

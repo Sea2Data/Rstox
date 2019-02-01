@@ -6,7 +6,7 @@
 \title{Bootstrap utils.}
 \usage{
 linkPSU2Stratum(x, projectName, psustratum = NULL, StratumArea = NULL,
-  list.out = TRUE, ignore.case = TRUE, fill0 = FALSE)
+  list.out = TRUE, ignore.case = TRUE, fill0 = TRUE)
 
 checkNumPSUsInStratum(projectName)
 }
@@ -27,7 +27,7 @@ checkNumPSUsInStratum(projectName)
 A list with names "Stratum" and "Total" containing dataframes for each species with the following columns: Stratum, Mean, SD (standard deviation), Variance, CV (coefficient of variation), and lower and upper 90% confidence bounds.
 }
 \description{
-\code{linkPSU2Stratum} Adds stratum information to a data frame with one row per PSU. Stratum ID, Area, number of PSUs and positive PSUs are added, and rows are generated for strata with non-positive density.
-\code{checkNumPSUsInStratum} Checks for numner of PSUs >= 2 in each stratum, which is a requirement for variance estimation, and should possibly be a requirement for the bootstrapping when one of the methods is PSU~Stratum.
+\code{linkPSU2Stratum} Adds stratum information to a data frame with one row per PSU. Stratum ID, Area, number of PSUs and positive PSUs are added, and rows are generated for strata with non-positive density. \cr \cr
+\code{checkNumPSUsInStratum} Checks for numner of PSUs >= 2 in each stratum, which is a requirement for variance estimation, and should possibly be a requirement for the bootstrapping when one of the methods is PSU~Stratum. \cr \cr
 }
 \keyword{internal}

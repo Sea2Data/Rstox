@@ -4,7 +4,7 @@
 \alias{getRstoxVersion}
 \title{Get the Rstox version and the version of the Java library used by Rstox, on which StoX is built.}
 \usage{
-getRstoxVersion(out = c("list", "string"))
+getRstoxVersion(out = c("list", "string"), dependencies = c("eca"))
 }
 \arguments{
 \item{out}{The type of object to return.}

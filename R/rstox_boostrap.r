@@ -7,35 +7,41 @@
 #' @param i				The boostrap iteration number.
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param assignments	Trawl assignment from baseline.
-#' @param strata		The strata of the survey.
+#' @param strataNames	The strata names of the survey.
 #' @param psuNASC		MeanNASC from baseline.
 #' @param stratumNASC	Strata NASC estimates from getNASCDistr(baseline).
 #' @param resampledNASC	Resampled NASC distribution.
 #' @param startProcess	The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.
 #' @param endProcess	The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".
 #' @param seedV			A vector of seeds. seedV[i] is used.
-#' @param sorted	Should the data be sorted prior to sampling?
+#' @param sorted		Should the data be sorted prior to sampling?
+#' @param JavaMem		The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores. 
 #'
 #' @return list with (1) the abundance by length in the bootstrap run, (2) the abundance by super individuals in the bootstrap run
 #'
 #' @export
 #' @keywords internal
 #'
-bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE){
+bootstrapOneIteration <- function(i, projectName, assignments, strataNames, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seedV=NULL, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
+	
+	
+	# NOTE: We need to use ... to accommodate changes in parameters in the bootstrap. This function can be run in parallel, so we cannot change the parameters before the bootstrap. However, some data are extracted from the baseline, and these will also need ..., or that the parameters are chcanged "globally":
+	
 	
 	# Load Rstox if not already loaded:
 	library(Rstox)
+	setJavaMemory(JavaMem)
 	# Get the baseline object (run if not already run), as this is needed to insert biostation weighting and meanNASC values into. The warningLevel = 1 continues with a warning when the baseline encounters warnings:
-	baseline <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1)
-	
+	temp <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1, ...)
+		
 	# Perform sampling drawing and replacement by stratum
 	BootWeights <- data.frame()
 	# Not effective if psuNASC has length 0:
 	meanNASC <- psuNASC
 	# Loop per strata:
-	for(j in 1:length(strata)){
+	for(j in 1:length(strataNames)){
 		# Get all stations with assignment to one or more PSUs in the current stratum:
-		stations <- unique(getVar(assignments, "StID")[getVar(assignments, "Stratum")==strata[j]])
+		stations <- unique(getVar(assignments, "StID")[getVar(assignments, "Stratum")==strataNames[j]])
 		# Change suggested for a problem with strata with no stations. The change was discarded, since there should be stations in all strata:
 		if(length(stations)==0){
 			warning(paste("No biotic stations in stratum", j))
@@ -50,19 +56,19 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		
 		# Count weights from resample (resulting in a data frame with columns "Var1" and "Freq"):
 		count <- as.data.frame(table(StID))
-		count$Stratum <- strata[j]
+		count$Stratum <- strataNames[j]
 		BootWeights <- rbind(BootWeights,count)
 		
 		# Find NASC scaling factor. This is not directly related to the sampling of biotic stations above. The NASC values have actually been resampled outside of this function, in the resampledNASC <- getResampledNASCDistr() command in runBootstrap():
 		if(length(psuNASC)>0){
 			# Pick out the NASC value of the current stratum j of the current bootstrap replicate i:
-			sm <- stratumNASC$NASC.by.strata$strata.mean[stratumNASC$NASC.by.strata$Stratum==strata[j]]
+			sm <- stratumNASC$NASC.by.strata$strata.mean[stratumNASC$NASC.by.strata$Stratum==strataNames[j]]
 			# Change introduced in the output from getResampledNASCDistr(), which form 2017-11-03 returns a list of elements NASC and seed:
 			if(is.list(resampledNASC)){
 				resampledNASC <- resampledNASC$NASC
 			}
 			# Scaling factor. This is a factor to multiply all NASC vaules inside the current stratum/bootstrap replicate with:
-			meanNASC$NASC.scale.f[meanNASC$Stratum==strata[j]] <- ifelse(sm>0, resampledNASC[i,j]/sm, 0)
+			meanNASC$NASC.scale.f[meanNASC$Stratum==strataNames[j]] <- ifelse(sm>0, resampledNASC[i,j]/sm, 0)
 		}
 	}
 	# Update biostation weighting
@@ -77,8 +83,9 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 		# Update MeanNASC object in Java memory:
 		setNASC(projectName, "MeanNASC", meanNASC)
 	}
+	
 	# Run the sub baseline within Java. The argument reset=TRUE is essensial to obtain the bootstrapping:
-	getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=endProcess, input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1)$outputData
+	getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=endProcess, input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, ...)$outputData
 }
 
 
@@ -106,6 +113,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 #'	\item{parameters$seed}{The seed for the random number generator (used for reproducibility)}
 #' }
 #' @param sorted	Should the data be sorted prior to sampling?
+#' @param JavaMem		The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores. 
 #'
 #' @return list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
 #'
@@ -115,12 +123,12 @@ bootstrapOneIteration <- function(i, projectName, assignments, strata, psuNASC=N
 #' @export
 #' @keywords internal
 #'
-bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, baseline=NULL, msg=TRUE, parameters=list(), sorted=TRUE){
+bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNASC=NULL, resampledNASC=NULL, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, parameters=list(), sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	
-	# Stop the funciton if both projectName and baseline are missing:
-	if(length(baseline)==0 && missing(projectName)){
-		stop("Either projectName or baseline must be given.")
-	}
+	### # Stop the funciton if both projectName and baseline are missing:
+	### if(length(baseline)==0 && missing(projectName)){
+	### 	stop("Either projectName or baseline must be given.")
+	### }
  
 	# Allow for inputs given in 'nboot' and 'seed' to prepare for the higher level functions bootstrapAcoustic() and runBootstrap():
 	if(length(parameters$nboot)){
@@ -145,13 +153,15 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	seedV <- getSeedV(seed, nboot=nboot)
 	
 	
-	# Define strata, either by acoustic values (if psuNASC is given) or by the trawl assignments:
-	strata <- unique(if(length(psuNASC)>0) getVar(psuNASC, "Stratum") else getVar(assignments, "Stratum"))
+	# Define strataNames, either by acoustic values (if psuNASC is given) or by the trawl assignments:
+	strataNames <- unique(if(length(psuNASC)>0) getVar(psuNASC, "Stratum") else getVar(assignments, "Stratum"))
 	
 	# Store the SuperIndAbundance from the original model:
 	# base.SuperIndAbundance <- getBaseline(baseline, fun="SuperIndAbundance", input=FALSE, msg=msg, drop=FALSE)$outputData$SuperIndAbundance
 	# base.SuperIndAbundance <- getBaseline(baseline, proc="SuperIndAbundance", input=FALSE, msg=msg, drop=FALSE)$outputData$SuperIndAbundance
-	base.SuperIndAbundance <- getBaseline(baseline, proc=endProcess, input=FALSE, msg=msg, drop=FALSE)$outputData[[endProcess]]
+	
+	# Also here, use the ... to accommodate changes in the parameters in the bootstrap:
+	base.SuperIndAbundance <- getBaseline(projectName, proc=endProcess, input=FALSE, msg=msg, drop=FALSE, ...)$outputData[[endProcess]]
 	
 	# Detect the number of cores and use the minimum of this and the number of requested cores and the number of bootstrap replicates:	
 	availableCores = detectCores()
@@ -168,14 +178,19 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
 		cl<-makeCluster(cores)
 		# Bootstrap:
-		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, cl=cl)
+		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strataNames=strataNames, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ..., cl=cl)
 		# End the parallel bootstrapping:
 		stopCluster(cl)
 	}
 	else{
 		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strata=strata, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted)
+		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strataNames=strataNames, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ...)
 	}
+	
+	
+	
+	#out <- papply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strataNames=strataNames, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, cores=cores)
+	
 	
 	out <- unlist(out, recursive=FALSE)
 	
@@ -211,20 +226,18 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #*********************************************
 #' Run a bootstrap in StoX
 #'
-#' \code{runBootstrap} is a wrapper function for the bootstrap functions below.
-#' \code{runBootstrap_1.6} runs the bootstrap of Rstox 1.6. The bootstrap changed from Rstox 1.6 to 1.7, by applying sorting prior to sampling, and different results (but with the same expected value) should be expected. Using \code{runBootstrap_1.6} identical results from previous runs should be expected.
-#' \code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata.
-#' \code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata.
-#' \code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata.
-#' \code{getBootstrapLevels} is used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user.
-#' \code{getBootstrapMethod} gets the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod'.
+#' \code{runBootstrap} is a wrapper function for the bootstrap functions below. \cr \cr
+#' \code{runBootstrap_1.6} runs the bootstrap of Rstox 1.6. The bootstrap changed from Rstox 1.6 to 1.7, by applying sorting prior to sampling, and different results (but with the same expected value) should be expected. Using \code{runBootstrap_1.6} identical results from previous runs should be expected. \cr \cr
+#' \code{runBootstrap_AcousticTrawl} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
+#' \code{runBootstrap_SweptAreaLength} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
+#' \code{runBootstrap_SweptAreaTotal} runs a simple bootstrap of biotic PSUs within strata. \cr \cr
 #'
 #' Resample (bootstrap) trawl stations based on swept area data and possibly also acoustic data to estimate uncertainty in estimates. By the default method (bootstrapMethod="AcousticTrawl"), the acoustic transect values (mean NASC along transects) and biotic stations (trawls) are resampled with replacement within each stratum for each bootstrap replicate, and the StoX project rerun and super individual abundance recalculated (or the output from a different process given by \code{endProcess}).
 #'
-#' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
+#' @param projectName   				The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
 #' @param bootstrapMethod				The method to use for the bootstrap. Currently implemented are given in the following table:
-#' \tabular{rrr}{
-#'   bootstrapMethod \tab Description
+#' \tabular{rr}{
+#'   bootstrapMethod \tab Description\cr
 #'   AcousticTrawl \tab Bootstrap of acoustic tralw surveys, where both acoustic and biotic data are resampled\cr
 #'   SweptAreaLength \tab Bootstrap only biotic data with length information\cr
 #'   SweptAreaTotal \tab For surveys with information only about total catch (count or weight), bootstrap biotic stations\cr
@@ -239,15 +252,16 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #'   EDSU \tab Acoustic data averaged over e.g. one nmi \tab Biotic station\cr
 #'   Sample \tab Ping \tab Individal catch sample
 #' }
-#' @param nboot							Number of bootstrap replicates.
-#' @param startProcess					The start process of the bootstrapping, being the first process before which biostations has been assigned and NASC values have been calculated.
-#' @param endProcess					The end process of the bootstrapping, being the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex".
-#' @param seed							The seed for the random number generator (used for reproducibility).
-#' @param cores							An integer giving the number of cores to run the bootstrapping over.
-#' @param msg							Logical: if TRUE print messages from runBaseline().
-#' @param ignore.case					Logical: If TRUE, ingore case when splitting by species category SpecCat.
-#' @param ...							Used for backwards compatibility.
-#' @param sorted						Should the data be sorted prior to sampling?
+#' @param nboot			Number of bootstrap replicates.
+#' @param startProcess	The start process of the bootstrapping, e.g., the last process before bio-stations have been assigned and NASC values have been calculated.
+#' @param endProcess	The end process of the bootstrapping, e.g., the process returning a matrix containing the following columns: "Stratum", "Abundance", "weight", and grouping variables such as "age", "SpecCat", "sex" (typically "SuperIndAbundance").
+#' @param seed			The seed for the random number generator (used for reproducibility).
+#' @param cores			An integer giving the number of cores to run the bootstrapping over.
+#' @param msg			Logical: if TRUE print messages from runBaseline().
+#' @param ignore.case	Logical: If TRUE ignore case in species category SpecCat.
+#' @param sorted		Should the data be sorted prior to sampling?
+#' @param JavaMem		The memory occupied by the Java virtual machine. Default is returned by getRstoxDef("JavaMem"). Reducing this may be usefull when using mutiple cores.
+#' @param ...			Used for backwards compatibility.
 #'
 #' @return list with (1) the abundance by length in the orginal model, (2) the abundance by length in the bootstrap run, (3) the abundance by super individuals in the orginal model, (4) the abundance by super individuals in the bootstrap run
 #'
@@ -255,13 +269,14 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 #' \dontrun{
 #' projectName <- "Test_Rstox"
 #' boot <- runBootstrap(projectName, nboot=10, seed=1, bootstrapMethod="AcousticTrawl")
+#' }
 #'
 #' @importFrom stats terms as.formula
 #'
 #' @export
 #' @rdname runBootstrap
 #'
-runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	lll <- list(...)
 	### Backwards compatibility: ###
 	# If the old numIterations is given, override the nboot by this:
@@ -270,6 +285,11 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 	}
 	### End of backwards compatibility: ###
 	
+	# Open the project:
+	openProject(projectName)
+	# Get the baseline parameters, which will be used to reset the project after the bootstrapping, since ... may contain changes in parameters:
+	parameters <- getBaselineParameters(projectName)$java
+	
 	# Run the different bootstrap types:
 	temp <- getBootstrapMethod(bootstrapMethod=bootstrapMethod, acousticMethod=acousticMethod, bioticMethod=bioticMethod, ...)
 	bootstrapMethod <- temp$bootstrapMethod
@@ -277,11 +297,14 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 	bioticMethod <- temp$bioticMethod
 	
 	# Apply the bootstrap:
-	if(!bootstrapMethod %in% getRstoxDef("model_types")){
+	if(!bootstrapMethod %in% getRstoxDef("project_types")){
 		stop("Invalid bootstrap type.")
 	}
 	bootstrapFun <- paste("runBootstrap", bootstrapMethod, sep="_")
-	do.call(bootstrapFun, list(projectName=projectName, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, ...))
+	do.call(bootstrapFun, list(projectName=projectName, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...))
+	
+	# Reset to the last baseline run before the bootstrap:
+	runBaseline(projectName, parlist=parameters, out="name", reset=TRUE, msg=FALSE)
 }
 #'
 #' @export
@@ -295,17 +318,16 @@ runBootstrap_1.6 <- function(projectName, bootstrapMethod="AcousticTrawl", acous
 }
 #'
 #' @export
-#' @keywords internal
 #' @rdname runBootstrap
 #'
-runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
-	# Baseline and biotic assignments:
-	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
+runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
+	# Baseline and biotic assignments. Run the baseline here with reset and optional parameter list to ensure that these are set before getPSUNASC() and getResampledNASCDistr(), which use getBaseline() with no ...:
+	temp <- runBaseline(projectName, msg=FALSE, reset=TRUE, save=TRUE, ...)
 	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Acoustic data:
-	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keept this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
-	psuNASC <- getPSUNASC(baseline=baseline)
+	# NOTE: The psuNASC is read here once, and used to scale the PSUs in the baseline at each bootstrap replicate. It is important to keep this, since the PSUs are changed in memory in each core, and we wish to scale relative to the original values each time. For the same reason, the PSUs are set back to the original value at the end of bootstrapParallel() when run on 1 core:
+	psuNASC <- getPSUNASC(projectName) # WARNING: THIS FUNCTION CALLS getBaseline() WITHOUT ANY PARLIST OR ..., AND WILL THUS RETURN THE MeanNASC FOR THE CURRENT PARAMETER STATE IN JAVA MEMORY.
 	# Warning if 'psuNASC' is not of positive length, in which case psuNASC, stratumNASC and resampledNASC are set to NULL and not written, and bootstrapMethod "SweptAreaLength" is run as a consequence of these being empty:
 	if(length(psuNASC)==0){
 		warning("bootstrapMethod was \"AcousticTrawl\", but no acoustic data recognized (empty psuNASC). bootstrapMethod changed to \"SweptAreaLength\", and this change should be applied also in the project parameters.")
@@ -313,8 +335,8 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 		resampledNASC <- NULL
 	}
 	else{
-		stratumNASC <- getNASCDistr(baseline=baseline, psuNASC=psuNASC, NASCDistr="observed")
-		resampledNASC <- getResampledNASCDistr(baseline=baseline, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(nboot=nboot, seed=seed), sorted=sorted)
+		stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="observed")
+		resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, parameters=list(nboot=nboot, seed=seed), sorted=sorted)
 		# Assign varialbes to the project environment:
 		setProjectData(projectName=projectName, var=psuNASC)
 		setProjectData(projectName=projectName, var=stratumNASC)
@@ -323,7 +345,7 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	
 
 	# Run bootstrap:
-	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
+	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...)
 
 	# Add the method specification:
 	bootstrap$bootstrapParameters$bootstrapMethod <- "AcousticTrawl"
@@ -333,22 +355,22 @@ runBootstrap_AcousticTrawl <- function(projectName, acousticMethod=PSU~Stratum, 
 	
 	# Assign the bootstrap to the project environment:
 	setProjectData(projectName=projectName, var=bootstrap)
-	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
-	baseline <- runBaseline(projectName, reset=TRUE, msg=FALSE)
+	
+	### # Rerun the baseline to ensure that all processes are run, and return the boostraped data:
+	### temp <- runBaseline(projectName, reset=TRUE, msg=FALSE, ...)
 	invisible(TRUE)
 }
 #'
 #' @export
-#' @keywords internal
 #' @rdname runBootstrap
 #'
-runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, ...){
+runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, nboot=5, startProcess="TotalLengthDist", endProcess="SuperIndAbundance", seed=1, cores=1, msg=TRUE, sorted=TRUE, JavaMem=getRstoxDef("JavaMem"), ...){
 	# Baseline and biotic assignments:
-	baseline <- runBaseline(projectName, out="baseline", msg=msg, reset=TRUE)
+	temp <- runBaseline(projectName, msg=FALSE, reset=TRUE, save=TRUE, ...)
 	assignments <- getBioticAssignments(projectName=projectName)
 	
 	# Run bootstrap:
-	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, baseline=baseline, msg=msg, sorted=sorted)
+	bootstrap <- bootstrapParallel(projectName=projectName, assignments=assignments, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...)
 	
 	# Add the method specification:
 	bootstrap$bootstrapParameters$bootstrapMethod <- "SweptAreaLength"
@@ -358,18 +380,18 @@ runBootstrap_SweptAreaLength <- function(projectName, acousticMethod=NULL, bioti
 	
 	# Assign varialbes to the global environment for use in plotting functions. This should be changed to a local Rstox environment in the future:
 	setProjectData(projectName=projectName, var=bootstrap)
-	# Rerun the baseline to ensure that all processes are run, and return the boostraped data:
-	baseline <- runBaseline(projectName, reset=TRUE, msg=FALSE)
+	
+	### # Rerun the baseline to ensure that all processes are run, and return the boostraped data:
+	### temp <- runBaseline(projectName, reset=TRUE, msg=FALSE, ...)
 	invisible(TRUE)
 }
 #'
 #' @importFrom data.table rbindlist
-#' @keywords internal
-#' @export
 #' @rdname runBootstrap
+#' @export
 #'
 runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, bioticMethod=PSU~Stratum, startProcess="SweptAreaDensity", endProcess=NULL, nboot=5, seed=1, cores=1, ignore.case=TRUE, sorted=TRUE, ...){
-	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE, sample=TRUE){
+	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE, sample=TRUE, ...){
 		# Function for calculating the mean density and keep the first row of a matrix:
 		MeanDensity1 <- function(y){
 			out <- y[1, , drop=FALSE]
@@ -413,7 +435,7 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	###}
 	seedV <- getSeedV(seed, nboot=nboot)
 	
-	DensityMatrix <- getBaseline(projectName, proc=startProcess, input="par")
+	DensityMatrix <- getBaseline(projectName, proc=startProcess, input="par", ...)
 	if(length(DensityMatrix$parameters[[startProcess]])==0){
 		stop(paste0("Invalid startProcess: ", startProcess))
 	}
@@ -464,11 +486,8 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 
 	invisible(TRUE)
 }
-#'
-#' @export
-#' @keywords internal
-#' @rdname runBootstrap
-#'
+
+# Function used for extracting either a matrix of bootstrap variables and domains, or the function specified by the user:
 getBootstrapLevels <- function(x){
 	isNULL <- any(length(x)==0, sum(nchar(x))==0, identical(x, FALSE), is.character(x) && identical(tolower(x), "null"))
 	if(isNULL){
@@ -491,11 +510,8 @@ getBootstrapLevels <- function(x){
 		return(NULL)
 	}
 }
-#'
-#' @export
-#' @keywords internal
-#' @rdname runBootstrap
-#'
+
+# Function for gettin the bootstrap method based on the inputs 'bootstrapMethod', 'acousticMethod' and 'bioticMethod':
 getBootstrapMethod <- function(bootstrapMethod="AcousticTrawl", acousticMethod=PSU~Stratum, bioticMethod=PSU~Stratum, ...){
 	# Function for comparing strings:
 	strequal <- function(x, y, ignore.case=TRUE){
@@ -510,7 +526,6 @@ getBootstrapMethod <- function(bootstrapMethod="AcousticTrawl", acousticMethod=P
 	# get the bootstrap levels:
 	acousticMethod <- getBootstrapLevels(acousticMethod)
 	bioticMethod <- getBootstrapLevels(bioticMethod)
-	
 	
 	# Special care for when bootstrapMethod=="AcousticTrawl" (the default) and acousticMethod = NULL and bioticMethod = PSU~Stratum or EDSU~Stratum:
 	if(strequal(bootstrapMethod[1], "AcousticTrawl")){
@@ -555,8 +570,11 @@ getBootstrapMethod <- function(bootstrapMethod="AcousticTrawl", acousticMethod=P
 #' @examples
 #' \dontrun{
 #' # Download an example swept area project:
-#' # pr <- createProject("ftp://ftp.imr.no/StoX/Example%20projects/Example_sweptarea_BarentsSea_cod_1999.zip")
+#' # pr <- createProject(
+#' #     "ftp://ftp.imr.no/StoX/Example%20projects/Example_sweptarea_BarentsSea_cod_1999.zip"
+#' # )
 #' # v <- varianceEstimation(pr)
+#' }
 #'
 #' @importFrom utils head
 #' @importFrom data.table rbindlist
@@ -588,7 +606,9 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 		}
 		
 		# Eq (3) in Jolly and Hampton (1990), but replacing the weights w by 1:
+		# Note that if there is only one station with positive values, e.g., c(0,0, something, 0), then the cv will be 1. This can be seen by deriving the unbiased sample variance estimator s2 = sum((x-meanx)^2) / (n-1), where x1 = a and all other xi are 0, giving meanx = a/n, and s2 = meanx^2 * n. The last n cancels out in the formula below, giving cv = 1 (sd / mean):
 		VarDensityStratumFun <- function(x, varName, meanName, na.rm=TRUE){
+			# Get the number of stations:
 			n = nrow(x)
 			if(n < 2){
 				return(Inf)
@@ -670,7 +690,7 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 	}
 	
 	# Add stratum information:
-	output <- linkPSU2Stratum(output, projectName=projectName, psustratum=psustratum, StratumArea=StratumArea, ignore.case=ignore.case)
+	output <- linkPSU2Stratum(output, projectName=projectName, psustratum=psustratum, StratumArea=StratumArea, ignore.case=ignore.case, fill0=TRUE)
 	
 	# Apply the variance estimation:
 	output <- lapply(output, JollyHampton, na.rm=na.rm)
@@ -690,8 +710,8 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 #*********************************************
 #' Bootstrap utils.
 #'
-#' \code{linkPSU2Stratum} Adds stratum information to a data frame with one row per PSU. Stratum ID, Area, number of PSUs and positive PSUs are added, and rows are generated for strata with non-positive density.
-#' \code{checkNumPSUsInStratum} Checks for numner of PSUs >= 2 in each stratum, which is a requirement for variance estimation, and should possibly be a requirement for the bootstrapping when one of the methods is PSU~Stratum.
+#' \code{linkPSU2Stratum} Adds stratum information to a data frame with one row per PSU. Stratum ID, Area, number of PSUs and positive PSUs are added, and rows are generated for strata with non-positive density. \cr \cr
+#' \code{checkNumPSUsInStratum} Checks for numner of PSUs >= 2 in each stratum, which is a requirement for variance estimation, and should possibly be a requirement for the bootstrapping when one of the methods is PSU~Stratum. \cr \cr
 #'
 #' @param x				A data frame with with one row per PSU, to which Stratum information should be added.
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
@@ -708,7 +728,7 @@ varianceEstimation <- function(projectName, proc="SweptAreaDensity", ignore.case
 #' @keywords internal
 #' @rdname linkPSU2Stratum
 #'
-linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, list.out=TRUE, ignore.case=TRUE, fill0=FALSE){
+linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, list.out=TRUE, ignore.case=TRUE, fill0=TRUE){
 	# Funciton for expanding the matrix by zero density for missing PSUs in the matrix:
 	fillZeros <- function(y, psustratum){
 		n <- nrow(psustratum)

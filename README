@@ -1,5 +1,5 @@
-# Rstox version: 1.9 (latest beta, 2018-04-18)
-# R version: 3.4.3
+# Rstox version: 1.9.1 (latest alpha, 2019-02-01)
+# R version: 3.5.0
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
 
@@ -8,20 +8,27 @@ dep.pck <- c("data.table", "ggplot2", "pbapply", "rgdal", "rgeos", "rJava", "sp"
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
-install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.9.tar.gz", repos=NULL)
+install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.1/Rstox_1.9.1.tar.gz", repos=NULL)
 
 # Alternatively, install the latest development version from GitHub.
 # Note that this does not guarantee a stable version.
-# For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox as described above.
+# For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.1 as described above.
 # Install from github using the devtools package:
 # devtools::install_github("Sea2Data/Rstox", ref="develop")
 
-# R should be installed as the 64 bit version (and 64 bit version ONLY for Windows 10. To do this, uncheck the box "32-bit Files" when selecting components to install. If you are re-intalling an R that has both 32 and 64 bit, you will need to uninstall R first).
+# R should be installed as the 64 bit version. On Windows 10, ONLY the 64 bit version should be used.
+# To do this, uncheck the box "32-bit Files" when selecting components to install.
+# If you are re-installing an R that has both 32 and 64 bit, you will need to uninstall R first.
+
 # On Windows systems with adminstrator requirements, it is recommended to install R in C:/users/<user>/documents/R.
+# Also if you are using Rstudio, please make sure that you are using the correct R version (in case you have
+# multiple versions installed). The R version can be selected in Tools > Global Options.
 
 # Note that 64 bit Java is required to run Rstox
+
 # On Windows, install Java from this webpage: https://www.java.com/en/download/windows-64bit.jsp,
 # or follow the instructions found on ftp://ftp.imr.no/StoX/Tutorials/
+
 # On Mac, getting Java and Rstox to communicate can be challenging.
 # If you run into problems such as "Unsupported major.minor version ...", try the following:
 # Update java, on
@@ -29,10 +36,13 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.9.tar.gz", repos=
 # If this does not work install first the JDK and then the JRE:
 # 	http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 # 	http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+# Rstox sohuld also work with Java 11, presently available only as Development Kit:
+# 	https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html
 # You may want to check that the downloaded version is first in the list by running the following in the Terminal:
 # 	/usr/libexec/java_home -V
 # 	java -version
-# Then run this in the Terminal.app:
+# Then run this in the Terminal.app (you will be asked for password, but the password will not show as you type.
+# It is possible to type the password in a text editor first and then paste it into the Terminal.):
 # 	sudo ln -s $(/usr/libexec/java_home)/jre/lib/server/libjvm.dylib /usr/local/lib
 # 	sudo R CMD javareconf
 # Open R (close and then open if already open) and install rJava:
@@ -41,40 +51,77 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.9.tar.gz", repos=
 # Then the installed Rstox should work.
 
 
-# Release notes:
+# Release notes Rstox_1.9.1:
 
-# 1. Removed the function baseline2ECA(), which is covered by baseline2eca().
+# 1. Added support for NMD biotic API version 3 and biotic version 3.0 in getNMDdata(). Removed search for 'serialno'. Only full year files can be downloaded, but filtering on species through 'tsn' and serial number through 'serialno' is incorporated in the StoX project generated at download.
 
-# 2. Added the option of downloading all seralno from a year if serialno is not set.
+# 2. Added support for NMD reference API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before, getMNDinfo("v") returned only the last entry of each platform.
 
-# 3. Added the function surveyPlanner() used to generate parallel or zigzag transects.
+# 3. Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns, as well as a column OldNames for old (non-preffered) names, given as strings such as "Norwegian: rødkrabbe, Scientific: Geryon tridens, English: red crab".
 
-# 4. Added the function plotStratum() for plotting the output from surveyPlanner().
+# 4. Added the functions prepareRECA(), runRECA() for preparing and running ECA (estimated catch at age), and plotRECA() and reportRECA() for plotting and reporting the results. These functions depend on the Reca package, which currently only works on Mac and Windows 7 (not Windows 10).
 
-# 5. Added the functions getProjString(), projectMatrixList(), spatial2matrixList(), matrixList2multipolygon(), multipolygon2spatial(), isSpatial(), isMatrixList(), isMultipolygon(), matrixListLevel(), rapplyKeepDataFrames() as utility functions for conversion to and from spatial objects, multipolygons, and lists of matrices, all containing polygons and other spatial data.
+# 5. Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
 
-# 6. Added the functions geo2xy() for conversion to and from geographic and Cartesian coordinates, polyAreaOld() which is the old polyArea(), and getMatrixList(), getMultipolygon() and getSpatial() for getting a list of matrices, a mutipolygon wkt string or a spatial object respectively.
+# 6. Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a list of all cruises containing biotic data.
 
-# 7. Mapped the new funcitons getMultipolygon() and getMatrixList() to the old funcitons matrix2multipolygon() multipolygon2matrix() for backwards compatibility.
+# 7. Added the function prepareDATRAS() for converting a biotic file to a DATRAS csv file. The function is included in the StoX template DATRAS conversion.
 
-# 8. Fixed bug in baseline2eca(), where the stratumNeighbour in the output was not created using matching but simple indexing of the strata present in the resources$covariateLink. Also now the neighbors of each present stratum is matched with the present strata.
+# 8. Added the function closeAllProjects().
 
-# 9. Other minor bug fixes.
+# 9. Changed the parameter 'margin' in plotStratum() to the new parameter 'zoom', which has default 1.5 and where 1 indicates no zooming, The old parameter named 'zoom' has been removed along with the parameter 'google' for Google-maps type of plots due to new requirements for users to create an API project and get this authorized.
 
-# 10. Added the parameter 'run' in getNMDdata(), which if set to FALSE only generates the project names, and does not download data and generate projects.
+# 10. Added the function exportDatras() which takes the output from a baseline model including the StoX function DATRASConvert and exports a DATRAS file. In the current version only one biotic file can be included in the project.
 
-# 11. Added the function aggregateBySpeciesCategory() which generates a species matrix with biotic stations as rows and station information and the species present in a reference file as columns.
+# 11. Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
 
-# 12. Added a check for missing not downloaded with getNMDdata().
+# 12. Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
 
-# 13. Added support for using year or cruise code as 'subset' in getNMDdata().
+# 13. Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
 
-# 14. Changed so that all matrix-like reference data downloaded using getNMDinfo() are represented as data.frame with numeric values wherever possible (when no NAs induced using as.numeric()).
+# 14. Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting transects, whereas transect=NULL did. In the new version all values other than TRUE suppresses plotting transects.
 
-# 15. Added the parameter modelType in the functions runBaseline(), getBaseline(), getProcess() and getBaselineParameters().
+# 15. Fixed bug in getNMDinfo("platform") and getNMDinfo("v"), where the columns validFrom and validTo did not correspond to the correct platform codes/names due to a sorting of these dates.
 
-# 16. Fixed bug in getBaseline(), where data with incomplete comments (e.g., 'Ersfjorden-pumper 80 tonn til "Sklinnabanken') resulted in rows being dropped from the data.
+# 16. Fixed bug in getNMDinfo, where UTF-8 encoding was ineffective (the corresponding bugfix in Version 1.3.2 was discovered to be ineffective). 
 
-# 17. Added "platformNumber" in getNMDinfo("v") and getNMDinfo("platform"), and changed the extraction of platforms when type="v" to all info of the latest 'validTo' value. When the 'validTo' is missing, the first row is returned, assuming there is only one row for these entries.
+# 17. Removed error in readStrataPolygons(), where multipolygons were not supported. Now only the first polygon of multipolygons are kept in the outputs 'lonlat' and 'lonlatAll', and all are kept in 'lonlatFull'.
 
-# 18. Added the function readBaselineFiles().
+# 18. Changed surveyPlanner() to discard strata with zero effort, but keep those strata in the Input list for plotting.
+
+# 19. Added the parameter "JavaMem" in bootstrap functions, used for setting the Java memory of each bootstrap replicate (useful to reduce memory for parallelized bootstrapping).
+
+# 20. Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
+
+# 21. Changed from using 'formulardato' to using 'sistefangstdato' in baseline2eca().
+
+# 22. Fixed bug in runBaseline(), where exportCSV==TRUE now implies resetting (and rerunning) the baseline.
+
+# 23. Changed 'covariateLink' in the output from baseline2eca() to link to the union of the covariate values in biotic and landing (and not only to landing as before). Also changed name of the thrid column of the data frames in covariateDefinition from "Value" to "Definition".
+
+# 24. Removed the covariate 'season', which was used in conjunction to 'year'. Now, these are concatinated in the temporal covariate.
+
+# 25. Changed the name of baseline2eca() to getCovData(). The old function kept for backwards compatibility.
+
+# 26. Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
+
+# 27. Avoided strange behavior by rgeos::readWKT() on Windows, where long strings were "unable to parse" (500 charaters).
+
+# 28. Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process. 
+
+# 29. Cleaned up how startProcess and endProcess interacts with 'reset' and the unrun and changed processes. The documentation updated with the following: The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
+
+# 30. Added the predefined values as attributes to the parameter values returned from getBaseline().
+
+# 31. Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
+
+# 32. Renamed the parameter 'API' to 'server' in getNMDinfo() and getNMDdata(). No backwards compatibility.
+
+# 33. Fixed bug with Java v11.
+
+# 34. Fixed bug with subset in getNMDdata().
+
+
+
+
+# For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS

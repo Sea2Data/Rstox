@@ -6,7 +6,7 @@
 \usage{
 baseline2eca(projectName, biotic = "BioticCovData",
   landing = "LandingCovData", temporal = NULL, gearfactor = NULL,
-  spatial = NULL)
+  spatial = NULL, landingresolution = 92, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -20,18 +20,14 @@ baseline2eca(projectName, biotic = "BioticCovData",
 \item{gearfactor}{Optional definition of the gearfactor covariate (not yet implemented).}
 
 \item{spatial}{Optional definition of the spatial covariate (not yet implemented).}
+
+\item{landingresolution}{The temporal resolution in days to use for aggregating the landing data.}
+
+\item{...}{Parameters passed to \code{\link{getBaseline}}.}
 }
 \value{
 A reference to the StoX Java baseline object
 }
 \description{
 This function reads data from a baseline run and converts to a list of data used by the ECA model in the Reca package.
-}
-\examples{
-system.time(eca <- baseline2eca("Test_Rstox"))
-# Show the covariate definitions:
-eca$resources
-# Show the eca object:
-str(eca)
-
 }

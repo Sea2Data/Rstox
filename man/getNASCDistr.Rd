@@ -4,10 +4,10 @@
 \alias{getNASCDistr}
 \title{Estimate mean NASC distribution}
 \usage{
-getNASCDistr(baseline, psuNASC, NASCDistr = "observed")
+getNASCDistr(projectName, psuNASC, NASCDistr = "observed")
 }
 \arguments{
-\item{baseline}{StoX Java baseline object.}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{psuNASC}{MeanNASC table from baseline.}
 
@@ -25,3 +25,4 @@ psuNASC <- getPSUNASC(projectName)
 stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
 
 }
+\keyword{internal}

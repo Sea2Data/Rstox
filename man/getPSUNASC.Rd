@@ -5,26 +5,27 @@
 \alias{aggPSUNASC}
 \title{Get and aggregate PSUNASC. Rows are reordered.}
 \usage{
-getPSUNASC(baseline)
+getPSUNASC(projectName)
 
 aggPSUNASC(psuNASC)
 }
 \arguments{
-\item{baseline}{A StoX baseline object.}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
-\item{psuNASC}{Data frame from getPSUNASC().}
+\item{psuNASC}{Data frame as returned from from \code{getPSUNASC}.}
 }
 \value{
 A Java integer, double, or Boolean
 \code{getPSUNASC} returns psuNASC Data frame with mean NASC (Value) per transect (PSU) and Layer together with strata area \cr 
-\code{aggPSUNASC} returns psuNASC_agg Data frame with mean NASC (Value) per transect (PSU)
+\code{aggPSUNASC} returns psuNASC_agg Data frame with mean NASC (Value) per transect (PSU) \cr \cr
 }
 \description{
 \code{getPSUNASC} gets a joined table with meanNASC, psu, stratum, and area. I.e., reads transect data, strata and area information from baseline Java object and merges them into one data frame. \cr \cr
-\code{aggPSUNASC} aggregates psuNASC Layer to PELBOT. Used within functions when resampling and rescaling NASC values if Layer!=PELBOT.
+\code{aggPSUNASC} aggregates psuNASC Layer to PELBOT. Used within functions when resampling and rescaling NASC values if Layer!=PELBOT. \cr \cr
 }
 \examples{
 psuNASC <- getPSUNASC("Test_Rstox")
 psuNASC_agg <- aggPSUNASC(psuNASC=psuNASC)
 
 }
+\keyword{internal}
