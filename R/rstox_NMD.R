@@ -77,7 +77,7 @@
 #' # system.time(l <- lapply(g1, getNMDinfo, msg=TRUE))
 #'
 #' # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
-#' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
+#' # go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.10.R.
 #' 
 #' @importFrom XML getNodeSet xmlValue xmlParse xmlNamespaceDefinitions
 #' @export
@@ -953,7 +953,7 @@ getCruiseInfo <- function(ver, server, msg=FALSE){
 	}
 	URL <- addQuery(paste(server, datasource, paste0("v", ver$API[[datasource]]), sep="/"), type="ListAll")
 	d <- downloadXML(URL, msg=msg)
-	s <- lapply(d, function(x) column2ilst(getRowElementValueWithName(x), col="text", colnames=".attrs"))
+	s <- lapply(d, function(x) column2ilst(getElements(x), col="text", colnames=".attrs"))
 	x <- as.dataFrame_full(s)
 	x <- as.numericDataFrame(x)
 	x

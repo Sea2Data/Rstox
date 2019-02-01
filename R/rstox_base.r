@@ -34,6 +34,7 @@
 #' @param soft				Logical: If TRUE, do not save the current javaParameters to the savedParameters field in the project environment (used in saveasProject()).
 #' @param to				A string naming the parameters to reset a project to (one of "original" and "saved", where the latter is only used in saveasProject()).
 #' @param subset.out		Logical: Used in \code{is.project}. If TRUE, subset the input project names, and if False, return a logical vector.
+#' @param relative.path		Logical: If TRUE, update the project.xml file with the relative paths in Read* functions.
 #'
 #' @examples
 #' # Show templates:
@@ -527,7 +528,7 @@ listOpenProjects <- function(){
 #' @export
 #' @rdname createProject
 #' 
-updateProject <- function(projectName, full.names=FALSE, relative.path=TRUE, close=FALSE){
+updateProject <- function(projectName, relative.path=TRUE, close=FALSE){
 	# Set the project name and the root directory of the project:
 	projectPaths <- getProjectPaths(projectName)
 	if(file.exists(projectPaths$projectPath)){

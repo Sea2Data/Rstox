@@ -130,7 +130,7 @@ g9[grep("torsk", g9$Norwegian, ignore.case=TRUE),]
 # system.time(l <- lapply(g1, getNMDinfo, msg=TRUE))
 
 # For examples of downloading data from Norwegian Marine Data Centre (NMD in norwegian), 
-# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.8.R.
+# go to ftp://ftp.imr.no/StoX/Download/Rstox/Examples/Rstox-example_1.10.R.
 
 }
 \keyword{NMD-API}

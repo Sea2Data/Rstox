@@ -652,15 +652,33 @@ Added "platformNumber" in getNMDinfo("v") and getNMDinfo("platform"), and change
 Added the function readBaselineFiles().
 
 
-########## Version 1.9.1 (2018-04-19) ##########
+########## Version 1.9.1 (2019-02-01) ##########
 
-Added support for NMD API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before getMNDinfo("v") returned only the last entry of each platform.
+Added support for NMD biotic API version 3 and biotic version 3.0 in getNMDdata(). Removed search for 'serialno'. Only full year files can be downloaded, but filtering on species through 'tsn' and serial number through 'serialno' is incorporated in the StoX project generated at download.
+
+Added support for NMD reference API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before, getMNDinfo("v") returned only the last entry of each platform.
+
+Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns, as well as a column OldNames for old (non-preffered) names, given as strings such as "Norwegian: rødkrabbe, Scientific: Geryon tridens, English: red crab".
+
+Added the functions prepareRECA(), runRECA() for preparing and running ECA (estimated catch at age), and plotRECA() and reportRECA() for plotting and reporting the results. These functions depend on the Reca package, which currently only works on Mac and Windows 7 (not Windows 10).
+
+Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
+
+Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a list of all cruises containing biotic data.
+
+Added the function prepareDATRAS() for converting a biotic file to a DATRAS csv file. The function is included in the StoX template DATRAS conversion.
+
+Added the function closeAllProjects().
+
+Changed the parameter 'margin' in plotStratum() to the new parameter 'zoom', which has default 1.5 and where 1 indicates no zooming, The old parameter named 'zoom' has been removed along with the parameter 'google' for Google-maps type of plots due to new requirements for users to create an API project and get this authorized.
+
+Added the function exportDatras() which takes the output from a baseline model including the StoX function DATRASConvert and exports a DATRAS file. In the current version only one biotic file can be included in the project.
+
+Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
 
 Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
 
 Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
-
-Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns, as well as a column OldNames for old (non-preffered) names, given as strings such as "Norwegian: rødkrabbe, Scientific: Geryon tridens, English: red crab".
 
 Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting transects, whereas transect=NULL did. In the new version all values other than TRUE suppresses plotting transects.
 
@@ -673,8 +691,6 @@ Removed error in readStrataPolygons(), where multipolygons were not supported. N
 Changed surveyPlanner() to discard strata with zero effort, but keep those strata in the Input list for plotting.
 
 Added the parameter "JavaMem" in bootstrap functions, used for setting the Java memory of each bootstrap replicate (useful to reduce memory for parallelized bootstrapping).
-
-Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
 
 Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
 
@@ -690,8 +706,6 @@ Changed the name of baseline2eca() to getCovData(). The old function kept for ba
 
 Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
 
-Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a list of all cruises.
-
 Avoided strange behavior by rgeos::readWKT() on Windows, where long strings were "unable to parse" (500 charaters).
 
 Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process. 
@@ -700,32 +714,43 @@ Cleaned up how startProcess and endProcess interacts with 'reset' and the unrun 
 
 Added the predefined values as attributes to the parameter values returned from getBaseline().
 
-Added the function closeAllProjects().
-
 Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
 
-Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
-
-Renamed the parameter API to server in getNMDinfo() and getNMDdata(). No backwards compatibility.
+Renamed the parameter 'API' to 'server' in getNMDinfo() and getNMDdata(). No backwards compatibility.
 
 Fixed bug with Java v11.
 
 Fixed bug with subset in getNMDdata().
 
+
+
+########## Version 1.10 (2019-02-01) ##########
+
+Added support for NMD biotic API version 3 and biotic version 3.0 in getNMDdata(). Removed search for 'serialno'. Only full year files can be downloaded, but filtering on species through 'tsn' and serial number through 'serialno' is incorporated in the StoX project generated at download.
+
+Added support for NMD reference API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before, getMNDinfo("v") returned only the last entry of each platform.
+
+Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns, as well as a column OldNames for old (non-preffered) names, given as strings such as "Norwegian: rødkrabbe, Scientific: Geryon tridens, English: red crab".
+
+Added the functions prepareRECA(), runRECA() for preparing and running ECA (estimated catch at age), and plotRECA() and reportRECA() for plotting and reporting the results. These functions depend on the Reca package, which currently only works on Mac and Windows 7 (not Windows 10).
+
+Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
+
+Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a list of all cruises containing biotic data.
+
+Added the function prepareDATRAS() for converting a biotic file to a DATRAS csv file. The function is included in the StoX template DATRAS conversion.
+
+Added the function closeAllProjects().
+
 Changed the parameter 'margin' in plotStratum() to the new parameter 'zoom', which has default 1.5 and where 1 indicates no zooming, The old parameter named 'zoom' has been removed along with the parameter 'google' for Google-maps type of plots due to new requirements for users to create an API project and get this authorized.
 
 Added the function exportDatras() which takes the output from a baseline model including the StoX function DATRASConvert and exports a DATRAS file. In the current version only one biotic file can be included in the project.
 
-
-########## Version 1.10 (2018-07-06) ##########
-
-Added support for NMD API version 2 in getMNDinfo() and getNMDdata(). The output from getMNDinfo("platform") now coincides with that from getMNDinfo("v"), being a data frame with all entries of all platforms, where some platforms can have multiple entries. Before getMNDinfo("v") returned only the last entry of each platform.
+Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
 
 Fixed bug in getNMDinfo("v"), where the returned data frame only contained NA.
 
 Fixed bug in surveyPlanner(), where the output data frame 'Transect' contained stratum indices instead of stratum names.
-
-Changed the output of getNMDinfo("taxa") to have one column per species, with the scientific, norwegian, english and russian name as columns, as well as a column OldNames for old (non-preffered) names, given as strings such as "Norwegian: rødkrabbe, Scientific: Geryon tridens, English: red crab".
 
 Fixed bug in plotStratum(), where transect=FLASE did not suppress plotting transects, whereas transect=NULL did. In the new version all values other than TRUE suppresses plotting transects.
 
@@ -738,8 +763,6 @@ Removed error in readStrataPolygons(), where multipolygons were not supported. N
 Changed surveyPlanner() to discard strata with zero effort, but keep those strata in the Input list for plotting.
 
 Added the parameter "JavaMem" in bootstrap functions, used for setting the Java memory of each bootstrap replicate (useful to reduce memory for parallelized bootstrapping).
-
-Added the functions writeBioticXML() and writeAcousticXML() (with supporting functions), which takes a data frame as input and writes the data frame to an XML file given XML-schema (XSD) files shipped along with Rstox. The input data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
 
 Removed LICENSE file, as this is unambigously stated in the DESCRIPTION file.
 
@@ -755,8 +778,6 @@ Changed the name of baseline2eca() to getCovData(). The old function kept for ba
 
 Removed the option 'quiet' in downloadXML(), which is replaced by 'msg'.
 
-Added the option getMNDinfo("cruise") or getMNDinfo("cruises"), for returning a list of all cruises.
-
 Avoided strange behavior by rgeos::readWKT() on Windows, where long strings were "unable to parse" (500 charaters).
 
 Fixed bug in runBaseline(), where when reset=TRUE, and startProcess was a later process than the first process to be changed using parlist or ..., the baseline was not run from that first process, but from the specified startProcess. Using parlist or ... now forces running the baseline from the first necessary process. 
@@ -765,18 +786,11 @@ Cleaned up how startProcess and endProcess interacts with 'reset' and the unrun 
 
 Added the predefined values as attributes to the parameter values returned from getBaseline().
 
-Added the function closeAllProjects().
-
 Changed default of keepMissing to TRUE in readBaselineParametersJava(), thus including all parameters, even those which are not set when running getBaseline().
 
-Increased default memory from 2 to 6 GB to accommodate ECA projects, which are generally large.
-
-Renamed the parameter API to server in getNMDinfo() and getNMDdata(). No backwards compatibility.
+Renamed the parameter 'API' to 'server' in getNMDinfo() and getNMDdata(). No backwards compatibility.
 
 Fixed bug with Java v11.
 
 Fixed bug with subset in getNMDdata().
 
-Changed the parameter 'margin' in plotStratum() to the new parameter 'zoom', which has default 1.5 and where 1 indicates no zooming, The old parameter named 'zoom' has been removed along with the parameter 'google' for Google-maps type of plots due to new requirements for users to create an API project and get this authorized.
-
-Added the function exportDatras() which takes the output from a baseline model including the StoX function DATRASConvert and exports a DATRAS file. In the current version only one biotic file can be included in the project.

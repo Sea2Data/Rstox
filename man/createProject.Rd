@@ -33,8 +33,7 @@ getProject(projectName, out = c("project", "baseline", "baseline-report",
 
 listOpenProjects()
 
-updateProject(projectName, full.names = FALSE, relative.path = TRUE,
-  close = FALSE)
+updateProject(projectName, relative.path = TRUE, close = FALSE)
 
 modifyProject(projectName, close = TRUE, parlist = list(), ...)
 
@@ -75,6 +74,8 @@ readXMLfiles(files, dir = tempdir(), model = list(), nchars = 500)
 \item{msg}{Logical: If TRUE, print messages to the console.}
 
 \item{out}{One of "project", "baseline" or "name" (project name), specifying the output.}
+
+\item{relative.path}{Logical: If TRUE, update the project.xml file with the relative paths in Read* functions.}
 
 \item{close}{Logical: If TRUE, close the project after updating file paths (used in \code{updateProject}).}
 
