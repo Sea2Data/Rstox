@@ -130,6 +130,8 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	### 	stop("Either projectName or baseline must be given.")
 	### }
  
+ 	browser()
+ 	
 	# Allow for inputs given in 'nboot' and 'seed' to prepare for the higher level functions bootstrapAcoustic() and runBootstrap():
 	if(length(parameters$nboot)){
 		nboot <- parameters$nboot
