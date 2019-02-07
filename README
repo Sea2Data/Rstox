@@ -1,4 +1,4 @@
-# Rstox version: 1.9.2 (latest alpha, 2019-02-04)
+# Rstox version: 1.9.3 (latest alpha, 2019-02-07)
 # R version: 3.5.2
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -8,11 +8,11 @@ dep.pck <- c("data.table", "ggplot2", "pbapply", "rgdal", "rgeos", "rJava", "sp"
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
-install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.2/Rstox_1.9.2.tar.gz", repos=NULL)
+install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.3/Rstox_1.9.3.tar.gz", repos=NULL)
 
 # Alternatively, install the latest development version from GitHub.
 # Note that this does not guarantee a stable version.
-# For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.2 as described above.
+# For official versions of Rstox, refer to the ftp server ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.3 as described above.
 # Install from github using the devtools package:
 # devtools::install_github("Sea2Data/Rstox", ref="develop")
 
@@ -51,7 +51,10 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.9.
 # Then the installed Rstox should work.
 
 
-# Release notes Rstox_1.9.2:
+# Release notes Rstox_1.9.3:
+
+# 1. Fixed bug in createProject(), where template now can be given as the first element of a list of processes in 'model'.
+
 
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS

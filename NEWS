@@ -724,7 +724,12 @@ Fixed bug with subset in getNMDdata().
 
 
 
-########## Version 1.10 (2019-02-01) ##########
+########## Version 1.9.3 (2019-02-07) ##########
+
+Fixed bug in createProject(), where template now can be given as the first element of a list of processes in 'model'.
+
+
+########## Version 1.10 (2019-02-07) ##########
 
 Added support for NMD biotic API version 3 and biotic version 3.0 in getNMDdata(). Removed search for 'serialno'. Only full year files can be downloaded, but filtering on species through 'tsn' and serial number through 'serialno' is incorporated in the StoX project generated at download.
 
@@ -793,4 +798,6 @@ Renamed the parameter 'API' to 'server' in getNMDinfo() and getNMDdata(). No bac
 Fixed bug with Java v11.
 
 Fixed bug with subset in getNMDdata().
+
+Fixed bug in createProject(), where template now can be given as the first element of a list of processes in 'model'.
 

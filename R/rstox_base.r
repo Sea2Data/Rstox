@@ -173,42 +173,78 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		
 		
 		############################################
-		##### 3. Apply the specified template: #####
+		##### 3. Apply the specified template/model: #####
 		############################################
-		# If the model contains a template string, transform this string to a list:
-		if(length(model)>1 && any(model %in% getTemplates(names.only=TRUE))){
-			# Detect template strings in the 'model':
-			atDetectedTemplates <- which(model %in% getTemplates(names.only=TRUE))
-			detectedTemplates <- unlist(model[atDetectedTemplates])
-			# Remove the detected templates:
-			model <- model[-atDetectedTemplates]
-			# Convert the template strings to partlist:
-			templateParlist <- unlist(lapply(detectedTemplates, template2parlist), recursive=FALSE)
-			# Add the parlist to the start of 'model':
-			model <- c(templateParlist, model)
+		
+		# The parameter 'model' can be specified in on of three ways:
+		# 1. As a single sharacter string naming one of the templates returned by getTemplates(TRUE)
+		# 2. As a list of processes given either as strings naming the function of the process, or lists of the parameters of the process, or a combination
+		# 3. As a list with the first element being the name of a template, and the following being lists of parameters
+		
+		# 1. 
+		if(length(model) == 1 && is.character(model)){
+			template <- matchTemplates(model)
+			if(length(template) == 0){
+				template <- matchTemplates("UserDefined")
+				parlist <- getParlist(parlist=c(model, parlist), ...)
+			}
+			else{
+				parlist <- getParlist(parlist=parlist, ...)
+			}
+		}
+		else if(is.list(model)){
+			# 3.
+			if(is.character(model[[1]]) && length(matchTemplates(model[[1]]))){
+				template <- matchTemplates(model[[1]])
+				model <- model[-1]
+			}
+			# 2.
+			else{
+				template <- matchTemplates("UserDefined")
+			}
+			
+			parlist <- getParlist(parlist=c(model, parlist), ...)
 		}
 		
-		# Detect whether the model is user defined:
-		userDefined <- is.list(model) || (length(model)>0 && !model[1] %in% getTemplates(names.only=TRUE))
-		# Select the template given the user input:
-		if(userDefined){
-			template <- matchTemplates("UserDefined")
-		}
-		else if(length(model)){
-			# Find the templates that match the available tempaltes case insensitively and using abbreviation:
-			template <- matchTemplates(model[1])
-			if(length(template)>1){
-				template <- template[1]
-				warning(paste0("Multiple templates matched. The first used (", template, ")"))
-			}
-			 else if(length(template)==0){
-				warning(paste0("'template' matches no templates. Run createProject() to get a list of available tempaltes. Default used (", "StationLengthDist", ")"))
-				template <- matchTemplates("StationLengthDist")
-			}
-		}
 		else{
-			template <- matchTemplates("StationLengthDist")
+			stop("The 'model' must be a single string naming the desired template, or a list of process specifications as given in 'parlist'. If the first element of the list is a string matching a template name, this template is used, and the processes modified by the following process parameter specifications.")
 		}
+		
+		
+		###  # If the model contains a template string, transform this string to a list:
+		###  if(length(model)>1 && any(model %in% getTemplates(names.only=TRUE))){
+		###  	# Detect template strings in the 'model':
+		###  	atDetectedTemplates <- which(model %in% getTemplates(names.only=TRUE))
+		###  	detectedTemplates <- unlist(model[atDetectedTemplates])
+		###  	# Remove the detected templates:
+		###  	model <- model[-atDetectedTemplates]
+		###  	# Convert the template strings to partlist:
+		###  	templateParlist <- unlist(lapply(detectedTemplates, template2parlist), recursive=FALSE)
+		###  	# Add the parlist to the start of 'model':
+		###  	model <- c(templateParlist, model)
+		###  }
+		
+		## Detect whether the model is user defined:
+		#userDefined <- is.list(model) || (length(model)>0 && !model[1] %in% getTemplates(names.only=TRUE))
+		## Select the template given the user input:
+		#if(userDefined){
+		#	template <- matchTemplates("UserDefined")
+		#}
+		#else if(length(model)){
+		#	# Find the templates that match the available tempaltes case insensitively and using abbreviation:
+		#	template <- matchTemplates(model[1])
+		#	if(length(template)>1){
+		#		template <- template[1]
+		#		warning(paste0("Multiple templates matched. The first used (", template, ")"))
+		#	}
+		#	 else if(length(template)==0){
+		#		warning(paste0("'template' matches no templates. Run createProject() to get a list of available tempaltes. Default used (", "StationLengthDist", ")"))
+		#		template <- matchTemplates("StationLengthDist")
+		#	}
+		#}
+		#else{
+		#	template <- matchTemplates("StationLengthDist")
+		#}
 		############################################
 		############################################
 		
@@ -259,20 +295,20 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		##### 5. Add the processes specified in 'model' #####
 		#####################################################
 		# Specify the model if a valid template was not given:
-		if(userDefined){
+		if(template == "UserDefined"){
 			if(length(thisfiles$process)){
 				warning(paste0("a project.xml file was copied to the project ", thisProjectPath, ", and any model specification given in 'model' is ignored (ignore.processXML = TRUE can be used to discard the project.xml file)"))
 			}
 			else{
 				# Get the list of parameters specified either in 'model', or in 'parlist' or '...' in addition (usually only used then a template is used so that userDefined=FALSE, but kept here for robustness):
-				parlist <- getParlist(parlist=c(model, parlist), ...)
+				### parlist <- getParlist(parlist=c(model, parlist), ...)
 				# Add the processes. Here ONLY the process and function names are set. Set the parameter values below:
 				addProcesses(project, parlist)
 			}
 		}
-		else{
-			parlist <- getParlist(parlist=parlist, ...)
-		}
+		### else{
+		### 	parlist <- getParlist(parlist=parlist, ...)
+		### }
 		
 		# Override parameters in the project:
 		if(length(parlist)){
@@ -1024,6 +1060,8 @@ getRelativeStoXPath <- function(x, fsep=.Platform$file.sep){
 #' @param close					Logical: if TRUE close the project on exit of the function (for \code{getBaseline}).
 #' @param fresh					Logical: if TRUE write new r.R and r-report.R scripts to the folder output/r.
 #' @param add.time				Logical: if TRUE add the current time to messages printed to the console in \code{runRScripts}.
+#'
+#' When a StoX project has been run using \code{runBaseline} or \code{getBaseline}, the Java object of the project is saved in the project environment, see names(RstoxEnv$Projects). If there are changes made in the project, e.g., replaced files or manual changes in the project.xml file
 #'
 #' @return For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}} a list of three elements named "parameters", "outputData", "processData", where empty elements can be dropped.
 #'
