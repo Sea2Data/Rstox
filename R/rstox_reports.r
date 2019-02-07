@@ -1289,20 +1289,22 @@ runFunsRstox <- function(projectName, string, out="all", options="", all.out=FAL
 	# Run functions and return outputs:
 	if(all.out){
 		#out <- lapply(funs, function(xx) {cat("... running", xx, "...\n"); do.call(xx, c(list(projectName=projectName), dotlist))})
-		out <- lapply(funs, function(xx) tryCatch({do.call(xx, c(list(projectName=projectName), dotlist))}, error=function(err) err))
+		out <- lapply(funs, function(xx) tryCatch({do.call(xx, c(list(projectName=projectName), dotlist))}, error=function(err) NA))
 	}
 	else{
 		#out <- lapply(funs, function(xx) {cat("... running", xx, "...\n"); do.call(xx, c(list(projectName=projectName), dotlist))$filename})
-		out <- lapply(funs, function(xx) tryCatch({do.call(xx, c(list(projectName=projectName), dotlist))}, error=function(err) err)$filename)
+		out <- lapply(funs, function(xx) tryCatch({do.call(xx, c(list(projectName=projectName), dotlist))}, error=function(err) NA)$filename)
 		#out <- lapply(funs, function(xx) do.call(xx, c(list(projectName=projectName), dotlist))$filename)
 	}
 	
 	# Name the output list by the funs:
 	names(out) <- funs
 	
+	# Remove errors:
+	out <- out[sapply(out, function(x) !identical(x, NA))]
 	out <- out[unlist(lapply(out, length))>0]
 	
-	
+	# Return:
 	if(drop.out && length(out)==1){
 		return(out[[1]])
 	}

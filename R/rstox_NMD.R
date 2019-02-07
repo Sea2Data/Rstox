@@ -1524,11 +1524,16 @@ extractDataFileNames <- function(projectXML){
 	}
 
 	# Parse the project.xml via the URL:
+	pp <- downloadXML(projectXML)
+	
 	projectXMLParsed <- XML::xmlParse(projectXML)
 	nsDefs <- XML::xmlNamespaceDefinitions(projectXMLParsed)
 	# Change on 2019-01-21, using the tag "stox" to select the appropriate namespace, making it robust to changes in the xml header:
 	#ns <- structure(sapply(nsDefs, function(x) x$uri), names = names(nsDefs))[[1]]
 	ns <- lapply(nsDefs, function(x) x$uri)$stox
+	if(length(ns) == 0){
+		stop(paste("The following project.xml file does not contain a valid namespace. Should be e.g. xmlns:stox=\"http://www.imr.no/formats/stox/v1.2\".\n\t", projectXML))
+	}
 	
 	# Get the data source names of StoX and NMD (differing in the acoustic ~ echosounder):
 	StoX_data_sources <- getRstoxDef("StoX_data_sources")

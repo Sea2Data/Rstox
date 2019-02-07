@@ -61,7 +61,9 @@ runRScripts(projectName, modelType = c("r", "r-report"), fresh = TRUE,
 
 \item{fresh}{Logical: if TRUE write new r.R and r-report.R scripts to the folder output/r.}
 
-\item{add.time}{Logical: if TRUE add the current time to messages printed to the console in \code{runRScripts}.}
+\item{add.time}{Logical: if TRUE add the current time to messages printed to the console in \code{runRScripts}.
+
+When a StoX project has been run using \code{runBaseline} or \code{getBaseline}, the Java object of the project is saved in the project environment, see names(RstoxEnv$Projects). If there are changes made in the project, e.g., replaced files or manual changes in the project.xml file}
 
 \item{par}{A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.}
 }
