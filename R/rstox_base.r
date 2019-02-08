@@ -1117,7 +1117,7 @@ runBaseline <- function(projectName, out=c("project", "baseline", "baseline-repo
 		return(NULL)
 	}
 	
-	# Set the tempRScriptFileName if specified. This can be used when running getBaseline() in parallel, to ensure that each run writes and sources unique R scripts, particularly for the StratumArea function with AreaMethod = "Accurate"":
+	# Set the tempRScriptFileName if specified. This can be used when running getBaseline() in parallel, to ensure that each run writes and sources unique R scripts:
 	if(length(tempRScriptFileName) && is.character(tempRScriptFileName)){
 		setTempRScriptFileName(projectName, tempRScriptFileName, msg=msg)
 	}
