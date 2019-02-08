@@ -31,7 +31,9 @@ bootstrapOneIteration <- function(i, projectName, assignments, strataNames, psuN
 	# Load Rstox if not already loaded:
 	library(Rstox)
 	setJavaMemory(JavaMem)
+	
 	# Get the baseline object (run if not already run), as this is needed to insert biostation weighting and meanNASC values into. The warningLevel = 1 continues with a warning when the baseline encounters warnings:
+	# 2019-02-08: Added the tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), which ensures that R-functions run by StoX are sourced from differently named files, so that we avoid any complications caused by mustiple parallel sessions writing to and sourcing the same file at the same time:
 	temp <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1, ...)
 		
 	# Perform sampling drawing and replacement by stratum
@@ -85,7 +87,13 @@ bootstrapOneIteration <- function(i, projectName, assignments, strataNames, psuN
 	}
 	
 	# Run the sub baseline within Java. The argument reset=TRUE is essensial to obtain the bootstrapping:
-	getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=endProcess, input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, ...)$outputData
+	# 2019-02-08: Added the tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), which ensures that R-functions run by StoX are sourced from differently named files, so that we avoid any complications caused by mustiple parallel sessions writing to and sourcing the same file at the same time:
+	getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=endProcess, input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), ...)$outputData
+	
+	
+	# Test done to identify the source of the random failure of one core when running bootstrap in parallel. The conclusion was that the error occurs in AbundanceByLength, which may read or write to some common resource for all cores. See bootstrapParallel():
+	# getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=c("AbundanceByLength", "SuperIndAbundance"), input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), ...)$outputData
+	# "TotalLengthDist", "AcousticDensity", "MeanDensity_Stratum", "SumDensity_Stratum", "AbundanceByLength", "IndividualDataStations", "IndividualData", "SuperIndAbundance"
 }
 
 
@@ -187,9 +195,67 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 		out <- pblapply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strataNames=strataNames, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, JavaMem=JavaMem, ...)
 	}
 	
+	# Test done to identify the source of the random failure of one core when running bootstrap in parallel. The conclusion was that the error occurs in AbundanceByLength, which may read or write to some common resource for all cores:
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$TotalLengthDist)))) Crash at run 5
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$AcousticDensity)))) No crashes after 20 runs
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$MeanDensity_Stratum)))) Crash at run 5
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$SumDensity_Stratum)))) Crash at run 2, 3
+	# print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$AbundanceByLength)))) Crash at run 4, AbundanceByLength also returning empty data, thus being the source of the error.
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$SuperIndAbundance))))
+	#return(list())
 	
-	
-	#out <- papply(seq_len(nboot), bootstrapOneIteration, projectName=projectName, assignments=assignments, strataNames=strataNames, psuNASC=psuNASC, stratumNASC=stratumNASC, resampledNASC=resampledNASC, startProcess=startProcess, endProcess=endProcess, seedV=seedV, sorted=sorted, cores=cores)
+	# [1] "Global RSE of NASC is 21.66 %"
+	# Reading:
+	# Process output SuperIndAbundance 
+	# Running 50 bootstrap replicates (using 4 cores in parallel):
+	#    |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed = 23s
+	#    V1  V2  V3  V4  V5  V6  V7  V8  V9 V10 V11 V12 V13 V14 V15 V16 V17 V18 V19 V20 V21 V22 V23 V24 V25 V26 V27 V28 V29 V30 V31 V32 V33 V34 V35 V36 V37 V38
+	# 1 274 273 263 267 262 260 266 260 264 261 270 264 270 279 274 268 272 273 256 270 268 263 267 259 253 272 275 262 269 274 275 270 270 269 278 273 277 268
+	# 2   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9
+	#   V39 V40 V41 V42 V43 V44 V45 V46 V47 V48 V49 V50
+	# 1 277 270 269 262 276 274 270 266 274 269 274 276
+	# 2   9   9   9   9   9   9   9   9   9   9   9   9
+	#     V1   V2   V3   V4   V5   V6   V7   V8   V9  V10  V11  V12  V13  V14  V15  V16  V17  V18  V19  V20  V21  V22  V23  V24  V25  V26  V27  V28  V29  V30  V31
+	# 1 3652 3507 3301 3907 3716 3205 3642 2758 3989 3339 3228 3668 2994 3584 3004 2922 3928 3857 3433 4158 4089 3085 3329 3303 2777 3527 3940 4127 3208 4014 3465
+	# 2   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41
+	#    V32  V33  V34  V35  V36  V37  V38  V39  V40  V41  V42  V43  V44  V45  V46  V47  V48  V49  V50
+	# 1 3700 2951 3502 3515 3622 3592 3411 4039 3462 3460 3354 4064 3646 3765 3989 3861 4234 3910 4168
+	# 2   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41   41
+	# [1] "Global RSE of NASC is 21.66 %"
+	# Reading:
+	# Process output SuperIndAbundance 
+	# Running 50 bootstrap replicates (using 4 cores in parallel):
+	#    |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed = 24s
+	#    V1 V2  V3  V4  V5 V6  V7  V8  V9 V10 V11 V12 V13 V14 V15 V16 V17 V18 V19 V20 V21 V22 V23 V24 V25 V26 V27 V28 V29 V30 V31 V32 V33 V34 V35 V36 V37 V38 V39
+	# 1 274  0 263 267 262  0 266 260 264   0 270 264 270   0 274 268 272   0 256 270 268   0 267 259 253   0 275 262 269   0 275 270 270   0 278 273 277   0 277
+	# 2   9  9   9   9   9  9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9
+	#   V40 V41 V42 V43 V44 V45 V46 V47 V48 V49 V50
+	# 1 270 269   0 276 274 270   0 274 269 274 276
+	# 2   9   9   9   9   9   9   9   9   9   9   9
+	#     V1 V2   V3   V4   V5 V6   V7   V8   V9 V10  V11  V12  V13 V14  V15  V16  V17 V18  V19  V20  V21 V22  V23  V24  V25 V26  V27  V28  V29 V30  V31  V32  V33
+	# 1 3652  0 3301 3907 3716  0 3642 2758 3989   0 3228 3668 2994   0 3004 2922 3928   0 3433 4158 4089   0 3329 3303 2777   0 3940 4127 3208   0 3465 3700 2951
+	# 2   41 41   41   41   41 41   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41
+	#   V34  V35  V36  V37 V38  V39  V40  V41 V42  V43  V44  V45 V46  V47  V48  V49  V50
+	# 1   0 3515 3622 3592   0 4039 3462 3460   0 4064 3646 3765   0 3861 4234 3910 4168
+	# 2  41   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41   41
+	# [1] "Global RSE of NASC is 21.66 %"
+	# Reading:
+	# Process output SuperIndAbundance 
+	# Running 50 bootstrap replicates (using 4 cores in parallel):
+	#    |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed = 23s
+	#   V1  V2  V3  V4 V5  V6  V7  V8 V9 V10 V11 V12 V13 V14 V15 V16 V17 V18 V19 V20 V21 V22 V23 V24 V25 V26 V27 V28 V29 V30 V31 V32 V33 V34 V35 V36 V37 V38 V39
+	# 1  0 273 263 267  0 260 266 260  0 261 270 264   0 279 274 268   0 273 256 270   0 263 267 259   0 272 275 262   0 274 275 270   0 269 278 273   0 268 277
+	# 2  9   9   9   9  9   9   9   9  9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9   9
+	#   V40 V41 V42 V43 V44 V45 V46 V47 V48 V49 V50
+	# 1 270   0 262 276 274   0 266 274 269   0 276
+	# 2   9   9   9   9   9   9   9   9   9   9   9
+	#   V1   V2   V3   V4 V5   V6   V7   V8 V9  V10  V11  V12 V13  V14  V15  V16 V17  V18  V19  V20 V21  V22  V23  V24 V25  V26  V27  V28 V29  V30  V31  V32 V33
+	# 1  0 3507 3301 3907  0 3205 3642 2758  0 3339 3228 3668   0 3584 3004 2922   0 3857 3433 4158   0 3085 3329 3303   0 3527 3940 4127   0 4014 3465 3700   0
+	# 2 41   41   41   41 41   41   41   41 41   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41  41
+	#    V34  V35  V36 V37  V38  V39  V40 V41  V42  V43  V44 V45  V46  V47  V48 V49  V50
+	# 1 3502 3515 3622   0 3411 4039 3462   0 3354 4064 3646   0 3989 3861 4234   0 4168
+	# 2   41   41   41  41   41   41   41  41   41   41   41  41   41   41   41  41   41
+	# [1] "Global RSE of NASC is 21.66 %"
 	
 	
 	out <- unlist(out, recursive=FALSE)
