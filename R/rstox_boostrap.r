@@ -34,7 +34,7 @@ bootstrapOneIteration <- function(i, projectName, assignments, strataNames, psuN
 	
 	# Get the baseline object (run if not already run), as this is needed to insert biostation weighting and meanNASC values into. The warningLevel = 1 continues with a warning when the baseline encounters warnings:
 	# 2019-02-08: Added the tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), which ensures that R-functions run by StoX are sourced from differently named files, so that we avoid any complications caused by mustiple parallel sessions writing to and sourcing the same file at the same time:
-	temp <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1, ...)
+	temp <- runBaseline(projectName=projectName, out="baseline", msg=FALSE, warningLevel=1, tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), ...)
 		
 	# Perform sampling drawing and replacement by stratum
 	BootWeights <- data.frame()
@@ -88,11 +88,13 @@ bootstrapOneIteration <- function(i, projectName, assignments, strataNames, psuN
 	
 	# Run the sub baseline within Java. The argument reset=TRUE is essensial to obtain the bootstrapping:
 	# 2019-02-08: Added the tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), which ensures that R-functions run by StoX are sourced from differently named files, so that we avoid any complications caused by mustiple parallel sessions writing to and sourcing the same file at the same time:
+	
+	
 	getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=endProcess, input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), ...)$outputData
 	
 	
 	# Test done to identify the source of the random failure of one core when running bootstrap in parallel. The conclusion was that the error occurs in AbundanceByLength, which may read or write to some common resource for all cores. See bootstrapParallel():
-	# getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=c("AbundanceByLength", "SuperIndAbundance"), input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), ...)$outputData
+	#getBaseline(projectName, startProcess=startProcess, endProcess=endProcess, proc=c("AbundanceByLength", "SuperIndAbundance"), input=FALSE, msg=FALSE, save=FALSE, reset=TRUE, drop=FALSE, warningLevel=1, tempRScriptFileName=paste("tempRScriptFile", i, sep="_"), ...)$outputData
 	# "TotalLengthDist", "AcousticDensity", "MeanDensity_Stratum", "SumDensity_Stratum", "AbundanceByLength", "IndividualDataStations", "IndividualData", "SuperIndAbundance"
 }
 
@@ -196,11 +198,11 @@ bootstrapParallel <- function(projectName, assignments, psuNASC=NULL, stratumNAS
 	}
 	
 	# Test done to identify the source of the random failure of one core when running bootstrap in parallel. The conclusion was that the error occurs in AbundanceByLength, which may read or write to some common resource for all cores:
-	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$TotalLengthDist)))) Crash at run 5
-	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$AcousticDensity)))) No crashes after 20 runs
-	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$MeanDensity_Stratum)))) Crash at run 5
-	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$SumDensity_Stratum)))) Crash at run 2, 3
-	# print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$AbundanceByLength)))) Crash at run 4, AbundanceByLength also returning empty data, thus being the source of the error.
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$TotalLengthDist)))) # Crash at run 5
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$AcousticDensity)))) # No crashes after 20 runs
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$MeanDensity_Stratum)))) # Crash at run 5
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$SumDensity_Stratum)))) # Crash at run 2, 3
+	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$AbundanceByLength)))) # Crash at run 4, AbundanceByLength also returning empty data, thus being the source of the error.
 	#print(as.data.frame(sapply(seq_along(out), function(x) dim(out[[x]]$SuperIndAbundance))))
 	#return(list())
 	

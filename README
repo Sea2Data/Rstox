@@ -1,4 +1,4 @@
-# Rstox version: 1.10 (latest beta, 2019-02-08)
+# Rstox version: 1.11 (latest beta, 2019-02-08)
 # R version: 3.5
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -8,7 +8,7 @@ dep.pck <- c("data.table", "ggplot2", "pbapply", "rgdal", "rgeos", "rJava", "sp"
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
-install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.10.tar.gz", repos=NULL)
+install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.11.tar.gz", repos=NULL)
 
 # Alternatively, install the latest development version from GitHub.
 # Note that this does not guarantee a stable version.
@@ -51,7 +51,7 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.10.tar.gz", repos
 # Then the installed Rstox should work.
 
 
-# Release notes Rstox_1.10:
+# Release notes Rstox_1.11:
 
 # 1. Added support for NMD biotic API version 3 and biotic version 3.0 in getNMDdata(). Removed search for 'serialno'. Only full year files can be downloaded, but filtering on species through 'tsn' and serial number through 'serialno' is incorporated in the StoX project generated at download.
 
@@ -124,6 +124,8 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Rstox_1.10.tar.gz", repos
 # 35. Fixed bug in createProject(), where template now can be given as the first element of a list of processes in 'model'.
 
 # 36. Fixed bug with parallel R sessions run by StoX writing to and sourcing the same temporary R script at once. This is solved by the argument tempRScriptFileName.
+
+
 
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/master/NEWS
