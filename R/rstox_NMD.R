@@ -1524,8 +1524,6 @@ extractDataFileNames <- function(projectXML){
 	}
 
 	# Parse the project.xml via the URL:
-	pp <- downloadXML(projectXML)
-	
 	projectXMLParsed <- XML::xmlParse(projectXML)
 	nsDefs <- XML::xmlNamespaceDefinitions(projectXMLParsed)
 	# Change on 2019-01-21, using the tag "stox" to select the appropriate namespace, making it robust to changes in the xml header:
