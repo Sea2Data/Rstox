@@ -1423,7 +1423,7 @@ writeMessageToConsoleOrFile <- function(text, msg, add.time=FALSE){
 	}
 }
 
-
+# Function for setting the name of the temporary R script written by StoX. These scripts are placed in dirname(tempdir()):
 setTempRScriptFileName <- function(projectName, tempRScriptFileName, msg=TRUE){
 	
 	# Get projet object:
