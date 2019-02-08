@@ -1,0 +1,3553 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.imr.no/formats/nmdbiotic/v3" xmlns:imrd="http://www.imr.no/formats/nmddocumentation/v1_0" xmlns:ref="http://www.imr.no/formats/nmdreference/v2.0" elementFormDefault="qualified" targetNamespace="http://www.imr.no/formats/nmdbiotic/v3" version="1.0">
+  <xs:import namespace="http://www.imr.no/formats/nmdreference/v2.0" schemaLocation="https://git.imr.no/Formats/commons-reference-jaxb/raw/master/src/main/resources/referencev2_0.xsd"/>
+  <xs:annotation>
+    <xs:documentation>
+      <imrd:imrDoc>
+        <!--Annotation generated: 2018/04/16 17:34:36-->
+        <imrd:description lang="no">Datamodell for biologiske data samlet inn ved Havforskningsinstituttet.</imrd:description>
+        <imrd:description lang="en">Datamodel for biological samples collected by or for the Institute of Marine Research in Norway.</imrd:description>
+      </imrd:imrDoc>
+    </xs:documentation>
+  </xs:annotation>
+  <xs:element name="missions" type="MissionsType">
+    <xs:annotation>
+      <xs:documentation>
+        <imrd:imrDoc>
+          <!--Annotation generated: 2018/04/16 17:34:36-->
+          <imrd:description lang="no">En samling av oppdrag/tokt.</imrd:description>
+          <imrd:description lang="en">A collection of missions.</imrd:description>
+        </imrd:imrDoc>
+      </xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:complexType name="MissionsType">
+    <xs:sequence>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="mission" type="MissionType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Oppdrag/tokt i samling. Hvert oppdrag er identifisert ved &lt;missiontype&gt;, &lt;startyear&gt;, &lt;platform&gt; og &lt;missionnumber&gt;.</imrd:description>
+              <imrd:description lang="en">Missions in collection. Each mission is identfied by  &lt;missiontype&gt;, &lt;startyear&gt;, &lt;platform&gt; and &lt;missionnumber&gt;</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="MissionType">
+    <xs:sequence>
+      <xs:element name="missiontypename" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Navn for oppdragstype &lt;missiontype&gt;</imrd:description>
+              <imrd:description lang="en">Name of mission type &lt;missiontype&gt;</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="callsignal" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Radiokallesignal for plattform.</imrd:description>
+              <imrd:description lang="en">Call sign for platform.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="platformname" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Navn p� plattform.</imrd:description>
+              <imrd:description lang="en">Name of plattform.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="cruise" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Toktnummer</imrd:description>
+              <imrd:description lang="en">Cruise id</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="missionstartdate" type="xs:date">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Startdato for oppdrag (UTC).</imrd:description>
+              <imrd:description lang="en">Start date of mission (UTC).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- startdate in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="missionstopdate" type="xs:date">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Sluttdato for oppdrag (UTC).</imrd:description>
+              <imrd:description lang="en">End date of mission (UTC).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- stopdate in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="purpose" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av oppdragets hensikt.</imrd:description>
+              <imrd:description lang="en">Description of the purpose of the mission.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="fishstation" type="FishstationType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Fiskestasjoner tatt p� Oppdrag/Tokt. Fiskestasjoner er en generalisering av en fiskeoperasjon og representer en datainnsamling i et definert omr�de og tidsrom med en definert redskapstype. En fiskestasjon er identifisert ved &lt;stationyear&gt; og &lt;serialnumber&gt; innenfor et oppdrag. Serienummer er ogs� unik p� tvers av oppdrag for stasjoner tatt i samme �r.</imrd:description>
+              <imrd:description lang="en">Fishstations sampled on this mission. Fishstations are a generalisation of fishing operations and represent data collection in a defined area and timespan, with a defined gear. En fiskestasjon er identifisert ved &lt;stationyear&gt; og &lt;serialnumber&gt; iwithin a mission. Serialnumbers are also unique across mission for station taken the same year.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="missiontype" type="KeyType" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">Type oppdrag. Definerer rutiner for pr�veutvelgelse og registreringskonvensjoner.</imrd:description>
+            <imrd:description lang="en">Type of mission. Defines procedures for sampling and conventions for registrations.</imrd:description>
+            <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/missiontype"/>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="startyear" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">�r for start av oppdrag.</imrd:description>
+            <imrd:description lang="en">The year the mission was started.</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="platform" type="KeyType" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">Angir innsamlingsplatform for oppdraget. Identifiserer via andre registre hvem som har v�rt ansvarlig for datainnsamlingen. For tokt er dette vanligvis identisk med &lt;catchplatform/&gt; p� underniv� fishstation, men disse kan v�re forskjellig i tilfeller hvor innsamlingsplattformen ikke er den samme som fangstplatformen. For eksempel for pr�veb�t.</imrd:description>
+            <imrd:description lang="en">The sampling platform for the mission.Identifies via other registries who was responsible for the data collection. For survey cruises this is normally the same as &lt;catchplatform/&gt; on child element fishstation, but these may differ when a sampling platform collects samples from a fishing platform (such as samples collected from commercial fisheries).</imrd:description>
+            <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/platform"/>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="missionnumber" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">Nummer i rekken av denne type oppdrag &lt;missiontype&gt; utf�rt med denne platform &lt;platform&gt;, med dette start�r &lt;startyear&gt;.</imrd:description>
+            <imrd:description lang="en">Sequential numbers identifying the mission among missions of this type &lt;missiontype&gt; on this platform &lt;platform&gt; with this start year &lt;startyear&gt;.</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="FishstationType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="nation" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for nasjon som tok stasjonen.  Hentes fra referansetabell i Data Manager.</imrd:description>
+              <imrd:description lang="en">Code identifying the nation that sampled the station. Obtained from reference table in Data Manager.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/nation"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="catchplatform" type="KeyType">
+        <!-- FishstationType/platform in biotic v 1.4 -->
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Plattformkode. Hentes fra referansetabell i Data Manager.</imrd:description>
+              <imrd:description lang="en">Code identifying the platform. Obtained from reference table in Data Manager.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/platform"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="station" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Identifiserer stasjon. Stasjonsnummer p� hvert fart�y starter p� nr. 1 ved �rets begynnelse, toktene nummereres fortl�pende. Ved bruk av spesiell redskap som flerposetr�l vil samme stasjonsnummer brukes i flere registreringer. Det brukes ulike stasjonsnummer serier for fiskestasjon, ctd, plankton etc. Denne regelen kan i noen tilfeller fravik p� kommersielt fiskefart�y/leiefart�y.</imrd:description>
+              <imrd:description lang="en">Identifies station. Stations are numbered sequantiually in a year for each vessel starting at 1 for the first station of the year. For some kinds of gear the station number will be repeated in different registrations. Different number series are used for fishstation, plankton, ctd, etc. This rule is not necessarrilly adhered to on commercial vessels or rented vessels.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fixedstation" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode som identifiserer en pr�vetakingsstasjon som gjentas p� samme posisjon med regelmessige intervaller. Blank om stasjonen ikke er en fast stasjon.</imrd:description>
+              <imrd:description lang="en">Code that identifies a regular station that is repeated in the same position at regular intervals. Left blank if the station is not a regular station.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/fixedcoastalstation"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="stationstartdate" type="xs:date">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Dato da redskapet kom i fiskedypet (UTC).</imrd:description>
+              <imrd:description lang="en">Date when the gear reached fishing depth (UTC).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- startdate in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="stationstarttime" type="xs:time">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Klokkeslett (UTC) da redskapet kom i fiskedypet. For line/garn: N�r f�rste krok/garn blir satt.</imrd:description>
+              <imrd:description lang="en">Time (UTC) when the gear reached fishing depth. For longline or gillnet, this is the time when the first hook or net was set.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="stationstopdate" type="xs:date">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Dato (UTC) n�r redskapet forlot fiskedypet.</imrd:description>
+              <imrd:description lang="en">Date (UTC) when the gear left fishing depth.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- stopdate in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="stationstoptime" type="xs:time">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Klokkeslett (UTC) da redskapet forlot fiskedypet. For line/garn: N�r siste krok/garn er ferdig trekt .</imrd:description>
+              <imrd:description lang="en">Time (UTC) when the gear reached fishing depth. For longline or gillnet, this is the time when the last hook or net left the water.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="stationtype" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Brukes til � kode at stasjonen er av en spesiell type.
+Blank for vanlig fiskestasjon eller for line og garn i referansefl�ten-dagens totalfangst (d�gnstasjon)</imrd:description>
+              <imrd:description lang="en">Code for the type of station. Left blank for regular fishing station or for longline or gillnet in the reference fleets daily totals.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Fishstationtype"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="latitudestart" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Posisjonens bredde i desimalgrader da redskapet kom i fiskedypet (datum: WGS 84).</imrd:description>
+              <imrd:description lang="en">Latitudinal position, when the gear reach the fishing depth. (decimal degrees, datum: WGS 84).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="longitudestart" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Posisjonens lengde i desimalgrader da redskapet kom i fiskedypet (datum: WGS 84).</imrd:description>
+              <imrd:description lang="en">Longitudinal position, when the gear reach the fishing depth. (decimal degrees, datum: WGS 84).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="latitudeend" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Posisjonens bredde i desimalgrader, da redskapet forlot fiskedypet (datum WGS 84).</imrd:description>
+              <imrd:description lang="en">Latitudinal position, when the gear left the fishing depth. (decimal degrees, datum: WGS 84).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="longitudeend" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Posisjonens lengde i desimalgrader, da redskapet forlot fiskedypet (datum WGS 84).</imrd:description>
+              <imrd:description lang="en">Longitudinal position, when the gear left the fishing depth. (decimal degrees, datum: WGS 84).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="system" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">System for koding av omr�de (&lt;area/&gt; og lokalitet &lt;location/&gt;. Se kart og forklaring i "H�ndbok for pr�vetaking av fisk og krepsdyr".
+
+Utsetting av torsk i Hordaland: 1
+Fiskeridirektoratets statistisk omr�de og lokalitet: 2
+ICES ruter (Nordsj�en) tokt: 3
+Stratakode bunntr�ltokt i Barentshavet: 4
+Stratakode bunntr�ltokt ved Svalbard: 5 
+Stratakode reketokt i Barentshavet: 6 
+Stratakode reketokt ved Svalbard: 7 
+Reker i Skagerrak og i Barentshavet: 8 
+0-gruppe unders�kelser i Barentshavet: 9</imrd:description>
+              <imrd:description lang="en">System for coding &lt;area/&gt; and &lt;location/&gt;.
+
+The most important are:
+Statistical areas and locations defined by the Norwegian directorate of fisheries: 2
+ICES areas: 3
+
+See Norwegian documentation for additional details.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="area" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Omr�de knyttet opp mot system.</imrd:description>
+              <imrd:description lang="en">Area as defined by system.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="location" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Lokalitet knyttet til system og omr�de.</imrd:description>
+              <imrd:description lang="en">Location within area, as defined by system.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="bottomdepthstart" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Bunndyp i meter n�r redskapet kom i fiskedypet.</imrd:description>
+              <imrd:description lang="en">Depth in meters, when the gear reached fishing depth.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="bottomdepthstop" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Bunndyp i meter n�r redskapet forlot fiskedypet.</imrd:description>
+              <imrd:description lang="en">Depth in meters, when the gear left fishing depth.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="bottomdepthmean" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Middelbunndyp p� fangststed, angitt i meter. Fangsted er fra redskap kom i fiskedypet til redskap forlot fiskedypet. Middelbunndyp m� derfor f�res etter at redskap har forlatt fiskedypet.</imrd:description>
+              <imrd:description lang="en">Mean depth (m) at catch location, defined as the positions from the time the gear reached fishing depth to when it left fishing depth.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="fishingdepthcount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Det antall fiskedyp som redskapen har fisket i. Dypeste og grunneste fiskedyp kan leses fra &lt;fishingdepthmax&gt; og &lt;fishingdepthmin/&gt;. Like dybdeintervaller forutsettes om redskapen fisker i flere fiskedyp.</imrd:description>
+              <imrd:description lang="en">The number of targeted fishing depths at the station. The deepest and shallowest fishing depth can be read from &lt;fishingdepthmax/&gt; and &lt;fishingdepthmin/&gt;. Equal depth intervals are assumed if more than one fishingdepth is provided.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New filed in biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="fishingdepthmax" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Det maksimale dyp redskapen har fisket i, angitt i meter. Dersom redskapen bare har fisket i et dyp, f�res dypet her.  For not: Det maksimale dypet av fiskestimen/fiskesl�ret, angitt i meter. For tr�l: Det maksimale dypet overtelna har g�tt i, etter at tr�len n�dde �nsket fiskedyp. For andre redskap enn tr�l: Dette felt angir det st�rste dyp redskapet har fangstet i. For standaridsert tr�ling over flere fiskedyp har det historisk v�rt nyttet koder med verdi &gt; 9000 (f.eks. 0-gruppetok). Se dokumentasjon i "H�ndbok for pr�vetaking av fisk og krepsdyr"".</imrd:description>
+              <imrd:description lang="en">The maximal fishing depth of the gear, given in meters. If the gear has been fishing at constant depth, this field should be filled. For seine, use the maximal depth of the shoal or school, for trawl use the maximal depth of the headline i for the duration of the station. For standardised trawling over multimple depths, codes &gt; 9000 have been used historically. See Norwegian documentation for further details.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fishingdepthmin" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Det minste dypet redskapen har fisket i, angitt i meter. Fylles ikke ut dersom redskapen bare har fisket i et dyp. For tr�l: Det minimale dyp overtelna gikk i, i hoveddypet, angitt i meter. For andre redskap enn tr�l: Dette felt angir det minste dyp redskapet har fangstet i. For not: Det minimale dypet av fiskestimen/fiskesl�ret, Angitt i meter.</imrd:description>
+              <imrd:description lang="en">The minimal depth the gear has been fishing, given in meters. Not filled if the gear has fished at constant depth. For trawl, use the minimal depth of the headline i for the duration of the station. For seine, give the minimal depth of the shoal or school.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fishingdepthmean" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Brukes dersom fiskedyp maks og fiskedyp min ikke er registrert. Fortrinsvis for referansefl�ten.</imrd:description>
+              <imrd:description lang="en">Used if minimal and maximal fishing depth can not be given. Primarily used by for data contribution form fishing vessels (the reference fleet).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fishingdepthtemperature" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Gjennomsnittstemperaturen (median) i fiskedypet i Celcius, fra redskapssensor montert p� tr�ld�r.</imrd:description>
+              <imrd:description lang="en">Median temperature at fishing depth in degrees Celcius, as read from sesnor on trawl door.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New filed in biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="gearno" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir detaljert hvilket redskap som er brukt, se merkeplate for hvert redskap sitt nummer (gjelder forel�pig tr�l).</imrd:description>
+              <imrd:description lang="en">Specify the exact gear used, see identifier on gear (if present).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="sweeplength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Lengde av sveiper, i meter.</imrd:description>
+              <imrd:description lang="en">Sweep length (m).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="gear" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir hvilken type redskap som er brukt. Se "H�ndbok for pr�vetaking av fisk og krepsdyr".</imrd:description>
+              <imrd:description lang="en">Code for the gear used. See Norwegian documentation for additional details.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/equipment"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="gearcount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall redskap som er brukt. For garnlenke angis antall garn i lenken, og for line angis antall krok p� linen. For andre redskaper, der flere like redskaper har v�rt i bruk p� samme stasjon, angis antall redskaper, for eksempel ruser, sn�rer og teiner.</imrd:description>
+              <imrd:description lang="en">The number of gears used, for chained gears or fishing with multiple identical gears. For gillnets: the number of nets in the chain. For longlines, the number of hooks on the line. For other gear (such as traps): the number of gears.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="direction" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir retningen halet foregikk i. Fylles bare ut n�r hele halet foreg�r i en og samme retning. NB! Nord, 0.0 grader kodes som 360 grader.</imrd:description>
+              <imrd:description lang="en">Direction of haul, relative to north. Only filled if the hauled was done in approximately constant direction. North is entered as 360 degrees.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="gearflow" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vannstr�m gjennom redskap i knop. Leses fra sensor.</imrd:description>
+              <imrd:description lang="en">Flow through gear i knots (nm/h). Read from sensor.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="vesselspeed" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Fart over bunn (speed over ground) for fart�y i nautiske mil. Leses fra GPS.</imrd:description>
+              <imrd:description lang="en">Vessel speed over ground in knots (nm/h). Read from GPS.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="logstart" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Verdi p� loggen i nautiske mil da redskapet kom i fiskedypet.</imrd:description>
+              <imrd:description lang="en">Log (nm) read at start of station.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="logstop" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Verdi p� loggen i nautiske mil da redskapet forlot fiskedypet.</imrd:description>
+              <imrd:description lang="en">Log (nm) at end of station.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="distance" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Tauet distanse i nautiske mil. Bruk data fra GPS hvis mulig. N�r bunntr�l brukes for � m�le bestander kvantitativt, skal det taues en fast distanse over bunn m�lt med GPS. Tauetid, hastighet og distanse skal registreres uavhengig av hverandre. Denne prosedyre b�r ogs� brukes ved kvalitative hal. Det er ingen standardiseringskrav ved pelagisk tr�ling.</imrd:description>
+              <imrd:description lang="en">Towed distance in nautical miles. GPS data should be used when possible. When bottom trawling for quantitative estimates of stocks, the trawl should be towed a given distance over the seabed as measured by GPS. Time, speed and distance for the haul should be registered independet of each other. This prosedure should also be used for qualitative hauls. There are no stanardds in these repspects for pelagic trawling.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="gearcondition" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Redskapets tilstand etter halet/kastet.</imrd:description>
+              <imrd:description lang="en">Condition of the gear after haul.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Gearcondition"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="samplequality" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir hvor godt fangsten gjenspeiler mengden av fisk i omr�det, vurdert ut fra m�ten det er tr�lt p� og redskapets oppf�rsel).</imrd:description>
+              <imrd:description lang="en">Specifies how the catch reflect the amount of fish and composition of species in the area, based on the way catch was fished or reported and based on the behaviour of the gear during fishing.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Samplequality"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="verticaltrawlopening" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Tr�lens gjennomsnittlige �pning i hoveddypet (m). Avleses fra Scanmar.</imrd:description>
+              <imrd:description lang="en">Mean opening of trawl during station (m). Read from SCANMAR .</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="verticaltrawlopeningsd" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Tr�l�pningens standardavvik (m). Avleses fra tr�lsensor.</imrd:description>
+              <imrd:description lang="en">Standard deviation of trawl opening (m). Read from SCANMAR.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="trawldoortype" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for type d�r.</imrd:description>
+              <imrd:description lang="en">Code for type of trawldoor.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="trawldoorarea" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Samlet overflate av d�r i kvadratmeter.</imrd:description>
+              <imrd:description lang="en">Area of the trawl door in square meters.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="trawldoorweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vekt av d�r i kg.</imrd:description>
+              <imrd:description lang="en">Weight of trawl door in kg.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="trawldoorspread" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">D�renes gjennomsnittlige avstand i meter. Avleses fra sensor p� d�rene.</imrd:description>
+              <imrd:description lang="en">Mean distance between trawl-doors (m). Read from sensors mounted on doors.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="trawldoorspreadsd" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">D�ravstandens standardavvik (m). N�yaktighet med �n desimal. Avleses fra PC tilkoblet scanmar. (Scan-prog.).</imrd:description>
+              <imrd:description lang="en">Standard deviation of door spread (m). Accurate to one decimal point. Read from PC connected to SCANMAR (Scan-prog.)</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="wingspread" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Gjennomsnittsverdi i meter for vingespredning i halet. Avleses fra sensor.</imrd:description>
+              <imrd:description lang="en">Mean wingspread (m) for the trawling. Read from sensor.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="wingspreadsd" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Standardavvik (m) for vingespredning.</imrd:description>
+              <imrd:description lang="en">Standard deviation of wingspread (m).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="wirelength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Representativ wirelengde (m) p� fiskestasjonen f�res.</imrd:description>
+              <imrd:description lang="en">Representative length of trawl-wires (m) during the station.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="wirediameter" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Wirediamater i mm.</imrd:description>
+              <imrd:description lang="en">Diameter for trawl wire (mm).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="wiredensity" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Wire vekt i kg pr meter wire.</imrd:description>
+              <imrd:description lang="en">Wire density as kg / m wire.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="soaktime" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Tid redskap stod i sj�en. GItt i desimaltimer.</imrd:description>
+              <imrd:description lang="en">Time the gear has been in the sea. Given in decimal hours.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="tripno" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Turnummer for referansefl�ten og kommersielle b�ter. Tur er vanligvis perioden mellom avgang og levering.</imrd:description>
+              <imrd:description lang="en">Trip number. Used by commercial vessels, such as the reference fleet. A trip is usually defined as the time period between departure from port and landing of catch.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fishabundance" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">I bruk fra 1998-2003. Se dokument &#8221;historiske koder&#8221;.</imrd:description>
+              <imrd:description lang="en">Code for amount of fish. Special field used 1989-1993. Legacy codes. See Norwegian documentation for additional information.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Fiskemengde"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fishdistribution" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">I bruk fra 1998-2003. Se dokument &#8221;historiske koder&#8221;.</imrd:description>
+              <imrd:description lang="en">Code for vertical distribution of fish. Special field used 1989-1993. Legacy codes. See Norwegian documentation for additional information.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Fiskefordeling"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="landingsite" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for sted eller mottak hvor fangst er levert.</imrd:description>
+              <imrd:description lang="en">Code for landing site or location.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/DeliveryPlacesHistoricalCodCatches"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fishingground" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Navn (kode) p� fiskefelt hvor fart�y opererer. Dette gjelder kun overv�kningstjenesten.</imrd:description>
+              <imrd:description lang="en">Name (code) of fishing grounds where the vessel is fishing. Reported from inspections. By the directorate of fisheries.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/FISHING_GROUND"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="vesselcount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall fiskefart�y i fiske p� fiskefelt. Dette gjelder kun overv�kningstjenesten.</imrd:description>
+              <imrd:description lang="en">Number of vessels fishing on fishing grounds. Reported from inspections from the directorate of fisheries.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="dataquality" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kvalitetsmerking av fiskedataene.  Se "H�ndbok for pr�vetaking av fisk og krepsdyr". Niv� blank vil representere data med sv�rt variabel kvalitet og det kreves i de fleste tilfellene inng�ende kjennskap til dataene f�r de brukes.</imrd:description>
+              <imrd:description lang="en">Code for the quality of the data. See Norwegian documentation for additional details. If this field is not filled,  specific knowledge of how the station was sampled is likely required to interpret the data from this station.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Datakvalitet"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="haulvalidity" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for trekkets vellykkethet.</imrd:description>
+              <imrd:description lang="en">Code for vailidty of haul.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/HAULVALIDITY"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="flora" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for beskrivelse av type bunnvegetasjon.</imrd:description>
+              <imrd:description lang="en">Code for describing the kind of vegetation on seabed.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/FLORA"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="vegetationcover" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for mengden av vegetasjonsdekke p� bunn.</imrd:description>
+              <imrd:description lang="en">Code for the amount of vegetational cover at seabed.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/VEGETATIONCOVER"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="visibility" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for sikt i vannet. Observert ved avslutning av stasjon.</imrd:description>
+              <imrd:description lang="en">Code for visibility through the water. Observed at end of station.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/VISIBILITY"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="waterlevel" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">vannstand (cm), relativt til normalvannstand bestemt fra vekst av tang, skjell og alger p� berg, eller lignende holdepunkter. Angitt med om lag 5 cm presisjon. Observert ved avslutning av stasjon.</imrd:description>
+              <imrd:description lang="en">water level (cm). Measured with 5 cm presicion relative to normal height which is subjectively determined from growth on rocks etc. Observed at end of station.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="winddirection" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vindens retning i grader, relativt til nord. Observert ved avslutning av stasjon.</imrd:description>
+              <imrd:description lang="en">Direction of wind in degrees, relative to north. Observed at end of station.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="windspeed" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vindens styrke (knop). Observert ved avslutning av stasjon.</imrd:description>
+              <imrd:description lang="en">Wind speed (knots). Observed at end of station.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="clouds" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av skydekke. Meterologisk kodesystem (WMO kode 2700), enhet: okta. Observert ved avslutning av stasjon.</imrd:description>
+              <imrd:description lang="en">Meterological code (WMO code 2700) describing the cloud coverage in unit: okta. Observed at end of station.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Clouds"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="sea" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av b�lgeh�yde. Meterologisk kodesystem (WMO kode 3700) Douglas Sea Scale. Observert ved avslutning av stasjon.</imrd:description>
+              <imrd:description lang="en">Meterological code (WMO code 3700, Douglas Sea scale) describing height of waves. Observed at end of station.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Sea"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="weather" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av v�r. Meterologisk kodesystem (WMO kode 4561). Observert ved avslutning av stasjon.</imrd:description>
+              <imrd:description lang="en">Meterological code (WMO code 4561) describing the weather. Observed at end of station.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Weather"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="stationcomment" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Opplysninger om hendelser p� stasjonen.</imrd:description>
+              <imrd:description lang="en">Information about noteworethy events at the station.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- comment in biotic 1.4 -->
+      </xs:element>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="catchsample" type="CatchsampleType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Fangstpr�ver tatt p� denne stasjonen. Hver fangst er identifisert av &lt;catchsampleid&gt; innenfor en fiskestasjon.</imrd:description>
+              <imrd:description lang="en">Catch samples from this station. Each catchsample is identified by &lt;catchsampleid&gt; for a given fishstation.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="stationyear" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">�r for serienummertildeling. Skal samsvare med startdato for stasjon.</imrd:description>
+            <imrd:description lang="en">Year for which serialno was issued. Should be year for startdate of station.</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+      <!-- New field biotic 3 -->
+    </xs:attribute>
+    <xs:attribute name="serialnumber" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">I tillegg til addressering via oppdrag gir serienummer koblet med �r &lt;FishstationType/stationyear&gt; en unik identifisering av stasjonsregistrering. Forskjellige innsamlingsplattformer og oppdragstyper har sine serienummerrekker som frem til 2014 tjente til � identifisere oppdragstype, men disse omfordeles etter behov. 
+Henviser ellers til dokument &#8221;historiske koder&#8221; for serienr. brukt i perioden 1989-2003, og til dokument &#8221;Serienummeroversikt 2003-2014&#8221;, for serienummer brukt i perioden 2003-2014.</imrd:description>
+            <imrd:description lang="en">In addition to addressing via mission, a fishstation is uniquely identified within a year (FishstationType/stationyear) by its serial number. Ranges of serial numbers are typically used for each samplingplatform or mission type, but are reallocated when needed. See Norwegian documentation for details on this matter.</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="CatchsampleType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="commonname" type="xs:string">
+        <!-- CatchsampleType/noname in biotic v 1.4 -->
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Norsk navn p� art eller bestand. Ogs� tilgjengelig via referansedata for &lt;catchcategory/&gt;.</imrd:description>
+              <imrd:description lang="en">Norwegian name for species or stock. Also available from reference data for &lt;catchcategory/&gt;</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="catchcategory" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Intern art og bestandskode. Denne samsvarer normalt med (TSN/ITIS), unntak er markert i referansetabell.</imrd:description>
+              <imrd:description lang="en">Species and stock code. Usually corresponds to taxonomic serial number (TSN/ITIS). Exceptions are marked in reference table.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/taxa"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- species in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="catchpartnumber" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Nummer i rekken av pr�ver av denne arten p� denne fiskestasjonen, se forklaring i "H�ndbok for pr�vetaking av fisk og krepsdyr".</imrd:description>
+              <imrd:description lang="en">Number to identify the sample given species and station. See Norwegian documentaiton for additional information.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="aphia" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Id for taksonomisk klassifisering i WORMS-databasen. Ogs� tilgjengelig via referansedata for &lt;catchcategory/&gt;.</imrd:description>
+              <imrd:description lang="en">Code for taxonomic classification in the WORMS (World Register of Marine Species) database. Also available from reference data for &lt;catchcategory/&gt;</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="scientificname" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vitenskapelig betegnesle p� taksonomisk klassifisering (latin). Ogs� tilgjengelig via referansedata for &lt;catchcategory/&gt;.</imrd:description>
+              <imrd:description lang="en">Scientific name for taxonomic classification. Also available from reference data for &lt;catchcategory/&gt;</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- new field in biotic 3 can be obtained from taxa-->
+      </xs:element>
+      <xs:element minOccurs="0" name="identification" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Sikkerhet av artsidentifisering</imrd:description>
+              <imrd:description lang="en">Degree of certainty in identification of species.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="foreignobject" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Registrering av ikke-biologisk materiale.</imrd:description>
+              <imrd:description lang="en">Registering of non-biological material.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/BIO_IKKE_BIOLOGISK"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="sampletype" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir hvordan pr�ven er tatt og hva slags pr�ve det er. For historiske koder og tilleggsinformasjon se "H�ndbok for pr�vetaking av fisk og krepsdyr".</imrd:description>
+              <imrd:description lang="en">Code for the type of sample. See Norwegian documentation for historical codes and additional information.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Sampletype"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="group" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Dette er en kode som skal angi om pr�ven er tatt fra en spesiell del av fangsten av denne arten. Det er gitt noen tilfeller da koden skal brukes, f.eks. under 0-gruppetokt for � skille 0- og I-gruppe fra resten av fangsten.</imrd:description>
+              <imrd:description lang="en">Code to flag if the sample is taken from a particular segment of the catch for this species. See Norwegian documentation for additional details.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Group"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="conservation" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Konservering.</imrd:description>
+              <imrd:description lang="en">Code for how the sample is conserved.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Conservationtype"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="catchproducttype" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av produktet som m�linger av total fangst er utf�rt p� (&lt;catchweight/&gt;, &lt;catchvolume/&gt;,). Angir bl.a. grad av prosessering som f.eks. Sl�ying.</imrd:description>
+              <imrd:description lang="en">Description of the product on which measurements of total catch are performed &lt;catchweight/&gt;, &lt;catchvolume/&gt;. Amongst other things the degree of prosessing (gutting)  of fish is desribed.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Vektmetode"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- producttype in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="raisingfactor" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Brukt dersom ikke all fangst av art er veid (&lt;catchweight/&gt;) eller m�lt (&lt;catchvolume/&gt;). For eksempel ved sortering etter subsampling. Fangstpr�vem�linger (&lt;catchweight/&gt;, &lt;catchvolume/&gt;, &lt;catchcount/&gt;) er gjort p� et antatt representativt utvalg, og ikke hele fangsten. Oppgangingsfaktor er forholdet mellom hele fangsten og det representative utvalget. Feltet er ikke alltid fyllt ut, s� en oppgangigsfaktor p� 1 kan ikke antas om feltet st�r tomt. Merk at verdiene i &lt;catchweight/&gt;, &lt;catchvolume/&gt; og&lt;catchcount/&gt; er ganget opp, s� man m� dele p� &lt;raisingfactor/&gt; for � f� mengden i subsample av fangst.</imrd:description>
+              <imrd:description lang="en">Used if catch sample measurements  (&lt;catchweight/&gt;, &lt;catchvolume/&gt; og&lt;catchcount/&gt;)  were done on a representative subsample, rather than the entire catch. For instance when species are sorted after subsampling. The raising factor is the ratio of the total catch to the subsample. This field is not always given, even when subsampling was done. Note that &lt;catchweight/&gt;, &lt;catchvolume/&gt; og&lt;catchcount/&gt; are the raised values. For example, you may divide &lt;catchweight/&gt; by &lt;raisingfactor/&gt; to get the weight of the subsample.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="catchweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vekt (Kg) av den delen av fangsten som er representert ved denne pr�ven. Se &lt;catchproducttype/&gt; for produkttype. Ved subsampling er et estimat for total fangst gitt. &lt;raisingfactor/&gt; gir faktor brukt for oppskalering, men totalfangst kan v�re estimert ogs� om &lt;raisingfactor/&gt; ikke er gitt.</imrd:description>
+              <imrd:description lang="en">Weigth (kg) of the part of the total catch that is represented by this sample. See &lt;catchproducttype/&gt; for product. If catch has been subsampled this is an estimate. The raising factor used is given by &lt;raisingfactor/&gt;, but total catch may be estimated even if &lt;raisingfactor/&gt; is not given.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- weight in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="catchvolume" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Volum (l) av den delen av fangsten som er representert ved denne pr�ven. Se &lt;catchproducttype/&gt; for produkttype. Ved subsampling er et estimat for total fangst gitt. &lt;raisingfactor/&gt; gir faktor brukt for oppskalering, men totalfangst kan v�re estimert ogs� om &lt;raisingfactor/&gt; ikke er gitt.</imrd:description>
+              <imrd:description lang="en">Volume(l) of the part of the total catch that is represented by this sample. See &lt;catchproducttype/&gt; for product type. If catch has been subsampled this is an estimate. The raising factor used is given by &lt;raisingfactor/&gt;, but total catch may be estimated even if &lt;raisingfactor/&gt; is not given.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- volume in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="catchcount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall fisk I den delen av fangsten som er representert ved denne pr�ven. Ofte estimert fra vekt og antall i lengdepr�ver ( &lt;lengthsamplecount/&gt;*&lt;catchweight/&gt;/&lt;lenghsampleweight/&gt;).</imrd:description>
+              <imrd:description lang="en">Count of fish in the part of the total catch that is represented by this sample. Often estimated from weight and count in length-measurements (&lt;lengthsamplecount/&gt;*&lt;catchweight/&gt;/&lt;lenghsampleweight/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- count in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="abundancecategory" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode som beskriver mengde av fangst kvalitativt.</imrd:description>
+              <imrd:description lang="en">Code for qualitative description of the amount of catch.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/ABUNDANCECATEGORY"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="sampleproducttype" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av produktet som pr�vetaking er utf�rt p� (&lt;lengthsampleweight/&gt;, &lt;lengthsamplevolume/&gt;). Angir bl.a. grad av prosessering som f.eks. Sl�ying.</imrd:description>
+              <imrd:description lang="en">Description of the product on which sample measurements were made (&lt;lengthsampleweight/&gt;, &lt;lengthsamplevolume/&gt;). Amongst other things the degree of prosessing (gutting)  of fish is desribed.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Vektmetode"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="lengthmeasurement" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Metode for hvordan arten er m�lt. For fisk m�les lengde, for manet diameter, for krepsdyr carapaxlengde o.a., se "H�ndbok for pr�vetaking av fisk og krepsdyr".</imrd:description>
+              <imrd:description lang="en">Method of measurement. Length is  measured for fish, diameter for jellyfish and carapax length etc. for shellfish. See Norwegian documentation for additional details.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Lengthmeasurementtype"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="lengthsampleweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vekt (kg) av lengdem�lt fisk i denne fangspr�ven. Se &lt;sampleproducttype/&gt; for produkttype.</imrd:description>
+              <imrd:description lang="en">Weight (kg) of the fish for which length was measured. See &lt;sampleproducttype/&gt; for product type.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="lengthsamplevolume" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Volum (l) av lengdem�lt fisk i denne fangspr�ven. Se &lt;sampleproducttype/&gt; for produkttype.</imrd:description>
+              <imrd:description lang="en">Volume (l)  of the fish for which length was measured. See &lt;sampleproducttype/&gt; for product type.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="lengthsamplecount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall lengdem�lt fisk i denne fangstpr�ven. Inkludert lengdem�lt fisk som det ogs� ble tatt grundigere individm�ling av (&lt;specimensamplecount/&gt;).</imrd:description>
+              <imrd:description lang="en">Count of fish for which length was measured. Including samples where more measurements than length were done (&lt;specimensamplecount/&gt;.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="specimensamplecount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall fisk som det er tatt individm�ling (&lt;individual/&gt;) av i denne fangstpr�ven.  Med dette forst�s individm�linger utover lengdem�l.</imrd:description>
+              <imrd:description lang="en">Count of fish for which detailed individual samples were taken (&lt;individual/&gt;). This refers to all samples where more than length measurements were taken.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="agesamplecount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall fisk som det er tatt alderspr�ve av i denne fangstpr�ven.</imrd:description>
+              <imrd:description lang="en">Count of fish for which age samples were taken from this catch sample.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="agingstructure" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir om otolitter, fiskeskjell eller annet er brukt for aldersbestemmelse.</imrd:description>
+              <imrd:description lang="en">Specifies which kind of structure is used for age determination.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/agingstructure"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="parasite" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir om parasitter er tatt pr�ve av/ p�vist.</imrd:description>
+              <imrd:description lang="en">Specifies if parasites were checked for or found.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Parasittpr%C3%B8ve"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="stomach" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Spesifiserer hvilken type magepr�ver som eventuelt ble tatt.</imrd:description>
+              <imrd:description lang="en">Specifies the kind of stomach sampling done, if any.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Opparbeidelse%20mage"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="intestine" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Spesifiserer hvilken type tarmpr�ve som eventuelt ble tatt.</imrd:description>
+              <imrd:description lang="en">Specifies the kind of intestine sample collected, if any.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="tissuesample" type="KeyType">
+        <!-- IndividualType/genetics in biotic v 1.4 -->
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir om pr�ver for genetisk klassifikasjon er tatt.</imrd:description>
+              <imrd:description lang="en">Specifies if  samples for genetic identification was taken.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/GENETIKK_SPD"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="samplerecipient" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for mottaker av frysepr�ve.</imrd:description>
+              <imrd:description lang="en">Code for recipient of sample. Used when sample is shipped for further processing.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="catchcomment" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Informasjon om observasjoner/hendelser p� arten.</imrd:description>
+              <imrd:description lang="en">Information about observations on species or incidents while measuring.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- comment in biotic 1.4-->
+      </xs:element>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="individual" type="IndividualType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Individpr�ver tatt fra fangstpr�ven. Hvert individ er identfisert ved &lt;specimenid&gt;</imrd:description>
+              <imrd:description lang="en">Samples of individuals from this catch sample. Each individual is identified by &lt;specimenid&gt;</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="catchsampleid" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">Fangstpr�venummer. Identifiserer en fangstpr�ve for en stasjon.</imrd:description>
+            <imrd:description lang="en">Catch sample number. Identifies a catch sample for a station.</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+      <!-- ssampeno in biotic 1.4 -->
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="IndividualType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="individualproducttype" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av produktet som pr�vetaking utf�rt p� (&lt;individualweight/&gt;, &lt;individualvolume/&gt;). Angir bl.a. grad av prosessering som f.eks. Sl�ying.</imrd:description>
+              <imrd:description lang="en">Description of the product on which sample measurements was made (&lt;individualweight/&gt;, &lt;individualvolume/&gt;). Amongst other things the degree of prosessing (gutting)  of fish is desribed.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Vektmetode"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- producttype in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="individualweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vekt (kg). Bruk vektoppl�sning tilpasset individets st�rrelse.</imrd:description>
+              <imrd:description lang="en">Weight (kg).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- weight in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="individualvolume" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Volum (l).</imrd:description>
+              <imrd:description lang="en">Volume (l).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- volume in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="lengthresolution" type="KeyType">
+        <!-- IndividualType/lengthunit in biotic v 1.4 -->
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir presisjon for lengdem�ling.</imrd:description>
+              <imrd:description lang="en">Code for the precision used when measuring length.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Lengdeenhet"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="length" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Lengde (m). Som angitt i &lt;CatchsampleType/lengthmeasurement&gt;. Presisjon i m�ling er gitt ved &lt;lengthresolution/&gt;. Merk at data kan v�re f�rt inn med h�yere oppl�sning enn det som er angitt i &lt;lengthresolution/&gt;, grunnet elektronsik innlesing fra m�lebrett og lignende. &lt;lengthresolution/&gt; angir likevel den presisjonen som er tilsiktet av pr�vetaker, og lengdem�let b�r behandles deretter.</imrd:description>
+              <imrd:description lang="en">Length (m). Measured to the precision specified by &lt;lengthresolution/&gt;. As specified in &lt;CatchsampleType/lengthmeasurement&gt;. Electronic registration from measuring devices may provide data that seem to be of higher resolution, but the resolution provided in &lt;lengthresolution/&gt; still reflects the intended precision of the person measuring.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fat" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for kvalitativ observasjon av fett i fisk.</imrd:description>
+              <imrd:description lang="en">Code for qualitative specification of fat in fish.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Fett"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fatpercent" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">M�les elektronisk av instrument fra Distell, kalt fiskefettm�ler. M�ler fettinnhold i prosent av filet (sild og makrell)
+Eksempel: 235=23,5%</imrd:description>
+              <imrd:description lang="en">Measurement of fat content as fraction in filet (%) using instrument from Distell. Used for Herring and Mackarell.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="sex" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for kj�nn.</imrd:description>
+              <imrd:description lang="en">Codef or sex.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Kj�nn"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="maturationstage" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Dette er modning i henhold til den generelle stadiebeskrivelsen, Se "H�ndbok for pr�vetaking av fisk og krepsdyr". Se ogs� SPESIALSTADIUM for enkelte arter.</imrd:description>
+              <imrd:description lang="en">Maturation given by the general description of stadium. See the Norwegian documentation for additional detail.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Stadium"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="specialstage" type="CompositeTaxaSexKeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Dette er modning i henhold til spesielle artsspesifikke stadiebeskrivelser. (f.eks. spesial stadium for bunnfisk p� IBTS-tokt). Detaljert informasjon finnes under relevant art i referansertabellen taxa. Se ellers "H�ndbok for pr�vetaking av fisk og krepsdyr" for bruk. Ensifrede spesialkoder kodes i "Spesial stadium". Koding av spesialstadium krever ogs� at
+kj�nn er bestemt (gjelder ikke dypvannsreke og sj�kreps). Referansetabell er organisert under taxa og sl�es opp p� art, kj�nn og kode.</imrd:description>
+              <imrd:description lang="en">Maturation given by species specific descriptions. See the reference table and the Norwegian documentation for additional details. Reference table is organised under taxa, and lookup can be done using species, sex and code.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/taxa"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="eggstage" type="CompositeTaxaSexKeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Forbergstadium brukt p� lodde. Detaljert informasjon finnes under oppf�ring for lodde i referansetabellen taxa. Se  dokument "Historiske koder". Referansetabell er organisert under taxa og sl�es opp p� art, kj�nn og kode.</imrd:description>
+              <imrd:description lang="en">Stadium used for capelin. See the reference table and the Norwegian documentation for additional information. Reference table is organised under taxa, and lookup can be done using species, sex and code.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/taxa"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="moultingstage" type="CompositeTaxaKeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Skallalder. Se "H�ndbok for pr�vetaking av fisk og krepsdyr" for bestemmelse av skallalder for kongekrabbe.</imrd:description>
+              <imrd:description lang="en">Moulting stage. See Norwegian documentation for additional details.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/taxa"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="spawningfrequency" type="CompositeTaxaKeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for gytefrekvens. Brukes p� enkelte skalldyr. F.eks. Sn�krabbe.</imrd:description>
+              <imrd:description lang="en">Code for Frequency of spawning. Used for some shellfish.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic v 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="stomachfillfield" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Magefylling bestemt i felt.</imrd:description>
+              <imrd:description lang="en">Stomach content, as determined in field.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Magefylling"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="stomachfilllab" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Magefylling bestemt i laboratorium.</imrd:description>
+              <imrd:description lang="en">Stomach content, as determined in laboratory.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Magefylling"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="digestion" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Ford�yelsesgrad.</imrd:description>
+              <imrd:description lang="en">Degree of digestion.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Ford�yningsgrad"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="liver" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kvalitativ beskrivelse av leverst�rrelse.</imrd:description>
+              <imrd:description lang="en">Qualitative description of the size of the liver.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Lever"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="liverparasite" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kvalitativ beskrivelse av mengden parasitt i lever.</imrd:description>
+              <imrd:description lang="en">Qualitative description of the amount of parasite on the liver.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Parasitt"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="gillworms" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir om det ble funnet gjellemark.</imrd:description>
+              <imrd:description lang="en">Denotes any finding of gillworms.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/GJELLEMAKK"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="swollengills" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir om gjeller er svullet.</imrd:description>
+              <imrd:description lang="en">Denotes if gills are swollen.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/GJELLESVULL"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fungusheart" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir om hjertet viser tegn til soppsykdom.</imrd:description>
+              <imrd:description lang="en">Signs of fungal disease from inspection of heart.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/SOPP_HJERTE"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fungusspores" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir om mikroskopisk unders�kelse av hjertevev viser tegn til soppsykdom.</imrd:description>
+              <imrd:description lang="en">Signs of fungal disease from microscopic examination of heart.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/SOPP_SPORER"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="fungusouter" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Angir om det finnes ytre tegn p� soppsykdom.</imrd:description>
+              <imrd:description lang="en">Signs of fungal disease from external examination.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/SOPP_YTRE"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="blackspot" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Sm� svarte prikker i fiskeskinnnet, gjelder torsk.</imrd:description>
+              <imrd:description lang="en">Small black spots on the fish. Used for cod.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/SVARTPRIKK"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="vertebraecount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall virvler. Se "H�ndbok for pr�vetaking av fisk og krepsdyr."</imrd:description>
+              <imrd:description lang="en">The number of vertebrae. See Norwegian documentation for additional details.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="gonadweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vekt av gonade (kg).</imrd:description>
+              <imrd:description lang="en">Weight gonade (kg).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="liverweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vekt av lever (kg).</imrd:description>
+              <imrd:description lang="en">Weight liver (kg).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="stomachweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vekt av mage (kg).</imrd:description>
+              <imrd:description lang="en">Weight stomach (kg).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="diameter" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Diameter (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Diameter (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="mantlelength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kappelengde (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Mantle length (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="carapacelength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Carapax lengde (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Carapace length (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="headlength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Hodelengde (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Head length (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="snouttoendoftail" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Snute til ende av sporen (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Snout to end of tail (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="snouttoendsqueezed" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Snute til ende sammenkneppet spor (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Snout to end of tail squeezed (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="snouttoanalfin" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Snute til forkant av gattfinne (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Snout to anal fin (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="snouttodorsalfin" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Snute til akternende av ryggfinne (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Snout to dorsal fin (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="forklength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Snute til innerst i sporen (Gaffellengde, m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Snout to fork in tail (Fork length, m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="snouttoboneknob" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Snute til beinknute i haleroten (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Snout to bone knob (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="lengthwithouthead" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Hodekappet lengde (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Length without head (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="carapacewidth" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Carapax bredde (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Carapace width (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="rightclawwidth" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">H�yre klo bredde (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Width of right claw (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="rightclawlength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">H�yre klo lengde (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Length of right claw (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="meroswidth" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Bredde 3dje fot merus (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Width of third foot meros (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="meroslength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Lengde 3dje fot merus (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Length of third foot meros (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="japanesecut" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Japankutt (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Japanese cut (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="abdomenwidth" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Abdomen bredde (m). Kun brukt om dette er m�lt i tillegg til hovedlengdem�l (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+              <imrd:description lang="en">Abdomen width (m). Only specified if this is measured in addition to main length measurement (&lt;CatchsampleType/lengthmeasurement&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="tissuesamplenumber" type="xs:integer">
+        <!-- IndividualType/geneticsnumber in biotic v 1.4 -->
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">F�lgenummer p� vevspr�ver.</imrd:description>
+              <imrd:description lang="en">Identifier for tissue samples.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="individualcomment" type="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kommentarfelt.</imrd:description>
+              <imrd:description lang="en">Comments.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- comment in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="preferredagereading" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Indikerer gjeldende alderslesing for individ, referer &lt;AgedeterminationType/agedeterminationid&gt;.</imrd:description>
+              <imrd:description lang="en">Indicates preferred age reading for an individual refers to &lt;AgedterminationType/agedeterminationid&gt;.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic v 3 -->
+      </xs:element>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="agedetermination" type="AgedeterminationType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Alderslesinger gjort av dette individet. Hver alderslesing er identifisert av &lt;agedeterminationid&gt;</imrd:description>
+              <imrd:description lang="en">Age readings for this individual. Each age reading is identified by &lt;agedeterminationid&gt;</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="tag" type="TagType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Merker p� dette individet. Hvert merke er identifisert av &lt;tagid&gt;</imrd:description>
+              <imrd:description lang="en">Tags on this individual. Each tag is identified by &lt;tagid&gt;</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="prey" type="PreyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Byttedyrpr�ver. Hver byttedyrpr�ve er identifisert ved &lt;preysampleid&gt;.</imrd:description>
+              <imrd:description lang="en">Prey samples. Each prey sample is identified by &lt;preysampleid&gt;.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- CatchsampleType/Prey in biotic v 1.4 -->
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="specimenid" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">Identifiserer et individ i en fangstpr�ve</imrd:description>
+            <imrd:description lang="en">Identifies the individual in a catchsample</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="AgedeterminationType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="agingstructureread" type="CompositeTaxaKeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Spesifiserer n�rmere hvilket medium som er lest.</imrd:description>
+              <imrd:description lang="en">Code for specifying which aging structure was read.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="agingstructureweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Vekt i mg.</imrd:description>
+              <imrd:description lang="en">Weight in mg.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="agingstructurelength" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Lengde i mm.</imrd:description>
+              <imrd:description lang="en">Length in mm.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="nowearpoint" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">No-wear-point er bredden (millimeter) av piggen der slitasjen begynner (m�lt i fiskens lengderetning).</imrd:description>
+              <imrd:description lang="en">The spine thickness (mm) at the point where the enamel is starting to be worn and the zones are no longer counted. Measured in the fish� longitudinal direction.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="externalspinebase" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">External spine base er bredden (millimeter) ved foten av piggen (m�lt i fiskens lengderetning).</imrd:description>
+              <imrd:description lang="en">The spine thickness (mm) at the base of the spine. Measured in the fish� longitudinal direction.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="countedannualage" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Tolket antall �rringer fra basis av piggen (den nyeste delen) og ut til der hvor emaljen eventuelt har begynt � slites bort.</imrd:description>
+              <imrd:description lang="en">The interpreted number of annual zones in the enamel of the spine. If the enamel is worn on the outer part of the spine, zones are counted from the base to the point where the enamel is starting to be worn, the no-wear-point (NWP).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="age" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Alder. Se "H�ndbok for pr�vetaking av fisk og krepsdyr" for instruksjon om hvordan alder leses fra otolitt, fiskjeskjel eller finnestr�le for ulike arter.</imrd:description>
+              <imrd:description lang="en">Age. See Norwegian documentation for details about how age is determined.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="spawningage" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Fiskens alder ved f�rstegangs gyting.</imrd:description>
+              <imrd:description lang="en">Age of specimen at first spawning.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="smoltage" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall �r lest fra fiskeskjell. Smoltalder er antall �r i elven.</imrd:description>
+              <imrd:description lang="en">Smolt age read from scales. The smolt age is the number of years spent in river before migration to sea.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="marineage" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall �r lest fra fiskeskjell. Sj�alder er antall �r i sj�en.</imrd:description>
+              <imrd:description lang="en">Marine age read from scales. The marine age is the number of years spent in sea, after migration from river.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="spawningzones" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall gytesoner.</imrd:description>
+              <imrd:description lang="en">The number of spawning zones read.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="readability" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for lesbarhet av aldersmedium.</imrd:description>
+              <imrd:description lang="en">Code for readability of aging structure.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/OTOLITH_READABILITY"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="otolithtype" type="CompositeTaxaKeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Klassifikasjon av otolitt. Se "H�ndbok for pr�vetaking av fisk og krepsdyr".</imrd:description>
+              <imrd:description lang="en">Classification of otolith. See Norwegian documentation for additional details.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="otolithedge" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av rand for otolitt.</imrd:description>
+              <imrd:description lang="en">Desciption of edge on otolith.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/OTOLITH_EDGE"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="otolithcentre" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av otolittkjerne.</imrd:description>
+              <imrd:description lang="en">Description of otolith core.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/OTOLITH_CENTRE"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="calibration" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall m�lestreker i m�leokkularet pr 2 millimeter. Oppgitt for det okkular og den forst�rrelse som ble brukt ved lesing av vekstsoner.</imrd:description>
+              <imrd:description lang="en">The number of divisions in the eyepiece graticule on 2 milimeters. Calibration is done for the lens and magnification used when reading the growthzones.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone1" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone2" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone3" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone4" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone5" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone6" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone7" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone8" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzone9" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">St�rrelse p� vekstsone angitt i antall m�lestreker (se &lt;calibration/&gt;).</imrd:description>
+              <imrd:description lang="en">Size of growth zone in integer number of divisions (see &lt;calibration/&gt;).</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="growthzonestotal" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Totalt antall vekstsoner m�lt.</imrd:description>
+              <imrd:description lang="en">Total number of growth zones measured.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="coastalannuli" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Gjelder historisk materiale for norsk v�rgytende sild. Se dokument "Veksttyper sild".</imrd:description>
+              <imrd:description lang="en">Historically used for a Norwegian stock of herring. See Norwgeian documentaiton for additional details.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="oceanicannuli" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Gjelder historisk materiale for norsk v�rgytende sild. Se dokument "Veksttyper sild".</imrd:description>
+              <imrd:description lang="en">Historically used for a Norwegian stock of herring. See Norwgeian documentaiton for additional details.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="blindreading" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Aldersbestemmelse uten kjennskap til lengde, vekt, kj�nn eller stadium. Kodet i spesialkode (historisk) frem til 31.12.2015: 6</imrd:description>
+              <imrd:description lang="en">Age was determined without knowledge of length, weight, sex or maturation.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="readingdate" type="xs:date">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Dato (UTC) n�r alder blir lest/m�lt.</imrd:description>
+              <imrd:description lang="en">Date (UTC) when age was read.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="agereader" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for � identifisere hvem som har lest alder.</imrd:description>
+              <imrd:description lang="en">Code to identify the person that read the age.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field in biotic 3 -->
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="agedeterminationid" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+      <!-- no in biotic 1.4 -->
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="TagType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="tagtype" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Beskrivelse av merketypen som er brukt.</imrd:description>
+              <imrd:description lang="en">Code for the type of tag used.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/MARKINGTYPE"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="tagid" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">Merkenummer av gjenfangster eller utsettinger av fisk.</imrd:description>
+            <imrd:description lang="en">Tag number for tagged or recaptured fish.</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+      <!-- tagno in biotic 1.4 -->
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="PreyType">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="preypartnumber" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Identifiserer pr�ve. Bruk forskjellig delpr�venummer om flere byttedyr av samme art blir tatt fra samme individid. Se ellers "H�ndbok for pr�vetaking av fisk og krepsdyr".</imrd:description>
+              <imrd:description lang="en">Identifies the prey sample. Use different number for different prey samples that are of the same species and taken from the same individual.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="preycategory" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Byttedyr art (TSN artskode)</imrd:description>
+              <imrd:description lang="en">Species of prey (TSN code).</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/taxa"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- species in biotic 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="source" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Pr�ve tatt fra mage eller tarm</imrd:description>
+              <imrd:description lang="en">Code to indicate the source of the prey sample.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- New field Biotic 3 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="preydigestion" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Ford�yelsesgrad av de forskjellige byttedyrkategoriene.</imrd:description>
+              <imrd:description lang="en">Degree of digestion of prey.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Ford�yningsgrad"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- digestion in biotc 1.4 -->
+      </xs:element>
+      <xs:element minOccurs="0" name="totalcount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall individer av bytterdyrkategori i magen.</imrd:description>
+              <imrd:description lang="en">Number of individuals of this prey in stomach.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="weightresolution" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Presisjon ved veiing  (&lt;totalweight/&gt;).</imrd:description>
+              <imrd:description lang="en">The precision of the weight (&lt;totalweight/&gt;).</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/PreyWeightUnit"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="totalweight" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Total vekt for byttedyr (kg). Presisjon i m�ling er angitt ved &lt;weightresolution/&gt;.</imrd:description>
+              <imrd:description lang="en">Total weight of prey (kg). Precision of measurement as identified in &lt;weightresolution/&gt;.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="interval" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Interval for lengdegrupper m�lt i lengdem�linger &lt;preylength/&gt;.</imrd:description>
+              <imrd:description lang="en">Interval for length groups measured &lt;preylength/&gt;.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Lengdeenhet"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="devstage" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Utviklingstrinn for byttedyr.</imrd:description>
+              <imrd:description lang="en">Developmental stage for prey.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/BIO_UTVIKLINGSTRINN"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element minOccurs="0" name="preylengthmeasurement" type="KeyType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Kode for metode for lengdem�linger gitt som &lt;preylength/&gt;.</imrd:description>
+              <imrd:description lang="en">Code for method of measurement for lengths given as &lt;preylength/&gt;.</imrd:description>
+              <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/Lengthmeasurementtype"/>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- lengthmeasurement in biotc 1.4 -->
+      </xs:element>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="preylengthfrequencytable" type="PreylengthType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Lengdem�linger av denne byttedyrtypen.</imrd:description>
+              <imrd:description lang="en">Length measurements of this prey.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+          <!-- preylength in biotic 1.4 -->
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="unbounded" minOccurs="0" name="copepodedevstagefrequencytable" type="CopepodedevstageType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Bestemmelser av copepode-utviklingsstadier for denne type byttedyr.</imrd:description>
+              <imrd:description lang="en">Determinations of copepode developmental stage for this prey.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- copepodedevstage in biotic 1.4 -->
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="preysampleid" type="xs:integer" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="PreylengthType">
+    <xs:sequence>
+      <xs:element name="lengthintervalcount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall organismer i intervallet gitt ved nedre grense &lt;lengthintervalstart/&gt; og &lt;PreyType/interval/&gt;.</imrd:description>
+              <imrd:description lang="en">The number of organisms in the interval given by the lower limit &lt;lengthintervalstart/&gt; and PreyType/&lt;interval/&gt;.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- count in biotc 1.4 -->
+      </xs:element>
+      <xs:element name="lengthintervalstart" type="xs:decimal">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Laveste grense (inklusive) for organismer telt i &lt;lengthintervalcount/&gt;, i meter.</imrd:description>
+              <imrd:description lang="en">Shortest length (inclusive) for organisms counted in &lt;lengthintervalcount/&gt;. Given in meters.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- length in biotic 1.4 -->
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="preylengthid" type="xs:integer">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">Identifiserer en lengdem�lingslinje i frekvenstabell.</imrd:description>
+            <imrd:description lang="en">Identifies a line of length measurements in frequency table.</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="CopepodedevstageType">
+    <xs:sequence>
+      <xs:element name="devstagecount" type="xs:integer">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Antall organismer i gitt kopepodittstadium &lt;copepodedevstage/&gt;.</imrd:description>
+              <imrd:description lang="en">The number of organisms in the given developmental stage &lt;copepodedevstage/&gt;.</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+        <!-- count in biotic 1.4 -->
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="copepodedevstage" type="KeyType" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">kopepodittstadium hvis antall er gitt i &lt;devstagecount/&gt;.</imrd:description>
+            <imrd:description lang="en">Copepode stadium whoose count is given in &lt;devstagecount/&gt;.</imrd:description>
+            <imrd:referenceTable href="http://tomcat7.imr.no:8080/apis/nmdapi/reference/v1/BIO_KOPEPODITT"/>
+          </imrd:imrDoc>
+        </xs:documentation>
+        <xs:appinfo>
+          <imrd:imrApp>
+            <imrd:key/>
+          </imrd:imrApp>
+        </xs:appinfo>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <!-- Types for identifying foreign keys in <missions/>  -->
+  <xs:simpleType name="KeyType">
+    <xs:annotation/>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+  <xs:simpleType name="CompositeTaxaKeyType">
+    <xs:annotation/>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+  <xs:simpleType name="CompositeTaxaSexKeyType">
+    <xs:annotation/>
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+  <!-- Types for exporting parts of reference table to biotic -->
+  <xs:element name="referencetables" type="ReferenceTablesType">
+    <xs:annotation>
+      <xs:documentation>
+        <imrd:imrDoc>
+          <!--Annotation generated: 2018/04/16 17:34:36-->
+          <imrd:description lang="en">Collection of reference tables used in &lt;missions&gt; and descendant nodes.</imrd:description>
+        </imrd:imrDoc>
+      </xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:complexType name="ReferenceTablesType">
+    <xs:sequence>
+      <xs:element maxOccurs="1" name="missiontypetable" type="MissiontypeTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for MissionType/missiontype</imrd:description>
+              <imrd:description lang="en">Reference table for MissionType/missiontype</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="platformtable" type="PlatformTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for MissionType/platform og FishstationType/catchplatform</imrd:description>
+              <imrd:description lang="en">Reference table for MissionType/platform and FishstationType/catchplatform</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="nationtable" type="NationTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/nation</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/nation</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="fixedstationtable" type="FixedstationTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/fixedstation</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/fixedstation</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="stationtypetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/station</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/station</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="systemtable" type="MissingTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/system</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/system</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="geartable" type="GearTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/gear</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/gear</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="gearconditiontable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/gearcondition</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/gearcondition</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="samplequalitytable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/samplequality</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/samplequality</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="trawldoortypetable" type="MissingTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/trawldoortype</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/trawldoortype</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="fishabundancetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/fishabundance</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/fishabundance</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="fishdistributiontable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/fishdistribution</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/fishdistribution</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="landingssitetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/landingsite</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/landingsite</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="fishinggroundtable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/fishingground</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/fishingground</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="dataqualitytable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/dataquality</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/dataquality</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="floratable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/flora</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/flora</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="vegetationcovertable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/vegetationcover</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/vegetationcover</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="visibilitytable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/visibility</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/visibility</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="haulvaliditytable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/haulvalidity</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/haulvalidity</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="cloudstable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/clouds</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/clouds</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="seatable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/sea</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/sea</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="weathertable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for FishstationType/weather</imrd:description>
+              <imrd:description lang="en">Reference table for FishstationType/weather</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="taxatable" type="TaxaTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType@catchcategory og PreyType@preycategory, samt taxaavhengige tabeller for IndividualType/specialstage, IndividualType/eggstage, IndividualType/moultingstage, AgedeterminationType/agingstructureread og AgedeterminationType/otolithtype</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType@catchcategory and PreyType@preycategory, as well as conditional reference tables for IndividualType/specialstage, IndividualType/eggstage, IndividualType/moultingstage, AgedeterminationType/agingstructureread and AgedeterminationType/otolithtype</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="identificationtable" type="MissingTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/identification</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/identification</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="sampletypetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/sampletype</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/sampletype</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="grouptable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/group</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/group</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="conservationtable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/conservation</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/conservation</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="producttypetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/catchproducttype, CatchsampleType/sampleproducttype og IndividualType/individualproductype</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/catchproducttype, CatchsampleType/sampleproducttype and IndividualType/individualproductype</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="abundancecategorytable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/abundancecategory</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/abundancecategory</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="lengthmeasurementtable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/lengthmeasurement og PreyType/preylengthmeasurement</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/lengthmeasurement and PreyType/preylengthmeasurement</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="agingstructuretable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/agingstructure</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/agingstructure</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="parasitetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/parasite</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/parasite</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="stomachtable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/stomach</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/stomach</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="intestinetable" type="MissingTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/intestine</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/intestine</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="tissuesampletable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/tissuesample</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/tissuesample</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="samplerecipienttable" type="MissingTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/recipient</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/recipient</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="foreignobjecttable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CatchsampleType/foreignobject</imrd:description>
+              <imrd:description lang="en">Reference table for CatchsampleType/foreignobject</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="lengthresolutiontable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/lengthresolution og PreyType/interval</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/lengthresolution and PreyType/interval</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="fattable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/fat</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/fat</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="sextable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/sex</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/sex</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="maturationstagetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/maturationstage</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/maturationstage</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="stomachfilltable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/stomachfillfield og IndividualType/stomachfilllab</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/stomachfillfield and IndividualType/stomachfilllab</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="digestiontable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/digestion ogPreyType/digestion</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/digestion and PreyType/digestion</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="livertable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/liver</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/liver</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="liverparasitetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/liverparasite</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/liverparasite</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="gillwormstable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/gillworms</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/gillworms</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="swollengillstable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/swollengills</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/swollengills</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="fungushearttable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/fungusheart</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/fungusheart</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="fungussporestable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/fungusspores</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/fungusspores</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="fungusoutertable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/fungusouter</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/fungusouter</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="blackspottable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for IndividualType/blackspot</imrd:description>
+              <imrd:description lang="en">Reference table for IndividualType/blackspot</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="readabilitytable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for AgedeterminationType/readability</imrd:description>
+              <imrd:description lang="en">Reference table for AgedeterminationType/readability</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="otolithedgetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for AgedeterminationType/otolithedge</imrd:description>
+              <imrd:description lang="en">Reference table for AgedeterminationType/otolithedge</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="otolithcentretable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for AgedeterminationType/otolithcentre</imrd:description>
+              <imrd:description lang="en">Reference table for AgedeterminationType/otolithcentre</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="agereadertable" type="MissingTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for AgedeterminationType/agereader</imrd:description>
+              <imrd:description lang="en">Reference table for AgedeterminationType/agereader</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="tagtypetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for TagType/tagtype</imrd:description>
+              <imrd:description lang="en">Reference table for TagType/tagtype</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="preysourcetable" type="MissingTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for PreyType/source</imrd:description>
+              <imrd:description lang="en">Reference table for PreyType/source</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="weightresolutiontable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for PreyType/weightresolution</imrd:description>
+              <imrd:description lang="en">Reference table for PreyType/weightresolution</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="devstagetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for PreyType/devstage</imrd:description>
+              <imrd:description lang="en">Reference table for PreyType/devstage</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element maxOccurs="1" name="copepodedevstagetable" type="ListTableType">
+        <xs:annotation>
+          <xs:documentation>
+            <imrd:imrDoc>
+              <!--Annotation generated: 2018/04/16 17:34:36-->
+              <imrd:description lang="no">Referansetabell for CopepodedevstageType/copepodedevstage</imrd:description>
+              <imrd:description lang="en">Reference table for CopepodedevstageType/copepodedevstage</imrd:description>
+            </imrd:imrDoc>
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <!-- Types for reference table containers ReferenceTableType is an abstract base type. 
+    ListTableType is a generic type most commonly used. 
+    Among the specialised types, Taxa is the most complex. It allows for conditional lookups, and support code conversion for part of some component keys.
+    MissingTableType can be used to give instructions for how to use data that does not yet have a structured reference table    -->
+  <xs:complexType abstract="true" name="ReferenceTableType">
+    <xs:annotation/>
+    <xs:attribute name="referenceurl" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          <imrd:imrDoc>
+            <!--Annotation generated: 2018/04/16 17:34:36-->
+            <imrd:description lang="no">Link til komplett referansetabell.</imrd:description>
+            <imrd:description lang="en">Url identifying a referece table for all possible (legal) codes for the data.</imrd:description>
+          </imrd:imrDoc>
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="ListTableType">
+    <xs:annotation/>
+    <xs:complexContent>
+      <xs:extension base="ReferenceTableType">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" name="reference" type="ref:KeyValueElementType">
+            <xs:annotation>
+              <xs:documentation>
+                <imrd:imrDoc>
+                  <!--Annotation generated: 2018/04/16 17:34:36-->
+                  <imrd:description lang="no">KeyType refererer reference/code</imrd:description>
+                  <imrd:description lang="en">KeyType indexes reference/code</imrd:description>
+                </imrd:imrDoc>
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="TaxaTableType">
+    <xs:annotation/>
+    <xs:complexContent>
+      <xs:extension base="ReferenceTableType">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" name="reference" type="ref:TaxaElementType">
+            <xs:annotation>
+              <xs:documentation>
+                <imrd:imrDoc>
+                  <!--Annotation generated: 2018/04/16 17:34:36-->
+                  <imrd:description lang="en">Type for associating KeyTypes to the reference table taxa. KeyType t, indexes ref:reference/tsn==t.
+Taxa-conditional reference data are also found in this structure through composite keys.
+referencedata for specialstage has key composed from CompositeTaxaSexKeyType key:
+ref:reference/tsn==key/../../../catchcategory]/lists[@property=="specialstage" &amp; @sexcode==key/../../sex]/row/name==key.
+referencedata for eggstage has key composed from key composed from CompositeTaxaSexKeyType key:
+ref:reference/tsn==key/../../../catchcategory]/lists[@property=="eggstage" &amp; @sexcode==key/../../sex]/row/name==key.
+referencedata for moultingstage has key composed from CompositeTaxaKeyType:
+ref:reference/tsn==key/../../../catchcategory]/lists[@property=="skallalder"]/row/name==key].</imrd:description>
+                </imrd:imrDoc>
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="PlatformTableType">
+    <xs:annotation/>
+    <xs:complexContent>
+      <xs:extension base="ReferenceTableType">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" name="reference" type="ref:PlatformElementType">
+            <xs:annotation>
+              <xs:documentation>
+                <imrd:imrDoc>
+                  <!--Annotation generated: 2018/04/16 17:34:36-->
+                  <imrd:description lang="no">KeyType t, referer reference/platformnumber</imrd:description>
+                  <imrd:description lang="en">KeyType t, indexes reference/platformnumber</imrd:description>
+                </imrd:imrDoc>
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="FixedstationTableType">
+    <xs:annotation/>
+    <xs:complexContent>
+      <xs:extension base="ReferenceTableType">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" name="reference" type="ref:FixedCoastalstationType">
+            <xs:annotation>
+              <xs:documentation>
+                <imrd:imrDoc>
+                  <!--Annotation generated: 2018/04/16 17:34:36-->
+                  <imrd:description lang="no">KeyType t, refererer reference/station==t</imrd:description>
+                  <imrd:description lang="en">KeyType t, indexes reference/station==t</imrd:description>
+                </imrd:imrDoc>
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="NationTableType">
+    <xs:annotation/>
+    <xs:complexContent>
+      <xs:extension base="ReferenceTableType">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" name="reference" type="ref:NationElementType">
+            <xs:annotation>
+              <xs:documentation>
+                <imrd:imrDoc>
+                  <!--Annotation generated: 2018/04/16 17:34:36-->
+                  <imrd:description lang="no">KeyType t, refererer reference/nation==t</imrd:description>
+                  <imrd:description lang="en">KeyType t, indexes reference/nation==t</imrd:description>
+                </imrd:imrDoc>
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="MissiontypeTableType">
+    <xs:annotation/>
+    <xs:complexContent>
+      <xs:extension base="ReferenceTableType">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" name="reference" type="ref:MissionTypeElementType">
+            <xs:annotation>
+              <xs:documentation>
+                <imrd:imrDoc>
+                  <!--Annotation generated: 2018/04/16 17:34:36-->
+                  <imrd:description lang="no">KeyType t, refererer reference/code==t</imrd:description>
+                  <imrd:description lang="en">KeyType t, indexes reference/code==t</imrd:description>
+                </imrd:imrDoc>
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="GearTableType">
+    <xs:annotation/>
+    <xs:complexContent>
+      <xs:extension base="ReferenceTableType">
+        <xs:sequence>
+          <xs:element maxOccurs="unbounded" name="reference" type="ref:EquipmentElementType">
+            <xs:annotation>
+              <xs:documentation>
+                <imrd:imrDoc>
+                  <!--Annotation generated: 2018/04/16 17:34:36-->
+                  <imrd:description lang="no">KeyType t, refererer reference/code==t</imrd:description>
+                  <imrd:description lang="en">KeyType t, indexes reference/code==t</imrd:description>
+                </imrd:imrDoc>
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="MissingTableType">
+    <xs:annotation/>
+    <xs:sequence>
+      <xs:element maxOccurs="1" name="description" type="xs:string">
+        <xs:annotation/>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

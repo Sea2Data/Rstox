@@ -4,7 +4,7 @@
 \alias{imputeByAge}
 \title{Impute	missing individual data by age}
 \usage{
-imputeByAge(projectName, seed = 1, cores = 1, saveInd = TRUE)
+imputeByAge(projectName, seed = 1, cores = 1, saveInd = TRUE, ...)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -14,6 +14,8 @@ imputeByAge(projectName, seed = 1, cores = 1, saveInd = TRUE)
 \item{cores}{An integer giving the number of cores to run the bootstrapping over.}
 
 \item{saveInd}{Logical: if TRUE save the imputing indices.}
+
+\item{...}{Unused but usd for robustness.}
 }
 \value{
 Updated list with imputed bootstrap results

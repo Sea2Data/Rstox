@@ -10,8 +10,8 @@ NMDdecode(URL)
 \item{URL}{An URL.}
 }
 \description{
-\code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr 
-\code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr 
-\code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming).
+\code{getNMDinfo} converts, prints and optionally returns NMD reference information given a search string to the reference information. Used in StoX.URL(). \cr \cr
+\code{getNMDdata} downloads data from specific cruises, cruise series ot survey time series from NMD. \cr \cr
+\code{downloadXML} downloads xml data from an API, parses the xml data, and converts to a list (the latter is time consuming). \cr \cr
 }
 \keyword{internal}

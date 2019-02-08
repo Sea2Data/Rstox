@@ -5,7 +5,8 @@
 \alias{getProjectDataEnv}
 \title{Functions to return various paths and file names.}
 \usage{
-getProjectPaths(projectName = NULL, projectRoot = NULL, recursive = 2)
+getProjectPaths(projectName = NULL, projectRoot = NULL,
+  recursive = 2)
 
 getProjectDataEnv(projectName)
 }

@@ -4,7 +4,7 @@
 \alias{getAvailableFunctions}
 \title{Get available StoX functions}
 \usage{
-getAvailableFunctions(type = "baseline")
+getAvailableFunctions()
 }
 \description{
 This funcion gets available StoX functions.

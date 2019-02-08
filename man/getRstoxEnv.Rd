@@ -4,13 +4,16 @@
 \alias{getRstoxEnv}
 \alias{getRstoxDef}
 \alias{initiateRstoxEnv}
+\alias{getModelType}
 \title{Set up the RstoxEnv}
 \usage{
 getRstoxEnv()
 
-getRstoxDef(name)
+getRstoxDef(name = NULL, ...)
 
 initiateRstoxEnv()
+
+getModelType(modelType)
 }
 \arguments{
 \item{name}{The name of the Rstox definition to retrieve.}
@@ -18,5 +21,6 @@ initiateRstoxEnv()
 \description{
 \code{getRstoxEnv} initiates the RstoxEnv environment if not existing.
 \code{getRstoxDef} gets an Rstox definition.
+\code{initiateRstoxEnv} sets up the Rstox environment with the definitions. To get these definitions, use getRstoxDef().
 }
 \keyword{internal}

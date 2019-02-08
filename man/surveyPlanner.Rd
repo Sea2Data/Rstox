@@ -2,31 +2,46 @@
 % Please edit documentation in R/rstox_spatial.r
 \name{surveyPlanner}
 \alias{surveyPlanner}
+\alias{addStratum}
+\alias{subsetStrata}
 \alias{plotStratum}
+\alias{addStratumBordersAndNames}
 \alias{readStrataPolygons}
-\title{Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).}
+\alias{getCentroid}
+\title{Plan an acoustic-trawl survey.}
 \usage{
 surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   bearing = "N", rev = FALSE, retour = FALSE, toursFirst = FALSE,
   hours = 240, nmi = NULL, t0 = NULL, knots = 10, seed = 0,
-  angsep = 1/6, distsep = NULL, plot = FALSE, margin = NULL,
-  shapenames = list(longitude = "long", latitude = "lat", stratum = "id"),
-  equalEffort = FALSE, byStratum = TRUE, strata = "all")
+  angsep = 1/6, distsep = NULL, margin = NULL, equalEffort = FALSE,
+  byStratum = TRUE, strata = "all", cruise = "surveyPlanner",
+  keepTransport = TRUE, centroid = NULL, ...)
 
-plotStratum(x, zoom = 4, transect = TRUE, centroid = NULL,
-  transport_alpha = 0.1, google = FALSE, margin = 0.5,
-  aspectratio = NULL, xlab = "longitude", ylab = "latitude")
+addStratum(x, acousticProc = "FilterAcoustic")
 
-readStrataPolygons(projectName)
+subsetStrata(strata, lonlat)
+
+plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
+  transport_alpha = 0.1, zoom = 1.5, aspectratio = NULL,
+  xlab = "Longitude", ylab = "Latitude", xlim = NULL, ylim = NULL,
+  keep0effort = TRUE, strata = "all", strataNameCol = "darkblue",
+  ...)
+
+addStratumBordersAndNames(p, x, strataNameCol = "darkblue")
+
+readStrataPolygons(projectName, ...)
+
+getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
+  "latitude"))
 }
 \arguments{
-\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}). Can also be the path to a shapefile or folder of shape files, or to a file with polygons given as a two column matrix with stratum name in the first column and a MULTIPOLYGON wkt string in the second conlumn.}
 
 \item{parameters}{Optional named list of parameters overriding the inputs "type", "bearing", "retour", "hours", "knots", "nmi", "seed" or "t0". This list is returned from \code{surveyPlanner} (located in the element $parameters), and can be useful when changing say the 'nmi' in the last strata given time lost due to weather in the first strata. See examples.}
 
 \item{type}{The type of the transects, repeated to the number of stratums. See details for possible values. Case insensitive.}
 
-\item{bearing}{The survey bearing of each transect, given in one of 4 ways: (1) by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", (2) as angles counter clockwise from EAST on degrees, (3) as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates, or (4) as a data frame with columns "lon_start", "lon_stop", "lat_start", "lat_stop" defining the angles between a start and end point for each stratum.}
+\item{bearing}{The survey bearing of each transect, given in one of 4 ways: (1) by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", (2) as angles counter clockwise from EAST in degrees, (3) as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates, or (4) as a data frame with columns "lon_start", "lon_stop", "lat_start", "lat_stop" defining the angles between a start and end point for each stratum.}
 
 \item{rev}{Logical: If TRUE, the bearing calculated by the funciton when bearing = "along" or "across" is reversed, i.e., going from East to West instead of West to East.}
 
@@ -36,57 +51,49 @@ readStrataPolygons(projectName)
 
 \item{hours, nmi}{The time/traveled distance to spend in each stratum, given in hours/nautical miles (repeated to the number of strata), where \code{nmi} has precedence over \code{hours}. If given as a list of one element, these are interpreted as the hours/nmi for the entire survey, in which case selecting only a subset of the strata using \code{strata} will increase the effort in each of the remaining strata.}
 
-\item{t0}{The start time of the survey, set to Sys.time() by default.}
+\item{t0}{The start time of the survey, set to Sys.time() formatted to UTC by default. A as.POSIXct object or a string of a recognisable form (such as "\%Y-\%m-\%d \%H:\%M:\%S") are supported.}
 
 \item{knots}{The speed to use in the stratum, given in knots.}
 
-\item{seed}{The seed(s) to use for the random transects. If not given as a vector of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.}
+\item{seed}{The seed(s) to use for the random transects. If not given as an integer vector (such as c(2L, 5L)) of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.}
 
 \item{angsep}{The separation in degrees of points populating the stratum polygons (geographical coordinates longitude, latitude). Low values preserve the stratum borders when converting to Cartesian coordinates.}
 
 \item{distsep}{The separation in nautical miles of points populating the transects in Cartesian coordinates before converting back to geographical coordinates. When given, this parameter preserves the shortest travel distance (great-circle distances) of the transects (inducing curved lines in geographical coordinates).}
 
-\item{plot}{Deprecated: Plots the transects in Cartesian coordintes. Use \code{\link{plotStratum}} instead().}
-
-\item{margin}{The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since the forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.}
-
-\item{shapenames}{A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.}
+\item{margin}{The margin to accept for deviation between input and output total travelled distance. Setting this may result in unequal coverage, since forcing the total traveled distance towards a fixed value may force specific paths due to the shape of the stratum. Rather, increase the input \code{hours}, og accept the "noise" in the output total traveled distance. For \code{plotStratum} margin is the margin around the borders of the survey area in units of its dimensions.}
 
 \item{equalEffort}{Logical: If TRUE, assign effort proportional to the area of each stratum.}
 
 \item{byStratum}{Logical: If FALSE, include the transport between strata in the total traveled distance given in $Survey of the output.}
 
-\item{strata}{Specification of the strata to include, either given as the string "all", implying all strata to be used, og a index vector as given to "[]" (negative values may be used to exclude specific strata).}
+\item{strata}{Specification of the strata to include, either given as the string "all", implying all strata to be used; an index vector as given to "[]" (negative values may be used to exclude specific strata), or a character vector of the strata names. Note that if the strata are named by integers, these names must be given as character and not integers, which would act as indices.}
 
-\item{x}{The output from \code{\link{surveyPlanner}}.}
+\item{cruise}{A string or numeric giving the cruise name/code.}
 
-\item{zoom}{The zoom to use for google maps}
-
-\item{transect}{Logical: If TRUE, plot the transects.}
+\item{keepTransport}{Logical: If FALSE, remove transport stretches in the Transect output.}
 
 \item{centroid}{Logical: If TRUE, plot the centroid of the strata.}
 
+\item{...}{Used for flexibility, and including shapenames: A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.}
+
+\item{x}{The output from \code{\link{surveyPlanner}}.}
+
 \item{transport_alpha}{The transparency to use for the transport paths.}
 
-\item{google}{Logical: If TRUE, download Google maps.}
+\item{zoom}{The zoom relative to the extent of the range of the transect positions. Default is 1.5.}
 
 \item{aspectratio}{The aspect ratio of the plot, adjusted automatically by default.}
 
-\item{xlab}{The x label for the plot.}
+\item{xlab, ylab}{The x and y label for the plot.}
 
-\item{ylab}{The y label for the plot.}
+\item{xlim, ylim}{The x and y limit of the plot.}
+
+\item{keep0effort}{Logical: If FALSE, keep only the strata with positive effort.}
+
+\item{transect}{Logical: If TRUE, plot the transects.}
 }
 \value{
-\code{surveyPlanner} returns a list of the following elements: 
-\describe{
-\item{"Parallel"}{"Parallel transects"}
-\item{"EqAngZZ"}{"Equal angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
-\item{"EqSpZZ"}{"Equal space zigzag sampler, Strindberg and Buckland (2004)"}
-\item{"AdjAngZZ"}{"Adjusted angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
-\item{"RectEnclZZ"}{"Rectangular enclosure zigzag sampler, Harbitz and Holmin (2018)"}
-\item{"CurvEnclZZ"}{"Curved enclosure zigzag sampler (not implemented), Harbitz and Holmin (2018)"}
-}
-
 \code{surveyPlanner} returns a list of the following elements: 
 \describe{
 \item{"transects"}{"A data frame with the geographic and Cartesian transect coordinates for all strata, along with start, mid and stop time and sailed distance"}
@@ -102,11 +109,22 @@ readStrataPolygons(projectName)
 \code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
 }
 \description{
-Get polygon area and convert to or from geographic and Cartesian coordinates. The strata are converted to Cartesian coordinates using a common projection that preserves distance (azimuthal equal distance projection, aeqd in the proj4 library).
+\code{surveyPlanner} reads a WKT (Well known text) file, shapefiles, or a StoX project and generates a survey plan of parallel or zig zag transects.  \cr \cr
+\code{plotStratum} plots the survey plan returned by \code{surveyPlanner} . \cr \cr
+\code{readStrataPolygons} reads a WKT (Well known text) file, shapefiles, or a StoX project and returns the strata system.  \cr \cr
 }
 \details{
+The \code{surveyPlanner} function generates the survey plan (transect lines) in a cartesian coordinate system, and transforms the positions to the geographical coordinate system (longitude, latitude) using the azimuthal equal distance projection, which ensures that distances, and also equal coverage, if the method used is designed with this prerequisite, are preserved in the transformation. 
 Strindberg and Buckland (2004): Strindberg, S., & Buckland, S. T. (2004). Zigzag survey designs in line transect sampling. Journal of Agricultural, Biological, and Environmental Statistics, 9(4), 443
 The following types are implemented:
+\describe{
+\item{"Parallel"}{"Parallel transects"}
+\item{"EqAngZZ"}{"Equal angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
+\item{"EqSpZZ"}{"Equal space zigzag sampler, Strindberg and Buckland (2004). End transects are generated different from Strindberg and Buckland (2004), by mirroring the last transect around the line perpendicular to the survey direction passing through the last intersection point between the stratum border and the parallel lines used to generate the transects."}
+\item{"AdjAngZZ"}{"Adjusted angle zigzag sampler (not implemented), Strindberg and Buckland (2004)"}
+\item{"RectEnclZZ"}{"Rectangular enclosure zigzag sampler, Harbitz (2019)"}
+\item{"CurvEnclZZ"}{"Curved enclosure zigzag sampler (not implemented), Harbitz (2019)"}
+}
 }
 \examples{
 # Generate parallel transects with equal effort in each stratum (proportional to area):
@@ -114,19 +132,17 @@ projectName <- "Test_Rstox"
 system.time(Parallel <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 dev.new()
-plotStratum(Parallel)
+p <- plotStratum(Parallel)
 
 # Running surveyPlanner() on a project takes some time, since the project has to be opened and
 # the process data read to obtain the strata. A quicker way is to specify the strata definitions 
-# directly, either as the path to a file such as 
-# file.path(dirname(getProjectPaths()$projectRoot), "polygon", "norwegian_sea2014.txt"), 
-# or as a folder or vector of paths to shapefiles:
+# directly, either as the path to a file or as a folder or vector of paths to shapefiles:
 # This produces a different strata system than that in the Test_Rstox project:
 system.time(Parallel <- surveyPlanner(projectName=file.path(dirname(getProjectPaths()$projectRoot),
-     "polygon", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
+     "reference", "stratum", "norwegian_sea2014.txt"), type="Parallel", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 dev.new()
-plotStratum(Parallel)
+p <- plotStratum(Parallel)
 
 # Write the transects to one csv file (to write one file per stratum use byStratum=TRUE). 
 # Use ext="nc" to write to a NetCDF4 file. Use 'dir' to specify the directory in which to place 
@@ -138,7 +154,7 @@ filename
 system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 dev.new()
-plotStratum(Zigzag)
+p <- plotStratum(Zigzag)
 
 # The parallel survey use 23.39 percent of sailing distance for transport between transects, 
 # whereas the zigzag survey use 10.76 percent.
@@ -155,20 +171,20 @@ hours[2:4] <- hours[2:4] - 50
 system.time(Parallel2 <- surveyPlanner(projectName=projectName, type="Parallel", bearing="N",
     knots=10, seed=0, hours=hours))
 dev.new()
-plotStratum(Parallel2)
+p <- plotStratum(Parallel2)
 
 # Tour-retour zigzag in stratum 1 and 3:
 system.time(Zigzag2 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE)))
 dev.new()
-plotStratum(Zigzag2)
+p <- plotStratum(Zigzag2)
 
 # Populate the transects with points separated by 10 nmi specified by the 'distsep' parameter, 
 # for visualizing the true track along the great-circle:
 system.time(Zigzag3 <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE, retour=c(TRUE, FALSE, TRUE, FALSE), distsep=10))
 dev.new()
-plotStratum(Zigzag3)
+p <- plotStratum(Zigzag3)
 
 # Write the transects to a NetCDF4 file in the output folder of the project (alternatively specify
 # the directory using 'dir', or the filenames using 'filenames'. Also use 'prefix' or 'suffix' 
@@ -176,3 +192,7 @@ plotStratum(Zigzag3)
 writeTransects(Zigzag3, projectName, ext="nc")
 
 }
+\seealso{
+See ?writeTransects for writing the transects to verious files.
+}
+\keyword{internal}

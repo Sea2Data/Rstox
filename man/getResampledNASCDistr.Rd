@@ -4,11 +4,11 @@
 \alias{getResampledNASCDistr}
 \title{Resample NASC distribution}
 \usage{
-getResampledNASCDistr(baseline, psuNASC, stratumNASC, parameters,
+getResampledNASCDistr(projectName, psuNASC, stratumNASC, parameters,
   sorted = TRUE)
 }
 \arguments{
-\item{baseline}{StoX Java baseline object.}
+\item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
 
 \item{psuNASC}{MeanNASC table from baseline.}
 
@@ -34,3 +34,4 @@ resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC
     parameters=list(seed=1, nboot=5))
 
 }
+\keyword{internal}

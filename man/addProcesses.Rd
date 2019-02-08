@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstox_java.r
 \name{addProcesses}
 \alias{addProcesses}
-\title{Add processes to a project given as output from getParlist():}
+\title{Add processes to a project, given output from getParlist():}
 \usage{
 addProcesses(project, processes)
 }

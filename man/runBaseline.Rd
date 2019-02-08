@@ -3,19 +3,31 @@
 \name{runBaseline}
 \alias{runBaseline}
 \alias{getBaseline}
+\alias{generateRScripts}
+\alias{runRScripts}
 \title{Run a StoX baseline model}
 \usage{
-runBaseline(projectName, startProcess = 1, endProcess = Inf,
-  reset = FALSE, save = FALSE, out = c("project", "baseline", "report",
-  "name"), modelType = "baseline", msg = TRUE, exportCSV = FALSE,
-  warningLevel = 0, parlist = list(), ...)
+runBaseline(projectName, out = c("project", "baseline",
+  "baseline-report", "name"), startProcess = 1, endProcess = Inf,
+  reset = FALSE, save = FALSE, modelType = "baseline", msg = TRUE,
+  exportCSV = FALSE, warningLevel = 0, tempRScriptFileName = NULL,
+  parlist = list(), ...)
 
 getBaseline(projectName, input = c("par", "proc"), proc = "all",
-  drop = TRUE, modelType = "baseline", msg = TRUE, startProcess = 1,
-  endProcess = Inf, reset = FALSE, save = FALSE, parlist = list(), ...)
+  drop = TRUE, startProcess = 1, endProcess = Inf, reset = FALSE,
+  save = FALSE, modelType = "baseline", msg = TRUE,
+  exportCSV = FALSE, warningLevel = 0, parlist = list(),
+  tempRScriptFileName = NULL, close = FALSE, ...)
+
+generateRScripts(projectName, fresh = TRUE)
+
+runRScripts(projectName, modelType = c("r", "r-report"), fresh = TRUE,
+  msg = TRUE, add.time = FALSE)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
+
+\item{out}{The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object). First element used.}
 
 \item{startProcess}{The name or number of the start process in the list of processes in the model (run \code{\link{runBaseline}} to get the processes of the project). The use of startProcess and endProcess requres that either no processes in the given range of processes depends on processes outside of the range, or that a baseline object is given in the input.}
 
@@ -25,15 +37,15 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 
 \item{save}{Logical; if TRUE changes to the project specified in parlist and "..." are saved in Java and to the object javaParameters in the project list in the RstoxEnv environment.}
 
-\item{out}{The object to return from runBaseline(), one of "name" (projectName), "baseline" (Java baseline object) or "project" (Java project object, containing the baseline object). First element used.}
-
-\item{modelType}{The type of model to run, currently one of "baseline" and "report" (the latter referring to "baseline report"). First element used.}
+\item{modelType}{The type of model to run, currently one of "baseline" and "baseline-report". First element used.}
 
 \item{msg}{Logical: if TRUE print information about the progress of reading the data.}
 
 \item{exportCSV}{Logical: if TRUE turn on exporting csv files from the baseline run.}
 
 \item{warningLevel}{The warning level used in the baseline run, where 0 stops the baseline for Java warnings, and 1 continues with a warning.}
+
+\item{tempRScriptFileName}{A file name specifying the temporary R script that StoX writes and sources e.g. for stratum area calculation using the accurate method.}
 
 \item{parlist}{List of parameters values overriding existing parameter values. These are specified as processName = list(parameter = value), for example AcousticDensity = list(a = -70, m = 10), BioStationWeighting = list(WeightingMethod = "NASC", a = -70, m = 10). Logical parameters (given as strings "true"/"false" in StoX) can be given as logical TRUE/FALSE.}
 
@@ -45,6 +57,14 @@ getBaseline(projectName, input = c("par", "proc"), proc = "all",
 
 \item{drop}{Logical: if TRUE drop empty list elements (default).}
 
+\item{close}{Logical: if TRUE close the project on exit of the function (for \code{getBaseline}).}
+
+\item{fresh}{Logical: if TRUE write new r.R and r-report.R scripts to the folder output/r.}
+
+\item{add.time}{Logical: if TRUE add the current time to messages printed to the console in \code{runRScripts}.
+
+When a StoX project has been run using \code{runBaseline} or \code{getBaseline}, the Java object of the project is saved in the project environment, see names(RstoxEnv$Projects). If there are changes made in the project, e.g., replaced files or manual changes in the project.xml file}
+
 \item{par}{A list of the same length as \code{fun} giving parameter values to uniquely identify processes. The list names are the names of the baseline process parameters, and the values are the baseline process values.}
 }
 \value{
@@ -54,12 +74,22 @@ For \code{\link{runBaseline}} theproject name, and for \code{\link{getBaseline}}
 \code{runBaseline} runs a StoX baseline model possibily overriding parameters. \cr \cr
 \code{getBaseline} returns input and output data from the StoX baseline model. \cr \cr
 }
+\details{
+The parameters startProcess and endProcess specify the range of processes to run (startProcess : endProcess). If the model has been run already for all or some of the processes in this range, only the unrun processes are run. If there are processes in or prior to this range for which parameters have changed, all processes from the first changed process and throughout the range startProcess : endProcess are rerun. The range of processes to run is extended to any changed processes beyond the range. If reset=TRUE, the range or processes to run is extended to the range startProcess : endProcess regardless of whether the processes have previouslu been run.
+}
 \examples{
 # Get output from the baseline:
 projectName <- "Test_Rstox"
 system.time(baselineData <- getBaseline(projectName))
 # Check the structure of the output from getBaseline():
 ls.str(baselineData)
+
+# The predefined values of the parameters are included as attributes to the list of parameters:
+baselineData$parameters$NASC
+# To get a clean list of all predefined values run the following:
+att <- rapply(baselineData$parameters, attributes, how="replace")
+# The cleaned list has named PROCESSNAME.PARAMETERNAME.predefinedValues:
+unlist(unlist(att, recursive=FALSE), recursive=FALSE)
 
 # Override parameters in the baseline:
 system.time(baselineDataMod <- getBaseline(projectName, 
