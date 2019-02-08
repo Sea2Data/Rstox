@@ -723,10 +723,14 @@ Fixed bug with Java v11.
 Fixed bug with subset in getNMDdata().
 
 
-
 ########## Version 1.9.3 (2019-02-07) ##########
 
 Fixed bug in createProject(), where template now can be given as the first element of a list of processes in 'model'.
+
+
+########## Version 1.9.4 (2019-02-08) ##########
+
+Fixed bug with parallel R sessions run by StoX writing to and sourcing the same temporary R script at once. This is solved by the argument tempRScriptFileName.
 
 
 ########## Version 1.10 (2019-02-07) ##########
@@ -800,4 +804,6 @@ Fixed bug with Java v11.
 Fixed bug with subset in getNMDdata().
 
 Fixed bug in createProject(), where template now can be given as the first element of a list of processes in 'model'.
+
+Fixed bug with parallel R sessions run by StoX writing to and sourcing the same temporary R script at once. This is solved by the argument tempRScriptFileName.
 
