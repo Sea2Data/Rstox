@@ -16,7 +16,7 @@ generateSpeciesMatrix(projectName, ref, years, check = TRUE,
 
 mergeSpeciesMatrix(...)
 
-aggregateBySpeciesCategory(projectName, ref, specVar = "noname",
+aggregateBySpeciesCategory(projectName, ref = NULL, specVar = "noname",
   specVar.bio = specVar, specVar.ref = specVar, catVar = "SpecCat",
   bioticProc = "FilterBiotic", stationVar = c("cruise", "serialno"),
   var = c("weight", "count"), na.as = 0, drop.out = TRUE,

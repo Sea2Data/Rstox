@@ -1518,7 +1518,7 @@ mergeSpeciesMatrix <- function(...){
 #' @keywords internal
 #' @rdname generateSpeciesMatrix
 #' 
-aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", 
+aggregateBySpeciesCategory <- function(projectName, ref=NULL, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", 
 	stationVar=c("cruise", "serialno"), var=c("weight", "count"), na.as=0, drop.out=TRUE, close=TRUE, msg=TRUE, ...){
 	# Function used for converting a matrix into a data frame and appending the rownames as the first column:
 	createTempDataFrame <- function(x){
@@ -1530,22 +1530,6 @@ aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specV
 	appendStationFirst <- function(x, stationVar=c("cruise", "serialno")){
 		Station <- do.call(paste, x[stationVar])
 		cbind(Station=Station, x, stringsAsFactors=FALSE)
-	}
-	
-	# Read the reference file linking species and species category:
-	if(is.data.frame(ref)){
-		ref <- ref
-	}
-	else{
-		ref <- read.csv2(ref, encoding = "UTF-8", stringsAsFactors=FALSE)
-	}
-	
-	# Read the ref file:
-	#ref <- read.csv2(ref, stringsAsFactors=FALSE)
-	ref[[specVar]] <- tolower(ref[[specVar]])
-	# Test whether the specVar and catVar are present in the ref file:
-	if(!all(c(specVar.ref, catVar) %in% names(ref))){
-		stop(paste0("All of 'specVar.ref' (possibly specified commonly for the biotic data and the ref file by 'specVar') and 'catVar' must be present in the 'ref' file (", paste(setdiff(c(specVar.ref, catVar), names(ref)), sep=", "), " not present in the ref file)."))
 	}
 	
 	# Get the project output:
@@ -1562,18 +1546,42 @@ aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specV
 	data <- appendStationFirst(data, stationVar=stationVar)
 	availableVars <- names(data)
 	
-	if(!specVar.bio %in% names(data)){
-		stop("'specVar.bio' (possibly specified commonly for the biotic data and the ref file by 'specVar') must be present in the biotic data of the project")
-	}
-
 	# Convert to lower case for the species, as per protocol of StoX.
 	data[[specVar]] <- tolower(data[[specVar]])
-	# Remove any columns named by 'catVar', but only if specVar != catVar:
-	if(specVar != catVar){
-		data <- data[, names(data) != catVar]
+	
+	
+	# Read the reference file linking species and species category:
+	if(is.data.frame(ref)){
+		ref <- ref
 	}
-	# Append the ref file to the data, and keep all species in the reference file:
-	data <- merge(data, ref, by=specVar, all.y=TRUE)
+	else if(length(ref)){
+		ref <- read.csv2(ref, encoding = "UTF-8", stringsAsFactors=FALSE)
+	}
+	
+	# Read the ref file:
+	if(length(ref)){
+		
+		# Remove any columns named by 'catVar', but only if specVar != catVar:
+		if(specVar != catVar){
+			data <- data[, names(data) != catVar]
+		}
+		
+		#ref <- read.csv2(ref, stringsAsFactors=FALSE)
+		ref[[specVar]] <- tolower(ref[[specVar]])
+		# Test whether the specVar and catVar are present in the ref file:
+		if(!all(c(specVar.ref, catVar) %in% names(ref))){
+			stop(paste0("All of 'specVar.ref' (possibly specified commonly for the biotic data and the ref file by 'specVar') and 'catVar' must be present in the 'ref' file (", paste(setdiff(c(specVar.ref, catVar), names(ref)), sep=", "), " not present in the ref file)."))
+		}
+		
+		if(!specVar.bio %in% names(data)){
+			stop("'specVar.bio' (possibly specified commonly for the biotic data and the ref file by 'specVar') must be present in the biotic data of the project")
+		}
+		
+		# Append the ref file to the data, and keep all species in the reference file:
+		data <- merge(data, ref, by=specVar, all.y=TRUE)
+	
+	}
+	
 	# Get only the the variables specified by 'var':
 	if(!all(var %in% names(data))){
 		var <- intersect(var, availableVars)
@@ -1605,7 +1613,7 @@ aggregateBySpeciesCategory <- function(projectName, ref, specVar="noname", specV
 	names(temp) <- var
 	
 	# Write the species matrix to a csv file:
-	outfile <- paste0("speciesMatrix", var, ".txt")
+	outfile <- paste0("speciesMatrix_", var, ".txt")
 	outfile <- file.path(getProjectPaths(projectName)$RReportDir, outfile)
 	lapply(seq_along(temp), function(i) write.table(temp[[i]], file=outfile[i], sep="\t", dec=".", row.names=FALSE, fileEncoding="UTF-8"))
 	
