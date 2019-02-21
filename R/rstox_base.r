@@ -1959,7 +1959,7 @@ R2Javapar <- function(x){
 getParlist <- function(parlist=list(), ..., na.rm=TRUE){
 	# Function for detecting and formatting process names:
 	formatProcessNameParameters <- function(parlist){
-		# Funciton do detect parameter values which are process names, and enclose these in "Process()":
+		# Funciton to detect parameter values which are process names, and enclose these in "Process()":
 		formatProcessNameParametersOne <- function(par, processNames){
 			atProcess <- par %in% processNames & names(par) != "functionName"
 			if(any(atProcess)){
@@ -1969,8 +1969,10 @@ getParlist <- function(parlist=list(), ..., na.rm=TRUE){
 		}
 	
 		# Get the process names:
-		processNames <- names(parlist)
-	
+		# Changed on 2019-02-18 to get the processes from Java:
+		# processNames <- names(parlist)
+		processNames <- unlist(getAvailableFunctions()[c("baseline", "baseline-report")])
+		
 		# Run through the parameters and detect and change process names:
 		lapply(parlist, formatProcessNameParametersOne, processNames=processNames)	
 	}

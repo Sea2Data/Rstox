@@ -28,9 +28,9 @@ writeXMLusingXSD(x, file, root, blockvar = NULL, blocksize = 100,
 data.frame2xml(x, root, xsd, na.rm = FALSE, strict = TRUE,
   discardSimple = FALSE, msg = FALSE)
 
-getHIXSDfile(xsd = "1.4", xsdtype = c("biotic", "acoustic"))
+getHIXSDfile(xsd = "1.4", xsdtype = c("biotic", "acoustic", "landing"))
 
-readHIXSD(xsd = "1.4", xsdtype = c("biotic", "acoustic"),
+readHIXSD(xsd = "1.4", xsdtype = c("biotic", "acoustic", "landing"),
   discardSimple = FALSE)
 
 validateHIXSD(x, xsd, strict = TRUE, discardSimple = FALSE)

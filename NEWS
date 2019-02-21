@@ -886,3 +886,7 @@ Fixed bug with parallel R sessions run by StoX writing to and sourcing the same 
 
 
 
+########## Version 1.11.1 (2019-02-08) ##########
+
+Added the option ref=NULL in aggregateBySpeciesCategory(), allowing for no reference file for grouping species into catecories.
+

@@ -25,7 +25,8 @@ plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
   transport_alpha = 0.1, zoom = 1.5, aspectratio = NULL,
   xlab = "Longitude", ylab = "Latitude", xlim = NULL, ylim = NULL,
   keep0effort = TRUE, strata = "all", strataNameCol = "darkblue",
-  ...)
+  transectcol = NULL, quiet = FALSE, timerange = NULL,
+  headshape = 18, ...)
 
 addStratumBordersAndNames(p, x, strataNameCol = "darkblue")
 

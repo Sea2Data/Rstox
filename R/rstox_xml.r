@@ -273,7 +273,7 @@ data.frame2xml <- function(x, root, xsd, na.rm=FALSE, strict=TRUE, discardSimple
 #' @rdname writeBioticXML
 #' @keywords internal
 #' 
-getHIXSDfile <- function(xsd="1.4", xsdtype=c("biotic", "acoustic")){
+getHIXSDfile <- function(xsd="1.4", xsdtype=c("biotic", "acoustic", "landing")){
 	if(is.character(xsd) && !file.exists(xsd)){
 		if(xsdtype[1] == "biotic"){
 			filename <- paste0("biotic_v", xsd, ".xsd")
@@ -282,6 +282,10 @@ getHIXSDfile <- function(xsd="1.4", xsdtype=c("biotic", "acoustic")){
 		else if(xsdtype[1] == "acoustic"){
 			filename <- paste0("LUF20_v", xsd, ".xsd")
 			xsd <- system.file("extdata", "xsd", "acoustic", filename, package="Rstox")
+		}
+		else if(xsdtype[1] == "landing"){
+			filename <- paste0("landingdatav", xsd, ".xsd")
+			xsd <- system.file("extdata", "xsd", "landing", filename, package="Rstox")
 		}
 		else{
 			stop("The given xsdtype not implemented.")
@@ -295,7 +299,7 @@ getHIXSDfile <- function(xsd="1.4", xsdtype=c("biotic", "acoustic")){
 #' @rdname writeBioticXML
 #' @keywords internal
 #' 
-readHIXSD <- function(xsd="1.4", xsdtype=c("biotic", "acoustic"), discardSimple=FALSE){
+readHIXSD <- function(xsd="1.4", xsdtype=c("biotic", "acoustic", "landing"), discardSimple=FALSE){
 	
 	# Try locating the xsd in the Rstox resoureces:
 	xsd <- getHIXSDfile(xsd=xsd, xsdtype=xsdtype)
