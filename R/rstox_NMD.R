@@ -509,12 +509,17 @@ getSeriesInfo <- function(ver, server, type, msg=FALSE, recursive=TRUE){
 		#}
 		# Function used for extracting a data frame of the StoX projects used in a survey time series:
 		getSurveyTimeSeriesProjects_V2 <- function(x, URLbase){
-			sampleTime <- NAsapply(x$cruiseSeries$cruiseSeries$samples, function(y) y$sampleTime)
-			stoxProjectId <- NAsapply(x$cruiseSeries$cruiseSeries$samples, function(y) y$stoxProject)
+			# For strange reason, IBTS time series is different from the rest of the pack, handle it correctly
+			if(length(x$cruiseSeries) > 1)
+				xRoot <- x$cruiseSeries[[2]]
+			else
+				xRoot <- x$cruiseSeries$cruiseSeries
+			sampleTime <- NAsapply(xRoot$samples, function(y) y$sampleTime)
+			stoxProjectId <- NAsapply(xRoot$samples, function(y) y$stoxProject)
 			STSCode <- x$code
 			STSName <- x$name
-			CSCode <- x$cruiseSeries$cruiseSeries$cruiseSeriesCode
-			CSName <- x$cruiseSeries$cruiseSeries$cruiseSeries
+			CSCode <- xRoot$cruiseSeriesCode
+			CSName <- xRoot$cruiseSeries
 			data.frame(sampleTime=sampleTime, stoxProjectId=stoxProjectId, STSCode=STSCode, STSName=STSName, CSCode=CSCode, CSName=CSName, stringsAsFactors=FALSE)
 		}
 
