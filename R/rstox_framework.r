@@ -50,7 +50,11 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
 #' @param use.set				For development. Remove this later!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #' @param BioticDataList		A list of biotic data representing the levels FishStation, CatchSample and Individual as returned from e.g. getBaseline("Test_Rstox")$outputData$ReadBioticXML.
 #'
-#' @details ATLE
+#' @details The purpose of function StationLengthDist is to produce a length frequency distribution for each biotic station by species. Three different distributions (LengthDistType) can be generated:
+#'
+#' LengthDist
+#' 
+#' A calculated length distribution as if every individual in the catch had been length measured.
 #'
 #' @return A data table of length distributions stacked for each combination of cruise/station and SepcCat.
 #'
