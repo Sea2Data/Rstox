@@ -914,7 +914,16 @@ factorNAfirst <- function(x){
 	### #x[is.nax] <- value
 	### #x
 	if(is.numeric(x)){
-		levels <- seq(min(x, na.rm=TRUE), max(x, na.rm=TRUE), by=median(diff(sort(unique(x))), na.rm=TRUE))
+		# Create an ordered vector spanning the range of x:
+		r <- range(x, na.rm=TRUE)
+		if(diff(r) == 0){
+			levels <- r[1]
+		}
+		else{
+			levels <- seq(r[1], r[2], by=median(diff(sort(unique(x))), na.rm=TRUE))
+		}
+		
+		# Add NAs first:
 		if(any(is.na(x))){
 				levels <- c(NA, levels)
 			}
@@ -922,6 +931,7 @@ factorNAfirst <- function(x){
 	else{
 		levels <- unique(x)
 	}
+	# Convert a single NA to "NA":
 	if(length(levels)==1 && is.na(levels)){
 		levels <- "NA"
 		x <- rep("NA", length(x))

@@ -63,8 +63,11 @@ StationLengthDist <- function(baselineOutput, BioticData="FilterBiotic", LengthD
 		baselineOutput <- baselineOutput$outputData
 	}
 	
+	
 	# Define list names to get the data from the specified 'BioticData':
 	BioticDataList <- baselineOutput[[BioticData]]
+	# Remove the process name in the names of the biotic data tables:
+	names(BioticDataList) <- gsub("^.*?_", "", names(BioticDataList))
 	BioticDataList <- lapply(BioticDataList, data.table::as.data.table)
 	
 	getStationLengthDist(BioticDataList, LengthDistType=LengthDistType, allowMissingWeight=allowMissingWeight, use.set=use.set)
@@ -118,25 +121,27 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 		cbind(x, out)
 	}
 	
+	# Accept the full output from getBaseline():
+	if("outputData" %in% names(BioticDataList)){
+		BioticDataList <- BioticDataList$outputData
+	}
+	
+	##### Define dataset names: #####
 	var <- c("distance", "weight", "lengthsampleweight", "count", "lengthsamplecount", "length", "lengthunit")
 	keys <- c("cruise", "serialno", "SpecCat")
 	aggregate_keys <- "samplenumber"
 	keys <- c(keys, aggregate_keys)
 	
-	# Accept the full output from getBaseline():
-	if("outputData" %in% names(x)){
-		x <- x$outputData
-	}
-	
-	##### Define dataset names: #####
-	# Define list names to get the data from the specified 'BioticData':
-	FishStationName <- paste(BioticData, "BioticData_FishStation.txt", sep="_")
-	CatchSampleName <- paste(BioticData, "BioticData_CatchSample.txt", sep="_")
-	IndividualName <- paste(BioticData, "BioticData_Individual.txt", sep="_")
+	# Define list names to get the data from:
+	FishStationName <- "BioticData_FishStation.txt"
+	CatchSampleName <- "BioticData_CatchSample.txt"
+	IndividualName <- "BioticData_Individual.txt"
+	##########
 	
 	
-	# First merge the fish station and catch sample data tables, to be sure to remove the entire station if none of the catch samples have e.g. weight and lengthsampleweight:
+	##### First merge the fish station and catch sample data tables, to be sure to remove the entire station if none of the catch samples have e.g. weight and lengthsampleweight: #####
 	FishStation_CatchSample <- merge2(BioticDataList[[FishStationName]], BioticDataList[[CatchSampleName]], var=var, keys=keys)
+	##########
 	
 	
 	##### Subset datasets given 'LengthDistType': #####
@@ -161,7 +166,10 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	temp <- merge2(FishStation_CatchSample, BioticDataList[[IndividualName]], var=thisvar, keys=keys, keys.out=TRUE)
 	FishStation_CatchSample_Individual <- temp$data
 	keys <- temp$keys
+	##########
 	
+	
+	##### Get length intervals: #####
 	# The 'lengthunit' from biotic v1.4 is coded as given by getNMDinfo("lengthunit"), which says code = 1:7, resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001):
 	resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001)
 	lengthRes <- max(resolutionMeters[FishStation_CatchSample_Individual$lengthunit], na.rm=TRUE)
@@ -176,8 +184,10 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	# Create a vector of all length intervals:
 	lengthIntervals <- seq(rangeLengths[1], rangeLengths[2], by=lengthResCM)
 	numLengthIntervals <- length(lengthIntervals)
+	##########
 	
 	
+	##### generate length distributions per station and SpecCat: #####
 	setkeyv(FishStation_CatchSample_Individual, cols=keys)
 	byGrp <- keys
 	out <- FishStation_CatchSample_Individual[,  .(
@@ -192,7 +202,10 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 		"has_NOTweightBUTcount" = rep(has_NOTweightBUTcount[1], numLengthIntervals), 
 		"has_onlyOnePartSample" = rep(has_onlyOnePartSample[1], numLengthIntervals)
 		), by=byGrp]
+	##########
 	
+	
+	##### Sum over part samples: #####
 	# Apply so called raising factors, which are total weight/count divided by sample weight/count:
 	out[has_weight==TRUE, WeightedCount := WeightedCount * weight / lengthsampleweight]
 	if(any(out$has_NOTweightBUTcount, na.rm=TRUE)){
@@ -206,7 +219,10 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	if(!all(out$has_onlyOnePartSample, na.rm=TRUE)){
 		out <- out[has_onlyOnePartSample == TRUE, psum(.SD), by=thiskeys]
 	}
+	##########
 	
+	
+	##### Output: #####
 	# Define the Station column, which is a concatination of cruise and seialno:
 	if(use.set){
 		set(out, j="Station", value=paste(out$cruise, out$serialno, sep="/"))
@@ -225,4 +241,5 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	}
 	
 	return(out)
+	##########
 }

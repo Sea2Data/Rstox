@@ -1380,7 +1380,7 @@ downloadSerialno <- function(serialno, downloadType, year=NULL, tsn=NULL, prefix
 		return(data.frame(year=year, serialno, tsn, URL=URL, stringsAsFactors=FALSE))
 	}
 	
-	# Create the project with a model incoporating the serian´lno and tsn:
+	# Create the project with a model incoporating the serialno and tsn:
 	model <- getSerialnoTsnModel(serialno, tsn, model)
 	projectName <- createProject(projectPath, dir=dir, model=model, ow=ow, ...)
 
@@ -1811,29 +1811,6 @@ getURLbase <- function(ver, server, datasource, model=NULL, dataset=NULL, unname
 }
 # Function to extract the variables given in the levels[[2]] in the list elements named by levels[[1]]
 getElements <- function(data, levels=list("element", c("text", ".attrs")), data.frame.out=TRUE, equalLen=NULL){
-	# Example from 'equipment', read using 
-	#   eV2 <- downloadXML("http://tomcat7.imr.no:8080/apis/nmdapi/reference/v2/dataset/equipment?version=2.0", msg=TRUE)
-	#   getElements(eV2, levels=list("row", NA))
-	# :
-		# $row
-		# $row$code
-		# [1] "3183"
-    	# 
-		# $row$name
-		# [1] "Torsketrål 135"
-    	# 
-		# $row$area
-		# [1] "0"
-    	# 
-		# $row$description
-		# [1] "Torsketrål 135 mm maskevidde, uten rist."
-    	# 
-		# $row$.attrs
-		#                       type                 deprecated                updatedTime                  updatedBy               insertedTime                 insertedBy 
-		#     "EquipmentElementType"                    "false" "2018-06-11T07:16:20.072Z"                   "import" "2018-06-11T07:16:20.072Z"                   "import" 
-		# attr(,"namespaces")
-		# http://www.w3.org/2001/XMLSchema-instance                                                                                                                               
-		#                                     "xsi"                                        ""                                        ""                                        "" 
 	
 	if(length(data)==0){
 		return(data)

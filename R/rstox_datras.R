@@ -27,7 +27,7 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 		# We have to remove "."," " and use uppercase
 		shipName <- toupper(gsub("[[:space:][:punct:]]", "", shipName))
 
-		# Replace Å with AA
+		# Replace the nordic character with AA
 		shipName <- gsub("\u00C5", "AA", shipName)
 
 		tempShipFile <- tempfile()

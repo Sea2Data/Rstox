@@ -369,7 +369,7 @@ runBootstrap <- function(projectName, bootstrapMethod="AcousticTrawl", acousticM
 		stop("Invalid bootstrap type.")
 	}
 	bootstrapFun <- paste("runBootstrap", bootstrapMethod, sep="_")
-	do.call(bootstrapFun, list(projectName=projectName, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...))
+	temp <- do.call(bootstrapFun, list(projectName=projectName, acousticMethod=acousticMethod, bioticMethod=bioticMethod, nboot=nboot, startProcess=startProcess, endProcess=endProcess, seed=seed, cores=cores, msg=msg, sorted=sorted, JavaMem=JavaMem, ...))
 	
 	# Reset to the last baseline run before the bootstrap:
 	runBaseline(projectName, parlist=parameters, out="name", reset=TRUE, msg=FALSE)
@@ -462,17 +462,29 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	boot1 <- function(seed=1, data, list.out=TRUE, sorted=TRUE, sample=TRUE, ...){
 		# Function for calculating the mean density and keep the first row of a matrix:
 		MeanDensity1 <- function(y){
-			out <- y[1, , drop=FALSE]
-			out$Density <- mean(y$Density)
+			# Get a data frame of SpecCat, Stratum, mean Density, Area (a test is made for equality), SampleSizeStratum, PosSampleSizeStratum:
+			if(!all(y$Area == y$Area[1])){
+				stop("Stratum area should be equal throughout a stratum. There is a bug in the code.")
+			}
+			out <- data.frame(
+				SpecCat = y$SpecCat[1],
+				Stratum = y$Stratum[1],
+				Density = mean(y$Density),
+				Area = y$Area[1],
+				SampleSizeStratum = y$SampleSizeStratum[1],
+				PosSampleSizeStratum = y$PosSampleSizeStratum[1]
+			)
 			out
 		}
-		
 		# Sample the rows of each stratum of each species (the input 'data' is split into a list by species):
 		if(sample){
+			# This is a list with one element per species, and one data frame per stratum of each species:
 			b <- lapply(data, function(y) by(y, y$Stratum, sampleSorted, seed=seed, by="SampleUnit"))
 		}
 		else{
-			b <- list(data)
+			# b <- list(data)
+			# Split the data into strata:
+			b <- lapply(data, function(y) split(y, y$Stratum))
 		}
 		# Calculate the mean density of each stratum of each species, and combine to a data.frame:
 		m <- lapply(b, function(y) if(is.list(y)) lapply(y, MeanDensity1) else MeanDensity1(y))
@@ -490,7 +502,8 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	}
 	
 	if(length(endProcess)){
-		startProcess <- endProcess
+		# Add a warning if the endProcess is given, as this is not used:
+		warning("For runBootstrap_SweptAreaTotal() 'startProcess' should be identical to 'endProcess', as PSUs are resampled from the output of this and only this process.")
 	}
 	
 	# Define seeds, and save these later:
@@ -522,18 +535,19 @@ runBootstrap_SweptAreaTotal <- function(projectName, acousticMethod=NULL, biotic
 	}
 	cores = min(cores, nboot, availableCores)
 	# Generate the clusters of time steps:
-	if(cores>1){
-		cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
-		cl<-makeCluster(cores)
-		# Bootstrap:
-		TotalCatch <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, cl=cl)
-		# End the parallel bootstrapping:
-		stopCluster(cl)
-	}
-	else{
-		cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
-		TotalCatch <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, sample=TRUE)
-	}
+	#if(cores>1){
+	#	cat(paste0("Running ", nboot, " bootstrap replicates (using ", cores, " cores in parallel):\n"))
+	#	cl<-makeCluster(cores)
+	#	# Bootstrap:
+	#	TotalCatch <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, cl=cl)
+	#	# End the parallel bootstrapping:
+	#	stopCluster(cl)
+	#}
+	#else{
+	#	cat(paste0("Running ", nboot, " bootstrap replicates:\n"))
+	#	TotalCatch <- pblapply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, sample=TRUE)
+	#}
+	TotalCatch <- papply(seedV, boot1, data=DensityMatrix, list.out=FALSE, sorted=sorted, cores=cores)
 	
 	bootstrapParameters <- list(
 		seed = seed, 
@@ -856,10 +870,10 @@ linkPSU2Stratum <- function(x, projectName, psustratum=NULL, StratumArea=NULL, l
 	
 	# Split into species categories:
 	x <- split(x, if(ignore.case) tolower(x$SpecCat) else x$SpecCat)
-	x <- lapply(x, addstratumArea, StratumArea=StratumArea)
 	if(fill0){
 		x <- lapply(x, fillZeros, psustratum=psustratum)
 	}
+	x <- lapply(x, addstratumArea, StratumArea=StratumArea)
 	x <- lapply(x, addSampleSize)
 	
 	# Return either a list or combined into a matrix:

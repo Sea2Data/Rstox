@@ -1038,7 +1038,7 @@ runRECA <-
            export_only = NULL) {
     requireNamespace("eca")
     
-    # Sett kjøreparametere her, sett dataparametere i prep_eca
+    # Sett run parameters her, sett dataparametere i prep_eca
     prepdata <- loadProjectData(projectName, var = "prepareRECA")
     if (is.null(prepdata)) {
       stop("Could not load project data")

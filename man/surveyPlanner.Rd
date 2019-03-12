@@ -4,6 +4,7 @@
 \alias{surveyPlanner}
 \alias{addStratum}
 \alias{subsetStrata}
+\alias{mergeStrata}
 \alias{plotStratum}
 \alias{addStratumBordersAndNames}
 \alias{readStrataPolygons}
@@ -19,7 +20,9 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
 
 addStratum(x, acousticProc = "FilterAcoustic")
 
-subsetStrata(strata, lonlat)
+subsetStrata(strataPolygons, strata = "all")
+
+mergeStrata(strataPolygons, strata = "all", prefix = "Merged")
 
 plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
   transport_alpha = 0.1, zoom = 1.5, aspectratio = NULL,
@@ -30,7 +33,7 @@ plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
 
 addStratumBordersAndNames(p, x, strataNameCol = "darkblue")
 
-readStrataPolygons(projectName, ...)
+readStrataPolygons(projectName, strata = "all", ...)
 
 getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
   "latitude"))
@@ -44,13 +47,13 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 
 \item{bearing}{The survey bearing of each transect, given in one of 4 ways: (1) by codes "N", "NW", "W", "WS", "S", "SE", "E", "NE", (2) as angles counter clockwise from EAST in degrees, (3) as a string "along" or "across" the stratum orientation as obtained by the principal components of the stratum borders after populating with 1000 points with nearly equal separation along the border in geographic corrdinates, or (4) as a data frame with columns "lon_start", "lon_stop", "lat_start", "lat_stop" defining the angles between a start and end point for each stratum.}
 
-\item{rev}{Logical: If TRUE, the bearing calculated by the funciton when bearing = "along" or "across" is reversed, i.e., going from East to West instead of West to East.}
+\item{rev}{Logical: If TRUE, the bearing calculated when bearing = "along" or "across" is reversed, i.e., going from East to West instead of West to East.}
 
 \item{retour}{Logical: If TRUE, continue with the transects back to the start point of the stratum.}
 
 \item{toursFirst}{Logical: If TRUE, do all tours first followed by the retours (only effective if retour is TRUE).}
 
-\item{hours, nmi}{The time/traveled distance to spend in each stratum, given in hours/nautical miles (repeated to the number of strata), where \code{nmi} has precedence over \code{hours}. If given as a list of one element, these are interpreted as the hours/nmi for the entire survey, in which case selecting only a subset of the strata using \code{strata} will increase the effort in each of the remaining strata.}
+\item{hours, nmi}{The time/traveled distance to spend in each stratum, given in hours/nautical miles, where \code{nmi} has precedence over \code{hours}. The vector is repeated to have length equal to the number of strata specified in \code{strata}, so that only one value is given, this is the hours/nmi in all strata. Optionally, if a single value is enclosed in a list, it is regarded as the total hours/nmi for the entire survey. In this case selecting only a subset of the strata using \code{strata} will increase the effort in the selected strata.}
 
 \item{t0}{The start time of the survey, set to Sys.time() formatted to UTC by default. A as.POSIXct object or a string of a recognisable form (such as "\%Y-\%m-\%d \%H:\%M:\%S") are supported.}
 
@@ -66,7 +69,7 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 
 \item{equalEffort}{Logical: If TRUE, assign effort proportional to the area of each stratum.}
 
-\item{byStratum}{Logical: If FALSE, include the transport between strata in the total traveled distance given in $Survey of the output.}
+\item{byStratum}{Logical: If FALSE, include the transport between strata in the total traveled distance given in the output element Survey and Stratum.}
 
 \item{strata}{Specification of the strata to include, either given as the string "all", implying all strata to be used; an index vector as given to "[]" (negative values may be used to exclude specific strata), or a character vector of the strata names. Note that if the strata are named by integers, these names must be given as character and not integers, which would act as indices.}
 

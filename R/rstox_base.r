@@ -1136,7 +1136,7 @@ runBaseline <- function(projectName, out=c("project", "baseline", "baseline-repo
 		reset <- TRUE
 	}
 	
-	# Remove processes that saves the project.xml file, which is assumed to ALWAYS be the last process. Please ask Åsmund to set this as a requirement in StoX:
+	# Remove processes that saves the project.xml file, which is assumed to ALWAYS be the last process. Please ask Aasmund to set this as a requirement in StoX:
 	#numProcesses      <- baseline$getProcessList()$size() - length(baseline$getProcessByFunctionName("WriteProcessData"))
 	# Change on 2018-09-21, counting the number of save processes:
 	numProcesses      <- baseline$getProcessList()$size() - length(JavaString2vector(baseline$getProcessesByFunctionName("WriteProcessData")))
@@ -2688,7 +2688,8 @@ initiateRstoxEnv <- function(){
 	)
 	
 	# The format used by NMD for shapshot time:
-	dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
+	#dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
+	dateTimeNMDAPIFormat <- "%Y_%m_%dT%H.%M.%OSZ"
 	
 	# The current API and datasource formats:
 	ver <- list(

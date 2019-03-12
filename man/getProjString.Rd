@@ -21,7 +21,7 @@ projectMatrixList(x, par = list(proj = "laea", units = "kmi", lon_0 = NA,
   lat_0 = NA, x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"),
   inv = FALSE, data.frame.out = FALSE)
 
-spatial2matrixList(x, drop = TRUE, data.frame.out = FALSE)
+spatial2matrixList(x, drop = TRUE, data.frame.out = FALSE, ...)
 
 matrixList2multipolygon(x, requireClosed = TRUE)
 

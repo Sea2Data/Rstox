@@ -28,7 +28,8 @@ Imports:
 		rJava,
 		sp,
 		XML
-Suggests: ggmap,
+Suggests: 
+    ggmap,
     ncdf4,
     pgirmess,
     eca,
