@@ -131,7 +131,15 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	# Comment: This seems to allow only one biotic file in the project, since the first cruise number is selected:
 	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_FishStation.txt$cruise)
 	Year <- unique(hh$Year)
+
+	# Try using Cruise Series first, since it's faster
 	cruiseShip <-  unlist(lapply(getNMDinfo("cs"), function(x) x[x$Cruise==cruiseNo[1] & x$Year==Year[1], "ShipName"]))
+
+	# If not found, use all the cruise list
+	if(length(cruiseShip) < 1) {
+		cList <- getNMDinfo("cruise")
+		cruiseShip <- cList[cList$cruise==as.character(cruiseNo[1]) & !is.na(cList$cruise), ]$platformname
+	}
 	shipCode <- getICESShipCode(cruiseShip[1])
 
 	hh$Ship <- shipCode
