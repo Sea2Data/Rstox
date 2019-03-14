@@ -164,6 +164,26 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	##---------------------------------------------------------------------------------
 	## hl and ca data cleaning
 
+	## WARN #0:
+	# It's possible to have two same aphia (but different species, e.g. SILD05) catch sampes in a haul.
+	# We need to combine them if we have two different TotalNo and catcatchwgt.
+
+	# Find duplicate species in a haul
+	dupl <- aggregate(species ~ aphia + serialno, rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_CatchSample.txt, FUN = function(x) length(unique(x)))
+	dupl <- dupl[dupl$species > 1, ]
+	# Find the above in DATRAS HL
+	found <- aggregate(CatCatchWgt ~ StNo + SpecCode + Sex + CatIdentifier, hl[(hl$SpecCode==dupl$aphia & hl$StNo==dupl$serialno),], FUN = function(x) length(unique(x)))
+	found <- found[found$CatCatchWgt > 1, ]
+	for(iz in 1:nrow(found)) {
+		tmpHL <- hl[hl$StNo==found[iz, "StNo"] & hl$SpecCode==found[iz, "SpecCode"] & hl$Sex==found[iz, "Sex"] & hl$CatIdentifier==found[iz, "CatIdentifier"], ]
+		combinedCatCatchWgt <- tmpHL
+		# Fix totalNo
+		hl[hl$StNo==found[iz, "StNo"] & hl$SpecCode==found[iz, "SpecCode"] & hl$Sex==found[iz, "Sex"] & hl$CatIdentifier==found[iz, "CatIdentifier"], "TotalNo"] <- sum(tmpHL$HLNoAtLngt)
+		# Fix CatCatchWgt
+		hl[hl$StNo==found[iz, "StNo"] & hl$SpecCode==found[iz, "SpecCode"] & hl$Sex==found[iz, "Sex"] & hl$CatIdentifier==found[iz, "CatIdentifier"], "CatCatchWgt"] <- round(mean(tmpHL$SubWgt*tmpHL$NoMeas*tmpHL$SubFactor))
+	}
+
+	## WARN #1:
 	# Find species with different SpecVal, if any of them have SpecVal == 1, delete any other records with different SpecVal
 	# otherwise, use the lowest SpecVal value for all
 
@@ -193,6 +213,7 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 
 	hl[hl$SpecVal==10, c("CatCatchWgt")] <- -9
 
+	## WARN #2:
 	## will now get errors in DATRAS upload for duplicate records
 	hl <- hl[!duplicated(hl),]
 
@@ -282,6 +303,7 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 
 
 	#############################################
+	## WARN #3:
 	## ca records with no HL records
 	## these records are because there is no catch weight
 	## DATRAS does not accept length info without catch weight
