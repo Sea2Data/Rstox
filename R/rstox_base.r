@@ -2688,8 +2688,11 @@ initiateRstoxEnv <- function(){
 	)
 	
 	# The format used by NMD for shapshot time:
+	# The first version used "-" in Rstox, contrary to NMD which uses "_":
 	#dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
-	dateTimeNMDAPIFormat <- "%Y_%m_%dT%H.%M.%OSZ"
+	#dateTimeSnapshotFormat <- "%Y-%m-%dT%H.%M.%OSZ"
+	# 2019-03-19: Changed back again to dashes after NMD agreed on this:
+	dateTimeNMDAPIFormat <- "%Y-%m-%dT%H.%M.%OSZ"
 	
 	# The current API and datasource formats:
 	ver <- list(
@@ -2877,6 +2880,7 @@ initiateRstoxEnv <- function(){
 		StoX_data_sources = StoX_data_sources, 
 		StoX_data_type_keys = StoX_data_type_keys, 
 		StoX_reading_processes = StoX_reading_processes, 
+		#dateTimeSnapshotFormat = dateTimeSnapshotFormat, 
 		dateTimeNMDAPIFormat = dateTimeNMDAPIFormat, 
 		NMD_data_sources = NMD_data_sources, 
 		#NMD_API_versions = NMD_API_versions, 

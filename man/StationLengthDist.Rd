@@ -33,5 +33,13 @@ A data table of length distributions stacked for each combination of cruise/stat
 Merges two data tables with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
 }
 \details{
-ATLE
+The purpose of function StationLengthDist is to produce a length frequency distribution for each biotic station by species. Three different distributions (LengthDistType) can be generated:
+
+The following example is from Poisson.Rd:
+
+\deqn{p(x) = \frac{\lambda^x e^{-\lambda}}{x!}}{%
+
+p(x) = \lambda^x exp(-\lambda)/x!} for \eqn{x = 0, 1, 2, \ldots}.
+
+A calculated length distribution as if every individual in the catch had been length measured.
 }

@@ -1,4 +1,4 @@
-# Rstox version: 1.11.1 (latest alpha, 2019-03-12)
+# Rstox version: 1.11.1 (latest alpha, 2019-03-19)
 # R version: 3.5
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
@@ -57,8 +57,8 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.11
 
 # 2. Added the option of merging strata by specifying the parameter 'strata' as a list. The other parameters need to be given for the merged strata, so that if three strata are merged the hours/nmi of these should be summed to obtain similar effort as in the unmerged strata.
 
-# 3. Changed snapshot ID in names of files downloaded from NMD from using "-" to "_" as separators between year, month and day.
+# 3. Fixed bug in plotAbundance() when there is only one non-NA level of either 'grp1' or 'grp2'.
 
-# 4. Fixed bug in plotAbundance() when there is only one non-NA level of either 'grp1' or 'grp2'.
+
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS

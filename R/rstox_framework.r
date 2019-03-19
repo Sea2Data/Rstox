@@ -52,7 +52,11 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
 #'
 #' @details The purpose of function StationLengthDist is to produce a length frequency distribution for each biotic station by species. Three different distributions (LengthDistType) can be generated:
 #'
-#' LengthDist
+#' The following example is from Poisson.Rd:
+#'
+#' \deqn{p(x) = \frac{\lambda^x e^{-\lambda}}{x!}}{%
+#'
+#' p(x) = \lambda^x exp(-\lambda)/x!} for \eqn{x = 0, 1, 2, \ldots}.
 #' 
 #' A calculated length distribution as if every individual in the catch had been length measured.
 #'

@@ -43,7 +43,7 @@
 #' @param file					The path to a the file to which the data are saved.
 #' @param method				The download method. See \code{\link{download.file}}.
 #' @param timeout				If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).
-#' @param snapshot				A time stamp specifying which snapshot to download. The latest snapshot before this time stamp is found and downloaded. The specific snapshot ID can also be given, as a string in the format returned from getRstoxDef("dateTimeNMDAPIFormat").
+#' @param snapshot				A time stamp specifying which snapshot to download. The latest snapshot before this time stamp is identified and downloaded. The specific snapshot ID can also be given, as a string in the format returned from getRstoxDef("dateTimeNMDAPIFormat").
 #'
 #' @details
 #' If non-standard characters are not shown as expected, it might be an issue of locale encoding. 
@@ -68,7 +68,7 @@
 #' g8 <- getNMDinfo("person")
 #' g9 <- getNMDinfo("taxa")
 #' # Get the tsn code of torsk:
-#' g9[g9$Norwegian=="torsk",]
+#' g9[which(g9$Norwegian=="torsk"),]
 #' # And all names containing "torsk":
 #' g9[grep("torsk", g9$Norwegian, ignore.case=TRUE),]
 #' }
@@ -165,6 +165,7 @@ getNMDinfo <- function(type=NULL, ver=getRstoxDef("ver"), server="http://tomcat7
 #' @rdname getNMDinfo
 #' 
 getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datasource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", suffix=NA, ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, info.out=FALSE, run=TRUE, timeout=NULL, snapshot=Sys.time(), ...){
+	
 	
 	# Support for giving 'prefix' as 'filebase' for backwards compatibility:
 	l <- list(...)
@@ -2062,6 +2063,7 @@ getAllSnapshotStrings <- function(URLSansGetType){
 	snapshotDateTimes <- unlist(getRowElementValueWithName(temp))
 	# Convert to POSIXct:
 	snapshotDateTimesPOSIXct <- as.POSIXct(snapshotDateTimes, format=getRstoxDef("dateTimeNMDAPIFormat"), tz="UTC")
+	
 	out <- data.frame(ID=snapshotDateTimes, time=snapshotDateTimesPOSIXct, stringsAsFactors=FALSE)
 	# Remove the NAs:
 	out <- out[!is.na(out$time),]
@@ -2070,7 +2072,6 @@ getAllSnapshotStrings <- function(URLSansGetType){
 buildNMDURL <- function(cruise=NULL, shipname=NULL, year=NULL, serialno=NULL, tsn=NULL, datasource="biotic", server="http://tomcat7.imr.no:8080/apis/nmdapi", ver=getRstoxDef("ver"), snapshot=Sys.time(), return.URL=FALSE){
 	
 	# Two different types of download exists: (1) Downloading files from cruises, and (2) downloading serial numbers. For type (1) 'cruise' and 'shipname' is required. For type (2) 'year' is required, and 'tsn' and 'serialno' optional.
-	
 	########## Cruise files: ##########
 	searchURL <- NA
 	snapshotID <- NA

@@ -892,6 +892,6 @@ Added the option ref=NULL in aggregateBySpeciesCategory(), allowing for no refer
 
 Added the option of merging strata by specifying the parameter 'strata' as a list. The other parameters need to be given for the merged strata, so that if three strata are merged the hours/nmi of these should be summed to obtain similar effort as in the unmerged strata.
 
-Changed snapshot ID in names of files downloaded from NMD from using "-" to "_" as separators between year, month and day.
-
 Fixed bug in plotAbundance() when there is only one non-NA level of either 'grp1' or 'grp2'.
+
+
