@@ -95,6 +95,31 @@ polyArea_test <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, lat_0=
 #' @rdname polyArea
 #' 
 geo2xy <- function(x, par=list(proj="aeqd", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), inv=FALSE, data.frame.out=FALSE, ...){
+	
+	# cs2cs -lu
+	#           km 1000.                Kilometer
+	#            m 1.                   Meter
+	#           dm 1/10                 Decimeter
+	#           cm 1/100                Centimeter
+	#           mm 1/1000               Millimeter
+	#          kmi 1852.0               International Nautical Mile
+	#           in 0.0254               International Inch
+	#           ft 0.3048               International Foot
+	#           yd 0.9144               International Yard
+	#           mi 1609.344             International Statute Mile
+	#         fath 1.8288               International Fathom
+	#           ch 20.1168              International Chain
+	#         link 0.201168             International Link
+	#        us-in 1./39.37             U.S. Surveyor's Inch
+	#        us-ft 0.304800609601219    U.S. Surveyor's Foot
+	#        us-yd 0.914401828803658    U.S. Surveyor's Yard
+	#        us-ch 20.11684023368047    U.S. Surveyor's Chain
+	#        us-mi 1609.347218694437    U.S. Surveyor's Statute Mile
+	#       ind-yd 0.91439523           Indian Yard
+	#       ind-ft 0.30479841           Indian Foot
+	#       ind-ch 20.11669506          Indian Chain
+		  
+		  
 	# Get projection string:
 	par <- getProjString(par=par, ..., x=x, requireClosed=FALSE)
 	

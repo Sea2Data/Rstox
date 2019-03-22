@@ -10,7 +10,7 @@ plot_length_at_age(biotic, pred, xlab = "age", alpha = 0.01,
 \arguments{
 \item{biotic}{indiviuals as exported by stox}
 
-\item{pred}{RECA prediction object as returned by eca::eca.predict}
+\item{pred}{RECA prediction object as returned by Reca::eca.predict}
 }
 \description{
 Plots mean length at age and sample range

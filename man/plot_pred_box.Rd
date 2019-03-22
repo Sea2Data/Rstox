@@ -8,7 +8,7 @@ plot_pred_box(pred, var, unit, xlab = "age",
   ylab = paste("posterior catch", unit), ...)
 }
 \arguments{
-\item{pred}{RECA prediction object as returned by eca::eca.predict}
+\item{pred}{RECA prediction object as returned by Reca::eca.predict}
 
 \item{var}{A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented.}
 

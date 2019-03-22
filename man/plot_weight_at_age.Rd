@@ -10,7 +10,7 @@ plot_weight_at_age(biotic, pred, unit, alpha = 0.01, xlab = "age",
 \arguments{
 \item{biotic}{indiviuals as exported by stox}
 
-\item{pred}{RECA prediction object as returned by eca::eca.predict}
+\item{pred}{RECA prediction object as returned by Reca::eca.predict}
 }
 \description{
 Plots mean weight at age and sample range

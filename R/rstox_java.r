@@ -418,4 +418,3 @@ jobjRef2Character <- function(x){
 	x <- x$toString()
 	strsplit(gsub("\\[|\\]", "", x), ", ")[[1]]
 }
-

@@ -23,6 +23,7 @@ Imports:
 		data.table (>= 1.10.4-3),
 		ggplot2,
 		pbapply,
+		Reca,
 		rgdal,
 		rgeos,
 		rJava,

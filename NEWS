@@ -894,4 +894,4 @@ Added the option of merging strata by specifying the parameter 'strata' as a lis
 
 Fixed bug in plotAbundance() when there is only one non-NA level of either 'grp1' or 'grp2'.
 
-
+Added the function plotFishStation() (and supporting funcitons) to plot the stations of a StoX project by species, possibly in different colors.

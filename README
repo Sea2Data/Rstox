@@ -1,10 +1,10 @@
-# Rstox version: 1.11.1 (latest alpha, 2019-03-19)
+# Rstox version: 1.11.1 (latest alpha, 2019-03-22)
 # R version: 3.5
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
 
 # Install the packages that Rstox depends on. Note that this updates all the specified packages to the latest (binary) version:
-dep.pck <- c("data.table", "ggplot2", "pbapply", "rgdal", "rgeos", "rJava", "sp", "XML")
+dep.pck <- c("data.table", "ggplot2", "pbapply", "Reca", "rgdal", "rgeos", "rJava", "sp", "XML")
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:
@@ -59,6 +59,6 @@ install.packages("ftp://ftp.imr.no/StoX/Download/Rstox/Versions/Alpha/Rstox_1.11
 
 # 3. Fixed bug in plotAbundance() when there is only one non-NA level of either 'grp1' or 'grp2'.
 
-
+# 4. Added the function plotFishStation() (and supporting funcitons) to plot the stations of a StoX project by species, possibly in different colors.
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS

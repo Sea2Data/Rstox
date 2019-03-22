@@ -1021,6 +1021,8 @@ prepareRECA <-
 #' @param seed see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param age.error see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
 #' @param export_only if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only
+#'
+#' @importFrom Reca eca.estimate eca.predict
 #' @export
 runRECA <-
   function(projectName,
@@ -1036,7 +1038,7 @@ runRECA <-
            seed = NULL,
            age.error = FALSE,
            export_only = NULL) {
-    requireNamespace("eca")
+    #requireNamespace("eca")
     
     # Sett run parameters her, sett dataparametere i prep_eca
     prepdata <- loadProjectData(projectName, var = "prepareRECA")
@@ -1088,11 +1090,11 @@ runRECA <-
     else{
       ## Estimate model
       fit <-
-        eca::eca.estimate(AgeLength, WeightLength, Landings, GlobalParameters)
+        Reca::eca.estimate(AgeLength, WeightLength, Landings, GlobalParameters)
       
       ## Predict
       pred <-
-        eca::eca.predict(AgeLength, WeightLength, Landings, GlobalParameters)
+        Reca::eca.predict(AgeLength, WeightLength, Landings, GlobalParameters)
       
       return(setProjectData(
         projectName = projectName,

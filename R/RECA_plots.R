@@ -91,7 +91,7 @@ plot_ci <- function(x, means, upper_ci, lower_ci, ...){
 }
 
 #' Plot catch by age prediction as boxplots
-#' @param pred RECA prediction object as returned by eca::eca.predict
+#' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @keywords internal
@@ -129,7 +129,7 @@ plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior cat
 }
 
 #' Plot equal tailed credible intervals for a catch by age prediction
-#' @param pred RECA prediction object as returned by eca::eca.predict
+#' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @param alpha
@@ -178,7 +178,7 @@ plot_catch_at_age_ci <- function(pred, var, unit, alpha=0.1, xlab="age", ylab=pa
 
 #' Plots mean weight at age and sample range
 #' @param biotic indiviuals as exported by stox
-#' @param pred RECA prediction object as returned by eca::eca.predict
+#' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @keywords internal
 plot_weight_at_age <- function(biotic, pred, unit, alpha=0.01, xlab="age", ylab=paste("ind. weight", unit), ...){
   
@@ -234,7 +234,7 @@ plot_weight_at_age <- function(biotic, pred, unit, alpha=0.01, xlab="age", ylab=
 
 #' Plots mean length at age and sample range
 #' @param biotic indiviuals as exported by stox
-#' @param pred RECA prediction object as returned by eca::eca.predict
+#' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @keywords internal
 plot_length_at_age <- function(biotic, pred, xlab="age", alpha=0.01, ylab=paste("length cm"), ...){
   
@@ -290,7 +290,7 @@ plot_length_at_age <- function(biotic, pred, xlab="age", alpha=0.01, ylab=paste(
 
 #' Plots a panel of RECA results
 #' @param biotic indiviuals as exported by stox
-#' @param pred RECA prediction object as returned by eca::eca.predict
+#' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @param main title for paneled plot
 #' @keywords internal
 plot_RECA_results_panel <- function(pred, biotic, main=NULL, ...){
