@@ -1,10 +1,10 @@
-# Rstox version: 1.11.1 (latest alpha, 2019-03-22)
+# Rstox version: 1.11.1 (latest alpha, 2019-03-25)
 # R version: 3.5
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source approach to acoustic and swept area survey calculations. Download Rstox from ftp://ftp.imr.no/StoX/Download/Rstox or install by running the following commands in R:
 
 # Install the packages that Rstox depends on. Note that this updates all the specified packages to the latest (binary) version:
-dep.pck <- c("data.table", "ggplot2", "pbapply", "Reca", "rgdal", "rgeos", "rJava", "sp", "XML")
+dep.pck <- c("data.table", "ggplot2", "pbapply", "rgdal", "rgeos", "rJava", "sp", "XML")
 install.packages(dep.pck, repos="http://cran.us.r-project.org", type="binary")
 
 # Install Rstox:

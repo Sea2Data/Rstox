@@ -21,10 +21,10 @@
 #' species <- names(speciesFrequency)
 #'
 #' # Plot the 6 most frequent species:
-#' plotFishStation(projectName, species=names(speciesFrequency[1:6]), col=TRUE)
+#' plotFishStation(projectName, species=species[1:6], col=TRUE, size=2)
 #' # Add jitter to the plot, resolving stations with multiple species. 
 #' # CAUTION: This adds randmoness to the fish station positions!:
-#' plotFishStation(projectName, species=names(speciesFrequency[1:6]), col=TRUE, jitter=c(0.2, 0.2, 1))
+#' plotFishStation(projectName, species=species[1:6], col=TRUE, size=2, jitter=c(0.2, 0.2, 1))
 #' 
 #' @importFrom stats density
 #' @export
@@ -38,14 +38,14 @@ plotFishStation <- function(projectName, species="torsk", proc="FilterBiotic", s
 	FishStation$species <- as.factor(FishStation$species)
 	
 	# Run and return the plot:
-	plotLonLat(x=FishStation, lon="longitudestart", lat="latitudestart", size=size, zoom=zoom, offset=offset, col=col, shape=shape, alpha=alpha, jitter=jitter)
+	plotLonLat(x=FishStation, lon="longitudestart", lat="latitudestart", species="species", size=size, zoom=zoom, offset=offset, col=col, shape=shape, alpha=alpha, jitter=jitter)
 }
 #'
 #' @export
 #' @import ggplot2
 #' @rdname plotFishStation
 #' 
-plotLonLat <- function(x, lon="lon", lat="lat", size=1, zoom=1, offset=c(0.5, 0.5), col=1, shape=16, alpha=1, jitter=FALSE){
+plotLonLat <- function(x, lon="lon", lat="lat", species="species", size=1, zoom=1, offset=c(0.5, 0.5), col=1, shape=16, alpha=1, jitter=FALSE){
 	# Get the map:
 	gmap <- map_data("world")
 	
@@ -79,8 +79,8 @@ plotLonLat <- function(x, lon="lon", lat="lat", size=1, zoom=1, offset=c(0.5, 0.
 		aes_string(
 			x = lon, 
 			y = lat, 
-			col = if(isTRUE(col)) "species" else shQuote(col), 
-			shape = if(isTRUE(shape)) "species" else shape
+			col = if(isTRUE(col)) species else shQuote(col), 
+			shape = if(isTRUE(shape)) species else shape
 		), 
 		size = size, 
 		alpha = alpha, 

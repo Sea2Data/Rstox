@@ -251,3 +251,53 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	return(out)
 	##########
 }
+
+
+
+inside <- function(cond, x, ...){
+	if(any(isSpatial(cond), isMatrixList(cond), isMultipolygon(cond))){
+		cond <- getSpatial()
+		
+		valid <- sp::point.in.polygon(
+			point.x = x$lon, 
+			point.y = x$lat, 
+			pol.x = cond[,1], 
+			pol.y = cond[,2]
+		)
+		
+	}	
+	
+}
+
+
+
+JavaJEXL2R <- function(x, eval=TRUE){
+	
+	# Define transformation from Java JEXL to R syntax:
+	pattern_replacement <- rbind(
+		c(" not", " !"), 
+		c(" and ", " && "), 
+		c(" or ", " || "), 
+		c(" eq ", " == "), 
+		c(" ne ", " != "), 
+		c(" lt ", " < "), 
+		c(" le ", " <= "), 
+		c(" gt ", " > "), 
+		c(" ge ", " >= "), 
+		c("true", "TRUE"),  
+		c("false", "FALSE"),  
+		c("null", "NULL")
+	)
+	
+	# Replace Jexl with R:
+	for(i in seq_len(nrow(pattern_replacement))){
+		x <- gsub(pattern_replacement[i,1], pattern_replacement[i,2], x)
+	}
+	
+	# Return the evaluated exprexsion:
+	if(eval){
+		x <- eval(parse(text="a == 5"))
+	}
+		
+	return(x)
+}
