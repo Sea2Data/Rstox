@@ -1,4 +1,5 @@
 #' Extract the covaraite definitions
+#' Returns NULL if parameter is missing
 #' @keywords internal
 getCovparam <- function(projectName, parameter) {
   # Get the project object:
@@ -15,7 +16,7 @@ getCovparam <- function(projectName, parameter) {
         encoding = "UTF-8"
       )
     if (!(parameter %in% out$Parameter)) {
-      stop(paste0("Parameter ", parameter, " not found in covparam"))
+      return(NULL)
     }
     out <-
       out[out$Parameter == parameter, c("CovariateTable", "Value")]
@@ -1728,7 +1729,7 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param var Variable to extract. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param write logical determining if report is written to files. If false the function return immidiatly with NULL.
-#' @param ... arguments passed to \code{\link{saveCatchMatrix}} and \code{\link{writeRecaConfiguration}}
+#' @param ... arguments passed to \code{\link{saveCatchMatrix}},\code{\link{saveCatchCovarianceMatrix}} and \code{\link{writeRecaConfiguration}}
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
 #' @export
 reportRECA <-
@@ -1765,11 +1766,14 @@ reportRECA <-
     }
     tryCatch({
       pd <- loadProjectData(projectName, var = "runRECA")
+      
+    },
+    error = function(e) {
     },
     finally = {
       
     })
-    
+
     tryCatch({
       saveCatchMatrix(
         pd$runRECA$pred,
@@ -1780,6 +1784,8 @@ reportRECA <-
         unit = unit
       )
       out$filename <- c(get_filename("means"), out$filename)
+    },
+    error = function(e) {
     },
     finally = {
       
@@ -1796,6 +1802,8 @@ reportRECA <-
       )
       out$filename <- c(get_filename("distribution"), out$filename)
     },
+    error = function(e) {
+    },
     finally = {
       
     })
@@ -1811,10 +1819,45 @@ reportRECA <-
       )
       out$filename <- c(get_filename("covariance"), out$filename)
     },
+    error = function(e) {
+    },
     finally = {
       
     })
     
+    tryCatch({
+      pd <- loadProjectData(projectName, var = "prepareRECA")
+      stationissuesfilename <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "stationissues.txt")
+      catchissuesfilename <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "catchissues.txt")
+      imputationissuesfilename  <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "imputationissues.txt") 
+
+      makeDataReportReca(pd$prepareRECA$StoxExport, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T)  
+    
+      if (file.exists(stationissuesfilename)){
+        out$filename <- c(stationissuesfilename, out$filename)        
+      }  
+      if (file.exists(catchissuesfilename)){
+        out$filename <- c(catchissuesfilename, out$filename)        
+      }
+      if (file.exists(imputationissuesfilename)){
+        out$filename <- c(imputationissuesfilename, out$filename)      
+      }
+
+    },
+    error = function(e) {
+    },
+    finally = {
+      
+    })  
+    
+    
+
     tryCatch({
       pd <- loadProjectData(projectName, var = "prepareRECA")
       filename <-
@@ -1829,6 +1872,8 @@ reportRECA <-
         main = projectName
       )
       out$filename <- c(filename, out$filename)
+    },
+    error = function(e) {
     },
     finally = {
       
