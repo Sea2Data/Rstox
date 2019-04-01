@@ -1637,6 +1637,89 @@ saveCatchMatrix <-
     }
   }
 
+#' @title Save catch at age variance-covariance matrix for age groups
+#' @description Write catch at age covariance predicted by \code{\link[eca]{eca.predict}} as csv file.
+#' @details Covariance matrix is written as comma-separated file with quoted strings as row/column names.
+#'    Each row and column correspond to an age group.
+#'    Units for catch at age are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
+#' @param pred as returned by \code{\link[eca]{eca.predict}}
+#' @param filename name of file to save to.
+#' @param var Variable to extract for covariance calculation. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @param standardize If True, pearson correlations are calculated, rather than covariances.
+saveCatchCovarianceMatrix <- function(pred,
+                                      filename,
+                                      var = "Abundance",
+                                      unit = "ones",
+                                      main = "",
+                                      standardize=F) {
+  comments <- c()
+  
+  if (standardize){
+    title <- "correlation matrix for age groups based on catch at age as"    
+  }
+  else{
+    title <- "variance-Covariance matrix for age groups based on catch at age as"    
+  }
+
+
+  if (var == "Abundance" | var == "Count") {
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "ones",
+      def.out = F
+    )
+    caa <- round(apply(pred$TotalCount, c(2, 3), sum))
+    
+    if (unit == "ones") {
+      comments <- c(paste(title, "as", var))
+    }
+    if (unit != "ones") {
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    
+  }
+  else if (var == "Weight") {
+    caa <- apply(pred$TotalCount, c(2, 3), sum) * pred$MeanWeight
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "kilograms",
+      def.out = F
+    )
+    comments <- c(paste(title, "as", var, "in", unit))
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  comments <- c(main, comments)
+  
+  caa_scaled <- as.data.frame(caa / plottingUnit$scale)  
+  if (!standardize){
+    covmat <- cov(t(caa_scaled))   
+  }
+  else{
+    covmat <- cor(t(caa_scaled))   
+  }
+  
+  rownames(covmat) <- pred$AgeCategories
+  colnames(covmat) <- pred$AgeCategories
+  
+  f <- file(filename, open = "w")
+  write(paste("#", comments), f)
+    write.table(
+      covmat,
+      file = f,
+      sep = "\t",
+      dec = ".",
+      row.names = T
+    )
+    close(f)
+}
+
 #' @title Report RECA.
 #' @description Produces reports for for RECA. Fails silently on errors.
 #' @details Exports a tab separated file with means of catch at age (produced by \code{\link{saveCatchMatrix}}), one for the posterior distribution of catch at age (produced by \code{\link{saveCatchMatrix}}), and a file summarizing the model configuration (produced by \code{\link{writeRecaConfiguration}})
@@ -1712,6 +1795,21 @@ reportRECA <-
         unit = unit
       )
       out$filename <- c(get_filename("distribution"), out$filename)
+    },
+    finally = {
+      
+    })
+    
+    tryCatch({
+      saveCatchCovarianceMatrix(
+        pd$runRECA$pred,
+        get_filename("covariance"),
+        main = projectName,
+        standardize = F,
+        var = var,
+        unit = unit
+      )
+      out$filename <- c(get_filename("covariance"), out$filename)
     },
     finally = {
       
