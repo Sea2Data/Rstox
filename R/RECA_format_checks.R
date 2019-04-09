@@ -168,6 +168,10 @@ checkCovariateConsistency <- function(modelobj, landingscov){
   
   #check that all level are present for all fixed effects
   nonconfixedeffects <- rownames(modelobj$info[modelobj$info[,"random"]==0 & modelobj$info[,"continuous"]==0,])
+  
+  #if (modelobj$info[co,"random"]==0 & modelobj$info[co,"continuous"]==0 & num_unique!=modelobj$info[co,"nlev"]){
+  #  stop(paste("Not all values present for fixed covariate", co, "(samples)"))
+  #}
   for (co in nonconfixedeffects){
       num_unique <- length(unique(landingscov[,co]))
       if (num_unique!=modelobj$info[co,"nlev"]){
