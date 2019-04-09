@@ -1536,7 +1536,12 @@ extractDataFileNames <- function(projectXML){
 	#ns <- structure(sapply(nsDefs, function(x) x$uri), names = names(nsDefs))[[1]]
 	ns <- lapply(nsDefs, function(x) x$uri)$stox
 	if(length(ns) == 0){
-		stop(paste("The following project.xml file does not contain a valid namespace. Should be e.g. xmlns:stox=\"http://www.imr.no/formats/stox/v1.2\".\n\t", projectXML))
+		warning(paste("The following project.xml file does not contain a valid namespace. Should be e.g. xmlns:stox=\"http://www.imr.no/formats/stox/v1.2\". The first avaiable name space chosen.\n\tFile: ", projectXML))
+		ns <- lapply(nsDefs, function(x) x$uri)[[1]]
+		# If no namespaces are given:
+		if(length(ns) == 0){
+			stop(paste("The following project.xml file does not contain ANY valid namespace.\n\tFile: ", projectXML))
+		}
 	}
 	
 	# Get the data source names of StoX and NMD (differing in the acoustic ~ echosounder):

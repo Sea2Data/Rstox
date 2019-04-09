@@ -301,3 +301,195 @@ JavaJEXL2R <- function(x, eval=TRUE){
 		
 	return(x)
 }
+
+
+# runRstodFramework with function name and parameters, interpreted from string
+
+
+# The functions of the Rstox framework should adhere to the following guidelines:
+# 
+# 1. 
+# 
+
+
+
+rbindXML <- function(x){
+	
+	# Define a function that rbinds the ind'th element of each dataset:
+	rbindXML_oneElement <- function(name, x){
+		# Get the ind'th element of each list returned from readNMDxmlFile:
+		temp <- lapply(x, "[[", name)
+		# Fast rbind using data.table:
+		data.table::rbindlist(temp)
+	}
+	
+	# Rbind the levels across the files:
+	if(length(x) > 1){
+		
+		# Get the names of each element:
+		names_out <- lapply(x, names)
+		unique_names_out <- unique(unlist(names_out))
+		
+		# Rbind all fish stations, catch samples etc across files:
+		x <- lapply(unique_names_out, rbindlist_oneElement, x=x)
+		
+		# Set the names of the output:
+		names(x) <- unique_names_out
+	}
+	else{
+		x <- x[[1]]
+	}
+	
+	return(x)
+}
+
+#library(RNMDAPI)
+#
+## Test echosounder data
+#download.file("http://tomcat7.imr.no:8080/apis/nmdapi/biotic/v3/Forskningsfart%C3%B8y/2018/Johan%20Hjort_LDGJ/2018202/snapshot/latest", "test_biotic.xml")
+#system.time(test_biotic <- readNMDxmlFile("test_biotic.xml"))
+#
+#system.time(test_biotic <- readNMDxmlFile("~/workspace/stox/project/StoXVerTest/unix_18.2.0/Proj/Nor_Se_NOR_le_san_aco_abu_est_i_sp_2017_bioticV1.4/input/biotic/biotic_cruiseNumber_2017843_Eros.xml"))
+
+
+
+
+
+readNMDxmlFiles <- function(FileNames=NULL){
+	
+	# Define a function that rbinds the ind'th element of each dataset:
+	rbindlist_oneElement <- function(ind, x){
+		# Get the ind'th element of each list returned from readNMDxmlFile:
+		temp <- lapply(x, "[[", ind)
+		# Fast rbind using data.table:
+		data.table::rbindlist(temp)
+	}
+	
+	# Read the XML files in a loop:
+	out <- lapply(FileNames, readNMDxmlFile)
+	
+	# Rbind the levels across the files:
+	if(length(out) > 1){
+		# Get the names of the first element:
+		names_out <- names(out[[1]])
+		
+		# Rbind all fish stations, catch samples etc across files:
+		ind <- seq_along(out[[1]])
+		out <- lapply(ind, rbindlist_oneElement, x=out)
+		
+		# Set the names of the output:
+		names(out) <- names_out
+	}
+	else{
+		out <- out[[1]]
+	}
+	
+	return(out)
+}
+
+
+ReadBioticXML <- function(FileNames=NULL, bioticFormat="3.0"){
+	
+	# Read the biotic files:
+	out <- readNMDxmlFiles(FileNames=NULL)
+	
+	# Convert to the specified biotic data format (this function must detect the format that was read):
+	bioticFormat <- convertBiotic(out, bioticFormat=bioticFormat)
+	
+	# Do ther stuff with the data, such as merge specific levels:
+	
+	return(out)
+}
+
+
+
+
+ReadAcousticXML <- function(FileNames=NULL){
+	
+	# Define a function that rbinds the ind'th element of each dataset:
+	rbindlist_oneElement <- function(ind, x){
+		# Get the ind'th element of each list returned from readNMDxmlFile:
+		temp <- lapply(x, "[[", ind)
+		# Fast rbind using data.table:
+		data.table::rbindlist(temp)
+	}
+	
+	# Read the biotic XML files in a loop:
+	out <- lapply(FileNames, readNMDxmlFile)
+	
+	# Rbind the levels across the files:
+	if(length(out) > 1){
+		# Get the names of the first element:
+		names_out <- names(out[[1]])
+		
+		# Rbind all fish stations, catch samples etc across files:
+		ind <- seq_along(out[[1]])
+		out <- lapply(ind, rbindlist_oneElement, x=out)
+		
+		# Set the names of the output:
+		names(out) <- names_out
+	}
+	else{
+		out <- out[[1]]
+	}
+	
+	# Do ther stuff with the data, such as merge levels:
+	
+	return(out)
+}
+
+
+
+
+ReadBioticXML <- function(FileNames=NULL){
+	
+	# Define a function that rbinds the ind'th element of each dataset:
+	rbindlist_oneElement <- function(ind, x){
+		# Get the ind'th element of each list returned from readNMDxmlFile:
+		temp <- lapply(x, "[[", ind)
+		# Fast rbind using data.table:
+		data.table::rbindlist(temp)
+	}
+	
+	# Read the biotic XML files in a loop:
+	out <- lapply(FileNames, readNMDxmlFile)
+	
+	# Rbind the levels across the files:
+	if(length(out) > 1){
+		# Get the names of the first element:
+		names_out <- names(out[[1]])
+		
+		# Rbind all fish stations, catch samples etc across files:
+		ind <- seq_along(out[[1]])
+		out <- lapply(ind, rbindlist_oneElement, x=out)
+		
+		# Set the names of the output:
+		names(out) <- names_out
+	}
+	else{
+		out <- out[[1]]
+	}
+	
+	# Do ther stuff with the data, such as merge levels:
+	
+	return(out)
+}
+
+
+
+
+
+#projectName <- "Test_Rstox"
+#projectPaths <- getProjectPaths(projectName)
+#bioticFiles <- unlist(getBaseline(projectName, proc=NULL, input="ReadBioticXML", endProcess=1))
+#bioticFiles <- bioticFiles[startsWith(names(bioticFiles), "FileName")]
+#bioticFiles <- bioticFiles[!is.na(bioticFiles)]
+#bioticFiles <- file.path(projectPaths$projectPath, bioticFiles)
+#
+#
+#
+#system.time(bioticData <- getBaseline(projectName, proc=1, input=FALSE, endProcess=4))
+#system.time(bioticData <- getBaseline(projectName, proc=1, input=FALSE, startProcess=5, endProcess=5, reset=TRUE)) # 9.5 seconds
+#
+#system.time(d <- ReadBioticXML(bioticFiles)) # 7.5 seconds
+#

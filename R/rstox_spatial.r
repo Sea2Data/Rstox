@@ -2024,10 +2024,6 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 	
 	# Add stratum names:
 	if(any(c("stratum", "strata") %in% tolower(plot))){
-		### stratum_centroid <- getCentroid(x$Input$lonlat)
-		### #p <- p + geom_text(data=x$Stratum, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"))
-		### p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", group="stratum"), fill=NA, colour="black", inherit.aes=FALSE)
-		### p <- p + geom_text(data=stratum_centroid, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"), colour=strataNameCol)
 		p <- addStratumBordersAndNames(p, x, strataNameCol=strataNameCol)
 	}
 	#annotate("text", x=x$Stratum$lon_centroid, y=x$Stratum$lat_centroid, label=x$Stratum$stratum, alpha=0.5, col=)
