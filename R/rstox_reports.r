@@ -1167,6 +1167,9 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	### 	#rownames(out) <- c("TSN", "TSB")[varInd$ind]
 	### }
 	
+	## Calculate covariance matrix
+	covarMatrix <- cov(t(xtabs(as.formula(paste0("Ab.Sum ~ ", paste(byGrp, collapse= " + "))), abundanceSumDT, na.action = na.pass, exclude = NULL)))
+
 	# Write the data to a tab-separated file:
 	if(write){
 		# Set temporary grp1 to NULL:
@@ -1189,7 +1192,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 		filename <- NULL
 	}
 	
-	outlist <- c(list(abnd=out, filename=filename), plottingUnit)
+	outlist <- c(list(abnd=out, covar=covarMatrix, filename=filename), plottingUnit)
 	
 	if(plotOutput){
 		#outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=abundanceSumDT$Ab.Sum, abundanceSumDT=abundanceSumDT))
