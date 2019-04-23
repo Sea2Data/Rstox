@@ -16,7 +16,7 @@ reportRECA(projectName, var = "Abundance", unit = "ones", write = T,
 
 \item{write}{logical determining if report is written to files. If false the function return immidiatly with NULL.}
 
-\item{...}{arguments passed to \code{\link{saveCatchMatrix}} and \code{\link{writeRecaConfiguration}}}
+\item{...}{arguments passed to \code{\link{saveCatchMatrix}},\code{\link{saveCatchCovarianceMatrix}} and \code{\link{writeRecaConfiguration}}}
 }
 \value{
 list, with at least one named element 'filename', a vector of file-paths to generated plots.
