@@ -257,7 +257,6 @@ getDataFrame <- function(baseline, processName=NULL, functionName=NULL, level=NU
 	}
 	
 	# Output a list of the data of each requested level:
-	browser()
 	out <- lapply(level, getDataFrameAtLevel, storage=storage, data=data)
 	outnames <- sapply(seq_along(out), function(xx) basename(storage$getStorageFileName(jInt(xx))))
 	# Remove leading integers in sublists of the output from processes:

@@ -52,6 +52,7 @@ devtools::install_github("Sea2Data/Rstox")
 # 2. Added the option of merging strata by specifying the parameter 'strata' as a list. The other parameters need to be given for the merged strata, so that if three strata are merged the hours/nmi of these should be summed to obtain similar effort as in the unmerged strata.
 # 3. Fixed bug in plotAbundance() when there is only one non-NA level of either 'grp1' or 'grp2'.
 # 4. Added the function plotFishStation() (and supporting funcitons) to plot the stations of a StoX project by species, possibly in different colors.
+# 5. Changed all serialno to serialnumber according to the change from biotic 1.4 to biotic 3.0 applied in StoX as of 2.7.7.
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS
 

@@ -2255,8 +2255,8 @@ writeTransects <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, c
 		Transect[,numericCols] <- round(Transect[,numericCols], digits=digits)
 		
 		# Write the data:
-		if(ext=="nc"){
-			#library(ncdf4)
+		if(ext=="nc" && requireNamespace("ncdf4", quietly = TRUE)){
+			
 			# Define the variables with Length and dimension state:
 			L <- nrow(Transect)
 			dimState <- ncdf4::ncdim_def(name="Row", units="count", vals=seq_len(L))
@@ -2480,7 +2480,13 @@ writeTransectsGPX <- function(x, projectName, dir=NULL, digits=5, prefix="", suf
 		
 		out <- data.frame(wp=seq_len(nrow(Transect)), Long=round(Transect$lon_start, digits=digits), Lat=round(Transect$lat_start, digits=digits), stringsAsFactors=FALSE)
 		# Use the suggested pgirmess package:
-		pgirmess::writeGPX(out, file=filename)
+		if(requireNamespace("pgirmess", quietly = TRUE)){
+			pgirmess::writeGPX(out, file=filename)
+		}
+		else{
+			warning("Package pgirmess not installed")
+		}
+		
 	}
 
 	# Split into strata, and set the files names as names of the list:

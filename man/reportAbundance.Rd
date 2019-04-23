@@ -9,24 +9,23 @@
 \title{Calculate a summary of the bootstrap iterations (possibly after imputing unknown ages).}
 \usage{
 reportAbundance(projectName, bootstrapMethod = "AcousticTrawl",
-  var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
+  var = "count", unit = NULL, baseunit = NULL, grp1 = "age",
   grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE,
   write = FALSE, ...)
 
-reportAbundance_SweptAreaLength(projectName, var = "Abundance",
+reportAbundance_SweptAreaLength(projectName, var = "count",
   unit = NULL, baseunit = NULL, grp1 = "age", grp2 = NULL,
   numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
   msg = TRUE, ...)
 
-reportAbundance_AcousticTrawl(projectName, var = "Abundance",
-  unit = NULL, baseunit = NULL, grp1 = "age", grp2 = NULL,
-  numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
-  msg = TRUE, ...)
+reportAbundance_AcousticTrawl(projectName, var = "count", unit = NULL,
+  baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
+  plotOutput = FALSE, write = FALSE, msg = TRUE, ...)
 
 reportAbundance_SweptAreaTotal(projectName, unit = NULL,
   baseunit = NULL, write = FALSE, ...)
 
-reportAbundanceAtLevel(projectName, var = "Abundance", unit = NULL,
+reportAbundanceAtLevel(projectName, var = "count", unit = NULL,
   baseunit = NULL, level = "bootstrapImpute", grp1 = "age",
   grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE,
   write = FALSE, digits = 6)

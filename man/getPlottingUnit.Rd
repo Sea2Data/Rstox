@@ -4,19 +4,21 @@
 \alias{getPlottingUnit}
 \title{Interprets a unit key stings as a scaleing factor}
 \usage{
-getPlottingUnit(unit = NULL, var = "Abundance", baseunit = NULL,
-  implemented = c(1, 2, 3), def.out = TRUE)
+getPlottingUnit(unit = NULL, var = "count", baseunit = NULL,
+  labl = NULL, def.out = TRUE, ...)
 }
 \arguments{
-\item{unit}{A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings), or alternatively a numeric value giving the scaling factor.}
+\item{unit}{A unit key string indicating the unit (see getPlottingUnit()$definitions$units for available key strings), or alternatively a numeric value giving the scaling factor.}
 
-\item{var}{A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).}
+\item{var}{A key string indicating the variable to plot, one of "count", representing abundance in number of individuals, and "weight", representing the total weight data to plot.}
 
 \item{baseunit}{The unit used in the data.}
 
-\item{implemented}{An integer vector giving the inplemented variables, which are the first two ("Abundance", "Weight") in the current version of Rstox.}
+\item{labl}{The label used in plots of the data.}
 
 \item{def.out}{Logical: if TRUE return also the defaults and definitions.}
+
+\item{...}{Used for backwards compatibility.}
 }
 \value{
 a list of the following four elements: 1. the scaling factor, 2. the unit string, 3. a matrix of the default values, and 4. a matrix of the defintions.
@@ -25,9 +27,9 @@ a list of the following four elements: 1. the scaling factor, 2. the unit string
 Given a key string such as "milliseconds" (possibly abbreviated) or the abbreviation "ms" (identical matching), the unit (here milliseconds) and scaling factor (here 1e-3) is returned.
 }
 \examples{
-getPlottingUnit(unit="milli", var="abund", baseunit="stox", def.out=FALSE)
-getPlottingUnit(unit="milli", var="weight", baseunit="stox", def.out=FALSE)
-getPlottingUnit(unit="hecto", var="weight", baseunit="stox")
+getPlottingUnit(unit="milli", var="count",  def.out=FALSE)
+getPlottingUnit(unit="milli", var="weight", def.out=FALSE)
+getPlottingUnit(unit="hecto", var="weight")
 
 }
 \keyword{internal}

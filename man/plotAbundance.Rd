@@ -8,14 +8,14 @@
 \title{Plot abundance results to the graphics device or to a file}
 \usage{
 plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
-  var = "Abundance", unit = NULL, baseunit = NULL, grp1 = "age",
+  var = "count", unit = NULL, baseunit = NULL, grp1 = "age",
   grp2 = NULL, xlab = NULL, ylab = NULL, main = "",
   format = "png", log = NULL, filetag = NULL, ...)
 
-plotAbundance_AcousticTrawl(projectName, var = "Abundance",
-  unit = NULL, baseunit = NULL, grp1 = "age", grp2 = NULL,
-  xlab = NULL, ylab = NULL, main = "", format = "png", maxcv = 1,
-  log = NULL, filetag = NULL, ...)
+plotAbundance_AcousticTrawl(projectName, var = "count", unit = NULL,
+  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
+  ylab = NULL, main = "", format = "png", maxcv = 1, log = NULL,
+  filetag = NULL, ...)
 
 plotAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
   xlab = NULL, ylab = NULL, main = "", format = "png",

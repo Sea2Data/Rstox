@@ -5,8 +5,8 @@
 \title{Merge two data tables with all=TRUE and the specified columns and keys.}
 \usage{
 merge2(x, y, var = c("distance", "weight", "lengthsampleweight",
-  "length", "lengthunit"), keys = c("cruise", "serialno", "samplenumber",
-  "SpecCat"), keys.out = FALSE)
+  "length", "lengthresolution"), keys = c("cruise", "serialnumber",
+  "samplenumber", "SpecCat"), keys.out = FALSE)
 }
 \arguments{
 \item{x, y}{Two data tables to be merged.}

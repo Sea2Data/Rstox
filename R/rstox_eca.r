@@ -175,9 +175,9 @@ baseline2eca <-
       
       # This section was removed with approval from Hanne and David. It was included for historical reasons, and the freqency column was supported in prevoius ECA versions, but we decided that there is no need for compressing the input data in this way anymore, given the assiciated complication of the input data:
       # (2e) Aggregate by lines without weight, but with equal length:
-      #duplines = duplicated(biotic[,c("serialno", "length", "weight")]) & is.na(biotic$age)
+      #duplines = duplicated(biotic[,c("serialnumber", "length", "weight")]) & is.na(biotic$age)
       #if(any(duplines)){
-      #	frequency = by(biotic$frequency, paste(biotic$serialno, biotic$length), sum)
+      #	frequency = by(biotic$frequency, paste(biotic$serialnumber, biotic$length), sum)
       #	biotic = biotic[!duplines,]
       #	biotic$frequency = frequency
       #}
@@ -528,8 +528,8 @@ getMode <- function(x) {
 #' Function for extracting the GlobalParameters object
 #' @keywords internal
 getGlobalParameters <- function (eca, ecaParameters) {
-  #serialno is there only to enforce return type for getVar
-  getnames <- c("lengthunitmeters", "serialno")
+  #serialnumber is there only to enforce return type for getVar
+  getnames <- c("lengthunitmeters", "serialnumber")
   usenames <- c("lengthresM", "samplingID")
   DataMatrix <- getVar(eca$biotic, getnames)
   names(DataMatrix) <- usenames
@@ -607,8 +607,8 @@ getDataMatrixANDCovariateMatrix <-
     # Define variables to include in the DataMatrix, where the variable specified in the input 'var' is included:
     getnames <-
       c(
-        "length",
-        "serialno",
+        "LengthCentimeters",
+        "serialnumber",
         "samplenumber",
         "lengthsamplecount",
         "lengthsampleweight",
@@ -771,8 +771,8 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
 #' @return logical vector identifying which individuals belong to a catchsample where age was sampled
 #' @keywords internal
 hasAgeInSample <- function(biotic){
-  hasage<-biotic[!is.na(biotic$age),c("serialno", "species", "samplenumber")]
-  return(paste(biotic$serialno, biotic$species, biotic$samplenumber, sep="/") %in% paste(hasage$serialno, hasage$species, hasage$samplenumber, sep="/"))
+  hasage<-biotic[!is.na(biotic$age),c("serialnumber", "species", "samplenumber")]
+  return(paste(biotic$serialnumber, biotic$species, biotic$samplenumber, sep="/") %in% paste(hasage$serialnumber, hasage$species, hasage$samplenumber, sep="/"))
 }
 
 #' Function for converting to the input format required by ECA (this is the main function):

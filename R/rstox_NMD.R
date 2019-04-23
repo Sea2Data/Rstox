@@ -22,7 +22,7 @@
 #' @param cruise				Either the code of a cruise, such as "2015116", or the full or short name of a cruise series or survey time series. In the current version, if given as a cruise code, the parameter 'shipname' must be given as well, based on which the path to the cruise is searched for by functionallity provided by NMD. For cruises prior to the year 1995 several vessels can be linked to the same cruise code, and as of version 2 the user will by default be asked to specify which vessel(s) to specify the vessels when this occurs, instead of having to specify the cruise initially.
 #' @param year					Used in conjunction with 'shipname' to get all cruises from one or more years from a specific ship.
 #' @param shipname				Specifies the ship name WITHOUT call signal, e.g., "G.O.Sars" and not "G.O.Sars_LMEL" (see 'cruise' and 'year').
-#' @param serialno				A vector of the requested serial numbers.
+#' @param serialnumber				A vector of the requested serial numbers.
 #' @param tsn					The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.
 #' @param datasource			The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datasource=NULL (default) returns all possible data.
 #' @param dir					The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects
@@ -164,7 +164,7 @@ getNMDinfo <- function(type=NULL, ver=getRstoxDef("ver"), server="http://tomcat7
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn=NULL, datasource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", suffix=NA, ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, info.out=FALSE, run=TRUE, timeout=NULL, snapshot=Sys.time(), ...){
+getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL, tsn=NULL, datasource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", suffix=NA, ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, info.out=FALSE, run=TRUE, timeout=NULL, snapshot=Sys.time(), ...){
 	
 	
 	# Support for giving 'prefix' as 'filebase' for backwards compatibility:
@@ -203,8 +203,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	dir <- getProjectPaths(projectName="", projectRoot=dir)$projectRoot
 	#######################################
 	
-	# Get serialno:
-	#serialno <- getSerialno(serialno, year)
+	# Get serialnumber:
+	#serialnumber <- getSerialnumber(serialnumber, year)
 	
 	# Get download type:
 	if(isSTS(cruise, ver=ver, server=server)){
@@ -214,7 +214,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 		downloadType <- "cs"
 	}
 	else if(length(year)){
-		downloadType <- "serialno"
+		downloadType <- "serialnumber"
 	}
 	else{
 		downloadType <- "c"
@@ -225,10 +225,10 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialno=NULL, tsn
 	########################################
 	########## (1) Serial number: ##########
 	########################################
-	# Download serialno data:
-	#if(length(serialno) && run){
-	if(downloadType == "serialno"){
-		out <- downloadSerialno(serialno=serialno, downloadType=downloadType, year=year, tsn=tsn, prefix=prefix, suffix=suffix, dir=dir, model=model, ow=ow, ver=ver, server=server, snapshot=snapshot, run=run, return.URL=return.URL, msg=msg, timeout=timeout, ...)
+	# Download serialnumber data:
+	#if(length(serialnumber) && run){
+	if(downloadType == "serialnumber"){
+		out <- downloadSerialnumber(serialnumber=serialnumber, downloadType=downloadType, year=year, tsn=tsn, prefix=prefix, suffix=suffix, dir=dir, model=model, ow=ow, ver=ver, server=server, snapshot=snapshot, run=run, return.URL=return.URL, msg=msg, timeout=timeout, ...)
 		return(out)
 	}
 	########################################
@@ -974,7 +974,7 @@ getCruiseInfo <- function(ver, server, msg=FALSE){
 ###############################################
 
 ##### Basic functions: #####
-#isSerialno <- function(cruise, ver){
+#isSerialnumber <- function(cruise, ver){
 #	cs <- getNMDinfo("cs", recursive=FALSE, ver=ver)
 #	length(cruise)==1 && cruise %in% cs
 #}
@@ -1176,8 +1176,8 @@ getProjectPathElements <- function(dir, subdir=NA, prefix=NA, name=NA, suffix=NA
 	split(out, seq_len(nrow(out)))
 	#as.data.frame(t(out))
 }
-# Function for constructing the paths of the StoX project(s), given the type of download. The output is a list of the elements projectPaths = an unnamed vector of paths to the individual projects, and either filePaths = a named list of file paths for downloadType=="serialno", or the cruiseInfo added file paths for downloadType %in% c("sts", "cs", "c"):
-getPaths <- function(downloadType=c("serialno", "sts", "cs", "c"), dir=NA, subdir=NA, name=NA, prefix=NA, suffix=NA, year=NA, serialno=NA, tsn=NA, cruiseInfo=NA, abbrev=FALSE, datasource=NULL, StoX_data_sources=NULL){
+# Function for constructing the paths of the StoX project(s), given the type of download. The output is a list of the elements projectPaths = an unnamed vector of paths to the individual projects, and either filePaths = a named list of file paths for downloadType=="serialnumber", or the cruiseInfo added file paths for downloadType %in% c("sts", "cs", "c"):
+getPaths <- function(downloadType=c("serialnumber", "sts", "cs", "c"), dir=NA, subdir=NA, name=NA, prefix=NA, suffix=NA, year=NA, serialnumber=NA, tsn=NA, cruiseInfo=NA, abbrev=FALSE, datasource=NULL, StoX_data_sources=NULL){
 	##### Get project paths: #####
 	# Remove prefix for cruise- and survey time series:
 	if(tolower(downloadType[1]) %in% c("cs", "sts")){
@@ -1197,13 +1197,13 @@ getPaths <- function(downloadType=c("serialno", "sts", "cs", "c"), dir=NA, subdi
 	}
 	
 	# Different suffix definitions for each type of download:
-	if(tolower(downloadType[1]) == "serialno"){
+	if(tolower(downloadType[1]) == "serialnumber"){
 		# Get the ranges of the individual serial numbers and the overall range:
-		if(length(serialno)){
-			serialno <- paste(range(serialno), collapse="-")
+		if(length(serialnumber)){
+			serialnumber <- paste(range(serialnumber), collapse="-")
 		}
 		# Generate suffix for the project (and for the file):
-		thisSuffix <- getSuffix(Year=year, SerialNumber=serialno, TSN=tsn)
+		thisSuffix <- getSuffix(Year=year, SerialNumber=serialnumber, TSN=tsn)
 		# Do no put the project into sub-folders:
 		subdir <- NA
 		# No name of the project, only suffix (name is for survey time- and cruise seres)
@@ -1265,8 +1265,8 @@ getPaths <- function(downloadType=c("serialno", "sts", "cs", "c"), dir=NA, subdi
 	
 	##### Get file paths: #####
 	# Different file name for each type of download:
-	if(tolower(downloadType[1]) == "serialno"){
-		# Define the folder of the biotic files og serialno:
+	if(tolower(downloadType[1]) == "serialnumber"){
+		# Define the folder of the biotic files og serialnumber:
 		projectDataPaths <- file.path(projectPaths, "input", "biotic")
 		# Use the same suffix as in the project name, and add file extension:
 		filePathElements <- getProjectPathElements(
@@ -1274,7 +1274,7 @@ getPaths <- function(downloadType=c("serialno", "sts", "cs", "c"), dir=NA, subdi
 			suffix = suffix, 
 			ext = "xml"
 		)
-		# Get the file paths of the serialno search, but do not abbreviate the file names, since the serialno ranges are already abbreviating by paring only the min and max serialno of each file:
+		# Get the file paths of the serialnumber search, but do not abbreviate the file names, since the serialnumber ranges are already abbreviating by paring only the min and max serialnumber of each file:
 		filePaths <- sapply(filePathElements, abbrevPath, abbrev=FALSE)
 		
 		# Return both the project and file paths:
@@ -1292,7 +1292,7 @@ getPaths <- function(downloadType=c("serialno", "sts", "cs", "c"), dir=NA, subdi
 			# Use the info of the current group of cruises (representing one StoX project), and build the file paths using the naming convension of NMD, see NMDFileName():
 			#FilePath <- NMDFileName(projectDir=projectPaths[i], cruiseInfo=cruiseInfo[[i]])
 			FilePath <- NMDFileName(cruise=cruiseInfo[[i]]$Cruise, shipname=cruiseInfo[[i]]$ShipName, snapshotID=cruiseInfo[[i]]$snapshotID, datasource=cruiseInfo[[i]]$NMD_data_source, projectName=projectPaths[i], file.ext="xml")
-			# Add the file paths to the cruiseInfo, and return this data frame as the 'filePaths'. Then 'filePaths' is different for "serialno" (list) and "sts", "cs", "c" (data frame):
+			# Add the file paths to the cruiseInfo, and return this data frame as the 'filePaths'. Then 'filePaths' is different for "serialnumber" (list) and "sts", "cs", "c" (data frame):
 			cbind(cruiseInfo[[i]], FilePath=FilePath, stringsAsFactors=FALSE)
 		}
 		
@@ -1342,38 +1342,38 @@ getSubset <- function(subset, nprojects, info){
 }
 
 
-##### Serial number serialno: #####
+##### Serial number: #####
 # Function for converting a vector of serial numbers, which can be fully or partly sequenced (incriment of 1 between consecutive elements):
-getSerialnoRanges <- function(x){
+getSerialnumberRanges <- function(x){
 	d <- diff(c(x))
 	starts <- c(1, which(d != 1)+1)
 	ends <- c(which(d != 1), length(x))
-	cbind(startSerialno=x[starts], endSerialno=x[ends])
+	cbind(startSerialnumber=x[starts], endSerialnumber=x[ends])
 }
-# Apply restrictions to the serialno, and request all serialno if year is given:
-getSerialno <- function(serialno, year, maxSerialno=99999){
-	if(length(serialno)==0 && length(year)){
-		serialno <- seq(1, maxSerialno)
+# Apply restrictions to the serialnumber, and request all serialnumber if year is given:
+getSerialnumber <- function(serialnumber, year, maxSerialnumber=99999){
+	if(length(serialnumber)==0 && length(year)){
+		serialnumber <- seq(1, maxSerialnumber)
 	}
-	if(any(serialno > maxSerialno)){
-		serialno <- serialno[serialno <= maxSerialno]
-		warning(paste0("Maximum serialno is ", maxSerialno))
+	if(any(serialnumber > maxSerialnumber)){
+		serialnumber <- serialnumber[serialnumber <= maxSerialnumber]
+		warning(paste0("Maximum serialnumber is ", maxSerialnumber))
 	}
 	
-	# Get the range of serialno:
-	serialnoRange <- getSerialnoRanges(serialno)
+	# Get the range of serialnumber:
+	serialnumberRange <- getSerialnumberRanges(serialnumber)
 	
-	serialnoRange
+	serialnumberRange
 }
 # Function for downloading a serial number range:
-downloadSerialno <- function(serialno, downloadType, year=NULL, tsn=NULL, prefix, suffix, dir, model, ow, ver, server, snapshot, run, return.URL, msg, timeout, ...){
+downloadSerialnumber <- function(serialnumber, downloadType, year=NULL, tsn=NULL, prefix, suffix, dir, model, ow, ver, server, snapshot, run, return.URL, msg, timeout, ...){
 	if(length(year)==0){
 		warning("'year' must be given when serial number is requested")
 		return(NULL)
 	}
 	
 	# Get the file and project path:
-	temp <- getPaths(downloadType=downloadType, dir=dir, subdir=NA, name=NA, prefix=prefix, suffix=suffix, year=year, serialno=serialno, tsn=tsn, abbrev=FALSE)
+	temp <- getPaths(downloadType=downloadType, dir=dir, subdir=NA, name=NA, prefix=prefix, suffix=suffix, year=year, serialnumber=serialnumber, tsn=tsn, abbrev=FALSE)
 	projectPath <- temp$projectPaths
 	filePath <- temp$filePaths
 	if(!run){
@@ -1381,13 +1381,13 @@ downloadSerialno <- function(serialno, downloadType, year=NULL, tsn=NULL, prefix
 	}
 	
 	# Get and possibly return the URLs:
-	URL <- buildNMDURL(year=year, serialno=serialno, tsn=tsn, datasource="biotic", server=server, ver=ver, snapshot=snapshot, return.URL=return.URL)$fileURL
+	URL <- buildNMDURL(year=year, serialnumber=serialnumber, tsn=tsn, datasource="biotic", server=server, ver=ver, snapshot=snapshot, return.URL=return.URL)$fileURL
 	if(return.URL){
-		return(data.frame(year=year, serialno, tsn, URL=URL, stringsAsFactors=FALSE))
+		return(data.frame(year=year, serialnumber, tsn, URL=URL, stringsAsFactors=FALSE))
 	}
 	
-	# Create the project with a model incoporating the serialno and tsn:
-	model <- getSerialnoTsnModel(serialno, tsn, model)
+	# Create the project with a model incoporating the serialnumber and tsn:
+	model <- getSerialnumberTsnModel(serialnumber, tsn, model)
 	projectName <- createProject(projectPath, dir=dir, model=model, ow=ow, ...)
 
 	# Download the files:
@@ -1402,11 +1402,11 @@ downloadSerialno <- function(serialno, downloadType, year=NULL, tsn=NULL, prefix
 	updateProject(projectName)
 	return(projectName)
 }
-# Function for adding serialno and tsn to the FilterBiotic function:
-getSerialnoTsnModel <- function(serialno, tsn, model=NULL){
-	if(length(serialno) && !is.na(serialno)){
-		serialnoString <- paste(serialno, collapse=", ")
-		FishStationExpr <- paste0("serialno =~ [", serialnoString, "]")
+# Function for adding serialnumber and tsn to the FilterBiotic function:
+getSerialnumberTsnModel <- function(serialnumber, tsn, model=NULL){
+	if(length(serialnumber) && !is.na(serialnumber)){
+		serialnumberString <- paste(serialnumber, collapse=", ")
+		FishStationExpr <- paste0("serialnumber =~ [", serialnumberString, "]")
 		model <- c(model, list(FilterBiotic=list(FishStationExpr = FishStationExpr)))
 	}
 	if(length(tsn) && !is.na(tsn)){
@@ -2074,9 +2074,9 @@ getAllSnapshotStrings <- function(URLSansGetType){
 	out <- out[!is.na(out$time),]
 	out
 }
-buildNMDURL <- function(cruise=NULL, shipname=NULL, year=NULL, serialno=NULL, tsn=NULL, datasource="biotic", server="http://tomcat7.imr.no:8080/apis/nmdapi", ver=getRstoxDef("ver"), snapshot=Sys.time(), return.URL=FALSE){
+buildNMDURL <- function(cruise=NULL, shipname=NULL, year=NULL, serialnumber=NULL, tsn=NULL, datasource="biotic", server="http://tomcat7.imr.no:8080/apis/nmdapi", ver=getRstoxDef("ver"), snapshot=Sys.time(), return.URL=FALSE){
 	
-	# Two different types of download exists: (1) Downloading files from cruises, and (2) downloading serial numbers. For type (1) 'cruise' and 'shipname' is required. For type (2) 'year' is required, and 'tsn' and 'serialno' optional.
+	# Two different types of download exists: (1) Downloading files from cruises, and (2) downloading serial numbers. For type (1) 'cruise' and 'shipname' is required. For type (2) 'year' is required, and 'tsn' and 'serialnumber' optional.
 	########## Cruise files: ##########
 	searchURL <- NA
 	snapshotID <- NA
@@ -2155,14 +2155,14 @@ buildNMDURL <- function(cruise=NULL, shipname=NULL, year=NULL, serialno=NULL, ts
 		stop("'year' must be given to download yearly data.")
 	}
 	
-	# Specifying serialno is only supported in biotic API v2 and below. In v3 search for serial number ranges has been removed due to heavy load on the server:
+	# Specifying serialnumber is only supported in biotic API v2 and below. In v3 search for serial number ranges has been removed due to heavy load on the server:
 	else if(length(year)){
 		if(ver$API$biotic >= 3){
-			if(length(serialno) && length(tsn)){
-				warning("Downloading specific serial numbers ('serialno') and species ('tsn') is no longer supported (as of biotic API v3). Yearly data of all species downloaded and serial number and species filtering added in the StoX project.")
+			if(length(serialnumber) && length(tsn)){
+				warning("Downloading specific serial numbers ('serialnumber') and species ('tsn') is no longer supported (as of biotic API v3). Yearly data of all species downloaded and serial number and species filtering added in the StoX project.")
 			}
-			else if(length(serialno)){
-				warning("Downloading specific serial numbers ('serialno') is no longer supported (as of biotic API v3). All serial numbers downloaded and serial number filtering added in the StoX project.")
+			else if(length(serialnumber)){
+				warning("Downloading specific serial numbers ('serialnumber') is no longer supported (as of biotic API v3). All serial numbers downloaded and serial number filtering added in the StoX project.")
 			}
 			else if(length(tsn)){
 				warning("Downloading data of a species ('tsn') is no longer supported (as of biotic API v3). Yearly data of all species downloaded and species filtering added in the StoX project.")

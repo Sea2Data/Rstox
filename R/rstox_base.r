@@ -3324,7 +3324,6 @@ readBaselineFiles <- function(x){
 		as.data.frame(lapply(y, string2logicalOne), stringsAsFactors=FALSE)
 	}
 	
-	browser()
 	# Read the files:
 	if("textConnection" %in% class(x)){
 		out <- read.csv(x, sep="\t", stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL)
