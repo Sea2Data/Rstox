@@ -815,7 +815,7 @@ plot_mission_types <- function(biotic, title="mission types\n# stations", blankc
 plot_sample_types <- function(biotic, title="sample types", xlab="# catch samples", blankcode=default_blankcode, cex.names=0.8){
   
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
-  catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "samplenumber", "species")]),]
+  catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "catchpartnumber", "catchcategory")]),]
   
   tt <- as.character(catchsample$sampletype)
   tt[is.na(tt)]<-""
@@ -894,7 +894,7 @@ plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch s
     stop("Does not work with multi-year data.")
   }
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
-  catches <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "samplenumber", "species")]),]
+  catches <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "catchpartnumber", "catchcategory")]),]
   catches[is.na(catches$trawlquality), "trawlquality"] <- rep(blankcode, sum(is.na(catches$trawlquality)))
   catches[is.na(catches$group), "group"] <- rep(blankcode, sum(is.na(catches$group)))
   
