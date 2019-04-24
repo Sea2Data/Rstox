@@ -813,13 +813,16 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
   ### 3. info: ###
   info <- getInfo(eca, CovariateMatrix, ecaParameters)
   
+  #reduce ageerror matrix to ages actually used
+  ageerrormatrix <- eca$ageError
+  ageerrormatrix <- ageerrormatrix[rownames(ageerrormatrix) %in% ecaParameters$minage:ecaParameters$maxage, colnames(ageerrormatrix) %in% ecaParameters$minage:ecaParameters$maxage]
   
   ### Return a list of the data: ###
   out <- list(
     DataMatrix = DataMatrix,
     CovariateMatrix = CovariateMatrix,
     CARNeighbours = info$CARNeighbours,
-    AgeErrorMatrix = eca$ageError,
+    AgeErrorMatrix = ageerrormatrix,
     info = info$info,
     resources = resources
   )

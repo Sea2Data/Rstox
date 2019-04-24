@@ -245,7 +245,7 @@ checkGlobalParameters <- function(globalparameters, agelength, weightlength){
     stop("Age error matrix not set, but age.error parameter set to TRUE.")
   }
   if (globalparameters$age.error & nrow(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
-    stop(paste0("Rows of age matrix does not match minage maxage parameters (", nrow(agelength$AgeErrorMatrix), " vs ", globalparameters$maxage, ":", globalparameters$minage, ")"))
+    stop(paste0("Rows of age matrix does not match minage maxage parameters (", nrow(agelength$AgeErrorMatrix), " vs ", globalparameters$minage, ":", globalparameters$maxage, ")"))
   }
   if (globalparameters$age.error & as.numeric(row.names(agelength$AgeErrorMatrix))[1] != globalparameters$minage){
     stop("First age of age error matrix does not correspond to minage")
