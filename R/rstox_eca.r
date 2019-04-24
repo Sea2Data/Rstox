@@ -1593,7 +1593,7 @@ writeRecaConfiguration <-
 #' @param var Variable to extract. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
-#' @param savemeans If True, only means for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.
+#' @param savemeans If True, only means and spread statistics for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.
 #' @keywords internal
 saveCatchMatrix <-
   function(pred,
@@ -1648,9 +1648,9 @@ saveCatchMatrix <-
     cv <-
       as.data.frame(list(
         Age = pred$AgeCategories,
-        cv = apply(caa_scaled, FUN = sd, MARGIN = 1)
+        sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
       ))
-    cv$cv <- cv$cv / means$mean
+    cv$cv <- cv$sd / means$mean
     colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
     caa_scaled$Age <- pred$AgeCategories
     caa_scaled <-
@@ -1777,7 +1777,7 @@ saveCatchCovarianceMatrix <- function(pred,
 reportRECA <-
   function(projectName,
            var = "Abundance",
-           unit = "ones",
+           unit = "millions",
            write = T,
            ...) {
     if (!write) {
