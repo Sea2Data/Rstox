@@ -2,6 +2,12 @@
 #*********************************************
 #' Plot fish stations by species
 #'
+#' This function plots the fish stations of the biotic data of a StoX project. The stations can be plotted with colors indicating the species specified by the parameter \code{species}. For stations with more than one of these species present, the last is plotted last, and this will overlay the other species in the station. To avoid this, there is an option \code{jitter}.
+#' 
+#' These are the details
+#' \deqn{\sum_{i} \hat{f} (x_i) \frac{b_{i+1}} {b_i}  = 1}
+#' End of the details
+#' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.
 #' @param species		A vector of the species for which stations will be plotted, given in the current version as the norwegian name ('noname'). there can be several species for each station, which will lead to several points in the same location (see \code{jitter}).
 #' @param proc			The process from which to get the fish stations (an object including the sting "FishStation").

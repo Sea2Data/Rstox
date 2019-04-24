@@ -169,10 +169,13 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	# We need to combine them if we have two different TotalNo and catcatchwgt.
 
 	# Find duplicate species in a haul
-	dupl <- aggregate(species ~ aphia + serialno, rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_CatchSample.txt, FUN = function(x) length(unique(x)))
+	
+	# NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+	dupl <- aggregate(species ~ aphia + serialnumber, rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_CatchSample.txt, FUN = function(x) length(unique(x)))
 	dupl <- dupl[dupl$species > 1, ]
 	# Find the above in DATRAS HL
-	found <- aggregate(CatCatchWgt ~ StNo + SpecCode + Sex + CatIdentifier, hl[(hl$SpecCode==dupl$aphia & hl$StNo==dupl$serialno),], FUN = function(x) length(unique(x)))
+	# NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+	found <- aggregate(CatCatchWgt ~ StNo + SpecCode + Sex + CatIdentifier, hl[(hl$SpecCode==dupl$aphia & hl$StNo==dupl$serialnumber),], FUN = function(x) length(unique(x)))
 	found <- found[found$CatCatchWgt > 1, ]
 	for(iz in 1:nrow(found)) {
 		tmpHL <- hl[hl$StNo==found[iz, "StNo"] & hl$SpecCode==found[iz, "SpecCode"] & hl$Sex==found[iz, "Sex"] & hl$CatIdentifier==found[iz, "CatIdentifier"], ]

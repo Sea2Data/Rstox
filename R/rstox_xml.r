@@ -105,24 +105,22 @@
 #' @export
 #' @rdname writeBioticXML
 #' 
-writeBioticXML <- function(x, file, xsd="1.4", blocksize=100, addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
+writeBioticXML <- function(x, file, xsd="1.4", blocksize=100, blockvar="serialno", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
 	# Get the xsd:
 	xsd <- getHIXSDfile(xsd=xsd, xsdtype="biotic")
 	# Define the root and write the XML:
 	root <- "missions"
-	blockvar <- "serialno"
 	writeXMLusingXSD(x=x, file=file, root=root, blockvar=blockvar, blocksize=blocksize, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, maxlines=maxlines, cores=cores)
 }
 #'
 #' @export
 #' @rdname writeBioticXML
 #' 
-writeAcousticXML <- function(x, file, xsd="1", blocksize=100, addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
+writeAcousticXML <- function(x, file, xsd="1", blocksize=100, blockvar="log_start", addVersion=TRUE, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
 	# Get the xsd:
 	xsd <- getHIXSDfile(xsd=xsd, xsdtype="acoustic")
 	# Define the root and write the XML:
 	root <- "echosounder_dataset"
-	blockvar <- "log_start"
 	writeXMLusingXSD(x=x, file=file, root=root, blockvar=blockvar, blocksize=blocksize, addVersion=addVersion, xsd=xsd, na.rm=na.rm, declaration=declaration, strict=strict, discardSimple=discardSimple, maxlines=maxlines, cores=cores)
 }
 #'

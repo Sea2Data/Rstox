@@ -3,7 +3,7 @@
 #' Impute unknown individual biological parameters from known values
 #'
 #' This function fills in holes in individual fish samples (also called imputation).
-#' In cases where individuals are not aged, missing biological variables (e.g "weight","age","sex", and "specialstage") are sampled from 
+#' In cases where individuals are not aged, missing biological variables (e.g "individualweight", "age", "sex", and "specialstage") are sampled from 
 #' fish in the same length group at the lowest imputation level possible.
 #'	imputeLevel = 0: no imputation, biological information exists
 #'	imputeLevel = 1: imputation at station level; biological information is selected at random from fish within station
@@ -44,7 +44,7 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 	
 	# 2017-11-03: The sampling procedure throughout Rstox was changed to use the function sampleSorted(). In that function the vector to be sampled can be sorted before sampling. This requires a unique ID to sort:
 	# Add a unique super individual ID:
-	#superindID <- paste("cruise", b$cruise, "serialno", b$serialno, "aphia", b$aphia, "samplenumber", b$samplenumber, "no", b$no, sep="_")
+	#superindID <- paste("cruise", b$cruise, "serialnumber", b$serialnumber, "aphia", b$aphia, "samplenumber", b$samplenumber, "no", b$no, sep="_")
 	# Check the order of the Row information in 'abnd':
 	if(!all(abnd$Row == seq_len(nrow(abnd)))){
 		warning("The superindividual table is not ordered according to the Row information. Imputing may have different results from when the table i sorted.")
@@ -108,13 +108,13 @@ distributeAbundance <- function(i=NULL, abnd, seedV=NULL) {
 		# Get indices for which of the rows with known ages that have the same station, stratum and survey as the current unknown individual:
 		matchStratum <- getVar(abnd, "Stratum")[indUnkn] == getVar(abnd, "Stratum")[atKnownAge]
 		matchcruise <- getVar(abnd, "cruise")[indUnkn] == getVar(abnd, "cruise")[atKnownAge]
-		matchserialno <- getVar(abnd, "serialno")[indUnkn] == getVar(abnd, "serialno")[atKnownAge]
+		matchserialnumber <- getVar(abnd, "serialnumber")[indUnkn] == getVar(abnd, "serialnumber")[atKnownAge]
 		matchLenGrp <- getVar(abnd, "LenGrp")[indUnkn] == getVar(abnd, "LenGrp")[atKnownAge]
-		#id.known.sta <- atKnownAge[ which(matchStratum & matchcruise & matchserialno & matchLenGrp) ]
+		#id.known.sta <- atKnownAge[ which(matchStratum & matchcruise & matchserialnumber & matchLenGrp) ]
 		#id.known.stratum <- atKnownAge[ which(matchStratum & matchLenGrp) ]
 		#id.known.survey <- atKnownAge[ which(matchLenGrp) ]
 		# Get the indices of known individuals in the current station:
-		id.known.sta <- atKnownAge[matchStratum & matchcruise & matchserialno & matchLenGrp]
+		id.known.sta <- atKnownAge[matchStratum & matchcruise & matchserialnumber & matchLenGrp]
 		# Get the indices of known individuals in the current stratum:
 		id.known.stratum <- atKnownAge[matchStratum & matchLenGrp]
 		# Get the indices of known individuals in the wnrite survey:
@@ -365,23 +365,24 @@ imputeByAge <- function(projectName, seed=1, cores=1, saveInd=TRUE, ...){
 #'
 #' Given a key string such as "milliseconds" (possibly abbreviated) or the abbreviation "ms" (identical matching), the unit (here milliseconds) and scaling factor (here 1e-3) is returned.
 #'
-#' @param unit			A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings), or alternatively a numeric value giving the scaling factor.
-#' @param var			A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).
-#' @param baseunit		The unit used in the data.
-#' @param implemented	An integer vector giving the inplemented variables, which are the first two ("Abundance", "Weight") in the current version of Rstox.
-#' @param def.out		Logical: if TRUE return also the defaults and definitions.
+#' @param unit		A unit key string indicating the unit (see getPlottingUnit()$definitions$units for available key strings), or alternatively a numeric value giving the scaling factor.
+#' @param var		A key string indicating the variable to plot, one of "count", representing abundance in number of individuals, and "weight", representing the total weight data to plot.
+#' @param baseunit	The unit used in the data.
+#' @param labl		The label used in plots of the data.
+#' @param def.out	Logical: if TRUE return also the defaults and definitions.
+#' @param ...		Used for backwards compatibility.
 #' 
 #' @return a list of the following four elements: 1. the scaling factor, 2. the unit string, 3. a matrix of the default values, and 4. a matrix of the defintions.
 #'
 #' @examples
-#' getPlottingUnit(unit="milli", var="abund", baseunit="stox", def.out=FALSE)
-#' getPlottingUnit(unit="milli", var="weight", baseunit="stox", def.out=FALSE)
-#' getPlottingUnit(unit="hecto", var="weight", baseunit="stox")
+#' getPlottingUnit(unit="milli", var="count",  def.out=FALSE)
+#' getPlottingUnit(unit="milli", var="weight", def.out=FALSE)
+#' getPlottingUnit(unit="hecto", var="weight")
 #'
 #' @export
 #' @keywords internal
 #' 
-getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implemented=c(1,2,3), def.out=TRUE){
+getPlottingUnit <- function(unit=NULL, var="count", baseunit=NULL, labl=NULL,  def.out=TRUE, ...){
 	# Function used to get the index of the match of unit against the default units:
 	getUnitInd <- function(unit, var, abbrev){
 		# Check abbreviations first:
@@ -400,51 +401,72 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 	}
 	
 	# Define variable, unit and base unit default vectors:
-	Rstox_var <- c("Abundance", "Count", "Weight", "Length", "Time")[implemented]
-	Rstox_unit <- c("millions", "millions", "tonnes", "meters", "seconds")[implemented]
-	names(Rstox_unit) <- Rstox_var
-	Rstox_baseunit <- c("1", "1", "grams", "centimeters", "seconds")[implemented]
-	names(Rstox_baseunit) <- Rstox_var
-	defaults <- data.frame(Rstox_var, Rstox_unit, Rstox_baseunit)
+	Rstox_var <- c("Abundance", "Count", "Weight", "Length", "Time")
+	Rstox_labl <- c("Abundance", "Abundance", "Biomass", "Length", "Time")
+	Rstox_unit <- c("millions", "millions", "tonnes", "meters", "seconds")
+	Rstox_baseunit <- c("1", "1", "grams", "centimeters", "seconds")
+	
+	defaults <- data.frame(
+		Rstox_var = Rstox_var, 
+		Rstox_labl = Rstox_labl, 
+		Rstox_unit = Rstox_unit, 
+		Rstox_baseunit = Rstox_baseunit, 
+		stringsAsFactors = FALSE
+	)
+	rownames(defaults) <- defaults$Rstox_var
+	
 	# Define lists of allowed unit definitions, abbreviations and scaling factors to be matched with the inputs:
-	units <- list(
-		c( "ones", "tens", "hundreds", "thousands", "millions", "billions", "trillions" ),
-		c( "ones", "tens", "hundreds", "thousands", "millions", "billions", "trillions" ),
-		#c( "micrograms", "milligrams", "grams", "hectograms", "kilograms", "tonnes" , "thousandtonnes" , "milliontonnes" ),
-		c( "micrograms", "milligrams", "grams", "hectograms", "kilograms", "tonnes" , "kilotonnes" , "megatonnes" ),
-		c( "micrometers", "millimeters", "centimeters", "decimeters", "meters", "kilometers" ),
-		c( "microseconds", "milliseconds", "seconds", "minutes", "hours", "days" ) )[implemented]
-	names(units) <- Rstox_var
-	abbrev <- list(
-		c( "1", "10", "100", "1000", "1e6", "1e9", "1e12" ),
-		c( "1", "10", "100", "1000", "1e6", "1e9", "1e12" ),
-		#c( "mcg", "mg", "g", "hg", "kg", "t" , "tt" , "mt" ),
-		c( "mcg", "mg", "g", "hg", "kg", "t" , "kt" , "mt" ),
-		c( "mcm", "mm", "cm", "dm", "m", "km" ),
-		c( "mcs", "ms", "s", "m", "h", "d" ) )[implemented]
-	names(abbrev) <- Rstox_var
-	scale <- list(
-		as.numeric(abbrev$Abundance),
-		as.numeric(abbrev$Abundance),
-		c( 1e-9, 1e-6, 1e-3, 1e-1, 1, 1e3 , 1e6 , 1e9 ),
-		c( 1e-6, 1e-3, 1e-2, 1e-1, 1, 1e3 ),
-		c( 1e-6, 1e-3, 1, 60, 60*60, 24*60*60 ) )[implemented]
-	names(scale) <- Rstox_var
-	definitions <- data.frame(unlist(units), unlist(abbrev), unlist(scale))
+	units <- structure(
+		list(
+			c( "ones", "tens", "hundreds", "thousands", "millions", "billions", "trillions" ),
+			c( "ones", "tens", "hundreds", "thousands", "millions", "billions", "trillions" ),
+			c( "micrograms", "milligrams", "grams", "hectograms", "kilograms", "tonnes" , "kilotonnes" , "megatonnes" ),
+			c( "micrometers", "millimeters", "centimeters", "decimeters", "meters", "kilometers" ),
+			c( "microseconds", "milliseconds", "seconds", "minutes", "hours", "days" )
+		), 
+		names=defaults$Rstox_var
+	)
+	
+	abbrev <- structure(
+		list(
+			c( "1", "10", "100", "1000", "1e6", "1e9", "1e12" ),
+			c( "1", "10", "100", "1000", "1e6", "1e9", "1e12" ),
+			c( "mcg", "mg", "g", "hg", "kg", "t" , "kt" , "mt" ),
+			c( "mcm", "mm", "cm", "dm", "m", "km" ),
+			c( "mcs", "ms", "s", "m", "h", "d" )
+		), 
+		names=defaults$Rstox_var
+	)
+	
+	scale <- structure(
+		list(
+			as.numeric(abbrev$Abundance),
+			as.numeric(abbrev$Abundance),
+			c( 1e-9, 1e-6, 1e-3, 1e-1, 1, 1e3 , 1e6 , 1e9 ),
+			c( 1e-6, 1e-3, 1e-2, 1e-1, 1, 1e3 ),
+			c( 1e-6, 1e-3, 1, 60, 60*60, 24*60*60 )
+		), 
+		names=defaults$Rstox_var
+	)
 	
 	# Get the variable by abbreviated matching:
-	var <- abbrMatch(var[1], Rstox_var, ignore.case=TRUE)$string
+	var <- abbrMatch(var[1], defaults$Rstox_var, ignore.case=TRUE)$string
 	# Defalut var if missing:
 	if(length(var)==0){
-		warning(paste0("'var' not matched with any of the available values (", paste0(getPlottingUnit()$defaults$Rstox_var, collapse=", "), "). Default selected (", getPlottingUnit()$defaults$Rstox_var[1],")"))
-		var <- getPlottingUnit()$defaults$Rstox_var[1]
+		all <- defaults$Rstox_var
+		this <- all[1]
+		warning(paste0("'var' not matched with any of the available values (", paste0(all, collapse=", "), "). Default selected (", this,")"))
+		var <- this
 	}
 	# Defalut unit if missing:
 	if(length(unit)==0){
-		unit <- Rstox_unit[[var]]
+		unit <- defaults[var, "Rstox_unit"]
 	}
 	if(length(baseunit)==0){
-		baseunit <- Rstox_baseunit[[var]]
+		baseunit <- defaults[var, "Rstox_baseunit"]
+	}
+	if(length(labl)==0){
+		labl <- defaults[var, "Rstox_labl"]
 	}
 	
 	# Get matches:
@@ -454,8 +476,15 @@ getPlottingUnit <- function(unit=NULL, var="Abundance", baseunit=NULL, implement
 	# Get the scaling factor between the base unit and requested unit:
 	scale.out <- scale[[var]][ind] / scale[[var]][baseind]
 	
-	out <- list(scale=scale.out, unit=unit.out, baseunit=baseunit, var=var)
+	out <- list(scale=scale.out, unit=unit.out, baseunit=baseunit, var=var, labl=labl)
 	if(def.out){
+		# Unlist the definitions and output the result:
+		definitions <- data.frame(
+			units = unlist(units), 
+			abbrev = unlist(abbrev), 
+			scale = unlist(scale)
+		)
+	
 		out <- c(out, list(defaults=defaults, definitions=definitions))
 	}
 	return(out)
@@ -601,7 +630,7 @@ plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 #' @export
 #' @rdname plotAbundance
 #' 
-plotAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", log=NULL, filetag=NULL, ...){
+plotAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="count", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", log=NULL, filetag=NULL, ...){
 	fun <- paste0("plotAbundance_", bootstrapMethod)
 	do.call(fun, list(projectName=projectName, var=var, unit=unit, baseunit=baseunit, grp1=grp1, grp2=grp2, xlab=xlab, ylab=ylab, main=main, format=format, log=log, filetag=filetag, ...))
 }
@@ -612,7 +641,7 @@ plotAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="Abu
 #' @keywords internal
 #' @rdname plotAbundance
 #'
-plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, log=NULL, filetag=NULL, ...){
+plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(projectName, var="count", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, xlab=NULL, ylab=NULL, main="", format="png", maxcv=1, log=NULL, filetag=NULL, ...){
 	
 	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
@@ -680,7 +709,7 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 	
 		# Get ylab and xlab text:
 		if(length(ylab)==0){
-			ylab <- paste0(plottingUnit$var, " (", plottingUnit$unit, ")")
+			ylab <- paste0(plottingUnit$labl, " (", plottingUnit$unit, ")")
 		}
 		#if(is.empty(xlab) & !is.empty(grp2)){
 		#	xlab <- paste(grp1,"by", grp2)
@@ -690,7 +719,7 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 		#}
 	
 		# Get file name:
-		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, thisgrp1, grp2, filetag), collapse="_"))
+		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$labl, thisgrp1, grp2, filetag), collapse="_"))
 		filename <- paste(filenamebase, format, sep=".")
 		
 		# If width and height is not given, default to width=5000, height=3000:
@@ -820,14 +849,12 @@ plotAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL, 
 	
 		# Get ylab and xlab text:
 		if(length(ylab)==0){
-			ylab <- paste0(plottingUnit$var, ", mean \u00B1 standard deviation (", plottingUnit$unit, ")")
+			ylab <- paste0(plottingUnit$labl, ", mean \u00B1 standard deviation (", plottingUnit$unit, ")")
 		}
 		xlab <- "SpecCat"
 		
 		# Get file name:
-		#filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var), collapse="_"))
-		#filename <- paste(filenamebase, format, sep=".")
-		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, xlab, filetag), collapse="_"))
+		filenamebase <- file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$labl, xlab, filetag), collapse="_"))
 		filename <- paste(filenamebase, format, sep=".")
 		
 		# If width and height is not given, default to width=5000, height=3000:
@@ -980,7 +1007,7 @@ factorNAfirst <- function(x){
 #' @export
 #' @rdname reportAbundance
 #'
-reportAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, ...){
+reportAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="count", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, ...){
 	fun <- paste0("reportAbundance_", bootstrapMethod)
 	do.call(fun, list(projectName=projectName, var=var, unit=unit, baseunit=baseunit, grp1=grp1, grp2=grp2, numberscale=numberscale, plotOutput=plotOutput, write=write, ...))
 }
@@ -989,7 +1016,7 @@ reportAbundance <- function(projectName, bootstrapMethod="AcousticTrawl", var="A
 #' @keywords internal
 #' @rdname reportAbundance
 #'
-reportAbundance_SweptAreaLength <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, msg=TRUE, ...){
+reportAbundance_SweptAreaLength <- function(projectName, var="count", unit=NULL, baseunit=NULL, grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, msg=TRUE, ...){
 	out <- list()
 	for(level in getRstoxDef("processLevels")){
 		out[[level]] <- reportAbundanceAtLevel(projectName, var=var, unit=unit, baseunit=baseunit, level=level, grp1=grp1, grp2=grp2, numberscale=numberscale, plotOutput=plotOutput, write=write)
@@ -1060,10 +1087,15 @@ reportAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL
 #' @keywords internal
 #' @rdname reportAbundance
 #' 
-reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, digits=6){
+reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, digits=6){
 	# Read the saved data from the R model. In older versions the user loaded the file "rmodel.RData" separately, but in the current code the environment "RstoxEnv" is declared on load of Rstox, and all relevant outputs are assigned to this environment:
 	projectEnv <- loadProjectData(projectName=projectName, var=level)
-	varInd <- abbrMatch(var[1], c("Abundance", "weight"), ignore.case=TRUE)
+	
+	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
+	#plottingUnit <- getPlottingUnit(var=var, def.out=FALSE)
+	
+	
+	#varInd <- abbrMatch(var[1], c("Abundance", "weight"), ignore.case=TRUE)
 	
 	# Combine all the bootstrap runs in one data table:
 	DT <- rbindlist(projectEnv[[level]]$SuperIndAbundance, idcol=TRUE)
@@ -1074,7 +1106,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	
 	# If grp1 is missing, replace it with all zeros:
 	if(length(grp1)==0 || length(DT[[grp1]])==0){
-		grp1 <- c("TSN", "TSB")[varInd$ind]
+		grp1 <- list(Abundance="TSN", Biomass="TSB")[[plottingUnit$labl]]
 		#DT[[grp1]] <- integer(nrow(DT))
 		DT[[grp1]] <- grp1
 	}
@@ -1099,7 +1131,6 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	base <- projectEnv[[level]]$base.SuperIndAbundance
 	strata <- unique(base$Stratum[base$includeintotal %in% TRUE])
 	# Get the scaling factor for the plotting and the unit requested and the unit used in the data as strings:
-	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
 	plottingUnit$nboot <- length(projectEnv[[level]]$SuperIndAbundance)
 	plottingUnit$seed <- projectEnv[[level]]$bootstrapParameters$seed
 	plottingUnit$bootstrapMethod <- projectEnv[[level]]$bootstrapParameters$bootstrapMethod
@@ -1112,12 +1143,12 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	Ab.Sum <- NULL
 	Abundance <- NULL
 	Stratum <- NULL
-	weight <- NULL
-	if(varInd$ind==1){
+	IndividualWeightGram <- NULL
+	if(plottingUnit$labl == "Abundance"){
 		abundanceSumDT <- DT[Stratum %in% strata, .(Ab.Sum=sum(Abundance, na.rm=TRUE) / plottingUnit$scale), by=byGrp]
 	}
-	else if(varInd$ind==2){
-		abundanceSumDT <- DT[Stratum %in% strata, .(Ab.Sum=sum(Abundance * weight, na.rm=TRUE) / plottingUnit$scale), by=byGrp]
+	else if(plottingUnit$labl == "Biomass"){
+		abundanceSumDT <- DT[Stratum %in% strata, .(Ab.Sum=sum(Abundance * IndividualWeightGram, na.rm=TRUE) / plottingUnit$scale), by=byGrp]
 	}
 	else{
 		warning(paste0("'var' does not match the available values (", getPlottingUnit()$defaults$Rstox_var, ")"))
@@ -1153,20 +1184,9 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 	out <- out[order(orderFact2, orderFact1, na.last=FALSE),]
 	rownames(out) <- NULL
 	
-	### if(nrow(out)==1){
-	### 	if(length(grp1)){
-	### 		out[1] <- "-"
-	### 	}
-	### 	else{
-	### 		out[1] <- c("TSN", "TSB")[varInd$ind]
-	### 		rownames(out) <- out[1]
-	### 		grp1 <- out[1]
-	### 	}
-	### 	#out <- out[,-1]
-	### 	#out <- out[1] <- 
-	### 	#rownames(out) <- c("TSN", "TSB")[varInd$ind]
-	### }
-	
+	## Calculate covariance matrix
+	covarMatrix <- cov(t(xtabs(as.formula(paste0("Ab.Sum ~ ", paste(byGrp, collapse= " + "))), abundanceSumDT, na.action = na.pass, exclude = NULL)))
+
 	# Write the data to a tab-separated file:
 	if(write){
 		# Set temporary grp1 to NULL:
@@ -1189,7 +1209,7 @@ reportAbundanceAtLevel <- function(projectName, var="Abundance", unit=NULL, base
 		filename <- NULL
 	}
 	
-	outlist <- c(list(abnd=out, filename=filename), plottingUnit)
+	outlist <- c(list(abnd=out, covar=covarMatrix, filename=filename), plottingUnit)
 	
 	if(plotOutput){
 		#outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=abundanceSumDT$Ab.Sum, abundanceSumDT=abundanceSumDT))
@@ -1417,8 +1437,8 @@ getFunsRstox <- function(string, out="all"){
 generateSpeciesMatrix <- function(projectName, ref, years, check=TRUE, 
 	downloadProjects = FALSE, timeout = 600, 
 	model = list("ReadBioticXML", FilterBiotic=list(BioticData="ReadBioticXML")), 
-	specVar = "noname", catVar = "Speccat", stationVar = c("cruise", "serialno"), 
-	bioticProc = "FilterBiotic", var = c("weight", "count"), 
+	specVar = "noname", catVar = "Speccat", stationVar = c("cruise", "serialnumber"), 
+	bioticProc = "FilterBiotic", var = c("individualweight", "catchcount"), 
 	max.sampletype=49, list.out=TRUE, ...){
 	
 	# Function to detect species that are present in the data but not in the reference file:
@@ -1529,7 +1549,7 @@ mergeSpeciesMatrix <- function(...){
 #' @rdname generateSpeciesMatrix
 #' 
 aggregateBySpeciesCategory <- function(projectName, ref=NULL, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", 
-	stationVar=c("cruise", "serialno"), var=c("weight", "count"), na.as=0, drop.out=TRUE, close=TRUE, msg=TRUE, ...){
+	stationVar=c("cruise", "serialnumber"), var=c("individualweight", "catchcount"), na.as=0, drop.out=TRUE, close=TRUE, msg=TRUE, ...){
 	# Function used for converting a matrix into a data frame and appending the rownames as the first column:
 	createTempDataFrame <- function(x){
 		out <- data.frame(stationVar=rownames(x), as.data.frame(x))
@@ -1537,7 +1557,7 @@ aggregateBySpeciesCategory <- function(projectName, ref=NULL, specVar="noname", 
 		out
 	}
 	# Add concatination of 
-	appendStationFirst <- function(x, stationVar=c("cruise", "serialno")){
+	appendStationFirst <- function(x, stationVar=c("cruise", "serialnumber")){
 		Station <- do.call(paste, x[stationVar])
 		cbind(Station=Station, x, stringsAsFactors=FALSE)
 	}

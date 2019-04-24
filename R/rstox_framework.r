@@ -12,7 +12,7 @@
 #'
 #' @return A merged data table.
 #'
-merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "length", "lengthunit"), keys=c("cruise", "serialno", "samplenumber", "SpecCat"), keys.out=FALSE){
+merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "length", "lengthresolution"), keys=c("cruise", "serialnumber", "samplenumber", "SpecCat"), keys.out=FALSE){
 	# Get the keys common for the two data tables:
 	commonVar <- intersect(names(x), names(y))
 	thisKeys <- intersect(keys, commonVar)
@@ -106,9 +106,9 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 			has_weight <- !is.na(x$weight)
 			has_lengthsampleweight <- !is.na(x$lengthsampleweight)
 		has_weight <- has_weight & has_lengthsampleweight
-			has_count <- !is.na(x$count)
+			has_catchcount <- !is.na(x$catchcount)
 			has_lengthsamplecount <- !is.na(x$lengthsamplecount)
-		has_count <- has_count & has_lengthsamplecount
+		has_count <- has_catchcount & has_lengthsamplecount
 
 		has_weightORcount <- has_weight | has_count
 		has_NOTweightBUTcount <- !has_weight & has_count
@@ -135,8 +135,8 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	}
 	
 	##### Define dataset names: #####
-	var <- c("distance", "weight", "lengthsampleweight", "count", "lengthsamplecount", "length", "lengthunit")
-	keys <- c("cruise", "serialno", "SpecCat")
+	var <- c("distance", "catchweight", "lengthsampleweight", "catchcount", "lengthsamplecount", "length", "lengthresolution")
+	keys <- c("cruise", "serialnumber", "SpecCat")
 	aggregate_keys <- "samplenumber"
 	keys <- c(keys, aggregate_keys)
 	
@@ -178,9 +178,9 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	
 	
 	##### Get length intervals: #####
-	# The 'lengthunit' from biotic v1.4 is coded as given by getNMDinfo("lengthunit"), which says code = 1:7, resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001):
+	# The 'lengthresolution' from biotic v1.4 is coded as given by getNMDinfo("lengthresolution"), which says code = 1:7, resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001):
 	resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001)
-	lengthRes <- max(resolutionMeters[FishStation_CatchSample_Individual$lengthunit], na.rm=TRUE)
+	lengthRes <- max(resolutionMeters[FishStation_CatchSample_Individual$lengthresolution], na.rm=TRUE)
 	lengthResCM <- lengthRes * 100
 	
 	# Get largest length resolution:
@@ -198,6 +198,25 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	##### generate length distributions per station and SpecCat: #####
 	setkeyv(FishStation_CatchSample_Individual, cols=keys)
 	byGrp <- keys
+	
+	# Declare the variables used in the FishStation_CatchSample_Individual[] expression below (this is done to avoid warnings when building the package):
+	. <- NULL
+	distance <- NULL
+	has_SpecCat <- NULL
+	has_weightORcount <- NULL
+	has_onlyOnePartSample <- NULL
+	lengthInt <- NULL
+	weight <- NULL
+	lengthsampleweight <- NULL
+	has_weight <- NULL
+	has_NOTweightBUTcount <- NULL
+	WeightedCount <- NULL
+	count <- NULL
+	lengthsamplecount <- NULL
+	Station <- NULL
+	cruise <- NULL
+	serialnumber <- NULL
+	
 	out <- FishStation_CatchSample_Individual[,  .(
 		"WeightedCount" = tabulatePlusOne(lengthInt, rangeLengthInt), 
 		"LengthGroup (cm)" = lengthIntervals, 
@@ -217,6 +236,7 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	# Apply so called raising factors, which are total weight/count divided by sample weight/count:
 	out[has_weight==TRUE, WeightedCount := WeightedCount * weight / lengthsampleweight]
 	if(any(out$has_NOTweightBUTcount, na.rm=TRUE)){
+		message("Here there seems to be bug, where count is not present, and this shoul also be catchcount")
 		out[has_NOTweightBUTcount==TRUE, WeightedCount := WeightedCount * count / lengthsamplecount]
 	}
 	
@@ -233,10 +253,10 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	##### Output: #####
 	# Define the Station column, which is a concatination of cruise and seialno:
 	if(use.set){
-		set(out, j="Station", value=paste(out$cruise, out$serialno, sep="/"))
+		set(out, j="Station", value=paste(out$cruise, out$serialnumber, sep="/"))
 	}
 	else{
-		out[, Station := paste(cruise, serialno, sep="/")]
+		out[, Station := paste(cruise, serialnumber, sep="/")]
 	}
 	
 	# Convert to percent:
@@ -301,3 +321,195 @@ JavaJEXL2R <- function(x, eval=TRUE){
 		
 	return(x)
 }
+
+
+# runRstodFramework with function name and parameters, interpreted from string
+
+
+# The functions of the Rstox framework should adhere to the following guidelines:
+# 
+# 1. 
+# 
+
+
+
+rbindXML <- function(x){
+	
+	# Define a function that rbinds the ind'th element of each dataset:
+	rbindXML_oneElement <- function(name, x){
+		# Get the ind'th element of each list returned from readNMDxmlFile:
+		temp <- lapply(x, "[[", name)
+		# Fast rbind using data.table:
+		data.table::rbindlist(temp)
+	}
+	
+	# Rbind the levels across the files:
+	if(length(x) > 1){
+		
+		# Get the names of each element:
+		names_out <- lapply(x, names)
+		unique_names_out <- unique(unlist(names_out))
+		
+		# Rbind all fish stations, catch samples etc across files:
+		x <- lapply(unique_names_out, rbindlist_oneElement, x=x)
+		
+		# Set the names of the output:
+		names(x) <- unique_names_out
+	}
+	else{
+		x <- x[[1]]
+	}
+	
+	return(x)
+}
+
+#library(RNMDAPI)
+#
+## Test echosounder data
+#download.file("http://tomcat7.imr.no:8080/apis/nmdapi/biotic/v3/Forskningsfart%C3%B8y/2018/Johan%20Hjort_LDGJ/2018202/snapshot/latest", "test_biotic.xml")
+#system.time(test_biotic <- readNMDxmlFile("test_biotic.xml"))
+#
+#system.time(test_biotic <- readNMDxmlFile("~/workspace/stox/project/StoXVerTest/unix_18.2.0/Proj/Nor_Se_NOR_le_san_aco_abu_est_i_sp_2017_bioticV1.4/input/biotic/biotic_cruiseNumber_2017843_Eros.xml"))
+
+
+
+
+
+readNMDxmlFiles <- function(FileNames=NULL){
+	
+	# Define a function that rbinds the ind'th element of each dataset:
+	rbindlist_oneElement <- function(ind, x){
+		# Get the ind'th element of each list returned from readNMDxmlFile:
+		temp <- lapply(x, "[[", ind)
+		# Fast rbind using data.table:
+		data.table::rbindlist(temp)
+	}
+	
+	# Read the XML files in a loop:
+	out <- lapply(FileNames, readNMDxmlFile)
+	
+	# Rbind the levels across the files:
+	if(length(out) > 1){
+		# Get the names of the first element:
+		names_out <- names(out[[1]])
+		
+		# Rbind all fish stations, catch samples etc across files:
+		ind <- seq_along(out[[1]])
+		out <- lapply(ind, rbindlist_oneElement, x=out)
+		
+		# Set the names of the output:
+		names(out) <- names_out
+	}
+	else{
+		out <- out[[1]]
+	}
+	
+	return(out)
+}
+
+
+ReadBioticXML <- function(FileNames=NULL, bioticFormat="3.0"){
+	
+	# Read the biotic files:
+	out <- readNMDxmlFiles(FileNames=NULL)
+	
+	# Convert to the specified biotic data format (this function must detect the format that was read):
+	bioticFormat <- convertBiotic(out, bioticFormat=bioticFormat)
+	
+	# Do ther stuff with the data, such as merge specific levels:
+	
+	return(out)
+}
+
+
+
+
+ReadAcousticXML <- function(FileNames=NULL){
+	
+	# Define a function that rbinds the ind'th element of each dataset:
+	rbindlist_oneElement <- function(ind, x){
+		# Get the ind'th element of each list returned from readNMDxmlFile:
+		temp <- lapply(x, "[[", ind)
+		# Fast rbind using data.table:
+		data.table::rbindlist(temp)
+	}
+	
+	# Read the biotic XML files in a loop:
+	out <- lapply(FileNames, readNMDxmlFile)
+	
+	# Rbind the levels across the files:
+	if(length(out) > 1){
+		# Get the names of the first element:
+		names_out <- names(out[[1]])
+		
+		# Rbind all fish stations, catch samples etc across files:
+		ind <- seq_along(out[[1]])
+		out <- lapply(ind, rbindlist_oneElement, x=out)
+		
+		# Set the names of the output:
+		names(out) <- names_out
+	}
+	else{
+		out <- out[[1]]
+	}
+	
+	# Do ther stuff with the data, such as merge levels:
+	
+	return(out)
+}
+
+
+
+
+ReadBioticXML <- function(FileNames=NULL){
+	
+	# Define a function that rbinds the ind'th element of each dataset:
+	rbindlist_oneElement <- function(ind, x){
+		# Get the ind'th element of each list returned from readNMDxmlFile:
+		temp <- lapply(x, "[[", ind)
+		# Fast rbind using data.table:
+		data.table::rbindlist(temp)
+	}
+	
+	# Read the biotic XML files in a loop:
+	out <- lapply(FileNames, readNMDxmlFile)
+	
+	# Rbind the levels across the files:
+	if(length(out) > 1){
+		# Get the names of the first element:
+		names_out <- names(out[[1]])
+		
+		# Rbind all fish stations, catch samples etc across files:
+		ind <- seq_along(out[[1]])
+		out <- lapply(ind, rbindlist_oneElement, x=out)
+		
+		# Set the names of the output:
+		names(out) <- names_out
+	}
+	else{
+		out <- out[[1]]
+	}
+	
+	# Do ther stuff with the data, such as merge levels:
+	
+	return(out)
+}
+
+
+
+
+
+#projectName <- "Test_Rstox"
+#projectPaths <- getProjectPaths(projectName)
+#bioticFiles <- unlist(getBaseline(projectName, proc=NULL, input="ReadBioticXML", endProcess=1))
+#bioticFiles <- bioticFiles[startsWith(names(bioticFiles), "FileName")]
+#bioticFiles <- bioticFiles[!is.na(bioticFiles)]
+#bioticFiles <- file.path(projectPaths$projectPath, bioticFiles)
+#
+#
+#
+#system.time(bioticData <- getBaseline(projectName, proc=1, input=FALSE, endProcess=4))
+#system.time(bioticData <- getBaseline(projectName, proc=1, input=FALSE, startProcess=5, endProcess=5, reset=TRUE)) # 9.5 seconds
+#
+#system.time(d <- ReadBioticXML(bioticFiles)) # 7.5 seconds
+#

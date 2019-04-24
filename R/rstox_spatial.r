@@ -2024,10 +2024,6 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 	
 	# Add stratum names:
 	if(any(c("stratum", "strata") %in% tolower(plot))){
-		### stratum_centroid <- getCentroid(x$Input$lonlat)
-		### #p <- p + geom_text(data=x$Stratum, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"))
-		### p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", group="stratum"), fill=NA, colour="black", inherit.aes=FALSE)
-		### p <- p + geom_text(data=stratum_centroid, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"), colour=strataNameCol)
 		p <- addStratumBordersAndNames(p, x, strataNameCol=strataNameCol)
 	}
 	#annotate("text", x=x$Stratum$lon_centroid, y=x$Stratum$lat_centroid, label=x$Stratum$stratum, alpha=0.5, col=)
@@ -2259,8 +2255,8 @@ writeTransects <- function(x, projectName, dir=NULL, digits=5, byStratum=TRUE, c
 		Transect[,numericCols] <- round(Transect[,numericCols], digits=digits)
 		
 		# Write the data:
-		if(ext=="nc"){
-			#library(ncdf4)
+		if(ext=="nc" && requireNamespace("ncdf4", quietly = TRUE)){
+			
 			# Define the variables with Length and dimension state:
 			L <- nrow(Transect)
 			dimState <- ncdf4::ncdim_def(name="Row", units="count", vals=seq_len(L))
@@ -2484,7 +2480,13 @@ writeTransectsGPX <- function(x, projectName, dir=NULL, digits=5, prefix="", suf
 		
 		out <- data.frame(wp=seq_len(nrow(Transect)), Long=round(Transect$lon_start, digits=digits), Lat=round(Transect$lat_start, digits=digits), stringsAsFactors=FALSE)
 		# Use the suggested pgirmess package:
-		pgirmess::writeGPX(out, file=filename)
+		if(requireNamespace("pgirmess", quietly = TRUE)){
+			pgirmess::writeGPX(out, file=filename)
+		}
+		else{
+			warning("Package pgirmess not installed")
+		}
+		
 	}
 
 	# Split into strata, and set the files names as names of the list:

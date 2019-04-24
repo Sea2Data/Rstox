@@ -2870,6 +2870,9 @@ initiateRstoxEnv <- function(){
 	)
 	RReportFunctions <- getDefaultsAndPredefinedValues(RReportFunctions)
 	
+	# Define the dependencies to include in the version names of the automated testing:
+	internal_dependencies <- c("Reca")
+	
 		
 	# Assign to RstoxEnv and return the definitions:
 	Definitions <- list(
@@ -2891,7 +2894,8 @@ initiateRstoxEnv <- function(){
 		modelTypeJavaFuns = modelTypeJavaFuns, 
 		ECACovariates = ECACovariates, 
 		RFunctions = RFunctions, 
-		RReportFunctions = RReportFunctions
+		RReportFunctions = RReportFunctions, 
+		internal_dependencies = internal_dependencies
 	)
 	assign("Definitions", Definitions, envir=get("RstoxEnv"))
 	assign("Projects", list(), envir=get("RstoxEnv"))
@@ -2958,7 +2962,7 @@ getModelType <- function(modelType){
 #' @export
 #' @keywords internal
 #'
-getRstoxVersion <- function(out=c("list", "string"), dependencies=c("eca")){
+getRstoxVersion <- function(out=c("list", "string"), dependencies=getRstoxDef("internal_dependencies")){
 	Rstox.init()
 	ver <- list(Rstox=as.character(packageVersion("Rstox")), StoXLib=J("no.imr.stox.model.Project")$RESOURCE_VERSION)
 	installed <- installed.packages()[, "Package"]

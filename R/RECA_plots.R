@@ -375,7 +375,8 @@ get_g_s_a_frame <- function(eca) {
     )
   tothaul <-
     aggregate(
-      list(hauls = agedb$serialno),
+      # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+	  list(hauls = agedb$serialnumber),
       by = list(
         temporal = agedb$temporal,
         gearfactor = agedb$gearfactor,
@@ -445,7 +446,7 @@ plot_gear_temporal_area <-
       titletext="gear/temporal - area\nlanded (kt)\nage samples: #vessels,#catches,#individuals"
     }
     
-    requireNamespace("plotrix")
+    requireNamespace("plotrix", quietly = TRUE)
     m <- get_g_s_a_frame(eca)
     m$desc <-
       paste(m$landed_kt, "\n", m$vessels, ", ", m$hauls, ",", m$aged, sep = "")
@@ -664,7 +665,7 @@ plot_fixed_effect_coverage <-
            wrongcol = default_color_wrong,
            undersampledcol = default_color_empty
   ) {
-    requireNamespace("plotrix")
+    requireNamespace("plotrix", quietly = TRUE)
     fixed_effects <-
       stoxexport$resources$covariateInfo[stoxexport$resources$covariateInfo$covType ==
                                            "Fixed", "name"]
@@ -690,7 +691,8 @@ plot_fixed_effect_coverage <-
     names(biocol) = fixed_effects
     aggsamp <-
       aggregate(
-        list(catchsamples = samples$serialno),
+        # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+		list(catchsamples = samples$serialnumber),
         by = biocol,
         FUN = function(x) {
           length(unique(x))
@@ -786,7 +788,8 @@ default_blankcode="--"
 #' @pal palette for coloring sections
 #' @keywords internal
 plot_mission_types <- function(biotic, title="mission types\n# stations", blankcode=default_blankcode, pal=c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999')){
-  stations <- biotic[!duplicated(biotic[,c("cruise", "serialno")]),]
+  # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+  stations <- biotic[!duplicated(biotic[,c("cruise", "serialnumber")]),]
   stations$missiontype <- unlist(lapply(stations$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]}))
   
   tt <- as.character(stations$missiontype)
@@ -811,7 +814,8 @@ plot_mission_types <- function(biotic, title="mission types\n# stations", blankc
 #' @keywords internal
 plot_sample_types <- function(biotic, title="sample types", xlab="# catch samples", blankcode=default_blankcode, cex.names=0.8){
   
-  catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialno", "samplenumber", "species")]),]
+  # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+  catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "samplenumber", "species")]),]
   
   tt <- as.character(catchsample$sampletype)
   tt[is.na(tt)]<-""
@@ -843,7 +847,8 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
 #' @param cex.names expansion factor for bar labels
 #' @keywords internal
 plot_station_types <- function(biotic, title="station types", xlab="# stations", blankcode=default_blankcode, cex.names=0.8){
-  station <- biotic[!duplicated(biotic[,c("cruise", "serialno")]),]
+  # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+  station <- biotic[!duplicated(biotic[,c("cruise", "serialnumber")]),]
   
   tt <- as.character(station$fishstationtype)
   tt[is.na(tt)]<-""
@@ -888,11 +893,13 @@ plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch s
   if (length(unique(biotic$year))>1){
     stop("Does not work with multi-year data.")
   }
-  catches <- biotic[!duplicated(biotic[,c("cruise", "serialno", "samplenumber", "species")]),]
+  # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+  catches <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "samplenumber", "species")]),]
   catches[is.na(catches$trawlquality), "trawlquality"] <- rep(blankcode, sum(is.na(catches$trawlquality)))
   catches[is.na(catches$group), "group"] <- rep(blankcode, sum(is.na(catches$group)))
   
-  counts = aggregate(list(count=catches$serialno), by=list(cruise=catches$cruise, quality=catches$trawlquality, group=catches$group), FUN=length)
+  # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
+  counts = aggregate(list(count=catches$serialnumber), by=list(cruise=catches$cruise, quality=catches$trawlquality, group=catches$group), FUN=length)
   counts$label <- paste(unlist(lapply(counts$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]})), counts$quality, counts$group, sep="/")
   counts$catchrep <- rep(NA, nrow(counts))
   counts$color <- rep(NA, nrow(counts))

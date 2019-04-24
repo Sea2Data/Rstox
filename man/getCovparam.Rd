@@ -2,11 +2,13 @@
 % Please edit documentation in R/rstox_eca.r
 \name{getCovparam}
 \alias{getCovparam}
-\title{Extract the covaraite definitions}
+\title{Extract the covaraite definitions
+Returns NULL if parameter is missing}
 \usage{
 getCovparam(projectName, parameter)
 }
 \description{
 Extract the covaraite definitions
+Returns NULL if parameter is missing
 }
 \keyword{internal}

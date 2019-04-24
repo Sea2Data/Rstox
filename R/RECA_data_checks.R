@@ -43,7 +43,7 @@ makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, im
   # station issues
   #
   
-  common_columns_station <- c("cruise", "serialno", "startdate", "latitudestart", "longitudestart", "area", "location", "gear")
+  common_columns_station <- c("cruise", "serialnumber", "startdate", "latitudestart", "longitudestart", "area", "location", "gear")
   
   stationissues <- stoxexport$biotic[0,common_columns_station]
   
@@ -89,7 +89,7 @@ makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, im
   # catch sample issues
   #
   
-  common_columns_catch <- c( "cruise", "serialno", "species", "samplenumber", "catchweight", "lengthsampleweight", "lengthsamplecount")
+  common_columns_catch <- c( "cruise", "serialnumber", "species", "samplenumber", "catchweight", "lengthsampleweight", "lengthsamplecount")
   
   catchissues <- stoxexport$biotic[0,common_columns_catch]
   missingcatchweight <- stoxexport$biotic[is.na(stoxexport$biotic$catchweight) | stoxexport$biotic$catchweight==0,common_columns_catch]

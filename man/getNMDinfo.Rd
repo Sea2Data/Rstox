@@ -12,7 +12,7 @@ getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
   msg = FALSE, simplify = TRUE, return.URL = FALSE)
 
 getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
-  serialno = NULL, tsn = NULL, datasource = NULL, dir = NULL,
+  serialnumber = NULL, tsn = NULL, datasource = NULL, dir = NULL,
   subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
   prefix = "NMD", suffix = NA, ver = getRstoxDef("ver"),
   server = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
@@ -53,7 +53,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{shipname}{Specifies the ship name WITHOUT call signal, e.g., "G.O.Sars" and not "G.O.Sars_LMEL" (see 'cruise' and 'year').}
 
-\item{serialno}{A vector of the requested serial numbers.}
+\item{serialnumber}{A vector of the requested serial numbers.}
 
 \item{tsn}{The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.}
 

@@ -1,20 +1,17 @@
 Package: Rstox
-Title: Running Stox functionality independently in R
+Title: Running StoX functionality independently in R
 Version: 1.11.1
 Authors@R: c(
-  person("Arne Johannes", "Holmin", role = c("aut","cre"), email = "arnejh@imr.no"),
-  person("Edvin", "Fuglebakk", role = "ctb"),
-  person("Gjert Endre", "Dingsoer", role = "ctb"),
-  person("Aasmund", "Skaalevik", role = "ctb"),
-  person("Espen", "Johnsen", role = "ctb"))
-Author: Arne Johannes Holmin [aut, cre],
-  Edvin Fuglebakk [ctr],
-  Gjert Endre Dingsoer [ctr],
-  Aasmund Skaalevik [ctr],
-  Espen Johnsen [ctr]
-Maintainer: Arne Johannes Holmin <arnejh@imr.no>
+  person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
+  person(given = "Ibrahim", family = "Umar", role = "aut"), 
+  person(given = "Edvin", family = "Fuglebakk", role = "aut"), 
+  person(given = "Aasmund", family = "Skaalevik", role = "aut"), 
+  person(given = "Espen", family = "Johnsen", role = "aut"), 
+  person(given = "Atle", family = "Totland", role = "aut"), 
+  person(given = "Gjert Endre", family = "Dingsoer", role = "aut"))
 Depends: R (>= 3.5)
-Description: This package contains most of the functionality of the StoX software, which is used for assessment of fish and other marine resources based on biotic and acoustic survey and landings data, among other uses. Rstox is intended for further analyses of such data, facilitating iterations over an arbitrary number of parameter values and data sets.
+Description: The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
+URL: https://github.com/Sea2Data/Rstox
 BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
 LazyData: true
@@ -29,8 +26,7 @@ Imports:
 		sp,
 		XML
 Suggests: 
-    ggmap,
     ncdf4,
     pgirmess,
-    eca,
+    Reca,
     plotrix

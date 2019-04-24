@@ -895,3 +895,5 @@ Added the option of merging strata by specifying the parameter 'strata' as a lis
 Fixed bug in plotAbundance() when there is only one non-NA level of either 'grp1' or 'grp2'.
 
 Added the function plotFishStation() (and supporting funcitons) to plot the stations of a StoX project by species, possibly in different colors.
+
+Changed all serialno to serialnumber according to the change from biotic 1.4 to biotic 3.0 applied in StoX as of 2.7.7.
