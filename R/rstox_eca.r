@@ -1,17 +1,18 @@
 #' Compensates bug in stox where the covariate temporal is not set based on prosessdata when useProsessdata is chosen
 #' @keywords internal
-temporal_workaround <- function(landing, processdata, sourcetype){
-  if ("temporal" %in% names(landing)){
+temporal_workaround <- function(data, processdata, sourcetype){
+  if ("temporal" %in% names(data)){
     warning(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
     tempdef <- processdata$temporal[processdata$temporal$CovariateSourceType==sourcetype,]
     tempdef$mstart <- substr(tempdef$Value, 4,5)
     tempdef$mend <- substr(tempdef$Value, 10,11)
     tempdef$dstart <- substr(tempdef$Value, 1,2)
     tempdef$dend <- substr(tempdef$Value, 7,8)
-    tl <- landing
+
+    tl <- data
     if (sourcetype=="Biotic"){
-      tl$m <- substr(tl$startdate, 4,5)
-      tl$d <- substr(tl$startdate, 1,2)
+      tl$m <- substr(tl$stationstartdate, 4,5)
+      tl$d <- substr(tl$stationstartdate, 1,2)
     }
     else if (sourcetype=="Landing"){
       tl$m <- substr(tl$sistefangstdato, 6,7)
@@ -27,11 +28,11 @@ temporal_workaround <- function(landing, processdata, sourcetype){
       selector <- lte_end & gte_start
       tl[selector, "temporal"] <- tempdef[i, "Covariate"]
     }
-    landing$temporal <- tl$temporal
-    return(landing)
+    data$temporal <- tl$temporal
+    return(data)
   }
   else{
-    return(landing)
+    return(data)
   }
 }
 
@@ -98,7 +99,7 @@ baseline2eca <-
     # Function that retreives year, month, day, yearday:
     addYearday <-
       function(x,
-               datecar = "startdate",
+               datecar = "stationstartdate",
                tz = "UTC",
                format = "%d/%m/%Y") {
         x[[datecar]] <- as.POSIXlt(x[[datecar]], tz = tz, format = format)
@@ -198,18 +199,19 @@ baseline2eca <-
       # (2c) Add yearday, year and month:
       biotic <-
         addYearday(biotic,
-                   datecar = "startdate",
+                   datecar = "stationstartdate",
                    tz = "UTC",
                    format = "%d/%m/%Y")
       
       # (2d) Hard code the lengthunits (from the sampling handbook). This must be changed in the future, so that lengthunitmeters is present in the biotic file:
       # TO BE IMPLEMENTED: Read the lengthresolution from NMD, which here is named by lengthunitmeters and then renamed to lengthresM in getGlobalParameters():
       # TO BE IMPLEMENTED: lengthresolution <- getNMDinfo("lengthresolution")
+      
       lengthcode <- 1:7
       # Length unit codes in the reference tables:
       lengthmeters <- c(1, 5, 10, 30, 50, 0.5, 0.1) / 1000
       biotic$lengthunitmeters <-
-        lengthmeters[match(biotic$lengthunit, lengthcode)]
+        lengthmeters[match(biotic$lengthresolution, lengthcode)]
       
       
       # This section was removed with approval from Hanne and David. It was included for historical reasons, and the freqency column was supported in prevoius ECA versions, but we decided that there is no need for compressing the input data in this way anymore, given the assiciated complication of the input data:
@@ -646,9 +648,9 @@ getDataMatrixANDCovariateMatrix <-
     # Define variables to include in the DataMatrix, where the variable specified in the input 'var' is included:
     getnames <-
       c(
-        "LengthCentimeters",
+        "lengthcentimeter",
         "serialnumber",
-        "samplenumber",
+        "catchpartnumber",
         "lengthsamplecount",
         "lengthsampleweight",
         "catchweight",
@@ -668,6 +670,7 @@ getDataMatrixANDCovariateMatrix <-
     usenames <- c(vars, usenames)
     
     # Extract the data matrix:
+    
     DataMatrix <- getVar(eca$biotic, getnames)
     names(DataMatrix) <- usenames
     
@@ -810,8 +813,8 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
 #' @return logical vector identifying which individuals belong to a catchsample where age was sampled
 #' @keywords internal
 hasAgeInSample <- function(biotic){
-  hasage<-biotic[!is.na(biotic$age),c("serialnumber", "species", "samplenumber")]
-  return(paste(biotic$serialnumber, biotic$species, biotic$samplenumber, sep="/") %in% paste(hasage$serialnumber, hasage$species, hasage$samplenumber, sep="/"))
+  hasage<-biotic[!is.na(biotic$age),c("serialnumber", "catchcategory", "catchpartnumber")]
+  return(paste(biotic$serialnumber, biotic$catchcategory, biotic$catchpartnumber, sep="/") %in% paste(hasage$serialnumber, hasage$catchcategory, hasage$catchpartnumber, sep="/"))
 }
 
 #' Function for converting to the input format required by ECA (this is the main function):
@@ -874,7 +877,8 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
 #' @keywords internal
 getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
   # Extract the non-NAs:
-  var <- "weight"
+  
+  var <- "individualweightgram"
   # Remove missing values from the DataMatrix and from the eca$covariateMatrixBiotic:
   valid <- !is.na(eca$biotic[[var]])
   eca$biotic <- eca$biotic[valid, , drop = FALSE]
@@ -888,12 +892,11 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
   CovariateMatrix <- temp$CovariateMatrix
   resources <- temp$resources
   
-  
   #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
   # Hard code the weight to KG, since it is in grams in StoX:
   weightunit <- 1e-3
   DataMatrix <-
-    cbind(weightKG = eca$biotic$weight * weightunit, DataMatrix)
+    cbind(weightKG = eca$biotic$individualweightgram * weightunit, DataMatrix)
   
   ### 2. CovariateMatrix: ###
   #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
@@ -1004,10 +1007,10 @@ prepareRECA <-
       ))
     }
     eca <- baseline2eca(projectName, landingresolution = temporalresolution)
-    
+
     #max length in cm
     if (is.null(maxlength)) {
-      maxlength <- max(eca$biotic$length)
+      maxlength <- max(eca$biotic$lengthcentimeter)
     }
     #consider if it makes sense to extract from data for minage and maxage as well
     
@@ -1866,7 +1869,7 @@ reportRECA <-
     finally = {
       
     })
-    
+
     tryCatch({
       pd <- loadProjectData(projectName, var = "prepareRECA")
       stationissuesfilename <-
