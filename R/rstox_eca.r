@@ -1,3 +1,40 @@
+#' Compensates bug in stox where the covariate temporal is not set based on prosessdata when useProsessdata is chosen
+#' @keywords internal
+temporal_workaround <- function(landing, processdata, sourcetype){
+  if ("temporal" %in% names(landing)){
+    warning(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
+    tempdef <- processdata$temporal[processdata$temporal$CovariateSourceType==sourcetype,]
+    tempdef$mstart <- substr(tempdef$Value, 4,5)
+    tempdef$mend <- substr(tempdef$Value, 10,11)
+    tempdef$dstart <- substr(tempdef$Value, 1,2)
+    tempdef$dend <- substr(tempdef$Value, 7,8)
+    tl <- landing
+    if (sourcetype=="Biotic"){
+      tl$m <- substr(tl$startdate, 4,5)
+      tl$d <- substr(tl$startdate, 1,2)
+    }
+    else if (sourcetype=="Landing"){
+      tl$m <- substr(tl$sistefangstdato, 6,7)
+      tl$d <- substr(tl$sistefangstdato, 9,10)
+    }
+    else{
+      stop("Source type not supported for workarund")
+    }
+
+    for (i in 1:nrow(tempdef)){
+      lte_end <- (tl$m < tempdef[i,"mend"] | (tl$m == tempdef[i,"mend"] & tl$d <= tempdef[i,"dend"]))
+      gte_start <- (tl$m > tempdef[i,"mstart"] | (tl$m == tempdef[i,"mstart"] & tl$d >= tempdef[i,"dstart"]))
+      selector <- lte_end & gte_start
+      tl[selector, "temporal"] <- tempdef[i, "Covariate"]
+    }
+    landing$temporal <- tl$temporal
+    return(landing)
+  }
+  else{
+    return(landing)
+  }
+}
+
 #' Extract the covaraite definitions
 #' Returns NULL if parameter is missing
 #' @keywords internal
@@ -110,7 +147,8 @@ baseline2eca <-
       # (1a) Get the data and convert variable names to lower case:
       landing <- baselineOutput$outputData[[landing[1]]]
       names(landing) <- tolower(names(landing))
-      
+
+      landing <- temporal_workaround(landing, baselineOutput$processData, "Landing")
       # 2018-08-28: Changed to using 'sistefangstdato' as per comment from Edvin:
       landing <-
         addYearday(landing,
@@ -126,6 +164,7 @@ baseline2eca <-
       # (2a) Get the data and convert variable names to lower case:
       biotic <- baselineOutput$outputData[[biotic[1]]]
       names(biotic) <- tolower(names(biotic))
+      biotic <- temporal_workaround(biotic, baselineOutput$processData, "Biotic")
       
       # Detect whether temporal is defined with seasons, and add year and season and remove temporal in the process data:
       # This caused error with cod and could be solved with Jira STOX-153:
