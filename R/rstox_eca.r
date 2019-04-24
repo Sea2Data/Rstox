@@ -385,7 +385,7 @@ baseline2eca <-
       # This process assigns TRUE to CAR only if the parameter 'UseStratumNeighbour' exists and is equal to the string "true". All other values except empty values (NULL) implies FALSE. If the parameter 'UseStratumNeighbour' is not present, NA is used:
       temp <-
         lapply(covariateNames, function(xx)
-          getCovparam(projectName, "UseStratumNeighbour")[[xx]] %in% TRUE)
+          getCovparam(projectName, "UseStratumNeighbour")[[xx]]=="true")
       CAR[unlist(lapply(temp, length)) > 0] <- unlist(temp)
       # Make sure that CAR is a logical:
       CAR[is.na(CAR)] <- FALSE
