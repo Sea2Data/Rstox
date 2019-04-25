@@ -18,7 +18,7 @@ saveCatchMatrix(pred, filename, var = "Abundance", unit = "ones",
 
 \item{main}{Title for the analysis, to be included as comment in saved file (e.g. species and year)}
 
-\item{savemeans}{If True, only means for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.}
+\item{savemeans}{If True, only means and spread statistics for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.}
 }
 \description{
 Write catch at age predicted by \code{\link[eca]{eca.predict}} as csv file.

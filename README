@@ -1,4 +1,4 @@
-# Rstox version: 1.11.1 (latest alpha, 2019-04-23)
+# Rstox version: 1.11.1 (latest alpha, 2019-04-25)
 # R version: 3.5
 
 
@@ -41,9 +41,9 @@ devtools::install_github("Sea2Data/Rstox")
 # 	sudo ln -s $(/usr/libexec/java_home)/jre/lib/server/libjvm.dylib /usr/local/lib
 # 	sudo R CMD javareconf
 # Open R (close and then open if already open) and install rJava:
-# 	install.packages('rJava', type='source')
-# 	install.packages('rJava', type="binary")
-# If this fails, try installing from source instead using install.packages('rJava', type='source')
+# 	utils::install.packages('rJava', type='source')
+# 	utils::install.packages('rJava', type="binary")
+# If this fails, try installing from source instead using utils::install.packages('rJava', type='source')
 # Then the installed Rstox should work.
 
 
