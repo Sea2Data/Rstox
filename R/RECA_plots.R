@@ -186,8 +186,8 @@ plot_weight_at_age <- function(biotic, pred, unit, alpha=0.01, xlab="age", ylab=
   plottingUnitBiotic=getPlottingUnit(unit=unit, var="Weight", baseunit="grams", def.out = F)
   
   #sample weights by age
-  maxweights <- aggregate(list(weight=biotic$weight), by=list(age=biotic$age), FUN=function(x){max(x, na.rm=T)})
-  minweights <- aggregate(list(weight=biotic$weight), by=list(age=biotic$age), FUN=function(x){min(x, na.rm=T)})
+  maxweights <- aggregate(list(weight=biotic$individualweight), by=list(age=biotic$age), FUN=function(x){max(x, na.rm=T)})
+  minweights <- aggregate(list(weight=biotic$individualweight), by=list(age=biotic$age), FUN=function(x){min(x, na.rm=T)})
   maxweights$weight <- maxweights$weight/plottingUnitBiotic$scale
   minweights$weight <- minweights$weight/plottingUnitBiotic$scale
   
@@ -242,8 +242,8 @@ plot_length_at_age <- function(biotic, pred, xlab="age", alpha=0.01, ylab=paste(
   ecascale = 1
   
   #sample length by age
-  maxlengths <- aggregate(list(length=biotic$length), by=list(age=biotic$age), FUN=function(x){max(x, na.rm=T)})
-  minlengths <- aggregate(list(length=biotic$length), by=list(age=biotic$age), FUN=function(x){min(x, na.rm=T)})
+  maxlengths <- aggregate(list(length=biotic$lengthcentimeter), by=list(age=biotic$age), FUN=function(x){max(x, na.rm=T)})
+  minlengths <- aggregate(list(length=biotic$lengthcentimeter), by=list(age=biotic$age), FUN=function(x){min(x, na.rm=T)})
   maxlengths$length <- maxlengths$length/bioticscale
   minlengths$length <- minlengths$length/bioticscale
   
