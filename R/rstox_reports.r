@@ -1196,7 +1196,10 @@ reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit
 		filename <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_")), ".txt")
 		moveToTrash(filename)
 		writeLines(paste(names(plottingUnit), unlist(plottingUnit), sep=": "), con=filename)
-		
+
+		filenameCov <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_")), "_covar.txt")
+		moveToTrash(filenameCov)
+
 		# Set significant digits in the printed file:
 		#suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
 		print(out)
@@ -1204,6 +1207,7 @@ reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit
 		#areNumeric <- sapply(out, is.numeric)
 		#out[areNumeric] <- lapply(out[areNumeric], signif, digits=digits)
 		suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
+		suppressWarnings(write.table(covarMatrix, file=filenameCov, append=TRUE, sep="\t", dec=".", row.names=TRUE))
 	}
 	else{
 		filename <- NULL
