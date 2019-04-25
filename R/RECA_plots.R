@@ -817,19 +817,17 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
   catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "catchpartnumber", "catchcategory")]),]
   
+  
   tt <- as.character(catchsample$sampletype)
-  tt[is.na(tt)]<-""
+  tt[is.na(tt)]<-blankcode
   tt <- table(tt)
   tt <- sort(tt, decreasing=T)
   
   labels <- getNMDinfo("sampletype")
-  labels <- labels[labels$code %in% names(tt),c("code", "shortname")]
+  labels <- labels[,c("code", "shortname")]
+  labels <- rbind(labels, c(blankcode, "unkown"))
+  labels <- labels[labels$code %in% names(tt),]
   labels <- labels[match(labels$code, names(tt)),]
-  
-  names(tt)[names(tt)==""] <- blankcode
-  if (sum(labels$code=="")>0){
-    labels[labels$code=="","code"] <- blankcode  
-  }
   
   if (length(tt)>1){
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)    
@@ -850,27 +848,23 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
   station <- biotic[!duplicated(biotic[,c("cruise", "serialnumber")]),]
   
-  tt <- as.character(station$fishstationtype)
-  tt[is.na(tt)]<-""
+  tt <- as.character(station$stationtype)
+  tt[is.na(tt)]<-blankcode
   tt <- table(tt)
   tt <- sort(tt, decreasing=T)
   
   labels <- getNMDinfo("fishstationtype")
-  labels <- labels[labels$name %in% names(tt),c("code", "shortname")]
-  labels <- labels[match(labels$name, names(tt)),]
-  
-  names(tt)[names(tt)==""] <- blankcode
-  if (sum(labels$code=="")>0){
-    labels[labels$code=="","code"] <- blankcode  
-  }
-  
+  labels <- labels[,c("code", "shortname")]
+  labels <- rbind(labels, c(blankcode, "unkown"))
+  labels <- labels[labels$code %in% names(tt),]
+  labels <- labels[match(labels$code, names(tt)),]
+    
   if(length(tt)>1){
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)  
   }
   else{
     pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""), main=title)
   }
-  
   
 }
 
@@ -895,11 +889,11 @@ plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch s
   }
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
   catches <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "catchpartnumber", "catchcategory")]),]
-  catches[is.na(catches$trawlquality), "trawlquality"] <- rep(blankcode, sum(is.na(catches$trawlquality)))
+  catches[is.na(catches$samplequality), "samplequality"] <- rep(blankcode, sum(is.na(catches$samplequality)))
   catches[is.na(catches$group), "group"] <- rep(blankcode, sum(is.na(catches$group)))
   
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
-  counts = aggregate(list(count=catches$serialnumber), by=list(cruise=catches$cruise, quality=catches$trawlquality, group=catches$group), FUN=length)
+  counts = aggregate(list(count=catches$serialnumber), by=list(cruise=catches$cruise, quality=catches$samplequality, group=catches$group), FUN=length)
   counts$label <- paste(unlist(lapply(counts$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]})), counts$quality, counts$group, sep="/")
   counts$catchrep <- rep(NA, nrow(counts))
   counts$color <- rep(NA, nrow(counts))
