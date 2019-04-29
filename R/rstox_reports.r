@@ -993,6 +993,7 @@ factorNAfirst <- function(x){
 #' @param numberscale		Kept for compability with older versions. Use 'unit' instead. (Scale results with e.g. 1000 or 1000000).
 #' @param plotOutput		Logical: if TRUE return a list of the recuired data in the function plotAbundance(). Otherwise, only the abundance data frame is returned.
 #' @param write				Logical: if TRUE write the data to a tab-separated file.
+#' @param covfun			The function to use when generating covariance/correlation matrices for each grouping variable (\code{grp1}, \code{grp2}).
 #' 
 #' @return A data frame of the abundance in sumary per grp2 and grp1 if plotOutput=FALSE, and a list holding this object (keeping "-" for missing values and not ordering) and other objects needed by plotAbundance().
 #'
@@ -1087,7 +1088,7 @@ reportAbundance_SweptAreaTotal <- function(projectName, unit=NULL, baseunit=NULL
 #' @keywords internal
 #' @rdname reportAbundance
 #' 
-reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, digits=6){
+reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit=NULL, level="bootstrapImpute", grp1="age", grp2=NULL, numberscale=1e6, plotOutput=FALSE, write=FALSE, digits=6, covfun="cov"){
 	# Read the saved data from the R model. In older versions the user loaded the file "rmodel.RData" separately, but in the current code the environment "RstoxEnv" is declared on load of Rstox, and all relevant outputs are assigned to this environment:
 	projectEnv <- loadProjectData(projectName=projectName, var=level)
 	
@@ -1185,31 +1186,39 @@ reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit
 	rownames(out) <- NULL
 	
 	## Calculate covariance matrix
-	covarMatrix <- cov(t(xtabs(as.formula(paste0("Ab.Sum ~ ", paste(byGrp, collapse= " + "))), abundanceSumDT, na.action = na.pass, exclude = NULL)))
-
+	# Get first the contingency table for the specified grp1 and grp2:
+	contingencyTable <- xtabs(as.formula(paste0("Ab.Sum ~ ", paste(byGrp, collapse= " + "))), abundanceSumDT, na.action = na.pass, exclude = NULL)
+	# For each grouping, get the covariance matrix:
+	grp <- byGrp[-length(byGrp)]
+	
+	
+	# Get all possible covariance/correlation matrices:
+	covMatrices <- lapply(grp, covOfOneGrp, contingencyTable, projectName=projectName, level=level, var=plottingUnit$var, covfun=covfun)
+	names(covMatrices) <- grp
+	
 	# Write the data to a tab-separated file:
 	if(write){
-		# Set temporary grp1 to NULL:
-		#if(grp1=="temp"){
-		#	grp1 <- NULL
-		#}
-		filename <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_")), ".txt")
-		moveToTrash(filename)
-		writeLines(paste(names(plottingUnit), unlist(plottingUnit), sep=": "), con=filename)
-		
+		filename_abnd <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(level, plottingUnit$var, grp1, grp2), collapse="_")), ".txt")
+		moveToTrash(filename_abnd)
+		writeLines(paste(names(plottingUnit), unlist(plottingUnit), sep=": "), con=filename_abnd)
 		# Set significant digits in the printed file:
-		#suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
+		#suppressWarnings(write.table(out, file=filename_abnd, append=TRUE, sep="\t", dec=".", row.names=FALSE))
 		print(out)
 		#options(scipen=999)
 		#areNumeric <- sapply(out, is.numeric)
 		#out[areNumeric] <- lapply(out[areNumeric], signif, digits=digits)
-		suppressWarnings(write.table(out, file=filename, append=TRUE, sep="\t", dec=".", row.names=FALSE))
+		suppressWarnings(write.table(out, file=filename_abnd, append=TRUE, sep="\t", dec=".", row.names=FALSE))
+		
+		# Write the covariance matrices:
+		filename_cov <- suppressWarnings(sapply(covMatrices, writeCovMatrix))
+		
+		filenames <- c(filename_abnd, filename_cov)
 	}
 	else{
-		filename <- NULL
+		filenames <- NULL
 	}
 	
-	outlist <- c(list(abnd=out, covar=covarMatrix, filename=filename), plottingUnit)
+	outlist <- c(list(abnd=out, covMatrices=covMatrices, filename=filenames), plottingUnit)
 	
 	if(plotOutput){
 		#outlist <- c(outlist, list(grp1.unknown=grp1.unknown, abundanceSum=abundanceSum, unique_grp1=unique_grp1, unique_grp2=unique_grp2, Ab.Sum=abundanceSumDT$Ab.Sum, abundanceSumDT=abundanceSumDT))
@@ -1218,7 +1227,35 @@ reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit
 	}
 	outlist
 }
-
+# Function for getting a covariance matrix for a specific grouping variable:
+covOfOneGrp <- function(grp, x, projectName, level, var, covfun="cov"){
+	# Sum over the remaining groups:
+	dimnamesx <- dimnames(x)
+	grpnames <- names(dimnamesx)
+	by <- c(match(grp, grpnames), length(dimnamesx))
+	thisgrp <- grpnames[by[1]]
+	covMatrix <- apply(x, by, sum)
+	# Get the covariance/correlation matrix:
+	covMatrix <- do.call(covfun, list(t(covMatrix)))
+	dimnames(covMatrix) <- lapply(dimnames(covMatrix), function(x) paste(thisgrp, x, sep="_"))
+	
+	# Get the file name:
+	filename <- paste0(file.path(getProjectPaths(projectName)$RReportDir, paste0(c(covfun, level, var, thisgrp), collapse="_")), ".txt")
+	
+	# Return a list of the covariance matrix and the file name:
+	out <- list(
+		covMatrix = covMatrix, 
+		filename = filename
+		)
+	
+	return(out)
+}
+# Function for writing the covariance/correlation matrices:
+writeCovMatrix <- function(x){
+	moveToTrash(x$filename)
+	suppressWarnings(write.table(x$covMatrix, file=x$filename, append=FALSE, sep="\t", dec=".", row.names=TRUE))
+	x$filename
+}
 
 #*********************************************
 #*********************************************

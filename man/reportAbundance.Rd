@@ -28,7 +28,7 @@ reportAbundance_SweptAreaTotal(projectName, unit = NULL,
 reportAbundanceAtLevel(projectName, var = "count", unit = NULL,
   baseunit = NULL, level = "bootstrapImpute", grp1 = "age",
   grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE,
-  write = FALSE, digits = 6)
+  write = FALSE, digits = 6, covfun = "cov")
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
@@ -50,6 +50,8 @@ reportAbundanceAtLevel(projectName, var = "count", unit = NULL,
 \item{write}{Logical: if TRUE write the data to a tab-separated file.}
 
 \item{level}{A string naming the process level (see getRstoxEnv()$processLevels for available levels).}
+
+\item{covfun}{The function to use when generating covariance/correlation matrices for each grouping variable (\code{grp1}, \code{grp2}).}
 }
 \value{
 A data frame of the abundance in sumary per grp2 and grp1 if plotOutput=FALSE, and a list holding this object (keeping "-" for missing values and not ordering) and other objects needed by plotAbundance().
