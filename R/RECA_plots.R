@@ -824,10 +824,12 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
   tt <- sort(tt, decreasing=T)
   
   labels <- getNMDinfo("sampletype")
-  labels <- labels[,c("code", "shortname")]
-  labels <- rbind(labels, c(blankcode, "unkown"))
-  labels <- labels[labels$code %in% names(tt),]
-  labels <- labels[match(labels$code, names(tt)),]
+  if (!is.null(labels)){
+    labels <- labels[,c("code", "shortname")]
+    labels <- rbind(labels, c(blankcode, "unkown"))
+    labels <- labels[labels$code %in% names(tt),]
+    labels <- labels[match(labels$code, names(tt)),]
+  }
   
   if (length(tt)>1){
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)    
@@ -854,10 +856,12 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
   tt <- sort(tt, decreasing=T)
   
   labels <- getNMDinfo("fishstationtype")
-  labels <- labels[,c("code", "shortname")]
-  labels <- rbind(labels, c(blankcode, "unkown"))
-  labels <- labels[labels$code %in% names(tt),]
-  labels <- labels[match(labels$code, names(tt)),]
+  if (!is.null(labels)){
+    labels <- labels[,c("code", "shortname")]
+    labels <- rbind(labels, c(blankcode, "unkown"))
+    labels <- labels[labels$code %in% names(tt),]
+    labels <- labels[match(labels$code, names(tt)),]
+  }
     
   if(length(tt)>1){
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)  
