@@ -1417,10 +1417,14 @@ plotSamplingOverview <-
     #
     # Samples by cells
     #
+    
     if (all(c("gearfactor", "temporal", "spatial") %in% stoxexp$resources$covariateInfo$name)) {
       rows <-
         nrow(unique(get_gta_landings(stoxexp)[, c("gearfactor", "temporal")]))
       cols <- length(unique(get_gta_landings(stoxexp)$spatial))
+      
+      cols <- max(13, cols)
+      rows <- max(3, rows)
       
       if (format == "png") {
         #dimension in pixels

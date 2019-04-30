@@ -470,17 +470,16 @@ plot_gear_temporal_area <-
               dim(landed))
     descr <-
       descr[rowSums(landed) > 0 |
-              rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0]
+              rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0, drop=F]
     col <-
       col[rowSums(landed) > 0 |
-            rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0]
+            rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0, drop=F]
     landed <-
       landed[rowSums(landed) > 0 |
-               rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0]
+               rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0, drop=F]
     colnames(descr) <- colnames(landed)
     rownames(descr) <- rownames(landed)
     
-    #deal with sizing and such when output device is clear
     #calculate plot size
     plot.new()
     plotrix::addtable2plot(
