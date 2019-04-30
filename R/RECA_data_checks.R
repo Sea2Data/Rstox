@@ -1,31 +1,6 @@
 #' Checks for data issues wrp to running RECA
 #' 
 
-#' Checks for NAs in columns commonly used for setting covariates
-#' @keywords internal
-check_common_covariates_for_NAs <- function(stoxexport){
-  # startdate
-  # position or area code
-  # gear
-  
-}
-
-#' Checks for NAs in catch parameters needed
-#' @keywords internal
-check_catch_variables_for_NAs <- function(stoxexport){
-  # catchweight
-  # sample weight
-  # sample number
-}
-
-#' @keywords internal
-#' Checks for indicators that stox-provided imputation tools or parameter estimation tools are needed
-check_if_data_massaging_needed <- function(stoxexport){
-  # area but not position
-  # mixed product types
-  # mixed length measurements
-}
-
 #' Data report for RECA
 #' @description Generates reports on data issues that might need to be addressed before running RECA
 #' @details Checks data exported from stox for missing mandatory information, and issues that will invalidate common covariate-configurations
@@ -58,10 +33,10 @@ makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, im
   
   #missing temporal covariate not yet accounted for
   if (!is.null(stations$temporal)){
-    missingspatial <- stations[is.na(stations$spatial) & !(stations$serialnumber %in% missingstartdate$serialnumber),common_columns_station]
-    if (nrow(missingspatial)>0){
-      missingspatial$issue <- "missing spatial covariate"
-      stationissues <- rbind(stationissues, missingspatial)
+    missingtemporal <- stations[is.na(stations$temporal) & !(stations$serialnumber %in% missingstartdate$serialnumber),common_columns_station]
+    if (nrow(missingtemporal)>0){
+      missingtemporal$issue <- "missing temporal covariate (has station startdate)"
+      stationissues <- rbind(stationissues, missingtemporal)
     } 
   }
   
@@ -76,7 +51,7 @@ makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, im
   if (!is.null(stations$spatial)){
     missingposition <- stations[is.na(stations$spatial) & !(stations$serialnumber %in% missingposition$serialnumber),common_columns_station]
     if (nrow(missingposition)>0){
-      missingposition$issue <- "missing spatial covariate"
+      missingposition$issue <- "missing spatial covariate (has position or area code)"
       stationissues <- rbind(stationissues, missingposition)
     }
   }
@@ -92,7 +67,7 @@ makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, im
   if (!is.null(stations$gearfactor)){
     missinggear <- stations[is.na(stations$gearfactor) & !(stations$serialnumber %in% missinggear$serialnumber),common_columns_station]
     if (nrow(missinggear)>0){
-      missinggear$issue <- "missing gear covariate"
+      missinggear$issue <- "missing gear covariate (has gear code)"
       stationissues <- rbind(stationissues, missinggear)
     }
   }
