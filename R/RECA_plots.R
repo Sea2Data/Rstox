@@ -470,17 +470,16 @@ plot_gear_temporal_area <-
               dim(landed))
     descr <-
       descr[rowSums(landed) > 0 |
-              rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0]
+              rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0, drop=F]
     col <-
       col[rowSums(landed) > 0 |
-            rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0]
+            rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0, drop=F]
     landed <-
       landed[rowSums(landed) > 0 |
-               rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0]
+               rowSums(aged) > 0, colSums(landed) > 0 | colSums(aged) > 0, drop=F]
     colnames(descr) <- colnames(landed)
     rownames(descr) <- rownames(landed)
     
-    #deal with sizing and such when output device is clear
     #calculate plot size
     plot.new()
     plotrix::addtable2plot(
@@ -824,10 +823,12 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
   tt <- sort(tt, decreasing=T)
   
   labels <- getNMDinfo("sampletype")
-  labels <- labels[,c("code", "shortname")]
-  labels <- rbind(labels, c(blankcode, "unkown"))
-  labels <- labels[labels$code %in% names(tt),]
-  labels <- labels[match(labels$code, names(tt)),]
+  if (!is.null(labels)){
+    labels <- labels[,c("code", "shortname")]
+    labels <- rbind(labels, c(blankcode, "unkown"))
+    labels <- labels[labels$code %in% names(tt),]
+    labels <- labels[match(labels$code, names(tt)),]
+  }
   
   if (length(tt)>1){
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)    
@@ -854,10 +855,12 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
   tt <- sort(tt, decreasing=T)
   
   labels <- getNMDinfo("fishstationtype")
-  labels <- labels[,c("code", "shortname")]
-  labels <- rbind(labels, c(blankcode, "unkown"))
-  labels <- labels[labels$code %in% names(tt),]
-  labels <- labels[match(labels$code, names(tt)),]
+  if (!is.null(labels)){
+    labels <- labels[,c("code", "shortname")]
+    labels <- rbind(labels, c(blankcode, "unkown"))
+    labels <- labels[labels$code %in% names(tt),]
+    labels <- labels[match(labels$code, names(tt)),]
+  }
     
   if(length(tt)>1){
     barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)  

@@ -1,31 +1,6 @@
 #' Checks for data issues wrp to running RECA
 #' 
 
-#' Checks for NAs in columns commonly used for setting covariates
-#' @keywords internal
-check_common_covariates_for_NAs <- function(stoxexport){
-  # startdate
-  # position or area code
-  # gear
-  
-}
-
-#' Checks for NAs in catch parameters needed
-#' @keywords internal
-check_catch_variables_for_NAs <- function(stoxexport){
-  # catchweight
-  # sample weight
-  # sample number
-}
-
-#' @keywords internal
-#' Checks for indicators that stox-provided imputation tools or parameter estimation tools are needed
-check_if_data_massaging_needed <- function(stoxexport){
-  # area but not position
-  # mixed product types
-  # mixed length measurements
-}
-
 #' Data report for RECA
 #' @description Generates reports on data issues that might need to be addressed before running RECA
 #' @details Checks data exported from stox for missing mandatory information, and issues that will invalidate common covariate-configurations
@@ -37,35 +12,64 @@ check_if_data_massaging_needed <- function(stoxexport){
 #' @param catchissuefile file for writing catch sample issues
 #' @param imputationfile file for writing report on issues that may need data massaging (imputation or estimation)
 #' @param verbose If true, summary and file locations will be printed to stdout
+#' @keywords internal
 makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, imputationfile, verbose=T){
   
   #
   # station issues
   #
   
-  common_columns_station <- c("cruise", "serialnumber", "startdate", "latitudestart", "longitudestart", "area", "location", "gear")
+  stations <- stoxexport$biotic[!duplicated(stoxexport$biotic[c("cruise", "serialnumber")]),]
+  common_columns_station <- c("cruise", "serialnumber", "stationstartdate", "latitudestart", "longitudestart", "area", "location", "gear")
   
   stationissues <- stoxexport$biotic[0,common_columns_station]
   
   # missing time
-  missingstartdate <- stoxexport$biotic[is.na(stoxexport$biotic$startdate),common_columns_station]
+  missingstartdate <- stations[is.na(stations$stationstartdate),common_columns_station]
   if (nrow(missingstartdate)>0){
     missingstartdate$issue <- "missing startdate"
     stationissues <- rbind(stationissues, missingstartdate)
   }
   
+  #missing temporal covariate not yet accounted for
+  if (!is.null(stations$temporal)){
+    missingtemporal <- stations[is.na(stations$temporal) & !(stations$serialnumber %in% missingstartdate$serialnumber),common_columns_station]
+    if (nrow(missingtemporal)>0){
+      missingtemporal$issue <- "missing temporal covariate (has station startdate)"
+      stationissues <- rbind(stationissues, missingtemporal)
+    } 
+  }
+  
   #missing position or area code
-  missingposition <- stoxexport$biotic[(is.na(stoxexport$biotic$latitudestart) | is.na(stoxexport$biotic$latitudeend)) & (is.na(stoxexport$biotic$location) | is.na(stoxexport$biotic$area)),common_columns_station]
+  missingposition <- stations[(is.na(stations$latitudestart) | is.na(stations$latitudeend)) & (is.na(stations$location) | is.na(stations$area)),common_columns_station]
   if (nrow(missingposition)>0){
     missingposition$issue <- "missing start positions or area codes"
     stationissues <- rbind(stationissues, missingposition)
   }
   
+  #missing spatial covariate not yet accounted for
+  if (!is.null(stations$spatial)){
+    missingposition <- stations[is.na(stations$spatial) & !(stations$serialnumber %in% missingposition$serialnumber),common_columns_station]
+    if (nrow(missingposition)>0){
+      missingposition$issue <- "missing spatial covariate (has position or area code)"
+      stationissues <- rbind(stationissues, missingposition)
+    }
+  }
+  
   #missing gear
-  missinggear <- stoxexport$biotic[is.na(stoxexport$biotic$gear),common_columns_station]
+  missinggear <- stations[is.na(stations$gear),common_columns_station]
   if (nrow(missinggear)>0){
     missinggear$issue <- "missing gear code"
     stationissues <- rbind(stationissues, missinggear)
+  }
+  
+  #missing gear covariate not yet accounted for
+  if (!is.null(stations$gearfactor)){
+    missinggear <- stations[is.na(stations$gearfactor) & !(stations$serialnumber %in% missinggear$serialnumber),common_columns_station]
+    if (nrow(missinggear)>0){
+      missinggear$issue <- "missing gear covariate (has gear code)"
+      stationissues <- rbind(stationissues, missinggear)
+    }
   }
  
   if (nrow(stationissues)>0){
@@ -89,20 +93,21 @@ makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, im
   # catch sample issues
   #
   
-  common_columns_catch <- c( "cruise", "serialnumber", "species", "samplenumber", "catchweight", "lengthsampleweight", "lengthsamplecount")
+  catches <- stoxexport$biotic[!duplicated(stoxexport$biotic[c("cruise", "serialnumber", "species", "catchpartnumber")]),]
+  common_columns_catch <- c( "cruise", "serialnumber", "species", "catchpartnumber", "catchweight", "lengthsampleweight", "lengthsamplecount")
   
   catchissues <- stoxexport$biotic[0,common_columns_catch]
-  missingcatchweight <- stoxexport$biotic[is.na(stoxexport$biotic$catchweight) | stoxexport$biotic$catchweight==0,common_columns_catch]
+  missingcatchweight <- catches[is.na(catches$catchweight) | catches$catchweight==0,common_columns_catch]
   if (nrow(missingcatchweight)){
     missingcatchweight$issue <- "missing or 0 catch hweight"
     catchissues <- rbind(catchissues, missingcatchweight)
   }
-  missingsampleweight <- stoxexport$biotic[is.na(stoxexport$biotic$lengthsampleweight) | stoxexport$biotic$lengthsampleweight==0,common_columns_catch]
+  missingsampleweight <- catches[is.na(catches$lengthsampleweight) | catches$lengthsampleweight==0,common_columns_catch]
   if (nrow(missingsampleweight)){
     missingsampleweight$issue <- "missing or 0 sample weight"  
     catchissues <- rbind(catchissues, missingsampleweight)
   }
-  missingsamplecount <- stoxexport$biotic[is.na(stoxexport$biotic$lengthsamplecount) | stoxexport$biotic$lengthsamplecount==0,common_columns_catch]
+  missingsamplecount <- catches[is.na(catches$lengthsamplecount) | catches$lengthsamplecount==0,common_columns_catch]
   if (nrow(missingsamplecount)){
     missingsamplecount$issue <- "missing or 0 sample count"  
     catchsissues <- rbind(catchsissues, missingsamplecount)
@@ -130,11 +135,13 @@ makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, im
   #
   
   soft_problems <- c()
-  if (any(is.na(stoxexport$biotic$platform))){
+  if (any(is.na(stations$platform))){
     soft_problems <- c(soft_problems, "Some stations are missing platforms. Consider imputing from mission level.")
   }
-  if (any((is.na(stoxexport$biotic$latitudestart) | is.na(stoxexport$biotic$latitudeend)) & !is.na(stoxexport$biotic$location) & !is.na(stoxexport$biotic$area))){
-    soft_problems <- c(soft_problems, "Some stations are missing positions. Consider imputing from area codes.")
+  if (!is.null(stations$spatial)){
+    if (any(is.na(stations$spatial) & ((is.na(stations$latitudestart) | is.na(stations$latitudeend)) & !is.na(stations$location) & !is.na(stations$area)))){
+      soft_problems <- c(soft_problems, "Some stations are missing positions. Consider imputing from area codes.")
+    }
   }
   # add check on product type to signal use of length weight conversion
 

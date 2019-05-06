@@ -36,6 +36,12 @@ temporal_workaround <- function(data, processdata, sourcetype){
   }
 }
 
+#' get random number to pass as seed to RECA
+#' @keywords internal
+getseed <- function(){
+  return(runif(1, 0,.Machine$integer.max))
+}
+
 #' Extract the covaraite definitions
 #' Returns NULL if parameter is missing
 #' @keywords internal
@@ -1090,6 +1096,11 @@ runRECA <-
     if (is.null(prepdata)) {
       stop("Could not load project data")
     }
+
+    if (is.null(seed)){
+      seed <- getseed()
+    }
+
     prepareRECA <- prepdata$prepareRECA
     GlobalParameters <- prepareRECA$GlobalParameters
     AgeLength <- prepareRECA$AgeLength
@@ -1417,10 +1428,14 @@ plotSamplingOverview <-
     #
     # Samples by cells
     #
+    
     if (all(c("gearfactor", "temporal", "spatial") %in% stoxexp$resources$covariateInfo$name)) {
       rows <-
         nrow(unique(get_gta_landings(stoxexp)[, c("gearfactor", "temporal")]))
       cols <- length(unique(get_gta_landings(stoxexp)$spatial))
+      
+      cols <- max(13, cols)
+      rows <- max(3, rows)
       
       if (format == "png") {
         #dimension in pixels
@@ -1647,15 +1662,15 @@ saveCatchMatrix <-
     comments <- c(main, comments)
     caa_scaled <- as.data.frame(caa / plottingUnit$scale)
     means <-
-      as.data.frame(list(Age = pred$AgeCategories, mean = rowMeans(caa_scaled)))
+      as.data.frame(list(age = pred$AgeCategories, mean = rowMeans(caa_scaled)))
     cv <-
       as.data.frame(list(
-        Age = pred$AgeCategories,
+        age = pred$AgeCategories,
         sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
       ))
     cv$cv <- cv$sd / means$mean
     colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
-    caa_scaled$Age <- pred$AgeCategories
+    caa_scaled$age <- pred$AgeCategories
     caa_scaled <-
       caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
     
