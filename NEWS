@@ -897,3 +897,6 @@ Fixed bug in plotAbundance() when there is only one non-NA level of either 'grp1
 Added the function plotFishStation() (and supporting funcitons) to plot the stations of a StoX project by species, possibly in different colors.
 
 Changed all serialno to serialnumber according to the change from biotic 1.4 to biotic 3.0 applied in StoX as of 2.7.7.
+
+Fixed bug in writeTransectsMaxSea() which should now only contain non-negative values with correct N/S and E/W. Also changed the parameter projectName of this and related write funcitons to having default projectName=NULL, allowing for extraction of the project name in the input list x.
+

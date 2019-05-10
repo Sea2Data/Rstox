@@ -2,29 +2,23 @@ Package: Rstox
 Title: Running StoX functionality independently in R
 Version: 1.11.1
 Authors@R: c(
-  person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
-  person(given = "Ibrahim", family = "Umar", role = "aut"), 
-  person(given = "Edvin", family = "Fuglebakk", role = "aut"), 
-  person(given = "Aasmund", family = "Skaalevik", role = "aut"), 
-  person(given = "Espen", family = "Johnsen", role = "aut"), 
-  person(given = "Atle", family = "Totland", role = "aut"), 
-  person(given = "Gjert Endre", family = "Dingsoer", role = "aut"))
+  person(given = "Given Name", family = "Family Name", role = c("cre", "aut"), email = "arnejh@hi.no"))
 Depends: R (>= 3.5)
 Description: The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
 URL: https://github.com/Sea2Data/Rstox
 BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
 LazyData: true
-RoxygenNote: 6.1.0
-Imports:
-		data.table (>= 1.10.4-3),
-		ggplot2,
-		pbapply,
-		rgdal,
-		rgeos,
-		rJava,
-		sp,
-		XML
+RoxygenNote: 6.1.1
+Imports: 
+    data.table (>= 1.10.4-3),
+    ggplot2,
+    pbapply,
+    rgdal,
+    rgeos,
+    rJava,
+    sp,
+    XML
 Suggests: 
     ncdf4,
     pgirmess,

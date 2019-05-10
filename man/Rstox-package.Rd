@@ -22,16 +22,6 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Arne Johannes Holmin \email{arnejh@hi.no}
-
-Authors:
-\itemize{
-  \item Ibrahim Umar
-  \item Edvin Fuglebakk
-  \item Aasmund Skaalevik
-  \item Espen Johnsen
-  \item Atle Totland
-  \item Gjert Endre Dingsoer
-}
+\strong{Maintainer}: Given Name Family Name \email{arnejh@hi.no}
 
 }
