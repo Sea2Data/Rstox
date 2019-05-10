@@ -1089,7 +1089,7 @@ runRECA <-
            seed = NULL,
            age.error = FALSE,
            export_only = NULL) {
-    requireNamespace("eca")
+    requireNamespace("Reca")
     
     # Sett run parameters her, sett dataparametere i prep_eca
     prepdata <- loadProjectData(projectName, var = "prepareRECA")
@@ -1581,6 +1581,7 @@ writeRecaConfiguration <-
       row.names = F,
       file = f
     )
+    write(paste("stations (hauls):", nrow(AgeLength$CovariateMatrix)), f)
     write(paste("individuals:", nrow(AgeLength$DataMatrix)), f)
     write("Weight given length model:", f)
     write.table(
@@ -1590,6 +1591,7 @@ writeRecaConfiguration <-
       row.names = F,
       file = f
     )
+    write(paste("stations (hauls):", nrow(WeightLength$CovariateMatrix)), f)
     write(paste("individuals:", nrow(WeightLength$DataMatrix)), f)
     write("Run-parameters:", f)
     write.table(t(as.data.frame(GlobalParameters)), col.names = F, f)
