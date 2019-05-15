@@ -634,8 +634,7 @@ getLandings <- function(landing, covariateMatrixLanding, landingresolution) {
 #' @keywords internal
 getDataMatrixANDCovariateMatrix <-
   function(eca,
-           vars = c("age", "yearday"),
-           ecaParameters) {
+           vars = c("age", "yearday")) {
     #partcount
     
     # Define variables to include in the DataMatrix, where the variable specified in the input 'var' is included:
@@ -712,7 +711,12 @@ getDataMatrixANDCovariateMatrix <-
 
 #' Function for extracting the CARNeighbours and info:
 #' @keywords internal
-getInfo <- function(eca, CovariateMatrix, ecaParameters) {
+getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
+  
+  if (!is.null(modelSpecification)){
+    stop("Configuraiton of continous, interactin an in.slopeModel not supported yet.")
+  }
+  
   ### 3. info: ###
   ncov <- length(names(CovariateMatrix))
   Infonames <-
@@ -758,9 +762,9 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
     eca$resources$covariateInfo$CAR
   
   # 3.3. continuous:
-  if (length(ecaParameters$continuous)) {
-    info[names(ecaParameters$continuous), "continuous"] <-
-      unlist(ecaParameters$continuous)
+  if (length(modelSpecification$continuous)) {
+    info[names(modelSpecification$continuous), "continuous"] <-
+      unlist(modelSpecification$continuous)
   }
   
   # 3.4. in.landings:
@@ -769,15 +773,15 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
   info["constant", "in.landings"] <- 1
   
   # 3.5. interaction:
-  if (length(ecaParameters$interaction)) {
-    info[names(ecaParameters$interaction), "interaction"] <-
-      unlist(ecaParameters$interaction)
+  if (length(modelSpecification$interaction)) {
+    info[names(modelSpecification$interaction), "interaction"] <-
+      unlist(modelSpecification$interaction)
   }
   
   # 3.6. include.slope:
-  if (length(ecaParameters$in.slopeModel)) {
-    info[names(ecaParameters$in.slopeModel), "in.slopeModel"] <-
-      unlist(ecaParameters$in.slopeModel)
+  if (length(modelSpecification$in.slopeModel)) {
+    info[names(modelSpecification$in.slopeModel), "in.slopeModel"] <-
+      unlist(modelSpecification$in.slopeModel)
   }
   
   info <- getHardCoded(info)
@@ -829,7 +833,7 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
   
   ### 1. DataMatrix: ###
   temp <-
-    getDataMatrixANDCovariateMatrix(eca, vars = c("age", "yearday"), ecaParameters)
+    getDataMatrixANDCovariateMatrix(eca, vars = c("age", "yearday"))
   DataMatrix <- temp$DataMatrix
   CovariateMatrix <- temp$CovariateMatrix
   resources <- temp$resources
@@ -846,7 +850,7 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
   #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
   
   ### 3. info: ###
-  info <- getInfo(eca, CovariateMatrix, ecaParameters)
+  info <- getInfo(eca, CovariateMatrix)
   
   #reduce ageerror matrix to ages actually used
   ageerrormatrix <- eca$ageError
@@ -880,7 +884,7 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
   
   ### 1. DataMatrix: ###
   temp <-
-    getDataMatrixANDCovariateMatrix(eca, vars = var, ecaParameters)
+    getDataMatrixANDCovariateMatrix(eca, vars = var)
   DataMatrix <- temp$DataMatrix
   CovariateMatrix <- temp$CovariateMatrix
   resources <- temp$resources
@@ -895,7 +899,7 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
   #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
   
   ### 3. info: ###
-  info <- getInfo(eca, CovariateMatrix, ecaParameters)
+  info <- getInfo(eca, CovariateMatrix)
   
   ### Return a list of the data: ###
   out <- list(
