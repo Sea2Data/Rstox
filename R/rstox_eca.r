@@ -612,21 +612,8 @@ getGlobalParameters <- function (eca, ecaParameters) {
 #' @keywords internal
 getLandings <- function(eca, ecaParameters) {
   ### landingAggregated: ###
-  landingAggregated <-
-    cbind(
-      constant = 1,
-      eca$landingAggregated,
-      midseason = sapply(
-        getCovariateValue(
-          eca$landingAggregated$temporal,
-          eca,
-          cov = "temporal",
-          type = "landing"
-        ),
-        getMidSeason
-      )
-    )
-  
+  landingAggregated <- eca$landingAggregated
+
   weight <- landingAggregated$rundvekt
   landingAggregated$rundvekt <- NULL
   landingAgeLength <- landingAggregated
