@@ -1799,6 +1799,7 @@ saveCatchCovarianceMatrix <- function(pred,
 }
 
 #' Make decomposed catch matrix
+#' Contain workaround variables, until reporting setup can be configured in stox.
 #' @description Compiles catch matrix decomposed on given variables
 #' @details 
 #'    decomposition variables need not be the same as model covariates, but model covariates will be used for estimation.
@@ -1810,14 +1811,18 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param projectname
 #' @param filename
 #' @param decomposition variables to use for decomposition, must be available for all rows in landings
-#' @param totallandings total landings for decomposition (may be a superset for project landings). If null, project landings are used
+#' @param totallandings workaround variable total landings for decomposition (may be a superset for project landings). If null, project landings are used
+#' @param addQuarterToDecomp workaround variable for adding quarter to decomp
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
-saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, totallandings, var = "Abundance",
+#' @keywords internal
+saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, totallandings, addQuarterToDecomp=F, var = "Abundance",
                                       unit = "ones",
                                       main = ""){
+  
+  stop("Fix setting fo quarter and adding to decomposition")
   
   # load eca configuration and parameterization
   prepdata <- loadProjectData(projectName, var = "prepareRECA")
@@ -1864,21 +1869,25 @@ saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, tota
   
   # iterate over all combinations of decomposition variables in total landings
   for (i in 1:nrow(aggtotal)){
+    ## extract corresponding data in the project landings
+    reducedlandings <- merge(projectlandings,aggtotal[1,decomposition])
     
-  }
-  ## extract corresponding data in the parameterised landings
-  ## handle any additional model covariate values
-  
-  ## compiled reduced set
-  ##reducedlandings <- 
-  ## get total and fraction
-  ## run predict: 
-  ##decompLandings <- getLandings(reducedlandings, decomposition, AgeLength, WeightLength, projecttempres)
-  ##pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+    if (nrow(reducedlandings)){
+      stop("handle when projectlandings subset of total landings")
+    }
+    ## get total and fraction
+    
+    ## handle any additional model covariate values
+    warning("Not handling additional covariate value")
+    
+    
+  decompLandings <- getLandings(reducedlandings, AgeLength, WeightLength, projecttempres)
+  pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
   ## extract catchmatrix for decomposition
   catchmatrix <- getCatchMatrix(pred, var = "Abundance", unit = "ones")
+  print(catchmatrix)
   ## add to output dataframe
-
+  }
   # add comments
   comments <- c()
   title <- "Mean catch at age estimates"
