@@ -115,7 +115,6 @@ baseline2eca <-
            temporal = NULL,
            gearfactor = NULL,
            spatial = NULL,
-           landingresolution=92,
            ...) {
     # Function that retreives year, month, day, yearday:
     addYearday <-
@@ -1018,7 +1017,8 @@ prepareRECA <-
         ") contain no spaces."
       ))
     }
-    eca <- baseline2eca(projectName, landingresolution = temporalresolution)
+    eca <- baseline2eca(projectName)
+    eca$temporalresolution <- temporalresolution
 
     #max length in cm
     if (is.null(maxlength)) {
@@ -1814,21 +1814,41 @@ saveCatchCovarianceMatrix <- function(pred,
 #'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
 #'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
 #'    
-#'    if the parametrisedlandings differ from landings, the fraction in landings for each combination of decomposition variables will be reflect that ratio, and reported estimates will reflect that of parameterisedlandings
-#'    if there are additional values or levels for the model covariates in the landings than what exists in the parametrisedlandings, NAs will be reported for means and sds.
+#'    if the project landings differ from totallandings, the fraction in landings for each combination of decomposition variables will be reflect that ratio, and reported estimates will reflect that of project landings
+#'    if there are additional values or levels for the model covariates in the total landings than what exists in the project landings, NAs will be reported for means and sds.
+#' @param projectname
 #' @param filename
-#' @param landings total landings for analysis
-#' @param parameterisedLandings reduced landings for which model was parameterized. Default to same as total landings. Must be a subset of total landings
 #' @param decomposition variables to use for decomposition, must be available for all rows in landings
+#' @param totallandings total landings for decomposition (may be a superset for project landings). If null, project landings are used
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
-saveDecomposedCatchMatrix <- function(filename, landings, decomposition, parameterisedlandings=landings, var = "Abundance",
+saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, totallandings, var = "Abundance",
                                       unit = "ones",
                                       main = ""){
 
-  # check that parameterised landings is subset of total landings
+  # load eca configuration
+  prepdata <- loadProjectData(projectName, var = "prepareRECA")
+  rundata <- loadProjectData(projectName, var = "runRECA")
+  if (is.null(prepdata) | is.null(rundata)) {
+    stop("Could not load project data")
+  }
+  
+  prepareRECA <- prepdata$prepareRECA
+  
+  projectlandings <- prepareRECA$StoxExport$landing
+  if (is.null(totallandings)){
+    totallandings <- projectlandings
+  }
+  projecttempres <- prepareRECA$StoxExport$temporalresolution
+  
+  AgeLength <- prepareRECA$AgeLength
+  WeightLength <- prepareRECA$WeightLength
+  runRECA <- rundata$runRECA
+  GlobalParameters <- runRECA$GlobalParameters
+  
+  # check that project landings is subset of total landings
   
   # check that total landings have values filled for all decomposition variables
 
@@ -1838,9 +1858,13 @@ saveDecomposedCatchMatrix <- function(filename, landings, decomposition, paramet
   ## handle any additional model covariate values
   
   ## compiled reduced set
+  ##reducedlandings <- 
   ## get total and fraction
-  ## run predict
-  ## extract catchmatrix
+  ## run predict: 
+  ##decompLandings <- getLandings(reducedlandings, decomposition, AgeLength, WeightLength, projecttempres)
+  ##pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+  ## extract catchmatrix for decomposition
+  catchmatrix <- getCatchMatrix(pred, var = "Abundance", unit = "ones")
 
   # add comments
   comments <- c()
