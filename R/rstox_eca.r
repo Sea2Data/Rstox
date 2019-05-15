@@ -610,10 +610,14 @@ getGlobalParameters <- function (eca, ecaParameters) {
 
 #' Function for extracting the Landings object
 #' @keywords internal
-getLandings <- function(eca, ecaParameters) {
+getLandings <- function(eca) {
   ### landingAggregated: ###
-  landingAggregated <- eca$landingAggregated
-
+  landingAggregated <- 
+    cbind(
+      constant = 1,
+      eca$landingAggregated
+    )
+  
   weight <- landingAggregated$rundvekt
   landingAggregated$rundvekt <- NULL
   landingAgeLength <- landingAggregated
@@ -1022,7 +1026,7 @@ prepareRECA <-
     #
     
     GlobalParameters <- getGlobalParameters(eca, ecaParameters)
-    Landings <- getLandings(eca, ecaParameters)
+    Landings <- getLandings(eca)
     AgeLength <- getLengthGivenAge_Biotic(eca, ecaParameters)
     WeightLength <- getWeightGivenLength_Biotic(eca, ecaParameters)
     
