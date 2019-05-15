@@ -1576,6 +1576,59 @@ writeRecaConfiguration <-
     }
   }
 
+#' calculates catch matrix for given variable and unit
+#' @return list with three members (means, cv and caa_scaled)
+#' @keywords internal
+getCatchMatrix <- function(pred,
+                           var = "Abundance",
+                           unit = "ones"){
+  if (var == "Abundance" | var == "Count") {
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "ones",
+      def.out = F
+    )
+    caa <- round(apply(pred$TotalCount, c(2, 3), sum))
+
+  }
+  else if (var == "Weight") {
+    caa <- apply(pred$TotalCount, c(2, 3), sum) * pred$MeanWeight
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "kilograms",
+      def.out = F
+    )
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  caa_scaled <- as.data.frame(caa / plottingUnit$scale)
+  means <-
+    as.data.frame(list(age = pred$AgeCategories, mean = rowMeans(caa_scaled)))
+  cv <-
+    as.data.frame(list(
+      age = pred$AgeCategories,
+      sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
+    ))
+  cv$cv <- cv$sd / means$mean
+  colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
+  caa_scaled$age <- pred$AgeCategories
+  caa_scaled <-
+    caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
+  
+  
+  tab <- list()
+  tab$means <- means
+  tab$cv <- cv
+  tab$caa_scaled <- caa_scaled
+
+  return (tab)
+  
+}
+
 #' @title Save catch at age matrix
 #' @description Write catch at age predicted by \code{\link[eca]{eca.predict}} as csv file.
 #' @details Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
@@ -1604,13 +1657,6 @@ saveCatchMatrix <-
     }
     
     if (var == "Abundance" | var == "Count") {
-      plottingUnit = getPlottingUnit(
-        unit = unit,
-        var = var,
-        baseunit = "ones",
-        def.out = F
-      )
-      caa <- round(apply(pred$TotalCount, c(2, 3), sum))
       
       if (unit == "ones") {
         comments <- c(paste(title, "as", var))
@@ -1621,13 +1667,6 @@ saveCatchMatrix <-
       
     }
     else if (var == "Weight") {
-      caa <- apply(pred$TotalCount, c(2, 3), sum) * pred$MeanWeight
-      plottingUnit = getPlottingUnit(
-        unit = unit,
-        var = var,
-        baseunit = "kilograms",
-        def.out = F
-      )
       comments <- c(paste(title, "as", var, "in", unit))
     }
     else{
@@ -1635,25 +1674,14 @@ saveCatchMatrix <-
     }
     
     comments <- c(main, comments)
-    caa_scaled <- as.data.frame(caa / plottingUnit$scale)
-    means <-
-      as.data.frame(list(age = pred$AgeCategories, mean = rowMeans(caa_scaled)))
-    cv <-
-      as.data.frame(list(
-        age = pred$AgeCategories,
-        sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
-      ))
-    cv$cv <- cv$sd / means$mean
-    colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
-    caa_scaled$age <- pred$AgeCategories
-    caa_scaled <-
-      caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
+    
+    tab <- getCatchMatrix(pred, var, unit)
     
     f <- file(filename, open = "w")
     write(paste("#", comments), f)
     if (savemeans) {
       write.table(
-        merge(means, cv),
+        merge(tab$means, tab$cv),
         file = f,
         sep = "\t",
         dec = ".",
@@ -1663,7 +1691,7 @@ saveCatchMatrix <-
     }
     else{
       write.table(
-        caa_scaled,
+        tab$caa_scaled,
         file = f,
         sep = "\t",
         dec = ".",
