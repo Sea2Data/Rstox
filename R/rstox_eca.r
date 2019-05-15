@@ -521,7 +521,7 @@ getMode <- function(x) {
 
 #' Function for extracting the GlobalParameters object
 #' @keywords internal
-getGlobalParameters <- function (eca, ecaParameters) {
+getGlobalParameters <- function (eca, resultdir, maxlength, minage, maxage, delta.age) {
   #serialnumber is there only to enforce return type for getVar
   getnames <- c("lengthunitmeters", "serialnumber")
   usenames <- c("lengthresM", "samplingID")
@@ -545,11 +545,11 @@ getGlobalParameters <- function (eca, ecaParameters) {
   # Convert to centimeters in the lengthunit:
   Gparams <- list(
     lengthresCM = lengthresCM,
-    resultdir = ecaParameters$resultdir,
-    maxlength = ecaParameters$maxlength,
-    minage = ecaParameters$minage,
-    maxage = ecaParameters$maxage,
-    delta.age = ecaParameters$delta.age
+    resultdir = resultdir,
+    maxlength = maxlength,
+    minage = minage,
+    maxage = maxage,
+    delta.age = delta.age
   )
   
   return(Gparams)
@@ -816,7 +816,7 @@ hasAgeInSample <- function(biotic){
 
 #' Function for converting to the input format required by ECA (this is the main function):
 #' @keywords internal
-getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
+getLengthGivenAge_Biotic <- function(eca, hatchDaySlashMonth, minage, maxage) {
   
   # Extract the non-NAs:
   var <- "age"
@@ -839,22 +839,17 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
   resources <- temp$resources
   
   
-  #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
-  
   # Estimate the remainder for real age by use of the hatchDaySlashMonth:
   numDaysOfYear <- 366
-  DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(ecaParameters$hatchDaySlashMonth)) / numDaysOfYear
+  DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(hatchDaySlashMonth)) / numDaysOfYear
   DataMatrix$yearday <- NULL
-  
-  ### 2. CovariateMatrix: ###
-  #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
   
   ### 3. info: ###
   info <- getInfo(eca, CovariateMatrix)
   
   #reduce ageerror matrix to ages actually used
   ageerrormatrix <- eca$ageError
-  ageerrormatrix <- ageerrormatrix[rownames(ageerrormatrix) %in% ecaParameters$minage:ecaParameters$maxage, colnames(ageerrormatrix) %in% ecaParameters$minage:ecaParameters$maxage]
+  ageerrormatrix <- ageerrormatrix[rownames(ageerrormatrix) %in% minage:maxage, colnames(ageerrormatrix) %in% minage:maxage]
   
   ### Return a list of the data: ###
   out <- list(
@@ -872,7 +867,7 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
 
 #' Function for converting to the input format required by ECA (this is the main function):
 #' @keywords internal
-getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
+getWeightGivenLength_Biotic <- function(eca) {
   # Extract the non-NAs:
   
   var <- "individualweightgram"
@@ -889,14 +884,10 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
   CovariateMatrix <- temp$CovariateMatrix
   resources <- temp$resources
   
-  #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
-  # Hard code the weight to KG, since it is in grams in StoX:
+  # convert weight to KG, since it is in grams in StoX:
   weightunit <- 1e-3
   DataMatrix <-
     cbind(weightKG = eca$biotic$individualweightgram * weightunit, DataMatrix)
-  
-  ### 2. CovariateMatrix: ###
-  #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
   
   ### 3. info: ###
   info <- getInfo(eca, CovariateMatrix)
@@ -1011,24 +1002,14 @@ prepareRECA <-
     }
     #consider if it makes sense to extract from data for minage and maxage as well
     
-    ecaParameters <-
-      list(
-        resultdir = resultdir,
-        minage = minage,
-        maxage = maxage,
-        delta.age = delta.age,
-        maxlength = maxlength,
-        hatchDaySlashMonth = hatchDaySlashMonth
-      )
-    
     #
     # convert data
     #
     
-    GlobalParameters <- getGlobalParameters(eca, ecaParameters)
+    GlobalParameters <- getGlobalParameters(eca, resultdir, maxlength, minage, maxage, delta.age)
     Landings <- getLandings(eca$landing, eca$covariateMatrixLanding, landingresolution = temporalresolution)
-    AgeLength <- getLengthGivenAge_Biotic(eca, ecaParameters)
-    WeightLength <- getWeightGivenLength_Biotic(eca, ecaParameters)
+    AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage)
+    WeightLength <- getWeightGivenLength_Biotic(eca)
     
     #
     # store results
