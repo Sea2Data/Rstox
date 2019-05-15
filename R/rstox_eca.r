@@ -556,33 +556,56 @@ getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, d
 }
 
 #' Function for extracting the Landings object
-#' Compiles landings objects aggreageted to the covariates in covariateMatrixLanding, and to the temporal resolution provided
+#' Compiles landings objects aggreageted to the variables in the parameter decomposition, and to the temporal resolution provided
 #' @keywords internal
-getLandings <- function(landing, covariateMatrixLanding, landingresolution) {
+getLandings <- function(landing, decomposition, AgeLength, WeightLength, landingresolution) {
   
-  #############################################
-  ##### (6) Get aggreagated landing data: #####
-  #############################################
-  # Change added on 2018-09-31:
-  # Stop the function if there are any missing values in 'rundvekt' or in any of the covariates:
   if (any(is.na(landing$rundvekt))) {
     stop("Missing values in landing$rundvekt.")
   }
-  testCovariate <- function(name, covariateMatrixLanding) {
-    if (any(is.na(covariateMatrixLanding[[name]]))) {
-      stop(paste0("Missing values in covariate ", name, " (landings)."))
+  
+  # 
+  # check that variables to aggregate by exsist in landings
+  #
+  if (is.null(decomposition)){
+    stop("Decomposition can not be NULL")
+  }
+  if (!all(decomposition %in% names(landing))){
+    cni <- decomposition[!(decomposition %in% names(landing))]
+    stop(paste("Can not aggregate by covaraiates", paste(cni, collapse=",")))
+  }
+  
+  #
+  # test that covariateLink is the same for AgeLength and WeightLength
+  #
+  if (!all(names(AgeLength$resources$covariateLink) %in% names(WeightLength$resources$covariateLink))){
+    stop("Different covariate defintions for Age given length model and Weight given length model is not supported")
+  }
+  for (n in names(AgeLength$resources$covariateLink)){
+    if (!(all(AgeLength$resources$covariateLink[[n]]==WeightLength$resources$covariateLink[[n]]))){
+      stop("Different covariate levels for Age given length model and Weight given length model is not supported")
     }
   }
-  lapply(names(covariateMatrixLanding),
-         testCovariate,
-         covariateMatrixLanding = covariateMatrixLanding)
   
-  # Aggregate the rundvekt by covariates:
+  #rename covariates
+  for (n in names(AgeLength$resources$covariateLink)){
+    if (AgeLength$info[n,"in.landings"]==1){
+      if (!(n %in% names(landing))){
+        stop(paste("Eror in covariate configuration.",n," not found in landings."))
+      }
+      landing[[n]] <- AgeLength$resources$covariateLink[[n]]$Numeric[match(landing[[n]], AgeLength$resources$covariateLink[[n]]$Covariate)]
+      if (any(is.na(landing[n]))){
+        stop(paste("Can not aggregate landings for covariates with missing values:", n))
+      }
+    }
+  }
+  
+  # Aggregate the rundvekt by covariates and temporal resolution:
   landing$tempslot <- landing$yearday %/% landingresolution
   landingAggregated <-
     by(
       landing$rundvekt,
-      as.data.frame(cbind(covariateMatrixLanding, landing$tempslot), stringsAsFactors = FALSE),
+      as.data.frame(cbind(landing[,decomposition], landing$tempslot), stringsAsFactors = FALSE),
       sum
     )
   # Combine into a data frame with covariates and the rundvekt in the last column:
@@ -1008,9 +1031,9 @@ prepareRECA <-
     #
     
     GlobalParameters <- getGlobalParameters(eca$biotic, resultdir, maxlength, minage, maxage, delta.age)
-    Landings <- getLandings(eca$landing, eca$covariateMatrixLanding, landingresolution = temporalresolution)
     AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage)
     WeightLength <- getWeightGivenLength_Biotic(eca)
+    Landings <- getLandings(eca$landing, names(eca$covariateMatrixLanding), AgeLength, WeightLength, landingresolution = temporalresolution)
     
     #
     # store results
@@ -1782,6 +1805,66 @@ saveCatchCovarianceMatrix <- function(pred,
       row.names = T
     )
     close(f)
+}
+
+#' Make decomposed catch matrix
+#' @description Compiles catch matrix decomposed on given variables
+#' @details 
+#'    decomposition variables need not be the same as model covariates, but model covariates will be used for estimation.
+#'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
+#'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
+#'    
+#'    if the parametrisedlandings differ from landings, the fraction in landings for each combination of decomposition variables will be reflect that ratio, and reported estimates will reflect that of parameterisedlandings
+#'    if there are additional values or levels for the model covariates in the landings than what exists in the parametrisedlandings, NAs will be reported for means and sds.
+#' @param filename
+#' @param landings total landings for analysis
+#' @param parameterisedLandings reduced landings for which model was parameterized. Default to same as total landings. Must be a subset of total landings
+#' @param decomposition variables to use for decomposition, must be available for all rows in landings
+#' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
+saveDecomposedCatchMatrix <- function(filename, landings, decomposition, parameterisedlandings=landings, var = "Abundance",
+                                      unit = "ones",
+                                      main = ""){
+
+  # check that parameterised landings is subset of total landings
+  
+  # check that total landings have values filled for all decomposition variables
+
+  # iterate over all combinations of decomposition variables in total landings
+  
+  ## extract corresponding data in the parameterised landings
+  ## handle any additional model covariate values
+  
+  ## compiled reduced set
+  ## get total and fraction
+  ## run predict
+  ## extract catchmatrix
+
+  # add comments
+  comments <- c()
+  title <- "Mean catch at age estimates"
+  if (var == "Abundance" | var == "Count") {
+    
+    if (unit == "ones") {
+      comments <- c(paste(title, "as", var))
+    }
+    if (unit != "ones") {
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    
+  }
+  else if (var == "Weight") {
+    comments <- c(paste(title, "as", var, "in", unit))
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  comments <- c(main, comments)
+  
+  # save the lot
 }
 
 #' @title Report RECA.
