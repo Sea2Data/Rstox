@@ -556,6 +556,7 @@ getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, d
 }
 
 #' Function for extracting the Landings object
+#' Compiles landings objects aggreageted to the covariates in covariateMatrixLanding, and to the temporal resolution provided
 #' @keywords internal
 getLandings <- function(landing, covariateMatrixLanding, landingresolution) {
   

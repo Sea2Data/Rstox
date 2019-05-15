@@ -83,10 +83,12 @@ plot_ci <- function(x, means, upper_ci, lower_ci, ...){
   args$type="p"
   do.call(points, args)
   
-  segments(x, upper_ci, x, lower_ci, lwd = 1.5, ...)
-  arrows(x, upper_ci, x,
-         lower_ci, lwd = 1.5, angle = 90,
-         code = 3, length = 0.05, ...)
+  sel <- as.vector(lower_ci)!=as.vector(upper_ci)
+  segments(x[sel], upper_ci[sel], x[sel], lower_ci[sel], lwd = 1.5, ...)
+  suppressWarnings(
+  arrows(x[sel], upper_ci[sel], x[sel],
+         lower_ci[sel], lwd = 1.5, angle = 90,
+         code = 3, length = 0.05, ...))
   
 }
 
