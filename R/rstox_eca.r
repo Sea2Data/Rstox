@@ -73,6 +73,21 @@ getCovparam <- function(projectName, parameter) {
   }
 }
 
+#' Function for converting the covariates present in biotic or landing to integer:
+#' @keywords internal
+getCovariateMatrix <- function(data, covariateNames, allLevels) {
+  # Get the covariate names present in the data:
+  covariateNames_present <- intersect(covariateNames, names(data))
+  # Convert each covariate to integer (index in allLevels):
+  out <-
+    sapply(covariateNames_present, function(this)
+      match(data[[this]], allLevels[[this]]))
+  # Convert to data frame and add colnames:
+  out <- as.data.frame(out, stringsAsFactors = FALSE)
+  colnames(out) <- covariateNames_present
+  out
+}
+
 #*********************************************
 #*********************************************
 #' Prepare data from a project to the ECA model
@@ -265,19 +280,6 @@ baseline2eca <-
       names(allLevels) <- covariateNames
       Nlevels <- sapply(allLevels, length)
       
-      # Function for converting the covariates present in biotic or landing to integer:
-      getCovariateMatrix <- function(data, covariateNames, allLevels) {
-        # Get the covariate names present in the data:
-        covariateNames_present <- intersect(covariateNames, names(data))
-        # Convert each covariate to integer (index in allLevels):
-        out <-
-          sapply(covariateNames_present, function(this)
-            match(data[[this]], allLevels[[this]]))
-        # Convert to data frame and add colnames:
-        out <- as.data.frame(out, stringsAsFactors = FALSE)
-        colnames(out) <- covariateNames_present
-        out
-      }
       covariateMatrixBiotic <-
         getCovariateMatrix(biotic, covariateNames = covariateNames, allLevels =
                              allLevels)
@@ -322,60 +324,6 @@ baseline2eca <-
       #covariateLink <- lapply(seq_along(allLevels), function(i) match(allLevels[[i]], covariateDefinition[[i]]$biotic[,2]))
       #covariateLink <- lapply(seq_along(allLevels), function(i) data.frame(Numeric=seq_along(allLevels[[i]]), Covariate=covariateDefinition[[i]]$biotic[covariateLink[[i]], 2], stringsAsFactors=FALSE))
       #names(covariateLink) <- names(covariateDefinition)
-      
-      
-      #############################################
-      ##### (6) Get aggreagated landing data: #####
-      #############################################
-      # Change added on 2018-09-31:
-      # Stop the function if there are any missing values in 'rundvekt' or in any of the covariates:
-      if (any(is.na(landing$rundvekt))) {
-        stop("Missing values in landing$rundvekt.")
-      }
-      testCovariate <- function(name, covariateMatrixLanding) {
-        if (any(is.na(covariateMatrixLanding[[name]]))) {
-          stop(paste0("Missing values in covariate ", name, " (landings)."))
-        }
-      }
-      lapply(names(covariateMatrixLanding),
-             testCovariate,
-             covariateMatrixLanding = covariateMatrixLanding)
-      
-      # Aggregate the rundvekt by covariates:
-      landing$tempslot <- landing$yearday %/% landingresolution
-      landingAggregated <-
-        by(
-          landing$rundvekt,
-          as.data.frame(cbind(covariateMatrixLanding, landing$tempslot), stringsAsFactors = FALSE),
-          sum
-        )
-      # Combine into a data frame with covariates and the rundvekt in the last column:
-      # Convert the dimnames to integer
-      landingAggregated <-
-        cbind(expand.grid(lapply(
-          dimnames(landingAggregated), as.integer
-        )), rundvekt = c(landingAggregated))
-      
-      # set the day of the year in the middle of each cell
-      numDaysOfYear <- 366 #use max, since this is converted to fractino of the year later, consider looking up in calendar
-      landingAggregated$midday <- landingAggregated$`landing$tempslot`*landingresolution + landingresolution/2.0
-      landingAggregated$`landing$tempslot`<-NULL
-      landingAggregated$midseason <-
-        landingAggregated$midday / numDaysOfYear
-      landingAggregated$midday <- NULL
-      
-      # Discard empty covariate combinations:
-      landingAggregated <-
-        landingAggregated[!is.na(landingAggregated$rundvekt), ]
-      # Order by the covariates
-      landingAggregated <-
-        landingAggregated[do.call("order", landingAggregated[, -ncol(landingAggregated)]), ]
-      #############################################
-      
-      
-      # Extract the hierarchy matrix from StoX (not implemented on 2017-02-23):
-      
-      
       
       ###########################################
       ##### (7) Covariate meta information: #####
@@ -483,7 +431,6 @@ baseline2eca <-
       list(
         biotic = biotic,
         landing = landing,
-        landingAggregated = landingAggregated,
         covariateMatrixBiotic = covariateMatrixBiotic,
         covariateMatrixLanding = covariateMatrixLanding,
         ageError = ageErrorMatrix,
@@ -610,12 +557,61 @@ getGlobalParameters <- function (eca, ecaParameters) {
 
 #' Function for extracting the Landings object
 #' @keywords internal
-getLandings <- function(eca) {
+getLandings <- function(landing, covariateMatrixLanding, landingresolution) {
+  
+  #############################################
+  ##### (6) Get aggreagated landing data: #####
+  #############################################
+  # Change added on 2018-09-31:
+  # Stop the function if there are any missing values in 'rundvekt' or in any of the covariates:
+  if (any(is.na(landing$rundvekt))) {
+    stop("Missing values in landing$rundvekt.")
+  }
+  testCovariate <- function(name, covariateMatrixLanding) {
+    if (any(is.na(covariateMatrixLanding[[name]]))) {
+      stop(paste0("Missing values in covariate ", name, " (landings)."))
+    }
+  }
+  lapply(names(covariateMatrixLanding),
+         testCovariate,
+         covariateMatrixLanding = covariateMatrixLanding)
+  
+  # Aggregate the rundvekt by covariates:
+  landing$tempslot <- landing$yearday %/% landingresolution
+  landingAggregated <-
+    by(
+      landing$rundvekt,
+      as.data.frame(cbind(covariateMatrixLanding, landing$tempslot), stringsAsFactors = FALSE),
+      sum
+    )
+  # Combine into a data frame with covariates and the rundvekt in the last column:
+  # Convert the dimnames to integer
+  landingAggregated <-
+    cbind(expand.grid(lapply(
+      dimnames(landingAggregated), as.integer
+    )), rundvekt = c(landingAggregated))
+  
+  # set the day of the year in the middle of each cell
+  numDaysOfYear <- 366 #use max, since this is converted to fractino of the year later, consider looking up in calendar
+  landingAggregated$midday <- landingAggregated$`landing$tempslot`*landingresolution + landingresolution/2.0
+  landingAggregated$`landing$tempslot`<-NULL
+  landingAggregated$midseason <-
+    landingAggregated$midday / numDaysOfYear
+  landingAggregated$midday <- NULL
+  
+  # Discard empty covariate combinations:
+  landingAggregated <-
+    landingAggregated[!is.na(landingAggregated$rundvekt), ]
+  # Order by the covariates
+  landingAggregated <-
+    landingAggregated[do.call("order", landingAggregated[, -ncol(landingAggregated)]), ]
+  
+  
   ### landingAggregated: ###
   landingAggregated <- 
     cbind(
       constant = 1,
-      eca$landingAggregated
+      landingAggregated
     )
   
   weight <- landingAggregated$rundvekt
@@ -1026,7 +1022,7 @@ prepareRECA <-
     #
     
     GlobalParameters <- getGlobalParameters(eca, ecaParameters)
-    Landings <- getLandings(eca)
+    Landings <- getLandings(eca$landing, eca$covariateMatrixLanding, landingresolution = temporalresolution)
     AgeLength <- getLengthGivenAge_Biotic(eca, ecaParameters)
     WeightLength <- getWeightGivenLength_Biotic(eca, ecaParameters)
     
