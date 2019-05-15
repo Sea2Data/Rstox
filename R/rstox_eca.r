@@ -533,7 +533,7 @@ getHardCoded <- function(info) {
   return(info)
 }
 
-#' Function for setting getting appropriate value for the midSeason column in Landings
+#' Function for getting the day of the year that is midway between two dates.
 #' @param x string representing a yearless date range as dd/mm-dd/mm or as a single day dd/mm
 #' @return the day number in the year for the given day, or the mean day number in the year for the endpoints of the range
 #' @keywords internal
