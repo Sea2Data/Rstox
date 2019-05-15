@@ -769,7 +769,7 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
   
   # 3.4. in.landings:
   info[rownames(info), "in.landings"] <-
-    as.integer(rownames(info) %in% names(eca$landingAggregated))
+    as.integer(rownames(info) %in% names(eca$landing))
   info["constant", "in.landings"] <- 1
   
   # 3.5. interaction:
@@ -797,7 +797,7 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
     for (n in rownames(info)) {
       if (info[n, "random"] == 1 & info[n, "in.landings"] == 1) {
         info[n, "nlev"] <-
-          max(eca$landingAggregated[[n]], CovariateMatrix[[n]])
+          max(eca$landing[[n]], CovariateMatrix[[n]])
       }
     }
   }
