@@ -555,23 +555,12 @@ getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, d
 }
 
 #' Function for extracting the Landings object
-#' Compiles landings objects aggreageted to the variables in the parameter decomposition, and to the temporal resolution provided
+#' Compiles landings objects aggreageted to the covariates in the models, and to the temporal resolution provided
 #' @keywords internal
-getLandings <- function(landing, decomposition, AgeLength, WeightLength, landingresolution) {
+getLandings <- function(landing, AgeLength, WeightLength, landingresolution) {
   
   if (any(is.na(landing$rundvekt))) {
     stop("Missing values in landing$rundvekt.")
-  }
-  
-  # 
-  # check that variables to aggregate by exsist in landings
-  #
-  if (is.null(decomposition)){
-    stop("Decomposition can not be NULL")
-  }
-  if (!all(decomposition %in% names(landing))){
-    cni <- decomposition[!(decomposition %in% names(landing))]
-    stop(paste("Can not aggregate by covaraiates", paste(cni, collapse=",")))
   }
   
   #
@@ -587,6 +576,7 @@ getLandings <- function(landing, decomposition, AgeLength, WeightLength, landing
   }
   
   #rename covariates
+  decomposition <- c()
   for (n in names(AgeLength$resources$covariateLink)){
     if (AgeLength$info[n,"in.landings"]==1){
       if (!(n %in% names(landing))){
@@ -596,6 +586,7 @@ getLandings <- function(landing, decomposition, AgeLength, WeightLength, landing
       if (any(is.na(landing[n]))){
         stop(paste("Can not aggregate landings for covariates with missing values:", n))
       }
+      decomposition <- c(decomposition, n)
     }
   }
   
@@ -1033,7 +1024,7 @@ prepareRECA <-
     GlobalParameters <- getGlobalParameters(eca$biotic, resultdir, maxlength, minage, maxage, delta.age)
     AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage)
     WeightLength <- getWeightGivenLength_Biotic(eca)
-    Landings <- getLandings(eca$landing, names(eca$covariateMatrixLanding), AgeLength, WeightLength, landingresolution = temporalresolution)
+    Landings <- getLandings(eca$landing, AgeLength, WeightLength, landingresolution = temporalresolution)
     
     #
     # store results
@@ -1827,8 +1818,8 @@ saveCatchCovarianceMatrix <- function(pred,
 saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, totallandings, var = "Abundance",
                                       unit = "ones",
                                       main = ""){
-
-  # load eca configuration
+  
+  # load eca configuration and parameterization
   prepdata <- loadProjectData(projectName, var = "prepareRECA")
   rundata <- loadProjectData(projectName, var = "runRECA")
   if (is.null(prepdata) | is.null(rundata)) {
@@ -1848,12 +1839,33 @@ saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, tota
   runRECA <- rundata$runRECA
   GlobalParameters <- runRECA$GlobalParameters
   
-  # check that project landings is subset of total landings
+  agglisttotal <- list()
+  agglistproject <- list()
+  for (n in decomposition){
+    agglisttotal[[n]]<-totallandings[[n]]
+    agglistproject[[n]]<-projectlandings[[n]]
+  }
+  aggtotal <- aggregate(weight=totallandings$rundvekt, by=agglisttotal, FUN=sum)
+  aggproject <- aggregate(weight=projectlandings$rundvekt, by=agglistproject, FUN=sum)
   
   # check that total landings have values filled for all decomposition variables
-
-  # iterate over all combinations of decomposition variables in total landings
+  if (any(is.na(totallandings[,decomposition]))){
+    stop("NAs for decomposition variables")
+  }
   
+  # check that project landings is subset of total landings
+  if (nrow(aggtotal)<nrow(aggproject)){
+    stop("project landings must be a subset of total landings")
+  }
+  comb <- merge(aggtotal, aggproject, by=decomposition, all.x=T, suffixes=c(".tot", ".proj"))
+  if (any(comb$weight.tot<comb$weight.proj)){
+    stop("project landings must be a subset of total landings")
+  }
+  
+  # iterate over all combinations of decomposition variables in total landings
+  for (i in 1:nrow(aggtotal)){
+    
+  }
   ## extract corresponding data in the parameterised landings
   ## handle any additional model covariate values
   
@@ -1865,6 +1877,7 @@ saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, tota
   ##pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
   ## extract catchmatrix for decomposition
   catchmatrix <- getCatchMatrix(pred, var = "Abundance", unit = "ones")
+  ## add to output dataframe
 
   # add comments
   comments <- c()
@@ -1889,6 +1902,7 @@ saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, tota
   comments <- c(main, comments)
   
   # save the lot
+  stop("Function under development")
 }
 
 #' @title Report RECA.
