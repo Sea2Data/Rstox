@@ -521,11 +521,11 @@ getMode <- function(x) {
 
 #' Function for extracting the GlobalParameters object
 #' @keywords internal
-getGlobalParameters <- function (eca, resultdir, maxlength, minage, maxage, delta.age) {
+getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, delta.age) {
   #serialnumber is there only to enforce return type for getVar
   getnames <- c("lengthunitmeters", "serialnumber")
   usenames <- c("lengthresM", "samplingID")
-  DataMatrix <- getVar(eca$biotic, getnames)
+  DataMatrix <- getVar(biotic, getnames)
   names(DataMatrix) <- usenames
   
   lengthresM <- getMode(DataMatrix$lengthresM)
@@ -1006,7 +1006,7 @@ prepareRECA <-
     # convert data
     #
     
-    GlobalParameters <- getGlobalParameters(eca, resultdir, maxlength, minage, maxage, delta.age)
+    GlobalParameters <- getGlobalParameters(eca$biotic, resultdir, maxlength, minage, maxage, delta.age)
     Landings <- getLandings(eca$landing, eca$covariateMatrixLanding, landingresolution = temporalresolution)
     AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage)
     WeightLength <- getWeightGivenLength_Biotic(eca)
