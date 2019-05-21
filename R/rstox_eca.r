@@ -791,6 +791,11 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
     info[names(modelSpecification$interaction), "interaction"] <-
       unlist(modelSpecification$interaction)
   }
+  else{
+    # defaults to interaction term for all covariates in landings
+    info[, "interaction"] <- info[, "in.landings"]
+    info["constant", "interaction"] <- 0
+  }
   
   # 3.6. include.slope:
   if (length(modelSpecification$in.slopeModel)) {
