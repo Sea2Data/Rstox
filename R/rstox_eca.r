@@ -569,16 +569,17 @@ getLandings <- function(landing, AgeLength, WeightLength, landingresolution) {
   if (!all(names(AgeLength$resources$covariateLink) %in% names(WeightLength$resources$covariateLink))){
     stop("Different covariate defintions for Age given length model and Weight given length model is not supported")
   }
-  for (n in names(AgeLength$resources$covariateLink)){
-    if (!(all(AgeLength$resources$covariateLink[[n]]==WeightLength$resources$covariateLink[[n]]))){
-      stop("Different covariate levels for Age given length model and Weight given length model is not supported")
-    }
-  }
   
   #rename covariates
   decomposition <- c()
   for (n in names(AgeLength$resources$covariateLink)){
     if (AgeLength$info[n,"in.landings"]==1){
+      #
+      # test that covariateLink is the same for AgeLength and WeightLength
+      #
+      if (!(all(AgeLength$resources$covariateLink[[n]]==WeightLength$resources$covariateLink[[n]]))){
+        stop("Different covariate levels for Age given length model and Weight given length model is not supported")
+      }
       if (!(n %in% names(landing))){
         stop(paste("Eror in covariate configuration.",n," not found in landings."))
       }
@@ -704,21 +705,20 @@ getDataMatrixANDCovariateMatrix <-
     
     
     #random covariates not in landings should have nlev equal to the observed levels
-      for (n in names(CovariateMatrix)) {
+    for (n in names(CovariateMatrix)) {
+      if ((n %in% names(eca$covariateMatrixBiotic)) & !(n %in% names(eca$covariateMatrixLanding))) {
         
-        if ((n %in% names(eca$covariateMatrixBiotic)) & !(n %in% names(eca$covariateMatrixLanding))) {
-          ecacodes <- unique(CovariateMatrix[[n]])
-          newecacodes <- 1:length(unique(CovariateMatrix[[n]]))
-          
-          # renumber covariates
-          CovariateMatrix[[n]] <- newecacodes[match(CovariateMatrix[[n]], ecacodes)]
-          
-          # update link to stox names
-          eca$resources$covariateLink[[n]] <- eca$resources$covariateLink[[n]][eca$resources$covariateLink[[n]][["Numeric"]] %in% ecacodes,]
-          eca$resources$covariateLink[[n]][["Numeric"]] <- newecacodes[match(eca$resources$covariateLink[[n]][["Numeric"]], ecacodes)]
-          
-        }
-      }
+        ecacodes <- unique(CovariateMatrix[[n]])
+        newecacodes <- 1:length(unique(CovariateMatrix[[n]]))
+        
+        # renumber covariates
+        CovariateMatrix[[n]] <- newecacodes[match(CovariateMatrix[[n]], ecacodes)]
+        
+        # update link to stox names
+        eca$resources$covariateLink[[n]] <- eca$resources$covariateLink[[n]][eca$resources$covariateLink[[n]][["Numeric"]] %in% ecacodes,]
+        eca$resources$covariateLink[[n]][["Numeric"]] <- newecacodes[match(eca$resources$covariateLink[[n]][["Numeric"]], ecacodes)]
+      } 
+    }
     
     return(list(DataMatrix = DataMatrix, CovariateMatrix = CovariateMatrix, resources= eca$resources))
   }
@@ -806,12 +806,12 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   # Continuous covariates should have only one level:
   info[info[, "continuous"] == 1, "nlev"] <- 1
   
-  # random covariates should have levels equal to max of landing and max of observations (not sure if the latter is necessary
+  # random covariates should have levels equal to max of landing
   if (sum(info[, "random"] == 1 & info[, "in.landings"] == 1) > 0) {
     for (n in rownames(info)) {
       if (info[n, "random"] == 1 & info[n, "in.landings"] == 1) {
-        info[n, "nlev"] <-
-          max(eca$landing[[n]], CovariateMatrix[[n]])
+          info[n, "nlev"] <-
+            length(unique((eca$landing[[n]])))
       }
     }
   }
