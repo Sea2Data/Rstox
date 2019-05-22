@@ -380,9 +380,16 @@ baseline2eca <-
       stratumNeighbour <- baselineOutput$proc$stratumneighbour
       stratumNeighbourList <- as.list(stratumNeighbour[, 2])
       names(stratumNeighbourList) <- stratumNeighbour[, 1]
-      stratumNeighbourList <-
-        lapply(stratumNeighbourList, function(xx)
-          as.numeric(unlist(strsplit(xx, ","))))
+      if (is.numeric(stratumNeighbour[, 2])){
+        stratumNeighbourList <-
+          lapply(stratumNeighbourList, function(xx)
+            as.numeric(unlist(strsplit(xx, ","))))
+      }
+      else{
+        stratumNeighbourList <-
+          lapply(stratumNeighbourList, function(xx)
+            unlist(strsplit(xx, ",")))
+      }
       
       # Extract only the strata present in the data:
       stratumNeighbourList <-

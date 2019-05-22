@@ -76,37 +76,39 @@ check_cov_vs_info <- function(modelobj){
       stop(paste("CAR variable specified as", co, "but CARneighbours not specified"))
     }
     if (modelobj$info[co,"CAR"]==1 & !is.null(modelobj$CARNeighbours)){
-      if (max(modelobj$CARNeighbours$idNeighbours)>modelobj$info[co,"nlev"] | max(modelobj$CARNeighbours$idNeighbours)<1){
-        stop(paste("Neigbour matrix not consistent with nlev for CAR vairable", co))
-      }
-    }
-    if (modelobj$info[co,"CAR"]==1 & (any(modelobj$CARNeighbours$numNeighbours<1) | length(modelobj$CARNeighbours$numNeighbours) < modelobj$info[co,"nlev"])){
-      stop(paste("CAR variable specified as", co, "but some areas are missing neighbours in the data."))
-    }
-    if (modelobj$info[co,"CAR"]==1 & sum(modelobj$CARNeighbours$numNeighbours) != length(modelobj$CARNeighbours$idNeighbours)){
-      stop(paste("CAR variable specified as", co, "numNeigbours is not consistent with idNeigbours"))
-    }
-    if (modelobj$info[co,"CAR"]==1){
-      asymmetric_pairs <- ""
-      for (i in 1:modelobj$info[co,"nlev"]){
-        last_i <- sum(modelobj$CARNeighbours$numNeighbours[1:i])
-        num_i <- modelobj$CARNeighbours$numNeighbours[i]
-        neighbours_i <- modelobj$CARNeighbours$idNeighbours[(last_i-num_i+1):last_i]
-        for (j in 1:modelobj$info[co,"nlev"]){
-          last_j <- sum(modelobj$CARNeighbours$numNeighbours[1:j])
-          num_j <- modelobj$CARNeighbours$numNeighbours[j]
-          neighbours_j <- modelobj$CARNeighbours$idNeighbours[(last_j-num_j+1):last_j]
-
-          ineighbourofj <- i %in% neighbours_j
-          jneighbourofi <- j %in% neighbours_i
-            
-          if (ineighbourofj!=jneighbourofi){
-            asymmetric_pairs <- paste(asymmetric_pairs, " (",i,",", j, ") ", sep="")
+      if (modelobj$info[co,"nlev"]>1){
+        if (max(modelobj$CARNeighbours$idNeighbours)>modelobj$info[co,"nlev"] | max(modelobj$CARNeighbours$idNeighbours)<1){
+          stop(paste("Neigbour matrix not consistent with nlev for CAR vairable", co))
+        }
+        if (modelobj$info[co,"CAR"]==1 & (any(modelobj$CARNeighbours$numNeighbours<1) | length(modelobj$CARNeighbours$numNeighbours) < modelobj$info[co,"nlev"])){
+          stop(paste("CAR variable specified as", co, "but some areas are missing neighbours in the data."))
+        }
+        if (modelobj$info[co,"CAR"]==1 & sum(modelobj$CARNeighbours$numNeighbours) != length(modelobj$CARNeighbours$idNeighbours)){
+          stop(paste("CAR variable specified as", co, "numNeigbours is not consistent with idNeigbours"))
+        }
+        if (modelobj$info[co,"CAR"]==1){
+          asymmetric_pairs <- ""
+          for (i in 1:modelobj$info[co,"nlev"]){
+            last_i <- sum(modelobj$CARNeighbours$numNeighbours[1:i])
+            num_i <- modelobj$CARNeighbours$numNeighbours[i]
+            neighbours_i <- modelobj$CARNeighbours$idNeighbours[(last_i-num_i+1):last_i]
+            for (j in 1:modelobj$info[co,"nlev"]){
+              last_j <- sum(modelobj$CARNeighbours$numNeighbours[1:j])
+              num_j <- modelobj$CARNeighbours$numNeighbours[j]
+              neighbours_j <- modelobj$CARNeighbours$idNeighbours[(last_j-num_j+1):last_j]
+              
+              ineighbourofj <- i %in% neighbours_j
+              jneighbourofi <- j %in% neighbours_i
+              
+              if (ineighbourofj!=jneighbourofi){
+                asymmetric_pairs <- paste(asymmetric_pairs, " (",i,",", j, ") ", sep="")
+              }
+            }  
           }
-        }  
-      }
-      if (nchar(asymmetric_pairs)>0){
-        stop(paste("CAR variable specified as", co, "but neighbour matrix is not symmetric (i is neighbour of j, but not j of i, or vice versa). Asymmetric pairs: ", asymmetric_pairs))
+          if (nchar(asymmetric_pairs)>0){
+            stop(paste("CAR variable specified as", co, "but neighbour matrix is not symmetric (i is neighbour of j, but not j of i, or vice versa). Asymmetric pairs: ", asymmetric_pairs))
+          }
+        }
       }
     }
   }

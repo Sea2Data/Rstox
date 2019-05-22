@@ -507,7 +507,7 @@ plot_cell_landings <-
   function(eca,
            xlab = "Cells (gear/temp/spatial)",
            ylab = "landed (kt)",
-           frac = 0.001,
+           frac = 0.01,
            titletext = paste("top", 100 - frac * 100, "weight-% cells"),
            legendtitle = "sample clusteredness",
            colgood = default_color_good,
@@ -522,7 +522,7 @@ plot_cell_landings <-
            baddesc = "0 samples") {
     mm <- get_g_s_a_frame(eca)
     mm <- mm[order(mm$landed_kt, decreasing = T), ]
-    mm <- mm[mm$landed_kt / sum(mm$landed_kt) > frac, ]
+    mm <- mm[cumsum(mm$landed_kt) / sum(mm$landed_kt) > frac, ]
     mm$col <- NA
     
     mm[mm$landed_kt == 0 & mm$vessels > 0, "col"] <- colwrong
@@ -535,8 +535,13 @@ plot_cell_landings <-
     mm[mm$landed_kt > 0 &  mm$vessels > 1 &
          mm$hauls > 1, "col"] <- colgood
     
+    rounded <- round(mm$landed_kt)
+    if (max(mm$landed_kt)<1){
+      rounded <- round(mm$landed_kt, digits = 2)
+    }
+    
     barplot(
-      round(mm$landed_kt),
+      rounded,
       col = mm$col,
       xlab = xlab,
       ylab = ylab,
@@ -712,7 +717,7 @@ plot_fixed_effect_coverage <-
     color[agg$catchsamples == 0 & agg$landed_kt > 0] <-
       undersampledcol
     color[agg$catchsamples > 0 & agg$landed_kt == 0] <- wrongcol
-    agg$landed_kt <- round(agg$landed_kt)
+    agg$landed_kt <- round(agg$landed_kt, digits = 1)
     names(agg)[names(agg)=="catchsamples"] <- "catch samples"
     names(agg)[names(agg)=="landed_kt"] <- "landed kt"
     
@@ -768,11 +773,11 @@ diagnostics_model_configuration <- function(stoxexport, okcol = default_color_ok
   par.old <- par(no.readonly = T)
   par(mfrow = c(1, 2), mar=c(1, 4.1, 4.1, 2.1))
   plot_fixed_effect_coverage(stoxexport,
-                             indparameters = c("age", "length"),
+                             indparameters = c("age", "lengthcentimeter"),
                              titletext = "Age samples for fixed effects", okcol=okcol, wrongcol=wrongcol, undersampledcol=undersampledcol)
   legend("bottom", fill=c(okcol, undersampledcol, wrongcol), legend=c(oktext, undersampledtext, wrongtext), bty="n", ncol=1, xpd=T)
   plot_fixed_effect_coverage(stoxexport,
-                             indparameters = c("weight", "length"),
+                             indparameters = c("individualweightgram", "lengthcentimeter"),
                              titletext = "Weight samples for fixed effects", okcol=okcol, wrongcol=wrongcol, undersampledcol=undersampledcol)
   par(par.old)
 }
