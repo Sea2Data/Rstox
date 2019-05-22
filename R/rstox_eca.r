@@ -11,6 +11,9 @@ temporal_workaround <- function(data, processdata, sourcetype){
 
     tl <- data
     if (sourcetype=="Biotic"){
+      if (any(is.na(tl$stationstartdate))){
+        stop("NAs in station startdate")
+      }
       tl$m <- substr(tl$stationstartdate, 4,5)
       tl$d <- substr(tl$stationstartdate, 1,2)
     }
