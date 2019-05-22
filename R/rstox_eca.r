@@ -985,6 +985,7 @@ prepareRECA <-
         var = NULL,
         name = "runRECA"
       )
+      saveProjectData(projectName)
     }
     
     #clean resultdir if needed
