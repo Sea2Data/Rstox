@@ -1271,9 +1271,11 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	############ and the x,y positions 'xyRotated': ############
 	############################################################
 	getTransectsByArea <- function(nmi_rest, area, transectSpacing, fac, corners, xyRotated, type="Parallel", bearing="N", knots=10, seed=0, retour=FALSE){
-		# Get the number of transects:
+		# Get the transectSpacing:
+		if(length(transectSpacing) == 0){
+			transectSpacing <- area / nmi_rest
+		}
 		
-		transectSpacing <- area / nmi_rest
 		# If the transect sould go tour-retour, use half spacing for parallel andtransects, and for zigzag simply go back with opposite order:
 		#if(type == "Parallel" && retour){
 		if(retour){
