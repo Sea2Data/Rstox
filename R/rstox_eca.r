@@ -1,7 +1,8 @@
 #' Compensates bug in stox where the covariate temporal is not set based on prosessdata when useProsessdata is chosen
 #' @keywords internal
 temporal_workaround <- function(data, processdata, sourcetype){
-  if ("temporal" %in% names(data)){
+  
+  if (!is.null(processdata$temporal)){
     warning(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
     tempdef <- processdata$temporal[processdata$temporal$CovariateSourceType==sourcetype,]
     tempdef$mstart <- substr(tempdef$Value, 4,5)
@@ -364,13 +365,19 @@ baseline2eca <-
       ##### (8) Fish age vs length-error matrix: #####
       ################################################
       ageErrorData <- baselineOutput$proc$ageerror
+      
       # Expand the AgeLength data to a sparse matrix:
-      maxAge <- max(ageErrorData[, 1:2]) + 1
-      ageErrorMatrix <- matrix(0, ncol = maxAge, nrow = maxAge)
-      ageErrorMatrix[as.matrix(ageErrorData[, 1:2]) + 1] <-
-        ageErrorData[, 3]
-      rownames(ageErrorMatrix) <- seq_len(maxAge) - 1
-      colnames(ageErrorMatrix) <- rownames(ageErrorMatrix)
+      if (!is.null(ageErrorData)){
+        maxAge <- max(ageErrorData[, 1:2]) + 1
+        ageErrorMatrix <- matrix(0, ncol = maxAge, nrow = maxAge)
+        ageErrorMatrix[as.matrix(ageErrorData[, 1:2]) + 1] <-
+          ageErrorData[, 3]
+        rownames(ageErrorMatrix) <- seq_len(maxAge) - 1
+        colnames(ageErrorMatrix) <- rownames(ageErrorMatrix)
+      }
+      else{
+        ageErrorMatrix <- NULL
+      }
       ################################################
       
       ############################################
@@ -606,7 +613,7 @@ getLandings <- function(landing, AgeLength, WeightLength, landingresolution) {
   landingAggregated <-
     by(
       landing$rundvekt,
-      as.data.frame(cbind(landing[,decomposition], landing$tempslot), stringsAsFactors = FALSE),
+      as.data.frame(cbind(landing[,decomposition, drop=F], landing$tempslot), stringsAsFactors = FALSE),
       sum
     )
   # Combine into a data frame with covariates and the rundvekt in the last column:

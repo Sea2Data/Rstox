@@ -141,9 +141,11 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   if (!is.null(agelength$AgeErrorMatrix) & (any(is.na(agelength$AgeErrorMatrix)) || any(agelength$AgeErrorMatrix>1) || any(agelength$AgeErrorMatrix<0))){
     stop("Invalid values in age error matrix")
   }
-  if (!is.null(agelength$AgeErrorMatrix) & any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
-    stop("Rows of age error matrix does not sum to 1")
-  }
+  if (!is.null(agelength$AgeErrorMatrix)){
+    if (any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
+      stop("Rows of age error matrix does not sum to 1")
+    }
+  } 
 }
 #' checks that weightlenght is configured correctly
 #' @keywords internal
@@ -248,17 +250,19 @@ checkGlobalParameters <- function(globalparameters, agelength, weightlength){
   if (globalparameters$age.error & is.null(agelength$AgeErrorMatrix)){
     stop("Age error matrix not set, but age.error parameter set to TRUE.")
   }
-  if (globalparameters$age.error & nrow(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
-    stop(paste0("Rows of age matrix does not match minage maxage parameters (", nrow(agelength$AgeErrorMatrix), " vs ", globalparameters$minage, ":", globalparameters$maxage, ")"))
-  }
-  if (globalparameters$age.error & as.numeric(row.names(agelength$AgeErrorMatrix))[1] != globalparameters$minage){
-    stop("First age of age error matrix does not correspond to minage")
-  }
-  if (globalparameters$age.error & as.numeric(row.names(agelength$AgeErrorMatrix))[length(row.names(agelength$AgeErrorMatrix))] != globalparameters$maxage){
-    stop("Last age of age error matrix does not correspond to maxage")
-  }
-  if (globalparameters$age.error & ncol(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
-    stop(paste0("Columns of age matrix does not match minage maxage parameters (", ncol(agelength$AgeErrorMatrix), " vs ", globalparameters$maxage, ":", globalparameters$minage, ")"))
-  }
+  if (globalparameters$age.error){
+    if (nrow(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
+      stop(paste0("Rows of age matrix does not match minage maxage parameters (", nrow(agelength$AgeErrorMatrix), " vs ", globalparameters$minage, ":", globalparameters$maxage, ")"))
+    }
+    if (as.numeric(row.names(agelength$AgeErrorMatrix))[1] != globalparameters$minage){
+      stop("First age of age error matrix does not correspond to minage")
+    }
+    if (as.numeric(row.names(agelength$AgeErrorMatrix))[length(row.names(agelength$AgeErrorMatrix))] != globalparameters$maxage){
+      stop("Last age of age error matrix does not correspond to maxage")
+    }
+    if (ncol(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
+      stop(paste0("Columns of age matrix does not match minage maxage parameters (", ncol(agelength$AgeErrorMatrix), " vs ", globalparameters$maxage, ":", globalparameters$minage, ")"))
+    }
+  } 
   
 }
