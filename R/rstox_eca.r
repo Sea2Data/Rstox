@@ -1110,8 +1110,8 @@ runRECA <-
     WeightLength <- prepareRECA$WeightLength
     Landings <- prepareRECA$Landings
     
-    GlobalParameters$caa.burnin <- burnin
-    GlobalParameters$burnin <- caa.burnin
+    GlobalParameters$caa.burnin <- caa.burnin
+    GlobalParameters$burnin <- burnin
     GlobalParameters$nSamples <- nSamples
     GlobalParameters$thin <- thin
     GlobalParameters$fitfile <- fitfile
