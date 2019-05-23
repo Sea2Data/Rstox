@@ -93,13 +93,13 @@ makeDataReportReca <- function(stoxexport, stationissuesfile, catchissuefile, im
   # catch sample issues
   #
   
-  catches <- stoxexport$biotic[!duplicated(stoxexport$biotic[c("cruise", "serialnumber", "species", "catchpartnumber")]),]
-  common_columns_catch <- c( "cruise", "serialnumber", "species", "catchpartnumber", "catchweight", "lengthsampleweight", "lengthsamplecount")
+  catches <- stoxexport$biotic[!duplicated(stoxexport$biotic[c("cruise", "serialnumber", "catchcategory", "catchpartnumber")]),]
+  common_columns_catch <- c( "cruise", "serialnumber", "catchcategory", "catchpartnumber", "catchweight", "lengthsampleweight", "lengthsamplecount")
   
   catchissues <- stoxexport$biotic[0,common_columns_catch]
   missingcatchweight <- catches[is.na(catches$catchweight) | catches$catchweight==0,common_columns_catch]
   if (nrow(missingcatchweight)){
-    missingcatchweight$issue <- "missing or 0 catch hweight"
+    missingcatchweight$issue <- "missing or 0 catch weight"
     catchissues <- rbind(catchissues, missingcatchweight)
   }
   missingsampleweight <- catches[is.na(catches$lengthsampleweight) | catches$lengthsampleweight==0,common_columns_catch]

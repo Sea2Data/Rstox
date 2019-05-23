@@ -1,7 +1,8 @@
 #' Compensates bug in stox where the covariate temporal is not set based on prosessdata when useProsessdata is chosen
 #' @keywords internal
 temporal_workaround <- function(data, processdata, sourcetype){
-  if ("temporal" %in% names(data)){
+  
+  if (!is.null(processdata$temporal)){
     warning(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
     tempdef <- processdata$temporal[processdata$temporal$CovariateSourceType==sourcetype,]
     tempdef$mstart <- substr(tempdef$Value, 4,5)
@@ -11,6 +12,9 @@ temporal_workaround <- function(data, processdata, sourcetype){
 
     tl <- data
     if (sourcetype=="Biotic"){
+      if (any(is.na(tl$stationstartdate))){
+        stop("NAs in station startdate")
+      }
       tl$m <- substr(tl$stationstartdate, 4,5)
       tl$d <- substr(tl$stationstartdate, 1,2)
     }
@@ -73,6 +77,21 @@ getCovparam <- function(projectName, parameter) {
   }
 }
 
+#' Function for converting the covariates present in biotic or landing to integer:
+#' @keywords internal
+getCovariateMatrix <- function(data, covariateNames, allLevels) {
+  # Get the covariate names present in the data:
+  covariateNames_present <- intersect(covariateNames, names(data))
+  # Convert each covariate to integer (index in allLevels):
+  out <-
+    sapply(covariateNames_present, function(this)
+      match(data[[this]], allLevels[[this]]))
+  # Convert to data frame and add colnames:
+  out <- as.data.frame(out, stringsAsFactors = FALSE)
+  colnames(out) <- covariateNames_present
+  out
+}
+
 #*********************************************
 #*********************************************
 #' Prepare data from a project to the ECA model
@@ -100,7 +119,6 @@ baseline2eca <-
            temporal = NULL,
            gearfactor = NULL,
            spatial = NULL,
-           landingresolution=92,
            ...) {
     # Function that retreives year, month, day, yearday:
     addYearday <-
@@ -265,19 +283,6 @@ baseline2eca <-
       names(allLevels) <- covariateNames
       Nlevels <- sapply(allLevels, length)
       
-      # Function for converting the covariates present in biotic or landing to integer:
-      getCovariateMatrix <- function(data, covariateNames, allLevels) {
-        # Get the covariate names present in the data:
-        covariateNames_present <- intersect(covariateNames, names(data))
-        # Convert each covariate to integer (index in allLevels):
-        out <-
-          sapply(covariateNames_present, function(this)
-            match(data[[this]], allLevels[[this]]))
-        # Convert to data frame and add colnames:
-        out <- as.data.frame(out, stringsAsFactors = FALSE)
-        colnames(out) <- covariateNames_present
-        out
-      }
       covariateMatrixBiotic <-
         getCovariateMatrix(biotic, covariateNames = covariateNames, allLevels =
                              allLevels)
@@ -323,60 +328,6 @@ baseline2eca <-
       #covariateLink <- lapply(seq_along(allLevels), function(i) data.frame(Numeric=seq_along(allLevels[[i]]), Covariate=covariateDefinition[[i]]$biotic[covariateLink[[i]], 2], stringsAsFactors=FALSE))
       #names(covariateLink) <- names(covariateDefinition)
       
-      
-      #############################################
-      ##### (6) Get aggreagated landing data: #####
-      #############################################
-      # Change added on 2018-09-31:
-      # Stop the function if there are any missing values in 'rundvekt' or in any of the covariates:
-      if (any(is.na(landing$rundvekt))) {
-        stop("Missing values in landing$rundvekt.")
-      }
-      testCovariate <- function(name, covariateMatrixLanding) {
-        if (any(is.na(covariateMatrixLanding[[name]]))) {
-          stop(paste0("Missing values in covariate ", name, " (landings)."))
-        }
-      }
-      lapply(names(covariateMatrixLanding),
-             testCovariate,
-             covariateMatrixLanding = covariateMatrixLanding)
-      
-      # Aggregate the rundvekt by covariates:
-      landing$tempslot <- landing$yearday %/% landingresolution
-      landingAggregated <-
-        by(
-          landing$rundvekt,
-          as.data.frame(cbind(covariateMatrixLanding, landing$tempslot), stringsAsFactors = FALSE),
-          sum
-        )
-      # Combine into a data frame with covariates and the rundvekt in the last column:
-      # Convert the dimnames to integer
-      landingAggregated <-
-        cbind(expand.grid(lapply(
-          dimnames(landingAggregated), as.integer
-        )), rundvekt = c(landingAggregated))
-      
-      # set the day of the year in the middle of each cell
-      numDaysOfYear <- 366 #use max, since this is converted to fractino of the year later, consider looking up in calendar
-      landingAggregated$midday <- landingAggregated$`landing$tempslot`*landingresolution + landingresolution/2.0
-      landingAggregated$`landing$tempslot`<-NULL
-      landingAggregated$midseason <-
-        landingAggregated$midday / numDaysOfYear
-      landingAggregated$midday <- NULL
-      
-      # Discard empty covariate combinations:
-      landingAggregated <-
-        landingAggregated[!is.na(landingAggregated$rundvekt), ]
-      # Order by the covariates
-      landingAggregated <-
-        landingAggregated[do.call("order", landingAggregated[, -ncol(landingAggregated)]), ]
-      #############################################
-      
-      
-      # Extract the hierarchy matrix from StoX (not implemented on 2017-02-23):
-      
-      
-      
       ###########################################
       ##### (7) Covariate meta information: #####
       ###########################################
@@ -414,13 +365,19 @@ baseline2eca <-
       ##### (8) Fish age vs length-error matrix: #####
       ################################################
       ageErrorData <- baselineOutput$proc$ageerror
+      
       # Expand the AgeLength data to a sparse matrix:
-      maxAge <- max(ageErrorData[, 1:2]) + 1
-      ageErrorMatrix <- matrix(0, ncol = maxAge, nrow = maxAge)
-      ageErrorMatrix[as.matrix(ageErrorData[, 1:2]) + 1] <-
-        ageErrorData[, 3]
-      rownames(ageErrorMatrix) <- seq_len(maxAge) - 1
-      colnames(ageErrorMatrix) <- rownames(ageErrorMatrix)
+      if (!is.null(ageErrorData)){
+        maxAge <- max(ageErrorData[, 1:2]) + 1
+        ageErrorMatrix <- matrix(0, ncol = maxAge, nrow = maxAge)
+        ageErrorMatrix[as.matrix(ageErrorData[, 1:2]) + 1] <-
+          ageErrorData[, 3]
+        rownames(ageErrorMatrix) <- seq_len(maxAge) - 1
+        colnames(ageErrorMatrix) <- rownames(ageErrorMatrix)
+      }
+      else{
+        ageErrorMatrix <- NULL
+      }
       ################################################
       
       ############################################
@@ -430,9 +387,16 @@ baseline2eca <-
       stratumNeighbour <- baselineOutput$proc$stratumneighbour
       stratumNeighbourList <- as.list(stratumNeighbour[, 2])
       names(stratumNeighbourList) <- stratumNeighbour[, 1]
-      stratumNeighbourList <-
-        lapply(stratumNeighbourList, function(xx)
-          as.numeric(unlist(strsplit(xx, ","))))
+      if (is.numeric(stratumNeighbour[, 2])){
+        stratumNeighbourList <-
+          lapply(stratumNeighbourList, function(xx)
+            as.numeric(unlist(strsplit(xx, ","))))
+      }
+      else{
+        stratumNeighbourList <-
+          lapply(stratumNeighbourList, function(xx)
+            unlist(strsplit(xx, ",")))
+      }
       
       # Extract only the strata present in the data:
       stratumNeighbourList <-
@@ -483,7 +447,6 @@ baseline2eca <-
       list(
         biotic = biotic,
         landing = landing,
-        landingAggregated = landingAggregated,
         covariateMatrixBiotic = covariateMatrixBiotic,
         covariateMatrixLanding = covariateMatrixLanding,
         ageError = ageErrorMatrix,
@@ -533,7 +496,7 @@ getHardCoded <- function(info) {
   return(info)
 }
 
-#' Function for setting getting appropriate value for the midSeason column in Landings
+#' Function for getting the day of the year that is midway between two dates.
 #' @param x string representing a yearless date range as dd/mm-dd/mm or as a single day dd/mm
 #' @return the day number in the year for the given day, or the mean day number in the year for the endpoints of the range
 #' @keywords internal
@@ -574,11 +537,11 @@ getMode <- function(x) {
 
 #' Function for extracting the GlobalParameters object
 #' @keywords internal
-getGlobalParameters <- function (eca, ecaParameters) {
+getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, delta.age) {
   #serialnumber is there only to enforce return type for getVar
   getnames <- c("lengthunitmeters", "serialnumber")
   usenames <- c("lengthresM", "samplingID")
-  DataMatrix <- getVar(eca$biotic, getnames)
+  DataMatrix <- getVar(biotic, getnames)
   names(DataMatrix) <- usenames
   
   lengthresM <- getMode(DataMatrix$lengthresM)
@@ -598,33 +561,89 @@ getGlobalParameters <- function (eca, ecaParameters) {
   # Convert to centimeters in the lengthunit:
   Gparams <- list(
     lengthresCM = lengthresCM,
-    resultdir = ecaParameters$resultdir,
-    maxlength = ecaParameters$maxlength,
-    minage = ecaParameters$minage,
-    maxage = ecaParameters$maxage,
-    delta.age = ecaParameters$delta.age
+    resultdir = resultdir,
+    maxlength = maxlength,
+    minage = minage,
+    maxage = maxage,
+    delta.age = delta.age
   )
   
   return(Gparams)
 }
 
 #' Function for extracting the Landings object
+#' Compiles landings objects aggreageted to the covariates in the models, and to the temporal resolution provided
 #' @keywords internal
-getLandings <- function(eca, ecaParameters) {
-  ### landingAggregated: ###
+getLandings <- function(landing, AgeLength, WeightLength, landingresolution) {
+  
+  if (any(is.na(landing$rundvekt))) {
+    stop("Missing values in landing$rundvekt.")
+  }
+  
+  #
+  # test that covariateLink is the same for AgeLength and WeightLength
+  #
+  if (!all(names(AgeLength$resources$covariateLink) %in% names(WeightLength$resources$covariateLink))){
+    stop("Different covariate defintions for Age given length model and Weight given length model is not supported")
+  }
+  
+  #rename covariates
+  decomposition <- c()
+  for (n in names(AgeLength$resources$covariateLink)){
+    if (AgeLength$info[n,"in.landings"]==1){
+      #
+      # test that covariateLink is the same for AgeLength and WeightLength
+      #
+      if (!(all(AgeLength$resources$covariateLink[[n]]==WeightLength$resources$covariateLink[[n]]))){
+        stop("Different covariate levels for Age given length model and Weight given length model is not supported")
+      }
+      if (!(n %in% names(landing))){
+        stop(paste("Eror in covariate configuration.",n," not found in landings."))
+      }
+      landing[[n]] <- AgeLength$resources$covariateLink[[n]]$Numeric[match(landing[[n]], AgeLength$resources$covariateLink[[n]]$Covariate)]
+      if (any(is.na(landing[n]))){
+        stop(paste("Can not aggregate landings for covariates with missing values:", n))
+      }
+      decomposition <- c(decomposition, n)
+    }
+  }
+  
+  # Aggregate the rundvekt by covariates and temporal resolution:
+  landing$tempslot <- landing$yearday %/% landingresolution
   landingAggregated <-
+    by(
+      landing$rundvekt,
+      as.data.frame(cbind(landing[,decomposition, drop=F], landing$tempslot), stringsAsFactors = FALSE),
+      sum
+    )
+  # Combine into a data frame with covariates and the rundvekt in the last column:
+  # Convert the dimnames to integer
+  landingAggregated <-
+    cbind(expand.grid(lapply(
+      dimnames(landingAggregated), as.integer
+    )), rundvekt = c(landingAggregated))
+  
+  # set the day of the year in the middle of each cell
+  numDaysOfYear <- 366 #use max, since this is converted to fractino of the year later, consider looking up in calendar
+  landingAggregated$midday <- landingAggregated$`landing$tempslot`*landingresolution + landingresolution/2.0
+  landingAggregated$`landing$tempslot`<-NULL
+  landingAggregated$midseason <-
+    landingAggregated$midday / numDaysOfYear
+  landingAggregated$midday <- NULL
+  
+  # Discard empty covariate combinations:
+  landingAggregated <-
+    landingAggregated[!is.na(landingAggregated$rundvekt), ]
+  # Order by the covariates
+  landingAggregated <-
+    landingAggregated[do.call("order", landingAggregated[, -ncol(landingAggregated)]), ]
+  
+  
+  ### landingAggregated: ###
+  landingAggregated <- 
     cbind(
       constant = 1,
-      eca$landingAggregated,
-      midseason = sapply(
-        getCovariateValue(
-          eca$landingAggregated$temporal,
-          eca,
-          cov = "temporal",
-          type = "landing"
-        ),
-        getMidSeason
-      )
+      landingAggregated
     )
   
   weight <- landingAggregated$rundvekt
@@ -647,8 +666,7 @@ getLandings <- function(eca, ecaParameters) {
 #' @keywords internal
 getDataMatrixANDCovariateMatrix <-
   function(eca,
-           vars = c("age", "yearday"),
-           ecaParameters) {
+           vars = c("age", "yearday")) {
     #partcount
     
     # Define variables to include in the DataMatrix, where the variable specified in the input 'var' is included:
@@ -704,28 +722,32 @@ getDataMatrixANDCovariateMatrix <-
     
     
     #random covariates not in landings should have nlev equal to the observed levels
-      for (n in names(CovariateMatrix)) {
+    for (n in names(CovariateMatrix)) {
+      if ((n %in% names(eca$covariateMatrixBiotic)) & !(n %in% names(eca$covariateMatrixLanding))) {
         
-        if ((n %in% names(eca$covariateMatrixBiotic)) & !(n %in% names(eca$covariateMatrixLanding))) {
-          ecacodes <- unique(CovariateMatrix[[n]])
-          newecacodes <- 1:length(unique(CovariateMatrix[[n]]))
-          
-          # renumber covariates
-          CovariateMatrix[[n]] <- newecacodes[match(CovariateMatrix[[n]], ecacodes)]
-          
-          # update link to stox names
-          eca$resources$covariateLink[[n]] <- eca$resources$covariateLink[[n]][eca$resources$covariateLink[[n]][["Numeric"]] %in% ecacodes,]
-          eca$resources$covariateLink[[n]][["Numeric"]] <- newecacodes[match(eca$resources$covariateLink[[n]][["Numeric"]], ecacodes)]
-          
-        }
-      }
+        ecacodes <- unique(CovariateMatrix[[n]])
+        newecacodes <- 1:length(unique(CovariateMatrix[[n]]))
+        
+        # renumber covariates
+        CovariateMatrix[[n]] <- newecacodes[match(CovariateMatrix[[n]], ecacodes)]
+        
+        # update link to stox names
+        eca$resources$covariateLink[[n]] <- eca$resources$covariateLink[[n]][eca$resources$covariateLink[[n]][["Numeric"]] %in% ecacodes,]
+        eca$resources$covariateLink[[n]][["Numeric"]] <- newecacodes[match(eca$resources$covariateLink[[n]][["Numeric"]], ecacodes)]
+      } 
+    }
     
     return(list(DataMatrix = DataMatrix, CovariateMatrix = CovariateMatrix, resources= eca$resources))
   }
 
 #' Function for extracting the CARNeighbours and info:
 #' @keywords internal
-getInfo <- function(eca, CovariateMatrix, ecaParameters) {
+getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
+  
+  if (!is.null(modelSpecification)){
+    stop("Configuraiton of continous, interactin an in.slopeModel not supported yet.")
+  }
+  
   ### 3. info: ###
   ncov <- length(names(CovariateMatrix))
   Infonames <-
@@ -771,26 +793,31 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
     eca$resources$covariateInfo$CAR
   
   # 3.3. continuous:
-  if (length(ecaParameters$continuous)) {
-    info[names(ecaParameters$continuous), "continuous"] <-
-      unlist(ecaParameters$continuous)
+  if (length(modelSpecification$continuous)) {
+    info[names(modelSpecification$continuous), "continuous"] <-
+      unlist(modelSpecification$continuous)
   }
   
   # 3.4. in.landings:
   info[rownames(info), "in.landings"] <-
-    as.integer(rownames(info) %in% names(eca$landingAggregated))
+    as.integer(rownames(info) %in% names(eca$landing))
   info["constant", "in.landings"] <- 1
   
   # 3.5. interaction:
-  if (length(ecaParameters$interaction)) {
-    info[names(ecaParameters$interaction), "interaction"] <-
-      unlist(ecaParameters$interaction)
+  if (length(modelSpecification$interaction)) {
+    info[names(modelSpecification$interaction), "interaction"] <-
+      unlist(modelSpecification$interaction)
+  }
+  else{
+    # defaults to interaction term for all covariates in landings
+    info[, "interaction"] <- info[, "in.landings"]
+    info["constant", "interaction"] <- 0
   }
   
   # 3.6. include.slope:
-  if (length(ecaParameters$in.slopeModel)) {
-    info[names(ecaParameters$in.slopeModel), "in.slopeModel"] <-
-      unlist(ecaParameters$in.slopeModel)
+  if (length(modelSpecification$in.slopeModel)) {
+    info[names(modelSpecification$in.slopeModel), "in.slopeModel"] <-
+      unlist(modelSpecification$in.slopeModel)
   }
   
   info <- getHardCoded(info)
@@ -801,12 +828,12 @@ getInfo <- function(eca, CovariateMatrix, ecaParameters) {
   # Continuous covariates should have only one level:
   info[info[, "continuous"] == 1, "nlev"] <- 1
   
-  # random covariates should have levels equal to max of landing and max of observations (not sure if the latter is necessary
+  # random covariates should have levels equal to max of landing
   if (sum(info[, "random"] == 1 & info[, "in.landings"] == 1) > 0) {
     for (n in rownames(info)) {
       if (info[n, "random"] == 1 & info[n, "in.landings"] == 1) {
-        info[n, "nlev"] <-
-          max(eca$landingAggregated[[n]], CovariateMatrix[[n]])
+          info[n, "nlev"] <-
+            length(unique((eca$landing[[n]])))
       }
     }
   }
@@ -825,7 +852,7 @@ hasAgeInSample <- function(biotic){
 
 #' Function for converting to the input format required by ECA (this is the main function):
 #' @keywords internal
-getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
+getLengthGivenAge_Biotic <- function(eca, hatchDaySlashMonth, minage, maxage) {
   
   # Extract the non-NAs:
   var <- "age"
@@ -842,28 +869,23 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
   
   ### 1. DataMatrix: ###
   temp <-
-    getDataMatrixANDCovariateMatrix(eca, vars = c("age", "yearday"), ecaParameters)
+    getDataMatrixANDCovariateMatrix(eca, vars = c("age", "yearday"))
   DataMatrix <- temp$DataMatrix
   CovariateMatrix <- temp$CovariateMatrix
   resources <- temp$resources
   
   
-  #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
-  
   # Estimate the remainder for real age by use of the hatchDaySlashMonth:
   numDaysOfYear <- 366
-  DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(ecaParameters$hatchDaySlashMonth)) / numDaysOfYear
+  DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(hatchDaySlashMonth)) / numDaysOfYear
   DataMatrix$yearday <- NULL
   
-  ### 2. CovariateMatrix: ###
-  #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
-  
   ### 3. info: ###
-  info <- getInfo(eca, CovariateMatrix, ecaParameters)
+  info <- getInfo(eca, CovariateMatrix)
   
   #reduce ageerror matrix to ages actually used
   ageerrormatrix <- eca$ageError
-  ageerrormatrix <- ageerrormatrix[rownames(ageerrormatrix) %in% ecaParameters$minage:ecaParameters$maxage, colnames(ageerrormatrix) %in% ecaParameters$minage:ecaParameters$maxage]
+  ageerrormatrix <- ageerrormatrix[rownames(ageerrormatrix) %in% minage:maxage, colnames(ageerrormatrix) %in% minage:maxage]
   
   ### Return a list of the data: ###
   out <- list(
@@ -881,7 +903,7 @@ getLengthGivenAge_Biotic <- function(eca, ecaParameters) {
 
 #' Function for converting to the input format required by ECA (this is the main function):
 #' @keywords internal
-getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
+getWeightGivenLength_Biotic <- function(eca) {
   # Extract the non-NAs:
   
   var <- "individualweightgram"
@@ -893,22 +915,18 @@ getWeightGivenLength_Biotic <- function(eca, ecaParameters) {
   
   ### 1. DataMatrix: ###
   temp <-
-    getDataMatrixANDCovariateMatrix(eca, vars = var, ecaParameters)
+    getDataMatrixANDCovariateMatrix(eca, vars = var)
   DataMatrix <- temp$DataMatrix
   CovariateMatrix <- temp$CovariateMatrix
   resources <- temp$resources
   
-  #DataMatrix <- getDataMatrix(eca, var=var, ecaParameters)
-  # Hard code the weight to KG, since it is in grams in StoX:
+  # convert weight to KG, since it is in grams in StoX:
   weightunit <- 1e-3
   DataMatrix <-
     cbind(weightKG = eca$biotic$individualweightgram * weightunit, DataMatrix)
   
-  ### 2. CovariateMatrix: ###
-  #CovariateMatrix <- getCovariateMatrix(eca, DataMatrix, ecaParameters)
-  
   ### 3. info: ###
-  info <- getInfo(eca, CovariateMatrix, ecaParameters)
+  info <- getInfo(eca, CovariateMatrix)
   
   ### Return a list of the data: ###
   out <- list(
@@ -981,6 +999,7 @@ prepareRECA <-
         var = NULL,
         name = "runRECA"
       )
+      saveProjectData(projectName)
     }
     
     #clean resultdir if needed
@@ -1012,7 +1031,8 @@ prepareRECA <-
         ") contain no spaces."
       ))
     }
-    eca <- baseline2eca(projectName, landingresolution = temporalresolution)
+    eca <- baseline2eca(projectName)
+    eca$temporalresolution <- temporalresolution
 
     #max length in cm
     if (is.null(maxlength)) {
@@ -1020,24 +1040,14 @@ prepareRECA <-
     }
     #consider if it makes sense to extract from data for minage and maxage as well
     
-    ecaParameters <-
-      list(
-        resultdir = resultdir,
-        minage = minage,
-        maxage = maxage,
-        delta.age = delta.age,
-        maxlength = maxlength,
-        hatchDaySlashMonth = hatchDaySlashMonth
-      )
-    
     #
     # convert data
     #
     
-    GlobalParameters <- getGlobalParameters(eca, ecaParameters)
-    Landings <- getLandings(eca, ecaParameters)
-    AgeLength <- getLengthGivenAge_Biotic(eca, ecaParameters)
-    WeightLength <- getWeightGivenLength_Biotic(eca, ecaParameters)
+    GlobalParameters <- getGlobalParameters(eca$biotic, resultdir, maxlength, minage, maxage, delta.age)
+    AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage)
+    WeightLength <- getWeightGivenLength_Biotic(eca)
+    Landings <- getLandings(eca$landing, AgeLength, WeightLength, landingresolution = temporalresolution)
     
     #
     # store results
@@ -1089,7 +1099,7 @@ runRECA <-
            seed = NULL,
            age.error = FALSE,
            export_only = NULL) {
-    requireNamespace("eca")
+    requireNamespace("Reca")
     
     # Sett run parameters her, sett dataparametere i prep_eca
     prepdata <- loadProjectData(projectName, var = "prepareRECA")
@@ -1107,8 +1117,8 @@ runRECA <-
     WeightLength <- prepareRECA$WeightLength
     Landings <- prepareRECA$Landings
     
-    GlobalParameters$caa.burnin <- burnin
-    GlobalParameters$burnin <- caa.burnin
+    GlobalParameters$caa.burnin <- caa.burnin
+    GlobalParameters$burnin <- burnin
     GlobalParameters$nSamples <- nSamples
     GlobalParameters$thin <- thin
     GlobalParameters$fitfile <- fitfile
@@ -1581,6 +1591,7 @@ writeRecaConfiguration <-
       row.names = F,
       file = f
     )
+    write(paste("stations (hauls):", nrow(AgeLength$CovariateMatrix)), f)
     write(paste("individuals:", nrow(AgeLength$DataMatrix)), f)
     write("Weight given length model:", f)
     write.table(
@@ -1590,6 +1601,7 @@ writeRecaConfiguration <-
       row.names = F,
       file = f
     )
+    write(paste("stations (hauls):", nrow(WeightLength$CovariateMatrix)), f)
     write(paste("individuals:", nrow(WeightLength$DataMatrix)), f)
     write("Run-parameters:", f)
     write.table(t(as.data.frame(GlobalParameters)), col.names = F, f)
@@ -1600,6 +1612,59 @@ writeRecaConfiguration <-
       }
     }
   }
+
+#' calculates catch matrix for given variable and unit
+#' @return list with three members (means, cv and caa_scaled)
+#' @keywords internal
+getCatchMatrix <- function(pred,
+                           var = "Abundance",
+                           unit = "ones"){
+  if (var == "Abundance" | var == "Count") {
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "ones",
+      def.out = F
+    )
+    caa <- round(apply(pred$TotalCount, c(2, 3), sum))
+
+  }
+  else if (var == "Weight") {
+    caa <- apply(pred$TotalCount, c(2, 3), sum) * pred$MeanWeight
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "kilograms",
+      def.out = F
+    )
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  caa_scaled <- as.data.frame(caa / plottingUnit$scale)
+  means <-
+    as.data.frame(list(age = pred$AgeCategories, mean = rowMeans(caa_scaled)))
+  cv <-
+    as.data.frame(list(
+      age = pred$AgeCategories,
+      sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
+    ))
+  cv$cv <- cv$sd / means$mean
+  colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
+  caa_scaled$age <- pred$AgeCategories
+  caa_scaled <-
+    caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
+  
+  
+  tab <- list()
+  tab$means <- means
+  tab$cv <- cv
+  tab$caa_scaled <- caa_scaled
+
+  return (tab)
+  
+}
 
 #' @title Save catch at age matrix
 #' @description Write catch at age predicted by \code{\link[eca]{eca.predict}} as csv file.
@@ -1629,13 +1694,6 @@ saveCatchMatrix <-
     }
     
     if (var == "Abundance" | var == "Count") {
-      plottingUnit = getPlottingUnit(
-        unit = unit,
-        var = var,
-        baseunit = "ones",
-        def.out = F
-      )
-      caa <- round(apply(pred$TotalCount, c(2, 3), sum))
       
       if (unit == "ones") {
         comments <- c(paste(title, "as", var))
@@ -1646,13 +1704,6 @@ saveCatchMatrix <-
       
     }
     else if (var == "Weight") {
-      caa <- apply(pred$TotalCount, c(2, 3), sum) * pred$MeanWeight
-      plottingUnit = getPlottingUnit(
-        unit = unit,
-        var = var,
-        baseunit = "kilograms",
-        def.out = F
-      )
       comments <- c(paste(title, "as", var, "in", unit))
     }
     else{
@@ -1660,25 +1711,14 @@ saveCatchMatrix <-
     }
     
     comments <- c(main, comments)
-    caa_scaled <- as.data.frame(caa / plottingUnit$scale)
-    means <-
-      as.data.frame(list(age = pred$AgeCategories, mean = rowMeans(caa_scaled)))
-    cv <-
-      as.data.frame(list(
-        age = pred$AgeCategories,
-        sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
-      ))
-    cv$cv <- cv$sd / means$mean
-    colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
-    caa_scaled$age <- pred$AgeCategories
-    caa_scaled <-
-      caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
+    
+    tab <- getCatchMatrix(pred, var, unit)
     
     f <- file(filename, open = "w")
     write(paste("#", comments), f)
     if (savemeans) {
       write.table(
-        merge(means, cv),
+        merge(tab$means, tab$cv),
         file = f,
         sep = "\t",
         dec = ".",
@@ -1688,7 +1728,7 @@ saveCatchMatrix <-
     }
     else{
       write.table(
-        caa_scaled,
+        tab$caa_scaled,
         file = f,
         sep = "\t",
         dec = ".",
@@ -1779,6 +1819,122 @@ saveCatchCovarianceMatrix <- function(pred,
       row.names = T
     )
     close(f)
+}
+
+#' Make decomposed catch matrix
+#' Contain workaround variables, until reporting setup can be configured in stox.
+#' @description Compiles catch matrix decomposed on given variables
+#' @details 
+#'    decomposition variables need not be the same as model covariates, but model covariates will be used for estimation.
+#'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
+#'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
+#'    
+#'    if the project landings differ from totallandings, the fraction in landings for each combination of decomposition variables will be reflect that ratio, and reported estimates will reflect that of project landings
+#'    if there are additional values or levels for the model covariates in the total landings than what exists in the project landings, NAs will be reported for means and sds.
+#' @param projectname
+#' @param filename
+#' @param decomposition variables to use for decomposition, must be available for all rows in landings
+#' @param totallandings workaround variable total landings for decomposition (may be a superset for project landings). If null, project landings are used
+#' @param addQuarterToDecomp workaround variable for adding quarter to decomp
+#' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
+#' @keywords internal
+saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, totallandings, addQuarterToDecomp=F, var = "Abundance",
+                                      unit = "ones",
+                                      main = ""){
+  
+  stop("Fix setting fo quarter and adding to decomposition")
+  
+  # load eca configuration and parameterization
+  prepdata <- loadProjectData(projectName, var = "prepareRECA")
+  rundata <- loadProjectData(projectName, var = "runRECA")
+  if (is.null(prepdata) | is.null(rundata)) {
+    stop("Could not load project data")
+  }
+  
+  prepareRECA <- prepdata$prepareRECA
+  
+  projectlandings <- prepareRECA$StoxExport$landing
+  if (is.null(totallandings)){
+    totallandings <- projectlandings
+  }
+  projecttempres <- prepareRECA$StoxExport$temporalresolution
+  
+  AgeLength <- prepareRECA$AgeLength
+  WeightLength <- prepareRECA$WeightLength
+  runRECA <- rundata$runRECA
+  GlobalParameters <- runRECA$GlobalParameters
+  
+  agglisttotal <- list()
+  agglistproject <- list()
+  for (n in decomposition){
+    agglisttotal[[n]]<-totallandings[[n]]
+    agglistproject[[n]]<-projectlandings[[n]]
+  }
+  aggtotal <- aggregate(weight=totallandings$rundvekt, by=agglisttotal, FUN=sum)
+  aggproject <- aggregate(weight=projectlandings$rundvekt, by=agglistproject, FUN=sum)
+  
+  # check that total landings have values filled for all decomposition variables
+  if (any(is.na(totallandings[,decomposition]))){
+    stop("NAs for decomposition variables")
+  }
+  
+  # check that project landings is subset of total landings
+  if (nrow(aggtotal)<nrow(aggproject)){
+    stop("project landings must be a subset of total landings")
+  }
+  comb <- merge(aggtotal, aggproject, by=decomposition, all.x=T, suffixes=c(".tot", ".proj"))
+  if (any(comb$weight.tot<comb$weight.proj)){
+    stop("project landings must be a subset of total landings")
+  }
+  
+  # iterate over all combinations of decomposition variables in total landings
+  for (i in 1:nrow(aggtotal)){
+    ## extract corresponding data in the project landings
+    reducedlandings <- merge(projectlandings,aggtotal[1,decomposition])
+    
+    if (nrow(reducedlandings)){
+      stop("handle when projectlandings subset of total landings")
+    }
+    ## get total and fraction
+    
+    ## handle any additional model covariate values
+    warning("Not handling additional covariate value")
+    
+    
+  decompLandings <- getLandings(reducedlandings, AgeLength, WeightLength, projecttempres)
+  pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+  ## extract catchmatrix for decomposition
+  catchmatrix <- getCatchMatrix(pred, var = "Abundance", unit = "ones")
+  print(catchmatrix)
+  ## add to output dataframe
+  }
+  # add comments
+  comments <- c()
+  title <- "Mean catch at age estimates"
+  if (var == "Abundance" | var == "Count") {
+    
+    if (unit == "ones") {
+      comments <- c(paste(title, "as", var))
+    }
+    if (unit != "ones") {
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    
+  }
+  else if (var == "Weight") {
+    comments <- c(paste(title, "as", var, "in", unit))
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  comments <- c(main, comments)
+  
+  # save the lot
+  stop("Function under development")
 }
 
 #' @title Report RECA.

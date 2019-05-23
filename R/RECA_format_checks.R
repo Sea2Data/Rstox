@@ -76,37 +76,39 @@ check_cov_vs_info <- function(modelobj){
       stop(paste("CAR variable specified as", co, "but CARneighbours not specified"))
     }
     if (modelobj$info[co,"CAR"]==1 & !is.null(modelobj$CARNeighbours)){
-      if (max(modelobj$CARNeighbours$idNeighbours)>modelobj$info[co,"nlev"] | max(modelobj$CARNeighbours$idNeighbours)<1){
-        stop(paste("Neigbour matrix not consistent with nlev for CAR vairable", co))
-      }
-    }
-    if (modelobj$info[co,"CAR"]==1 & (any(modelobj$CARNeighbours$numNeighbours<1) | length(modelobj$CARNeighbours$numNeighbours) < modelobj$info[co,"nlev"])){
-      stop(paste("CAR variable specified as", co, "but some areas are missing neighbours in the data."))
-    }
-    if (modelobj$info[co,"CAR"]==1 & sum(modelobj$CARNeighbours$numNeighbours) != length(modelobj$CARNeighbours$idNeighbours)){
-      stop(paste("CAR variable specified as", co, "numNeigbours is not consistent with idNeigbours"))
-    }
-    if (modelobj$info[co,"CAR"]==1){
-      asymmetric_pairs <- ""
-      for (i in 1:modelobj$info[co,"nlev"]){
-        last_i <- sum(modelobj$CARNeighbours$numNeighbours[1:i])
-        num_i <- modelobj$CARNeighbours$numNeighbours[i]
-        neighbours_i <- modelobj$CARNeighbours$idNeighbours[(last_i-num_i+1):last_i]
-        for (j in 1:modelobj$info[co,"nlev"]){
-          last_j <- sum(modelobj$CARNeighbours$numNeighbours[1:j])
-          num_j <- modelobj$CARNeighbours$numNeighbours[j]
-          neighbours_j <- modelobj$CARNeighbours$idNeighbours[(last_j-num_j+1):last_j]
-
-          ineighbourofj <- i %in% neighbours_j
-          jneighbourofi <- j %in% neighbours_i
-            
-          if (ineighbourofj!=jneighbourofi){
-            asymmetric_pairs <- paste(asymmetric_pairs, " (",i,",", j, ") ", sep="")
+      if (modelobj$info[co,"nlev"]>1){
+        if (max(modelobj$CARNeighbours$idNeighbours)>modelobj$info[co,"nlev"] | max(modelobj$CARNeighbours$idNeighbours)<1){
+          stop(paste("Neigbour matrix not consistent with nlev for CAR vairable", co))
+        }
+        if (modelobj$info[co,"CAR"]==1 & (any(modelobj$CARNeighbours$numNeighbours<1) | length(modelobj$CARNeighbours$numNeighbours) < modelobj$info[co,"nlev"])){
+          stop(paste("CAR variable specified as", co, "but some areas are missing neighbours in the data."))
+        }
+        if (modelobj$info[co,"CAR"]==1 & sum(modelobj$CARNeighbours$numNeighbours) != length(modelobj$CARNeighbours$idNeighbours)){
+          stop(paste("CAR variable specified as", co, "numNeigbours is not consistent with idNeigbours"))
+        }
+        if (modelobj$info[co,"CAR"]==1){
+          asymmetric_pairs <- ""
+          for (i in 1:modelobj$info[co,"nlev"]){
+            last_i <- sum(modelobj$CARNeighbours$numNeighbours[1:i])
+            num_i <- modelobj$CARNeighbours$numNeighbours[i]
+            neighbours_i <- modelobj$CARNeighbours$idNeighbours[(last_i-num_i+1):last_i]
+            for (j in 1:modelobj$info[co,"nlev"]){
+              last_j <- sum(modelobj$CARNeighbours$numNeighbours[1:j])
+              num_j <- modelobj$CARNeighbours$numNeighbours[j]
+              neighbours_j <- modelobj$CARNeighbours$idNeighbours[(last_j-num_j+1):last_j]
+              
+              ineighbourofj <- i %in% neighbours_j
+              jneighbourofi <- j %in% neighbours_i
+              
+              if (ineighbourofj!=jneighbourofi){
+                asymmetric_pairs <- paste(asymmetric_pairs, " (",i,",", j, ") ", sep="")
+              }
+            }  
           }
-        }  
-      }
-      if (nchar(asymmetric_pairs)>0){
-        stop(paste("CAR variable specified as", co, "but neighbour matrix is not symmetric (i is neighbour of j, but not j of i, or vice versa). Asymmetric pairs: ", asymmetric_pairs))
+          if (nchar(asymmetric_pairs)>0){
+            stop(paste("CAR variable specified as", co, "but neighbour matrix is not symmetric (i is neighbour of j, but not j of i, or vice versa). Asymmetric pairs: ", asymmetric_pairs))
+          }
+        }
       }
     }
   }
@@ -139,9 +141,11 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   if (!is.null(agelength$AgeErrorMatrix) & (any(is.na(agelength$AgeErrorMatrix)) || any(agelength$AgeErrorMatrix>1) || any(agelength$AgeErrorMatrix<0))){
     stop("Invalid values in age error matrix")
   }
-  if (!is.null(agelength$AgeErrorMatrix) & any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
-    stop("Rows of age error matrix does not sum to 1")
-  }
+  if (!is.null(agelength$AgeErrorMatrix)){
+    if (any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
+      stop("Rows of age error matrix does not sum to 1")
+    }
+  } 
 }
 #' checks that weightlenght is configured correctly
 #' @keywords internal
@@ -246,17 +250,19 @@ checkGlobalParameters <- function(globalparameters, agelength, weightlength){
   if (globalparameters$age.error & is.null(agelength$AgeErrorMatrix)){
     stop("Age error matrix not set, but age.error parameter set to TRUE.")
   }
-  if (globalparameters$age.error & nrow(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
-    stop(paste0("Rows of age matrix does not match minage maxage parameters (", nrow(agelength$AgeErrorMatrix), " vs ", globalparameters$minage, ":", globalparameters$maxage, ")"))
-  }
-  if (globalparameters$age.error & as.numeric(row.names(agelength$AgeErrorMatrix))[1] != globalparameters$minage){
-    stop("First age of age error matrix does not correspond to minage")
-  }
-  if (globalparameters$age.error & as.numeric(row.names(agelength$AgeErrorMatrix))[length(row.names(agelength$AgeErrorMatrix))] != globalparameters$maxage){
-    stop("Last age of age error matrix does not correspond to maxage")
-  }
-  if (globalparameters$age.error & ncol(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
-    stop(paste0("Columns of age matrix does not match minage maxage parameters (", ncol(agelength$AgeErrorMatrix), " vs ", globalparameters$maxage, ":", globalparameters$minage, ")"))
-  }
+  if (globalparameters$age.error){
+    if (nrow(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
+      stop(paste0("Rows of age matrix does not match minage maxage parameters (", nrow(agelength$AgeErrorMatrix), " vs ", globalparameters$minage, ":", globalparameters$maxage, ")"))
+    }
+    if (as.numeric(row.names(agelength$AgeErrorMatrix))[1] != globalparameters$minage){
+      stop("First age of age error matrix does not correspond to minage")
+    }
+    if (as.numeric(row.names(agelength$AgeErrorMatrix))[length(row.names(agelength$AgeErrorMatrix))] != globalparameters$maxage){
+      stop("Last age of age error matrix does not correspond to maxage")
+    }
+    if (ncol(agelength$AgeErrorMatrix) != (globalparameters$maxage-globalparameters$minage+1)){
+      stop(paste0("Columns of age matrix does not match minage maxage parameters (", ncol(agelength$AgeErrorMatrix), " vs ", globalparameters$maxage, ":", globalparameters$minage, ")"))
+    }
+  } 
   
 }
