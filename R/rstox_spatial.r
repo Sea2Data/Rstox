@@ -67,7 +67,7 @@ polyArea <- function(x, requireClosed=TRUE) {
 	sp::proj4string(p) <- sp::CRS("+proj=longlat +ellps=WGS84")	
 	# define the proj4 definition of Lambert Azimuthal Equal Area (laea) CRS with origo in wkt center:
 	# Units: international nautical miles:
-	laea.CRS<-CRS(paste0("+proj=laea +lat_0=",p@polygons[[1]]@labpt[2]," +lon_0=",p@polygons[[1]]@labpt[1],
+	laea.CRS <- sp::CRS(paste0("+proj=laea +lat_0=",p@polygons[[1]]@labpt[2]," +lon_0=",p@polygons[[1]]@labpt[1],
 		" +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=kmi +no_defs"))
 	# project data points from longlat to given laea
 	p1 <- sp::spTransform(p, laea.CRS)
@@ -2400,8 +2400,9 @@ writeTransectsINFO <- function(x, projectName=NULL, dir=NULL, digits=2, prefix="
 		parameters <- x$parameters[[stratumInd]]
 		
 		# Get the total travelled distance and the survey coverage:
-		dist <- Stratum$total
-	    area.nm2 <- Stratum$area
+		# dist <- Stratum$total # This was a bug, where the total sailed distance was used instead of the transect distance without transport
+		dist <- Stratum$transect
+		area.nm2 <- Stratum$area
 	    Sur.cov <- dist / sqrt(area.nm2)
 		
 		# Select the current stratum:
