@@ -16,8 +16,8 @@ The package Rstox contains most of the functionality of the stock assesment util
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/Sea2Data/Rstox}
-  \item Report bugs at \url{https://github.com/Sea2Data/Rstox/issues}
+  \item \url{https://github.com/IMR-StoX/Rstox}
+  \item Report bugs at \url{https://github.com/IMR-StoX/Rstox/issues}
 }
 
 }

@@ -4,8 +4,7 @@
 \alias{getDataMatrixANDCovariateMatrix}
 \title{Function for extracting the DataMatrix for the given variable ("age" or "weight", length is requested in both):}
 \usage{
-getDataMatrixANDCovariateMatrix(eca, vars = c("age", "yearday"),
-  ecaParameters)
+getDataMatrixANDCovariateMatrix(eca, vars = c("age", "yearday"))
 }
 \description{
 Function for extracting the DataMatrix for the given variable ("age" or "weight", length is requested in both):

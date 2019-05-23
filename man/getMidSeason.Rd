@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstox_eca.r
 \name{getMidSeason}
 \alias{getMidSeason}
-\title{Function for setting getting appropriate value for the midSeason column in Landings}
+\title{Function for getting the day of the year that is midway between two dates.}
 \usage{
 getMidSeason(x, tz = "UTC", format = "\%d/\%m/\%Y")
 }
@@ -13,6 +13,6 @@ getMidSeason(x, tz = "UTC", format = "\%d/\%m/\%Y")
 the day number in the year for the given day, or the mean day number in the year for the endpoints of the range
 }
 \description{
-Function for setting getting appropriate value for the midSeason column in Landings
+Function for getting the day of the year that is midway between two dates.
 }
 \keyword{internal}
