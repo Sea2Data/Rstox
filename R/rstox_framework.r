@@ -43,12 +43,12 @@ merge2 <- function(x, y, var=c("distance", "weight", "lengthsampleweight", "leng
 #' 
 #' Merges two data tables with all=TRUE, while keeping only columns of the data tables with names intersecting \code{var}, and using the intersect of \code{keys} and the names of the data tables as the 'by' argument.
 #' 
-#' @param baselineOutput		A list as returned from \code{\link{getBaseline}} containing biotic data with three data tables representing the levels FishStation, CatchSample and Individual.
+#' @param baselineOutput		A list as returned from \code{\link{getBaseline}} containing biotic data with three data tables representing the levels fishstation, catchsample and individual.
 #' @param BioticData			The function from which the biotic data are retrieved, normally one of "ReadBioticXML" and "FilterBiotic".
 #' @param LengthDistType		The type of length distribution to use, one of "LengthDist", "NormLengthDist" and "PercentLengthDist" (see 'Details').
 #' @param allowMissingWeight	Logical: If TRUE and \code{LengthDistType} == "PercentLengthDist" accept stations with missing pairs of lengthsampleweight and (total) weight or lengthsamplecatch and (total) catch.
 #' @param use.set				For development. Remove this later!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#' @param BioticDataList		A list of biotic data representing the levels FishStation, CatchSample and Individual as returned from e.g. getBaseline("Test_Rstox")$outputData$ReadBioticXML.
+#' @param BioticDataList		A list of biotic data representing the levels fishstation, catchsample and individual as returned from e.g. getBaseline("Test_Rstox")$outputData$ReadBioticXML.
 #'
 #' @details The purpose of function StationLengthDist is to produce a length frequency distribution for each biotic station by species. Three different distributions (LengthDistType) can be generated:
 #'
@@ -101,7 +101,7 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	}
 	
 	# Function to get missing data and number of part samples
-	checkCatchSample <- function(x){
+	checkCatchsample <- function(x){
 		has_SpecCat <- !is.na(x$SpecCat)
 			has_weight <- !is.na(x$weight)
 			has_lengthsampleweight <- !is.na(x$lengthsampleweight)
@@ -141,38 +141,38 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	keys <- c(keys, aggregate_keys)
 	
 	# Define list names to get the data from:
-	FishStationName <- "BioticData_FishStation.txt"
-	CatchSampleName <- "BioticData_CatchSample.txt"
-	IndividualName <- "BioticData_Individual.txt"
+	fishstationName <- "BioticData_fishstation.txt"
+	catchsampleName <- "BioticData_catchsample.txt"
+	individualName <- "BioticData_individual.txt"
 	##########
 	
 	
 	##### First merge the fish station and catch sample data tables, to be sure to remove the entire station if none of the catch samples have e.g. weight and lengthsampleweight: #####
-	FishStation_CatchSample <- merge2(BioticDataList[[FishStationName]], BioticDataList[[CatchSampleName]], var=var, keys=keys)
+	fishstation_catchsample <- merge2(BioticDataList[[fishstationName]], BioticDataList[[catchsampleName]], var=var, keys=keys)
 	##########
 	
 	
 	##### Subset datasets given 'LengthDistType': #####
 	# If LengthDistType="NormLengthDist", accept only stations with 'distance':
 	if(LengthDistType == "NormLengthDist"){
-		FishStation_CatchSample <- subset(FishStation_CatchSample, !is.na(distance))
+		fishstation_catchsample <- subset(fishstation_catchsample, !is.na(distance))
 	}
 	
 	# Check validity of the data:
-	FishStation_CatchSample <- checkCatchSample(FishStation_CatchSample)
+	fishstation_catchsample <- checkCatchsample(fishstation_catchsample)
 	
 	# If LengthDistType="PercentLengthDist" there is a possibility to accept stations with missing weight and count, as long as there is only one sample
 	if(LengthDistType == "PercentLengthDist" && allowMissingWeight){
-		FishStation_CatchSample <- subset(FishStation_CatchSample, has_SpecCat & (has_weightORcount | has_onlyOnePartSample))
+		fishstation_catchsample <- subset(fishstation_catchsample, has_SpecCat & (has_weightORcount | has_onlyOnePartSample))
 	}
 	else{
-		FishStation_CatchSample <- subset(FishStation_CatchSample, has_SpecCat & has_weightORcount)
+		fishstation_catchsample <- subset(fishstation_catchsample, has_SpecCat & has_weightORcount)
 	}
 	
-	# Merge FishStation with CatchSample, and then the result with Individual:
+	# Merge fishstation with catchsample, and then the result with individual:
 	thisvar <- c(var, "has_weight", "has_NOTweightBUTcount", "has_onlyOnePartSample")
-	temp <- merge2(FishStation_CatchSample, BioticDataList[[IndividualName]], var=thisvar, keys=keys, keys.out=TRUE)
-	FishStation_CatchSample_Individual <- temp$data
+	temp <- merge2(fishstation_catchsample, BioticDataList[[individualName]], var=thisvar, keys=keys, keys.out=TRUE)
+	fishstation_catchsample_individual <- temp$data
 	keys <- temp$keys
 	##########
 	
@@ -180,15 +180,15 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	##### Get length intervals: #####
 	# The 'lengthresolution' from biotic v1.4 is coded as given by getNMDinfo("lengthresolution"), which says code = 1:7, resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001):
 	resolutionMeters = c(0.001, 0.005, 0.010, 0.030, 0.050, 0.0005, 0.0001)
-	lengthRes <- max(resolutionMeters[FishStation_CatchSample_Individual$lengthresolution], na.rm=TRUE)
+	lengthRes <- max(resolutionMeters[fishstation_catchsample_individual$lengthresolution], na.rm=TRUE)
 	lengthResCM <- lengthRes * 100
 	
 	# Get largest length resolution:
 	# Round down all length measurements to the nearest length interval (add 1 to make the first interval start at 0, thus rounding down):
-	FishStation_CatchSample_Individual$lengthInt <- floor(FishStation_CatchSample_Individual$length / lengthResCM) + 1
-	rangeLengthInt <- range(FishStation_CatchSample_Individual$lengthInt, na.rm=TRUE)
+	fishstation_catchsample_individual$lengthInt <- floor(fishstation_catchsample_individual$length / lengthResCM) + 1
+	rangeLengthInt <- range(fishstation_catchsample_individual$lengthInt, na.rm=TRUE)
 	# Get the range of the lengths:
-	rangeLengths <- (range(FishStation_CatchSample_Individual$lengthInt, na.rm=TRUE) - 1) * lengthResCM
+	rangeLengths <- (range(fishstation_catchsample_individual$lengthInt, na.rm=TRUE) - 1) * lengthResCM
 	# Create a vector of all length intervals:
 	lengthIntervals <- seq(rangeLengths[1], rangeLengths[2], by=lengthResCM)
 	numLengthIntervals <- length(lengthIntervals)
@@ -196,10 +196,10 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	
 	
 	##### generate length distributions per station and SpecCat: #####
-	setkeyv(FishStation_CatchSample_Individual, cols=keys)
+	setkeyv(fishstation_catchsample_individual, cols=keys)
 	byGrp <- keys
 	
-	# Declare the variables used in the FishStation_CatchSample_Individual[] expression below (this is done to avoid warnings when building the package):
+	# Declare the variables used in the fishstation_catchsample_individual[] expression below (this is done to avoid warnings when building the package):
 	. <- NULL
 	distance <- NULL
 	has_SpecCat <- NULL
@@ -217,7 +217,7 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	cruise <- NULL
 	serialnumber <- NULL
 	
-	out <- FishStation_CatchSample_Individual[,  .(
+	out <- fishstation_catchsample_individual[,  .(
 		"WeightedCount" = tabulatePlusOne(lengthInt, rangeLengthInt), 
 		"LengthGroup (cm)" = lengthIntervals, 
 		"LengthInterval (cm)" = rep(lengthResCM[1], numLengthIntervals), 

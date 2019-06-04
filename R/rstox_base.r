@@ -809,9 +809,16 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 		if(is.list(files)){
 			return(files)
 		}
+		
+		# Check if the key strings are present in the first nchars characters:
 		first <- sapply(files, readChar, nchars=nchars)
-		out <- lapply(getRstoxDef("StoX_data_type_keys"), grep, first, ignore.case=TRUE)
-		if(sum(sapply(out, length))){
+		#out <- lapply(getRstoxDef("StoX_data_type_keys"), grep, first, ignore.case=TRUE)
+		grepSeveral <- function(pattern, x, ...){
+			unlist(lapply(pattern, grep, x, ...))
+		}
+		out <- lapply(getRstoxDef("StoX_data_type_keys"), grepSeveral, first, ignore.case=TRUE)
+		
+		if(sum(lengths(out))){
 			out <- lapply(out, function(x) files[x])
 			names(out) <- getRstoxDef("StoX_data_sources")
 		}
@@ -2673,7 +2680,12 @@ initiateRstoxEnv <- function(){
 	
 	# The following key strings are used to detect the data file type:
 	#StoX_data_type_keys <- c(acoustic = "echosounder_dataset", biotic = "missions xmlns", landing = "Sluttseddel")
-	StoX_data_type_keys <- c(acoustic = "nmdechosounder", biotic = "nmdbiotic", landing = "Sluttseddel")
+	#StoX_data_type_keys <- c(acoustic = "nmdechosounder", biotic = "nmdbiotic", landing = "Sluttseddel")
+	StoX_data_type_keys <- list(
+		acoustic = c("nmdechosounder", "echosounder_dataset"), 
+		biotic = c("nmdbiotic", "missions xmlns"), 
+		landing = c("Sluttseddel")
+	)
 	StoX_reading_processes <- c(acoustic = "ReadAcousticXML", biotic = "ReadBioticXML", landing = "ReadLandingXML")
 	
 	
