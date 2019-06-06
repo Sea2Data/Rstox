@@ -47,7 +47,10 @@ check_cov_vs_info <- function(modelobj){
     ma <- max(modelobj$CovariateMatrix[,co])
     mi <- min(modelobj$CovariateMatrix[,co])
     num_unique <- length(unique(modelobj$CovariateMatrix[,co]))
-    
+
+    if (modelobj$info[co,"continuous"]==0 & co!="constant" & modelobj$info[co,"nlev"]==1){
+      stop(paste("Only one level for categorical covariate", co))
+    }
     if (modelobj$info[co,"continuous"]==0 & ma > modelobj$info[co,"nlev"]){
       stop(paste("Max value higher than nlev for covariate", co))
     }

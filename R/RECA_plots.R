@@ -508,7 +508,7 @@ plot_cell_landings <-
            xlab = "Cells (gear/temp/spatial)",
            ylab = "landed (kt)",
            frac = 0.01,
-           titletext = paste("top", 100 - frac * 100, "weight-% cells"),
+           titletext = paste("top", 100 - frac * 100, "weight-% cells (out of", format(sum(eca$landing$rundvekt)/(1000*1000), digits = 1), "kt)"),
            legendtitle = "sample clusteredness",
            colgood = default_color_good,
            colok = default_color_ok,
@@ -522,7 +522,14 @@ plot_cell_landings <-
            baddesc = "0 samples") {
     mm <- get_g_s_a_frame(eca)
     mm <- mm[order(mm$landed_kt, decreasing = T), ]
-    mm <- mm[cumsum(mm$landed_kt) / sum(mm$landed_kt) > frac, ]
+    indexoflastsmallerthanfrac <- sum((cumsum(mm$landed_kt) / sum(mm$landed_kt) < (1-frac)))
+    if (indexoflastsmallerthanfrac < nrow(mm)){
+      index <-indexoflastsmallerthanfrac+1
+    }
+    else{
+      index <-indexoflastsmallerthanfrac
+    }
+    mm <- mm[1:index,]      
     mm$col <- NA
     
     mm[mm$landed_kt == 0 & mm$vessels > 0, "col"] <- colwrong
