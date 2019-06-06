@@ -171,8 +171,9 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	# Find duplicate species in a haul
 	
 	# NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
-	dupl <- aggregate(species ~ aphia + serialnumber, rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_catchsample.txt, FUN = function(x) length(unique(x)))
-	dupl <- dupl[dupl$species > 1, ]
+	# NOTE 2019-06-06: species is also replaced to commonname
+	dupl <- aggregate(commonname ~ aphia + serialnumber, rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_catchsample.txt, FUN = function(x) length(unique(x)))
+	dupl <- dupl[dupl$commonname > 1, ]
 	# Find the above in DATRAS HL
 	# NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
 	found <- aggregate(CatCatchWgt ~ StNo + SpecCode + Sex + CatIdentifier, hl[(hl$SpecCode==dupl$aphia & hl$StNo==dupl$serialnumber),], FUN = function(x) length(unique(x)))
