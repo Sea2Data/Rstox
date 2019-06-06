@@ -51,7 +51,7 @@ downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
 
 \item{year}{Used in conjunction with 'shipname' to get all cruises from one or more years from a specific ship.}
 
-\item{shipname}{Specifies the ship name WITHOUT call signal, e.g., "G.O.Sars" and not "G.O.Sars_LMEL" (see 'cruise' and 'year').}
+\item{shipname}{Optional: Specifies the ship name WITHOUT call signal, e.g., "G.O.Sars" and not "G.O.Sars_LMEL" (see 'cruise' and 'year'). If empty (default), data from all ships of the given cruise are downloaded.}
 
 \item{serialnumber}{A vector of the requested serial numbers.}
 

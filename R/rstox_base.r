@@ -18,8 +18,30 @@
 #' \code{getAvailableProjects} lists available projects. \cr \cr
 #' \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
 #'
-#' @param projectName   	The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.
-#' @param files   			A list with elements named "acoustic", "biotic", "landing", "process" (holding the project.xml file) or other implemented types of data to be copied to the project (available data types are stored in Definitions$StoX_data_sources in the environment "RstoxEnv". Get these by getRstoxDef("StoX_data_sources"). These could be given as directories, in which case all files within the directories are copied, or as URLs. If given as a single path to a directory holding sub-directories with names "acoustic", "biotic", "landing", "process" or other implemented types of data, the files are copied from these directories. If \code{files} has length 0 (default), no files are written to the project except the project.xml file using the specified \code{model}. If multiple projects are created, the files are copied to all projects. If given as a single URL to a zipped StoX project, the project is downloaded and unzipped, usting the 
+#' @param projectName The name or full path of the project, a baseline object 
+#'   (as returned from \code{getBaseline} or \code{runBaseline}), og a project
+#'   object (as returned from \code{openProject}). For \code{createProject}, 
+#'   \code{projectName}=NULL (the default) returns available templates, and 
+#'   for \code{openProject}, zeros length \code{projectName} returns all StoX 
+#'   projects in the default workspace either given as a vector of full paths, 
+#'   or, in the case projectName is an empty list, a list of names of StoX 
+#'   projects located in the default workspace and sub directories. Projects 
+#'   locataed in sub directories of the default workspace can be given by the 
+#'   relative path, or are searched for by name.
+#' @param files A list with elements named "acoustic", "biotic", "landing", 
+#'   "process" (holding the project.xml file) or other implemented types of 
+#'   data to be copied to the project (available data types are stored in 
+#'   Definitions$StoX_data_sources in the environment "RstoxEnv". Get these 
+#'   by getRstoxDef("StoX_data_sources"). These could be given as directories, 
+#'   in which case all files within the directories are copied, or as URLs. 
+#'   If given as a single path to a directory holding sub-directories with 
+#'   names "acoustic", "biotic", "landing", "process" or other implemented 
+#'   types of data, the files are copied from these directories. 
+#'   If \code{files} has length 0 (default), no files are written to the 
+#'   project except the project.xml file using the specified \code{model}. 
+#'   If multiple projects are created, the files are copied to all projects. 
+#'   If given as a single URL to a zipped StoX project, the project is 
+#'   downloaded and unzipped.
 #' @param newProjectName	The name of the project to save an open project as.
 #' @param dir				The directory in which to put the project. The project is a directory holding three sub directories named "input", "output" and "process", where input, output and process files are stored.
 #' @param model   			The model to use, either given as a string specifying a template, or a vector of process names or list of processes given as lists of parameter specifications (see \code{parlist}). Show available templates with createProject().
@@ -36,7 +58,6 @@
 #' @param subset.out		Logical: Used in \code{is.project}. If TRUE, subset the input project names, and if False, return a logical vector.
 #' @param relative.path		Logical: If TRUE, update the project.xml file with the relative paths in Read* functions.
 #'
-#' @examples
 #' # Show templates:
 #' templ <- createProject()
 #' names(templ)
@@ -2960,35 +2981,6 @@ getModelType <- function(modelType){
 #### 		validModelTypes[hit]
 #### 	}
 #### }
-
-
-
-
-
-#*********************************************
-#*********************************************
-#' Get the Rstox version and the version of the Java library used by Rstox, on which StoX is built.
-#'
-#' @param out	The type of object to return.
-#'
-#' @export
-#' @keywords internal
-#'
-getRstoxVersion <- function(out=c("list", "string"), dependencies=getRstoxDef("internal_dependencies")){
-	Rstox.init()
-	ver <- list(Rstox=as.character(packageVersion("Rstox")), StoXLib=J("no.imr.stox.model.Project")$RESOURCE_VERSION)
-	installed <- installed.packages()[, "Package"]
-	if(any(dependencies %in% installed)){
-		installed <- intersect(dependencies, installed)
-		add <- lapply(installed, function(x) as.character(packageVersion(x)))
-		names(add) <- installed
-		ver <- c(ver, add)
-	}
-	if(out[1]=="string"){
-		ver <- paste(names(ver), unlist(ver), sep="_", collapse="_")
-	}
-	ver
-}
 
 
 #*********************************************

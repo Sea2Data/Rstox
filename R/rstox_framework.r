@@ -161,7 +161,7 @@ getStationLengthDist <- function(BioticDataList, LengthDistType="PercentLengthDi
 	# Check validity of the data:
 	fishstation_catchsample <- checkCatchsample(fishstation_catchsample)
 	
-	# If LengthDistType="PercentLengthDist" there is a possibility to accept stations with missing weight and count, as long as there is only one sample
+	# If LengthDistType="PercentLengthDist" there is a possibility to accept stations with missing weight and count, as long as there is only one sample:
 	if(LengthDistType == "PercentLengthDist" && allowMissingWeight){
 		fishstation_catchsample <- subset(fishstation_catchsample, has_SpecCat & (has_weightORcount | has_onlyOnePartSample))
 	}

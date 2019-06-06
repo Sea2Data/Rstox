@@ -24,7 +24,7 @@ getProcessDataTableAsDataFrame(projectName, tableName)
 
 \item{functionName}{The name of the function to extract data by, such as "ReadBioticXML"}
 
-\item{level}{The level of tables for some datatypes like FishStation, which contains different levels, i.e., 1 for fishstation, 2 for sample and 3 for individuals. \code{getDataFrame1} selects the first level, and \code{getDataFrame} must be used to select a different level}
+\item{level}{The level of tables for some datatypes like fishstation, which contains different levels, i.e., 1 for fishstation, 2 for sample and 3 for individuals. \code{getDataFrame1} selects the first level, and \code{getDataFrame} must be used to select a different level}
 
 \item{drop}{Logical: if TRUE (defalut) drop the list if only one data frame is requested.}
 
