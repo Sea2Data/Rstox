@@ -46,7 +46,7 @@
 #' 
 #' # Merge the biotic data to one data frame, but exclude the comment column first:
 #' by12 <- c("cruise", "serialno", "platform")
-#' by23 <- c(by12, "SpecCat", "species", "noname", "aphia", "samplenumber")
+#' by23 <- c(by12, "SpecCat", "species", "commonname", "aphia", "samplenumber")
 #' d <- merge(merge(g[[1]], g[[2]], all=TRUE, by=by12), g[[3]], all=TRUE, by=by23)
 #' # Revert the names of the weights back to the original 
 #' # for comparison with a new project using the new biotic.xml file:

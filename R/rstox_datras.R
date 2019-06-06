@@ -129,7 +129,7 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 
 	## get ship code from ICES
 	# Comment: This seems to allow only one biotic file in the project, since the first cruise number is selected:
-	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_FishStation.txt$cruise)
+	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_fishstation.txt$cruise)
 	Year <- unique(hh$Year)
 
 	# Try using Cruise Series first, since it's faster
@@ -171,7 +171,7 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	# Find duplicate species in a haul
 	
 	# NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
-	dupl <- aggregate(species ~ aphia + serialnumber, rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_CatchSample.txt, FUN = function(x) length(unique(x)))
+	dupl <- aggregate(species ~ aphia + serialnumber, rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_catchsample.txt, FUN = function(x) length(unique(x)))
 	dupl <- dupl[dupl$species > 1, ]
 	# Find the above in DATRAS HL
 	# NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:

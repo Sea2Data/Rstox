@@ -200,7 +200,7 @@ jBoolean <- function(i) {
 #' @param tableName		Supported processdata tables: TRAWLASSIGNMENT, DISTANCEASSIGNMENT, PSUASSIGNMENT, DISTANCEPSU, PSUSTRATUM, STRATUMPOLYGON
 #' @param storage		The StoX storage object
 #' @param data			The StoX data
-#' @param level			The level of tables for some datatypes like FishStation, which contains different levels, i.e., 1 for fishstation, 2 for sample and 3 for individuals. \code{getDataFrame1} selects the first level, and \code{getDataFrame} must be used to select a different level
+#' @param level			The level of tables for some datatypes like fishstation, which contains different levels, i.e., 1 for fishstation, 2 for sample and 3 for individuals. \code{getDataFrame1} selects the first level, and \code{getDataFrame} must be used to select a different level
 #' @param drop			Logical: if TRUE (defalut) drop the list if only one data frame is requested.
 #'
 #' @return A dataframe
@@ -290,7 +290,7 @@ getDataFrameAtLevel <- function(level, storage, data) {
 	s <- storage$asTable(data, jInt(level))
 	#out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=F)
 	
-	# A grave error was found when reading all data from 2016 (all serialno), where serial number were missing in e.g., FishStation versus CatchSample. This was tracked to the read.csv() of getDataFrameAtLevel(), where uncompleted quotes resulted in removed lines. The solution was to add the parameter quote=NULL:
+	# A grave error was found when reading all data from 2016 (all serialno), where serial number were missing in e.g., fishstation versus catchsample. This was tracked to the read.csv() of getDataFrameAtLevel(), where uncompleted quotes resulted in removed lines. The solution was to add the parameter quote=NULL:
 	#out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8")
 	### out <- read.csv(textConnection(s), sep='\t', stringsAsFactors=FALSE, na.strings="-", encoding="UTF-8", quote=NULL)
 	### # Interpret true/false as TRUE/FALSE (move along the columns of 'out'):

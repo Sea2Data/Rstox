@@ -9,15 +9,16 @@
 generateSpeciesMatrix(projectName, ref, years, check = TRUE,
   downloadProjects = FALSE, timeout = 600,
   model = list("ReadBioticXML", FilterBiotic = list(BioticData =
-  "ReadBioticXML")), specVar = "noname", catVar = "Speccat",
+  "ReadBioticXML")), specVar = "commonname", catVar = "Speccat",
   stationVar = c("cruise", "serialnumber"),
   bioticProc = "FilterBiotic", var = c("individualweight",
   "catchcount"), max.sampletype = 49, list.out = TRUE, ...)
 
 mergeSpeciesMatrix(...)
 
-aggregateBySpeciesCategory(projectName, ref = NULL, specVar = "noname",
-  specVar.bio = specVar, specVar.ref = specVar, catVar = "SpecCat",
+aggregateBySpeciesCategory(projectName, ref = NULL,
+  specVar = "commonname", specVar.bio = specVar,
+  specVar.ref = specVar, catVar = "SpecCat",
   bioticProc = "FilterBiotic", stationVar = c("cruise",
   "serialnumber"), var = c("individualweight", "catchcount"),
   na.as = 0, drop.out = TRUE, close = TRUE, msg = TRUE, ...)

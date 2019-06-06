@@ -4,7 +4,8 @@
 \alias{getGlobalParameters}
 \title{Function for extracting the GlobalParameters object}
 \usage{
-getGlobalParameters(eca, ecaParameters)
+getGlobalParameters(biotic, resultdir, maxlength, minage, maxage,
+  delta.age)
 }
 \description{
 Function for extracting the GlobalParameters object

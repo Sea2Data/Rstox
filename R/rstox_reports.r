@@ -1474,12 +1474,12 @@ getFunsRstox <- function(string, out="all"){
 generateSpeciesMatrix <- function(projectName, ref, years, check=TRUE, 
 	downloadProjects = FALSE, timeout = 600, 
 	model = list("ReadBioticXML", FilterBiotic=list(BioticData="ReadBioticXML")), 
-	specVar = "noname", catVar = "Speccat", stationVar = c("cruise", "serialnumber"), 
+	specVar = "commonname", catVar = "Speccat", stationVar = c("cruise", "serialnumber"), 
 	bioticProc = "FilterBiotic", var = c("individualweight", "catchcount"), 
 	max.sampletype=49, list.out=TRUE, ...){
 	
 	# Function to detect species that are present in the data but not in the reference file:
-	out.noname <- function(pr, ref, bioticProc="FilterBiotic", max.sampletype=49){
+	out.commonname <- function(pr, ref, bioticProc="FilterBiotic", max.sampletype=49){
 		# Read the biotic proecss and extract the catch sample level:
 		cat("Project:", pr, "...\n")
 		s1 <- getBaseline(pr, endProcess=bioticProc, proc=bioticProc, input=FALSE, msg=FALSE)
@@ -1487,11 +1487,11 @@ generateSpeciesMatrix <- function(projectName, ref, years, check=TRUE,
 		dat1 <- s1$ReadBioticXML$ReadBioticXML_BioticData_CatchSample.txt
 	
 		# Note that all names are converted to lower case 
-		noname.pr <- tolower(sort(as.character(unique(dat1$noname[dat1$sampletype <= max.sampletype]))))
-		ref$noname <- tolower(sort(as.character(ref$noname)))
+		commonname.pr <- tolower(sort(as.character(unique(dat1$commonname[dat1$sampletype <= max.sampletype]))))
+		ref$commonname <- tolower(sort(as.character(ref$commonname)))
 
 		# What is in XML file but not in Reference file:
-		only.in.xml <- setdiff(noname.pr, ref$noname)
+		only.in.xml <- setdiff(commonname.pr, ref$commonname)
 		if(length(only.in.xml)){
 			cat("Only in xml files (not in the reference table):", only.in.xml, "\n")
 		}
@@ -1541,7 +1541,7 @@ generateSpeciesMatrix <- function(projectName, ref, years, check=TRUE,
 	# Report species that are present in the data but not in the reference file:
 	if(check){
 		cat("Checking whether all species are present in the reference data frame...\n")
-		only.in.xml <- lapply(projectName, out.noname, ref=ref, bioticProc=bioticProc, max.sampletype=max.sampletype)
+		only.in.xml <- lapply(projectName, out.commonname, ref=ref, bioticProc=bioticProc, max.sampletype=max.sampletype)
 		if(length(only.in.xml)==0){
 			cat("All species present\n")
 		}
@@ -1585,7 +1585,7 @@ mergeSpeciesMatrix <- function(...){
 #' @keywords internal
 #' @rdname generateSpeciesMatrix
 #' 
-aggregateBySpeciesCategory <- function(projectName, ref=NULL, specVar="noname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", 
+aggregateBySpeciesCategory <- function(projectName, ref=NULL, specVar="commonname", specVar.bio=specVar, specVar.ref=specVar, catVar="SpecCat", bioticProc="FilterBiotic", 
 	stationVar=c("cruise", "serialnumber"), var=c("individualweight", "catchcount"), na.as=0, drop.out=TRUE, close=TRUE, msg=TRUE, ...){
 	# Function used for converting a matrix into a data frame and appending the rownames as the first column:
 	createTempDataFrame <- function(x){

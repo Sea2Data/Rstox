@@ -4,7 +4,7 @@
 \alias{getWeightGivenLength_Biotic}
 \title{Function for converting to the input format required by ECA (this is the main function):}
 \usage{
-getWeightGivenLength_Biotic(eca, ecaParameters)
+getWeightGivenLength_Biotic(eca)
 }
 \description{
 Function for converting to the input format required by ECA (this is the main function):

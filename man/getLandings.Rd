@@ -2,11 +2,13 @@
 % Please edit documentation in R/rstox_eca.r
 \name{getLandings}
 \alias{getLandings}
-\title{Function for extracting the Landings object}
+\title{Function for extracting the Landings object
+Compiles landings objects aggreageted to the covariates in the models, and to the temporal resolution provided}
 \usage{
-getLandings(eca, ecaParameters)
+getLandings(landing, AgeLength, WeightLength, landingresolution)
 }
 \description{
 Function for extracting the Landings object
+Compiles landings objects aggreageted to the covariates in the models, and to the temporal resolution provided
 }
 \keyword{internal}

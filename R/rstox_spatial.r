@@ -67,7 +67,7 @@ polyArea <- function(x, requireClosed=TRUE) {
 	sp::proj4string(p) <- sp::CRS("+proj=longlat +ellps=WGS84")	
 	# define the proj4 definition of Lambert Azimuthal Equal Area (laea) CRS with origo in wkt center:
 	# Units: international nautical miles:
-	laea.CRS<-CRS(paste0("+proj=laea +lat_0=",p@polygons[[1]]@labpt[2]," +lon_0=",p@polygons[[1]]@labpt[1],
+	laea.CRS <- sp::CRS(paste0("+proj=laea +lat_0=",p@polygons[[1]]@labpt[2]," +lon_0=",p@polygons[[1]]@labpt[1],
 		" +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=kmi +no_defs"))
 	# project data points from longlat to given laea
 	p1 <- sp::spTransform(p, laea.CRS)
@@ -537,6 +537,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param retour			Logical: If TRUE, continue with the transects back to the start point of the stratum.
 #' @param toursFirst		Logical: If TRUE, do all tours first followed by the retours (only effective if retour is TRUE).
 #' @param hours,nmi			The time/traveled distance to spend in each stratum, given in hours/nautical miles, where \code{nmi} has precedence over \code{hours}. The vector is repeated to have length equal to the number of strata specified in \code{strata}, so that only one value is given, this is the hours/nmi in all strata. Optionally, if a single value is enclosed in a list, it is regarded as the total hours/nmi for the entire survey. In this case selecting only a subset of the strata using \code{strata} will increase the effort in the selected strata.
+#' @param transectSpacing	The spacing in nautical miles between transects. This parameter is only effective if 
 #' @param t0				The start time of the survey, set to Sys.time() formatted to UTC by default. A as.POSIXct object or a string of a recognisable form (such as "\%Y-\%m-\%d \%H:\%M:\%S") are supported.
 #' @param knots				The speed to use in the stratum, given in knots.
 #' @param seed				The seed(s) to use for the random transects. If not given as an integer vector (such as c(2L, 5L)) of length equal to the number of strata, random seed are drawn using \code{\link{getSeedV}}.
@@ -662,7 +663,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @importFrom utils head tail
 #' @rdname surveyPlanner
 #' 
-surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, nmi=NULL, t0=NULL, knots=10, seed=0, angsep=1/6, distsep=NULL, margin=NULL, equalEffort=FALSE, byStratum=TRUE, strata="all", cruise="surveyPlanner", keepTransport=TRUE, centroid=NULL, ...){
+surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, nmi=NULL, transectSpacing=NULL, t0=NULL, knots=10, seed=0, angsep=1/6, distsep=NULL, margin=NULL, equalEffort=FALSE, byStratum=TRUE, strata="all", cruise="surveyPlanner", keepTransport=TRUE, centroid=NULL, ...){
 	
 	############################################################
 	######################## Functions: ########################
@@ -1269,10 +1270,12 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	#### to propagate through the stratum) ('xmin', 'xmax'), ###
 	############ and the x,y positions 'xyRotated': ############
 	############################################################
-	getTransectsByArea <- function(nmi_rest, area, fac, corners, xyRotated, type="Parallel", bearing="N", knots=10, seed=0, retour=FALSE){
-		# Get the number of transects:
+	getTransectsByArea <- function(nmi_rest, area, transectSpacing, fac, corners, xyRotated, type="Parallel", bearing="N", knots=10, seed=0, retour=FALSE){
+		# Get the transectSpacing:
+		if(length(transectSpacing) == 0){
+			transectSpacing <- area / nmi_rest
+		}
 		
-		transectSpacing <- area / nmi_rest
 		# If the transect sould go tour-retour, use half spacing for parallel andtransects, and for zigzag simply go back with opposite order:
 		#if(type == "Parallel" && retour){
 		if(retour){
@@ -1335,7 +1338,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	############################################################
 	#### Function for generating transects for one stratum: ####
 	############################################################
-	transectsOneStratum <- function(stratumInd, xy, area, parameters, margin=NULL){
+	transectsOneStratum <- function(stratumInd, xy, area, transectSpacing, parameters, margin=NULL){
 		# Get the parameters of the current stratumInd:
 		parameters <- lapply(parameters, "[", stratumInd)
 		
@@ -1359,7 +1362,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		fac <- runif(1)
 		
 		# If margin is given, iterate to obtain transects with total track length deviating at most by 'margin' relative to the input track length (margin = 0.05 implies between 19  and 21 hours, say):
-		temp <- getTransectsByArea(nmi_rest=nmi_rest, area=area[stratumInd], fac=fac, corners=corners, xyRotated=xyRotated, type=parameters$type, bearing=parameters$bearing, seed=parameters$seed, knots=parameters$knots, retour=parameters$retour)
+		temp <- getTransectsByArea(nmi_rest=nmi_rest, area=area[stratumInd], transectSpacing=transectSpacing, fac=fac, corners=corners, xyRotated=xyRotated, type=parameters$type, bearing=parameters$bearing, seed=parameters$seed, knots=parameters$knots, retour=parameters$retour)
 		
 		numIter <- 1
 		if(length(margin) && is.numeric(margin)){
@@ -1371,7 +1374,8 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			lastTemp <- NULL
 			# Iterate to get a calculated tracklength within the margins
 			while(abs(parameters$nmi - totalSailedDist) > margin_nmi){
-				temp <- getTransectsByArea(nmi_rest=nmi_rest, area=area[stratumInd], fac=fac, corners=corners, xyRotated=xyRotated, type=parameters$type, bearing=parameters$bearing, seed=parameters$seed, knots=parameters$knots, retour=parameters$retour)
+				# Ignore any 'transectSpacing' given as input, since we are now trying to fit the transect spacing to the desired effort:
+				temp <- getTransectsByArea(nmi_rest=nmi_rest, area=area[stratumInd], transectSpacing=NULL, fac=fac, corners=corners, xyRotated=xyRotated, type=parameters$type, bearing=parameters$bearing, seed=parameters$seed, knots=parameters$knots, retour=parameters$retour)
 				
 				totalSailedDist1 <- getDistTime(temp$coords, t0=parameters$t0, byStratum=FALSE)
 				totalSailedDist <- sum(totalSailedDist1$segmentLengths, na.rm=TRUE)
@@ -1626,7 +1630,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	#########################################
 	##### Get transects for all strata: #####
 	#########################################
-	out <- lapply(seq_along(xy), transectsOneStratum, xy=xy, area=area, parameters=parameters, margin=margin)
+	out <- lapply(seq_along(xy), transectsOneStratum, xy=xy, area=area, transectSpacing=transectSpacing, parameters=parameters, margin=margin)
 
 	Transect <- as.data.frame(data.table::rbindlist(out, idcol="stratum"), stringsAsFactors=FALSE)
 	# Convert the idcol 'stratum' from index to name:
@@ -2400,8 +2404,9 @@ writeTransectsINFO <- function(x, projectName=NULL, dir=NULL, digits=2, prefix="
 		parameters <- x$parameters[[stratumInd]]
 		
 		# Get the total travelled distance and the survey coverage:
-		dist <- Stratum$total
-	    area.nm2 <- Stratum$area
+		# dist <- Stratum$total # This was a bug, where the total sailed distance was used instead of the transect distance without transport
+		dist <- Stratum$transect
+		area.nm2 <- Stratum$area
 	    Sur.cov <- dist / sqrt(area.nm2)
 		
 		# Select the current stratum:

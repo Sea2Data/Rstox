@@ -13,10 +13,11 @@
 \usage{
 surveyPlanner(projectName, parameters = NULL, type = "Parallel",
   bearing = "N", rev = FALSE, retour = FALSE, toursFirst = FALSE,
-  hours = 240, nmi = NULL, t0 = NULL, knots = 10, seed = 0,
-  angsep = 1/6, distsep = NULL, margin = NULL, equalEffort = FALSE,
-  byStratum = TRUE, strata = "all", cruise = "surveyPlanner",
-  keepTransport = TRUE, centroid = NULL, ...)
+  hours = 240, nmi = NULL, transectSpacing = NULL, t0 = NULL,
+  knots = 10, seed = 0, angsep = 1/6, distsep = NULL,
+  margin = NULL, equalEffort = FALSE, byStratum = TRUE,
+  strata = "all", cruise = "surveyPlanner", keepTransport = TRUE,
+  centroid = NULL, ...)
 
 addStratum(x, acousticProc = "FilterAcoustic")
 
@@ -54,6 +55,8 @@ getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
 \item{toursFirst}{Logical: If TRUE, do all tours first followed by the retours (only effective if retour is TRUE).}
 
 \item{hours, nmi}{The time/traveled distance to spend in each stratum, given in hours/nautical miles, where \code{nmi} has precedence over \code{hours}. The vector is repeated to have length equal to the number of strata specified in \code{strata}, so that only one value is given, this is the hours/nmi in all strata. Optionally, if a single value is enclosed in a list, it is regarded as the total hours/nmi for the entire survey. In this case selecting only a subset of the strata using \code{strata} will increase the effort in the selected strata.}
+
+\item{transectSpacing}{The spacing in nautical miles between transects. This parameter is only effective if}
 
 \item{t0}{The start time of the survey, set to Sys.time() formatted to UTC by default. A as.POSIXct object or a string of a recognisable form (such as "\%Y-\%m-\%d \%H:\%M:\%S") are supported.}
 

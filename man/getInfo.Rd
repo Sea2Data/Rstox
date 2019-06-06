@@ -4,7 +4,7 @@
 \alias{getInfo}
 \title{Function for extracting the CARNeighbours and info:}
 \usage{
-getInfo(eca, CovariateMatrix, ecaParameters)
+getInfo(eca, CovariateMatrix, modelSpecification = NULL)
 }
 \description{
 Function for extracting the CARNeighbours and info:

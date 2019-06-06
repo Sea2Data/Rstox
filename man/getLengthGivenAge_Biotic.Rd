@@ -4,7 +4,7 @@
 \alias{getLengthGivenAge_Biotic}
 \title{Function for converting to the input format required by ECA (this is the main function):}
 \usage{
-getLengthGivenAge_Biotic(eca, ecaParameters)
+getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage)
 }
 \description{
 Function for converting to the input format required by ECA (this is the main function):
