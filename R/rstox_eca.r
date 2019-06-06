@@ -171,6 +171,9 @@ baseline2eca <-
       
       # (1a) Get the data and convert variable names to lower case:
       landing <- baselineOutput$outputData[[landing[1]]]
+      if (nrow(landing)==0){
+        stop("Landing table is empty.")
+      }
       names(landing) <- tolower(names(landing))
 
       landing <- temporal_workaround(landing, baselineOutput$processData, "Landing")
@@ -188,6 +191,11 @@ baseline2eca <-
       ############################################################
       # (2a) Get the data and convert variable names to lower case:
       biotic <- baselineOutput$outputData[[biotic[1]]]
+      
+      if (nrow(biotic)==0){
+        stop("Biotic table is empty")
+      }
+      
       names(biotic) <- tolower(names(biotic))
       biotic <- temporal_workaround(biotic, baselineOutput$processData, "Biotic")
       
@@ -1583,6 +1591,7 @@ writeRecaConfiguration <-
         info[, c(length(names(info)), seq(1, length(names(info)) - 1))]
       return(info)
     }
+    write(paste("Total landings:", sum(Landings$LiveWeightKG), "kg"), f)
     write("Length given age model:", f)
     write.table(
       formatinfo(AgeLength$info),
