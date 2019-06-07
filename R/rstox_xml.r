@@ -24,7 +24,7 @@
 #' @param cores					The number of cores to use to parallel writing of the individual XML files, which are then merged to one file. Set this > 1 to speed up the writing.
 #' @param root					The root of the XML to write. Use in \code{writeXMLusingXSD}, which requires a root to append the XML to.
 #' @param xsdtype				The type of XSD, currently one of "biotic" and "acoustic", used when reading an XSD (as used by the Institute of Marine Research).
-#' @param msg				Logical: If TRUE, print messages to the console.
+#' @param msg					Logical: If TRUE, print messages to the console.
 #'
 #' @examples
 #' \dontrun{

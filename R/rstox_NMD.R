@@ -251,14 +251,20 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL,
 			cruiseInfo <- getCruiseInfoFromStsInfo(stsInfo)
 		}
 		else if(downloadType == "c"){
+			# Get the shipname(s) if not specified:
+			# Change added on 2019-06-06, where empty shipname implies all ships of the cruise:
+			ShipName = if(length(shipname)) shipname else getShipNameFromCruiseNumber(cruise)
+			if(length(ShipName) == 0){
+				stop("No data found for cruise number ", cruise)
+			}
+			
 			# Define the info needed to get the URLs:
 			cruiseInfo <- data.frame(
 				Year = getYearFromCruiseNumber(cruise), 
 				# Bug fix on 2018-09-28 after comment from Ibrahim. With Cruise named CruiseNr, getPaths() did not find the cruise number:
 				# CruiseNr = cruise, 
 				Cruise = cruise, 
-				# Change added on 2019-06-06, where empty shipname implies all ships of the cruise:
-				ShipName = if(length(shipname)) shipname else getShipNameFromCruiseNumber(cruise)
+				ShipName = ShipName
 			)
 			# Add both StoX and NMD datasource:
 			cruiseInfo <- addDataSources(cruiseInfo, datasource=datasource)
@@ -1190,7 +1196,7 @@ getProjectPathElements <- function(dir, subdir=NA, prefix=NA, name=NA, suffix=NA
 	#as.data.frame(t(out))
 }
 # Function for constructing the paths of the StoX project(s), given the type of download. The output is a list of the elements projectPaths = an unnamed vector of paths to the individual projects, and either filePaths = a named list of file paths for downloadType=="serialnumber", or the cruiseInfo added file paths for downloadType %in% c("sts", "cs", "c"):
-getPaths <- function(downloadType=c("serialnumber", "sts", "cs", "c"), dir=NA, subdir=NA, name=NA, prefix=NA, suffix=NA, year=NA, serialnumber=NA, tsn=NA, cruiseInfo=NA, abbrev=FALSE, datasource=NULL, StoX_data_sources=NULL){
+getPaths <- function(downloadType=c("serialnumber", "sts", "cs", "c"), dir=NA, subdir=NA, name=NA, prefix=NA, suffix=NA, year=NA, serialnumber=NA, tsn=NA, cruiseInfo=NA, abbrev=FALSE, datasource=NULL, StoX_data_sources=NULL, msg=FALSE){
 	##### Get project paths: #####
 	# Remove prefix for cruise- and survey time series:
 	if(tolower(downloadType[1]) %in% c("cs", "sts")){
@@ -1251,6 +1257,9 @@ getPaths <- function(downloadType=c("serialnumber", "sts", "cs", "c"), dir=NA, s
 	else if(tolower(downloadType[1]) == "c"){
 		# If there is only one unique cruise, but several unique ship names, set the ship name to NULL to indicate that the data from all ships should be in the same project which will be named only by the cruise number:
 		if(length(unique(CruiseNumber)) == 1 && length(unique(ShipName)) > 1){
+			if(msg){
+				message("The followng ship names downloaded for cruise number ", unique(CruiseNumber), ": ", paste(unique(ShipName), collapse=", "))
+			}
 			ShipName <- NULL
 		}
 		
@@ -1665,7 +1674,7 @@ getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL,
 	}
 	
 	# Define the project names (original and possibly abbreviated):
-	projectPathsOrig <- getPaths(downloadType=downloadType, dir=dir, subdir=subdir, name=cruise, prefix=prefix, suffix=suffix, year=year, cruiseInfo=cruiseInfo, abbrev=FALSE, datasource=datasource, StoX_data_sources=StoX_data_sources)$projectPaths
+	projectPathsOrig <- getPaths(downloadType=downloadType, dir=dir, subdir=subdir, name=cruise, prefix=prefix, suffix=suffix, year=year, cruiseInfo=cruiseInfo, abbrev=FALSE, datasource=datasource, StoX_data_sources=StoX_data_sources, msg=TRUE)$projectPaths
 	temp <- getPaths(downloadType=downloadType, dir=dir, subdir=subdir, name=cruise, prefix=prefix, suffix=suffix, year=year, cruiseInfo=cruiseInfo, abbrev=abbrev, datasource=datasource, StoX_data_sources=StoX_data_sources)
 	projectPaths <- temp$projectPaths
 	cruiseInfo <- temp$cruiseInfo

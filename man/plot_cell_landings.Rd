@@ -6,12 +6,14 @@
 \usage{
 plot_cell_landings(eca, xlab = "Cells (gear/temp/spatial)",
   ylab = "landed (kt)", frac = 0.01, titletext = paste("top", 100 -
-  frac * 100, "weight-\% cells"), legendtitle = "sample clusteredness",
-  colgood = default_color_good, colok = default_color_ok,
-  colbarely = default_color_barely, colbad = default_color_bad,
-  colempty = default_color_empty, colwrong = default_color_wrong,
-  gooddesc = "> 1 vessel", okdesc = "> 1 catch",
-  barelydesc = "> 0 catch", baddesc = "0 samples")
+  frac * 100, "weight-\% cells (out of",
+  format(sum(eca$landing$rundvekt)/(1000 * 1000), digits = 1), "kt)"),
+  legendtitle = "sample clusteredness", colgood = default_color_good,
+  colok = default_color_ok, colbarely = default_color_barely,
+  colbad = default_color_bad, colempty = default_color_empty,
+  colwrong = default_color_wrong, gooddesc = "> 1 vessel",
+  okdesc = "> 1 catch", barelydesc = "> 0 catch",
+  baddesc = "0 samples")
 }
 \description{
 Plot aggregated landings for all cells, labeled with sampling level
