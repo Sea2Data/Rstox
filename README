@@ -1,4 +1,4 @@
-# Rstox version: 1.11.1 (latest alpha, 2019-06-04)
+# Rstox version: 1.11.1 (latest alpha, 2019-06-06)
 # R version: 3.5
 
 
@@ -62,6 +62,8 @@ devtools::install_github("IMR-StoX/Rstox")
 # 6. Fixed bug in writeTransectsMaxSea() which should now only contain non-negative values with correct N/S and E/W. Also changed the parameter projectName of this and related write funcitons to having default projectName=NULL, allowing for extraction of the project name in the input list x.
 
 # 7. Fixed bug in writeTransectsINFO(), where survey coverage included transport.
+
+# 8. Added support for only specifying cruise number in getNMDdata(), in which case data from all cruises are downloaded to a single project named only by the cruise number.
 
 # For historical release notes see https://github.com/IMR-StoX/Rstox/blob/alpha/NEWS
 

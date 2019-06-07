@@ -901,3 +901,5 @@ Changed all serialno to serialnumber according to the change from biotic 1.4 to 
 Fixed bug in writeTransectsMaxSea() which should now only contain non-negative values with correct N/S and E/W. Also changed the parameter projectName of this and related write funcitons to having default projectName=NULL, allowing for extraction of the project name in the input list x.
 
 Fixed bug in writeTransectsINFO(), where survey coverage included transport.
+
+Added support for only specifying cruise number in getNMDdata(), in which case data from all cruises are downloaded to a single project named only by the cruise number.

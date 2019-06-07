@@ -14,7 +14,7 @@ getStationLengthDist(BioticDataList,
   use.set = FALSE)
 }
 \arguments{
-\item{baselineOutput}{A list as returned from \code{\link{getBaseline}} containing biotic data with three data tables representing the levels FishStation, CatchSample and Individual.}
+\item{baselineOutput}{A list as returned from \code{\link{getBaseline}} containing biotic data with three data tables representing the levels fishstation, catchsample and individual.}
 
 \item{BioticData}{The function from which the biotic data are retrieved, normally one of "ReadBioticXML" and "FilterBiotic".}
 
@@ -24,7 +24,7 @@ getStationLengthDist(BioticDataList,
 
 \item{use.set}{For development. Remove this later!!!!!!!!!!!!!!!!!!!!!!!!!!!}
 
-\item{BioticDataList}{A list of biotic data representing the levels FishStation, CatchSample and Individual as returned from e.g. getBaseline("Test_Rstox")$outputData$ReadBioticXML.}
+\item{BioticDataList}{A list of biotic data representing the levels fishstation, catchsample and individual as returned from e.g. getBaseline("Test_Rstox")$outputData$ReadBioticXML.}
 }
 \value{
 A data table of length distributions stacked for each combination of cruise/station and SepcCat.

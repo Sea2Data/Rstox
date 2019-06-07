@@ -21,8 +21,8 @@
 #' @param simplify				Logical: if TRUE simplify the data into matrices instead of complicated lists in some cases like taxa.
 #' @param cruise				Either the code of a cruise, such as "2015116", or the full or short name of a cruise series or survey time series. In the current version, if given as a cruise code, the parameter 'shipname' must be given as well, based on which the path to the cruise is searched for by functionallity provided by NMD. For cruises prior to the year 1995 several vessels can be linked to the same cruise code, and as of version 2 the user will by default be asked to specify which vessel(s) to specify the vessels when this occurs, instead of having to specify the cruise initially.
 #' @param year					Used in conjunction with 'shipname' to get all cruises from one or more years from a specific ship.
-#' @param shipname				Specifies the ship name WITHOUT call signal, e.g., "G.O.Sars" and not "G.O.Sars_LMEL" (see 'cruise' and 'year').
-#' @param serialnumber				A vector of the requested serial numbers.
+#' @param shipname				Optional: Specifies the ship name WITHOUT call signal, e.g., "G.O.Sars" and not "G.O.Sars_LMEL" (see 'cruise' and 'year'). If empty (default), data from all ships of the given cruise are downloaded.
+#' @param serialnumber			A vector of the requested serial numbers.
 #' @param tsn					The species code for downloading a specific species. See the examples for how to get the \code{tsn} of a species.
 #' @param datasource			The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datasource=NULL (default) returns all possible data.
 #' @param dir					The path to the directory in which to place the StoX project holding the downloaded data, or TRUE indicating that a sub directory should be created in which to put mulpitle with the name of the in which to put the downloaded projects
@@ -257,7 +257,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL,
 				# Bug fix on 2018-09-28 after comment from Ibrahim. With Cruise named CruiseNr, getPaths() did not find the cruise number:
 				# CruiseNr = cruise, 
 				Cruise = cruise, 
-				ShipName = shipname
+				# Change added on 2019-06-06, where empty shipname implies all ships of the cruise:
+				ShipName = if(length(shipname)) shipname else getShipNameFromCruiseNumber(cruise)
 			)
 			# Add both StoX and NMD datasource:
 			cruiseInfo <- addDataSources(cruiseInfo, datasource=datasource)
@@ -289,6 +290,18 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL,
 	}
 	####################################################
 }
+
+getShipNameFromCruiseNumber <- function(cruiseNumber, cruiseList=NULL){
+	if(length(cruiseList) == 0){
+		message("Downloading full cruise list...")
+		cruiseList <- getNMDinfo("cruise")
+	}
+	cruiseMatch <- cruiseList$cruise %in% cruiseNumber
+	shipName <- cruiseList$platformname[cruiseMatch]
+	shipName
+}
+
+
 #'
 #' @export
 #' @rdname getNMDinfo
@@ -1236,6 +1249,11 @@ getPaths <- function(downloadType=c("serialnumber", "sts", "cs", "c"), dir=NA, s
 		}
 	}
 	else if(tolower(downloadType[1]) == "c"){
+		# If there is only one unique cruise, but several unique ship names, set the ship name to NULL to indicate that the data from all ships should be in the same project which will be named only by the cruise number:
+		if(length(unique(CruiseNumber)) == 1 && length(unique(ShipName)) > 1){
+			ShipName <- NULL
+		}
+		
 		thisSuffix <- getSuffix(CruiseNumber=CruiseNumber, ShipName=ShipName)
 		subdir <- NA
 		# No name of the project, only suffix (name is for survey time- and cruise seres)
