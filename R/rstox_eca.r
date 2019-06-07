@@ -885,7 +885,7 @@ getLengthGivenAge_Biotic <- function(eca, hatchDaySlashMonth, minage, maxage) {
   
   # Estimate the remainder for real age by use of the hatchDaySlashMonth:
   numDaysOfYear <- 366
-  DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(hatchDaySlashMonth)) / numDaysOfYear
+  DataMatrix$part.year <- (DataMatrix$yearday - getMidSeason(hatchDaySlashMonth) + 1) / numDaysOfYear
   DataMatrix$yearday <- NULL
   
   ### 3. info: ###

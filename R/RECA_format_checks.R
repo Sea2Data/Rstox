@@ -123,7 +123,7 @@ check_data_matrix <- function(modelobj){
   if (!lastsample==nrow(modelobj$CovariateMatrix)){
     stop("sampling ids does not equal the number of rows in covariate matrix")
   }
-  
+
 }
 #' checks that specification of covariates are OK
 #' @keywords internal
@@ -141,6 +141,12 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   }
   check_data_matrix(agelength)
   check_covariates(agelength)
+  if (any(!is.na(agelength$DataMatrix$part.year) & agelength$DataMatrix$part.year<=0)){
+    stop("part.year must be in <0,1]")
+  }
+  if (any(!is.na(agelength$DataMatrix$part.year) & agelength$DataMatrix$part.year>1)){
+    stop("part.year must be in <0,1]")
+  }
   if (!is.null(agelength$AgeErrorMatrix) & (any(is.na(agelength$AgeErrorMatrix)) || any(agelength$AgeErrorMatrix>1) || any(agelength$AgeErrorMatrix<0))){
     stop("Invalid values in age error matrix")
   }
