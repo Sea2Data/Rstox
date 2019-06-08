@@ -255,7 +255,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL,
 			# Change added on 2019-06-06, where empty shipname implies all ships of the cruise:
 			ShipName = if(length(shipname)) shipname else getShipNameFromCruiseNumber(cruise)
 			if(length(ShipName) == 0){
-				stop("No data found for cruise number ", cruise)
+				warning("No data found for cruise number ", cruise)
+				return(NULL)
 			}
 			
 			# Define the info needed to get the URLs:
