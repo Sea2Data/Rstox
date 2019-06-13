@@ -1,5 +1,5 @@
 #' Compensates bug in stox where the covariate temporal is not set based on prosessdata when useProsessdata is chosen
-#' @keywords internal
+#' @noRd
 temporal_workaround <- function(data, processdata, sourcetype){
   
   if (!is.null(processdata$temporal)){
@@ -41,14 +41,14 @@ temporal_workaround <- function(data, processdata, sourcetype){
 }
 
 #' get random number to pass as seed to RECA
-#' @keywords internal
+#' @noRd
 getseed <- function(){
   return(runif(1, 0,.Machine$integer.max))
 }
 
 #' Extract the covaraite definitions
 #' Returns NULL if parameter is missing
-#' @keywords internal
+#' @noRd
 getCovparam <- function(projectName, parameter) {
   # Get the project object:
   project <- openProject(projectName, out = "project")
@@ -78,7 +78,7 @@ getCovparam <- function(projectName, parameter) {
 }
 
 #' Function for converting the covariates present in biotic or landing to integer:
-#' @keywords internal
+#' @noRd
 getCovariateMatrix <- function(data, covariateNames, allLevels) {
   # Get the covariate names present in the data:
   covariateNames_present <- intersect(covariateNames, names(data))
@@ -484,7 +484,7 @@ baseline2eca <-
 #
 
 #' Function used for combining hard coded parameter values and user defeined parameter values
-#' @keywords internal
+#' @noRd
 getHardCoded <- function(info) {
   hardcoded <- as.data.frame(matrix(
     c(#add constant
@@ -507,7 +507,7 @@ getHardCoded <- function(info) {
 #' Function for getting the day of the year that is midway between two dates.
 #' @param x string representing a yearless date range as dd/mm-dd/mm or as a single day dd/mm
 #' @return the day number in the year for the given day, or the mean day number in the year for the endpoints of the range
-#' @keywords internal
+#' @noRd
 getMidSeason <- function(x, tz = "UTC", format = "%d/%m/%Y") {
   x <- as.Date(strsplit(x, "-")[[1]], "%d/%m")
   x <- as.POSIXlt(x, tz = tz, format = format)
@@ -518,7 +518,7 @@ getMidSeason <- function(x, tz = "UTC", format = "%d/%m/%Y") {
 }
 
 #' Function used for extracting the correct covariate value from the inidces used in the covariate matrix passed to ECA:
-#' @keywords internal
+#' @noRd
 getCovariateValue <-
   function(index,
            eca,
@@ -538,13 +538,13 @@ getCovariateValue <-
   }
 
 #' Function for getting the mode of a vector:
-#' @keywords internal
+#' @noRd
 getMode <- function(x) {
   as.numeric(names(table(x))[which.max(table(x))])
 }
 
 #' Function for extracting the GlobalParameters object
-#' @keywords internal
+#' @noRd
 getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, delta.age) {
   #serialnumber is there only to enforce return type for getVar
   getnames <- c("lengthunitmeters", "serialnumber")
@@ -581,7 +581,7 @@ getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, d
 
 #' Function for extracting the Landings object
 #' Compiles landings objects aggreageted to the covariates in the models, and to the temporal resolution provided
-#' @keywords internal
+#' @noRd
 getLandings <- function(landing, AgeLength, WeightLength, landingresolution) {
   
   if (any(is.na(landing$rundvekt))) {
@@ -1849,7 +1849,7 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
-#' @keywords internal
+#' @noRd
 saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, totallandings, addQuarterToDecomp=F, var = "Abundance",
                                       unit = "ones",
                                       main = ""){

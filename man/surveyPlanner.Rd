@@ -3,12 +3,9 @@
 \name{surveyPlanner}
 \alias{surveyPlanner}
 \alias{addStratum}
-\alias{subsetStrata}
-\alias{mergeStrata}
 \alias{plotStratum}
 \alias{addStratumBordersAndNames}
 \alias{readStrataPolygons}
-\alias{getCentroid}
 \title{Plan an acoustic-trawl survey.}
 \usage{
 surveyPlanner(projectName, parameters = NULL, type = "Parallel",
@@ -21,10 +18,6 @@ surveyPlanner(projectName, parameters = NULL, type = "Parallel",
 
 addStratum(x, acousticProc = "FilterAcoustic")
 
-subsetStrata(strataPolygons, strata = "all")
-
-mergeStrata(strataPolygons, strata = "all", prefix = "Merged")
-
 plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
   transport_alpha = 0.1, zoom = 1.5, aspectratio = NULL,
   xlab = "Longitude", ylab = "Latitude", xlim = NULL, ylim = NULL,
@@ -35,9 +28,6 @@ plotStratum(x, plot = c("map", "stratum", "transect"), centroid = NULL,
 addStratumBordersAndNames(p, x, strataNameCol = "darkblue")
 
 readStrataPolygons(projectName, strata = "all", ...)
-
-getCentroid(lonlat, proj = "aeqd", lonlatnames = c("longitude",
-  "latitude"))
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}). Can also be the path to a shapefile or folder of shape files, or to a file with polygons given as a two column matrix with stratum name in the first column and a MULTIPOLYGON wkt string in the second conlumn.}
@@ -202,4 +192,3 @@ writeTransects(Zigzag3, projectName, ext="nc")
 \seealso{
 See ?writeTransects for writing the transects to verious files.
 }
-\keyword{internal}
