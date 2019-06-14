@@ -17,7 +17,7 @@
 #' psuNASC_agg <- aggPSUNASC(psuNASC=psuNASC)
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getPSUNASC
 #'
 getPSUNASC <- function(projectName){
@@ -53,7 +53,7 @@ getPSUNASC <- function(projectName){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getPSUNASC
 #'
 aggPSUNASC <- function(psuNASC){
@@ -81,7 +81,7 @@ aggPSUNASC <- function(psuNASC){
 #' @return list with mean and variance by stratum
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' 
 wtd.strata.est <- function(tr.value, tr.dist){
 	# Average of transect values weighted by transect distance:
@@ -112,7 +112,7 @@ wtd.strata.est <- function(tr.value, tr.dist){
 #' psuNASC <- getPSUNASC(projectName)
 #' stratumNASC <- getNASCDistr(projectName, psuNASC=psuNASC, NASCDistr="normal")
 #'
-#' @keywords internal
+#' @noRd
 #' @export
 #' 
 getNASCDistr <- function(projectName, psuNASC, NASCDistr="observed"){
@@ -188,7 +188,7 @@ getNASCDistr <- function(projectName, psuNASC, NASCDistr="observed"){
 #' resampledNASC <- getResampledNASCDistr(projectName, psuNASC=psuNASC, stratumNASC=stratumNASC, 
 #'     parameters=list(seed=1, nboot=5))
 #'
-#' @keywords internal
+#' @noRd
 #' @export
 #' 
 getResampledNASCDistr <- function(projectName, psuNASC, stratumNASC, parameters, sorted=TRUE){

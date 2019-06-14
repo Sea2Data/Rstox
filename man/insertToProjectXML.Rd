@@ -6,9 +6,6 @@
 \alias{insertPsustratum}
 \alias{insertSuassignment}
 \alias{insertBioticassignment}
-\alias{insertToProjectXML}
-\alias{getTransectID}
-\alias{getLogStoXid}
 \title{Modify a StoX project.xml file directly.}
 \usage{
 insertStratumpolygon(Stratum, file)
@@ -20,12 +17,6 @@ insertPsustratum(Log, file)
 insertSuassignment(Log, estlayer = 1, file)
 
 insertBioticassignment(Stations, file)
-
-insertToProjectXML(insert, type, file)
-
-getTransectID(Log)
-
-getLogStoXid(Log, timevar = "start_time")
 }
 \arguments{
 \item{Stratum}{A data.frame with column names "longitude" and "latitude" giving the stratum polygon, or a list of these, named by the stratum names.}
@@ -51,4 +42,3 @@ getLogStoXid(Log, timevar = "start_time")
 \code{insertToProjectXML} inserts a string to the project.xml file. \cr \cr
 \code{getTransectID} returns transect IDs. \cr \cr
 }
-\keyword{internal}

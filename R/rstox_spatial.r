@@ -91,7 +91,7 @@ polyArea_test <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, lat_0=
 }
 #' 
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname polyArea
 #' 
 geo2xy <- function(x, par=list(proj="aeqd", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), inv=FALSE, data.frame.out=FALSE, ...){
@@ -144,7 +144,6 @@ geo2xy <- function(x, par=list(proj="aeqd", units="kmi", lon_0=NA, lat_0=NA, x_0
 }
 #' 
 #' @export
-#' @keywords internal
 #' @rdname polyArea
 #' 
 getMatrixList <- function(x, drop=TRUE, data.frame.out=FALSE){
@@ -165,7 +164,6 @@ getMatrixList <- function(x, drop=TRUE, data.frame.out=FALSE){
 }
 #'
 #' @export
-#' @keywords internal
 #' @rdname polyArea
 #' 
 getMultipolygon <- function(x, drop=TRUE, data.frame.out=FALSE, requireClosed=TRUE){
@@ -185,7 +183,6 @@ getMultipolygon <- function(x, drop=TRUE, data.frame.out=FALSE, requireClosed=TR
 #' @export
 #' @importFrom rgeos readWKT
 #' @importFrom sp SpatialPolygons Polygons Polygon
-#' @keywords internal
 #' @rdname polyArea
 #' 
 getSpatial <- function(x){
@@ -247,7 +244,7 @@ multipolygon2matrix <- getMatrixList
 #'
 #' @export
 #' @importFrom rgeos readWKT
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 getProjString <- function(par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), ..., x=NULL, list.out=FALSE, requireClosed=TRUE){
@@ -298,7 +295,7 @@ getProjString <- function(par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA,
 #'
 #' @export
 #' @importFrom rgdal project
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 projectMatrixList <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, lat_0=NA, x_0=0, y_0=0, ellps="WGS84", datum="WGS84"), inv=FALSE, data.frame.out=FALSE){
@@ -310,7 +307,7 @@ projectMatrixList <- function(x, par=list(proj="laea", units="kmi", lon_0=NA, la
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 spatial2matrixList <- function(x, drop=TRUE, data.frame.out=FALSE, ...){
@@ -389,7 +386,7 @@ spatial2matrixList <- function(x, drop=TRUE, data.frame.out=FALSE, ...){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @importFrom utils head tail
 #' @rdname getProjString
 #' 
@@ -441,7 +438,7 @@ matrixList2multipolygon <- function(x, requireClosed=TRUE){
 #'
 #' @export
 #' @importFrom rgeos readWKT
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 multipolygon2spatial <- function(x){
@@ -449,7 +446,7 @@ multipolygon2spatial <- function(x){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 isSpatial <- function(x){
@@ -457,7 +454,7 @@ isSpatial <- function(x){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 isMatrixList <- function(x){
@@ -465,7 +462,7 @@ isMatrixList <- function(x){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 isMultipolygon <- function(x){
@@ -473,7 +470,7 @@ isMultipolygon <- function(x){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 matrixListLevel <- function(x){
@@ -493,7 +490,7 @@ matrixListLevel <- function(x){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getProjString
 #' 
 rapplyKeepDataFrames <- function(x, FUN, ...){
@@ -1740,7 +1737,7 @@ addStratum <- function(x, acousticProc="FilterAcoustic"){
 }
 #' 
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname surveyPlanner
 #' 
 subsetStrata <- function(strataPolygons, strata="all"){
@@ -1778,7 +1775,7 @@ subsetStrata <- function(strataPolygons, strata="all"){
 }
 #' 
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname surveyPlanner
 #' 
 # Merge strata:
@@ -2042,7 +2039,6 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 	return(p)
 }
 #' 
-#' @export
 #' @import ggplot2
 #' @rdname surveyPlanner
 #' 
@@ -2191,7 +2187,7 @@ readStrataPolygons <- function(projectName, strata="all", ...){
 }
 #' 
 #' @export
-#' @keywords internal
+#' @noRd 
 #' @rdname surveyPlanner
 #' 
 getCentroid <- function(lonlat, proj="aeqd", lonlatnames=c("longitude", "latitude")){

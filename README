@@ -1,4 +1,4 @@
-# Rstox version: 1.11.1 (latest alpha, 2019-06-08)
+# Rstox version: 1.11.1 (latest alpha, 2019-06-13)
 # R version: 3.5
 
 
@@ -6,9 +6,9 @@
 
 
 # Install the latest official version
-devtools::install_github("IMR-StoX/Rstox")
+devtools::install_github("Sea2Data/Rstox")
 
-# It is also possible to install the latest development version, through devtools::install_github("IMR-StoX/Rstox", ref = "develop")
+# It is also possible to install the latest development version, through devtools::install_github("Sea2Data/Rstox", ref = "develop")
 # Note that this does not guarantee a stable version and should ONLY be used to test out new functionality.
 
 
@@ -65,6 +65,6 @@ devtools::install_github("IMR-StoX/Rstox")
 
 # 8. Added support for only specifying cruise number in getNMDdata(), in which case data from all cruises are downloaded to a single project named only by the cruise number.
 
-# For historical release notes see https://github.com/IMR-StoX/Rstox/blob/alpha/NEWS
+# For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS
 
 

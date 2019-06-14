@@ -4,7 +4,6 @@
 \alias{readWKTSplit}
 \alias{polyArea}
 \alias{polyArea_test}
-\alias{geo2xy}
 \alias{getMatrixList}
 \alias{getMultipolygon}
 \alias{getSpatial}
@@ -19,10 +18,6 @@ polyArea(x, requireClosed = TRUE)
 polyArea_test(x, par = list(proj = "laea", units = "kmi", lon_0 = NA,
   lat_0 = NA, x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"),
   longlat = TRUE, ...)
-
-geo2xy(x, par = list(proj = "aeqd", units = "kmi", lon_0 = NA, lat_0 =
-  NA, x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"), inv = FALSE,
-  data.frame.out = FALSE, ...)
 
 getMatrixList(x, drop = TRUE, data.frame.out = FALSE)
 
@@ -47,11 +42,11 @@ multipolygon2matrix(x, drop = TRUE, data.frame.out = FALSE)
 
 \item{longlat}{Logical: If TRUE (default) the input to polyArea_test is longitude, latitude.}
 
-\item{inv}{Logical: If TRUE, do the inverse conversion in rgdal::project().}
+\item{drop}{Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.}
 
 \item{data.frame.out}{Logical: If TRUE convert the matrices to data frames with columns x and y.}
 
-\item{drop}{Logical: If TRUE drop the list if only one multipolygon or only one polygon is given.}
+\item{inv}{Logical: If TRUE, do the inverse conversion in rgdal::project().}
 }
 \value{
 \code{polyArea} returns area in nmi squared, and \code{matrix2multipolygon} returns a MULTIPOLYGON wkt.
@@ -82,4 +77,3 @@ lapply(g$processData$stratumpolygon$Polygon, polyArea)
 ###lapply(xy, polyArea, input="xy")
 
 }
-\keyword{internal}

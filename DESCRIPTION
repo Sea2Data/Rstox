@@ -5,8 +5,8 @@ Authors@R: c(
   person(given = "Given Name", family = "Family Name", role = c("cre", "aut"), email = "arnejh@hi.no"))
 Depends: R (>= 3.5)
 Description: The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
-URL: https://github.com/IMR-StoX/Rstox
-BugReports: https://github.com/IMR-StoX/Rstox/issues
+URL: https://github.com/Sea2Data/Rstox
+BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
 LazyData: true
 RoxygenNote: 6.1.0

@@ -9,7 +9,6 @@
 #' \code{writeXMLusingXSD} Utility function of \code{data.frame2xml} for writing any data frame to an XML file given an XML root and an xsd. \cr \cr
 #' \code{data.frame2nestedList} Utility function of \code{data.frame2xml}  for converting a data frame to a nested list. The data frame must have column names with prefixes such as Level4.Var or Level2.Attr or Level3.AttrReq followed by "." and the variable name (e.g., Level3.AttrReq.serialno). \cr \cr
 #' \code{list2XML} Utility function for converting a list to an xml object. This function is a generalization of the funciton as_xml_document() in the package xml2, which turns a list into anxml object, but not for too deep lists. \cr \cr
-#' \code{data.frame2xml} Utility function of \code{writeXMLusingXSD} for converting a data frame to an xml object. \cr \cr
 #'
 #' @param x						The data frame to write to an XML file, validated against the xsd. The data frame has one column per combination of variable and attribute, where the attributes are coded into the column names in the following manner: variableName..attributeName.attributeValue. If there are variables with identical names at different levels in the XMl hierarchy, the level (i.e., the name of the parent node) can be given in the column name by separation of a dot: variableName.level.
 #' @param file					The path to the XML file to write.
@@ -127,7 +126,7 @@ writeAcousticXML <- function(x, file, xsd="1", blocksize=100, blockvar="log_star
 #' @importFrom XML newXMLNode saveXML xmlAttrs
 #' @export
 #' @rdname writeBioticXML
-#' @keywords internal
+#' @noRd
 #' 
 writeXMLusingXSD <- function(x, file, root, blockvar=NULL, blocksize=100, addVersion=TRUE, xsd=NULL, na.rm=TRUE, declaration="<?xml version=\"1.0\" encoding=\"UTF-8\"?>", strict=TRUE, discardSimple=FALSE, maxlines=10, cores=1){
 	
@@ -236,7 +235,7 @@ writeXMLusingXSD <- function(x, file, root, blockvar=NULL, blocksize=100, addVer
 #' @export
 #' @importFrom XML xmlName
 #' @rdname writeBioticXML
-#' @keywords internal
+#' @noRd
 #' 
 data.frame2xml <- function(x, root, xsd, na.rm=FALSE, strict=TRUE, discardSimple=FALSE, msg=FALSE){
 	
@@ -269,7 +268,7 @@ data.frame2xml <- function(x, root, xsd, na.rm=FALSE, strict=TRUE, discardSimple
 #'
 #' @export
 #' @rdname writeBioticXML
-#' @keywords internal
+#' @noRd
 #' 
 getHIXSDfile <- function(xsd="1.4", xsdtype=c("biotic", "acoustic", "landing")){
 	if(is.character(xsd) && !file.exists(xsd)){
@@ -295,7 +294,6 @@ getHIXSDfile <- function(xsd="1.4", xsdtype=c("biotic", "acoustic", "landing")){
 #' @importFrom XML xmlParse xmlToList
 #' @export
 #' @rdname writeBioticXML
-#' @keywords internal
 #' 
 readHIXSD <- function(xsd="1.4", xsdtype=c("biotic", "acoustic", "landing"), discardSimple=FALSE){
 	
@@ -497,7 +495,6 @@ readHIXSD <- function(xsd="1.4", xsdtype=c("biotic", "acoustic", "landing"), dis
 #'
 #' @export
 #' @rdname writeBioticXML
-#' @keywords internal
 #' 
 validateHIXSD <- function(x, xsd, strict=TRUE, discardSimple=FALSE){
 	

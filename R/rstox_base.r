@@ -916,7 +916,7 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 #' @param onlyone   	Logical: If TRUE, only one project is checked (no for loop).
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname downloadProjectZip
 #'
 downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=TRUE, ow=TRUE, msg=TRUE, onlyone=TRUE){
@@ -1002,7 +1002,7 @@ downloadProjectZip <- function(URL, projectName=NULL, projectRoot=NULL, cleanup=
 #' @return A project object
 #' 
 #' @export
-#' @keywords internal
+#' @noRd
 #' 
 pointToStoXFiles <- function(projectName, files=NULL, relative.path=TRUE, close=FALSE){
 	
@@ -1491,7 +1491,7 @@ setTempRScriptFileName <- function(projectName, tempRScriptFileName, msg=TRUE){
 #'
 #' @export
 #' @rdname getProcess
-#' @keywords internal
+#' @noRd
 #'
 getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRUE, msg=TRUE, proc.out=FALSE){
 	if(length(proc)==0 || identical(proc, FALSE)){
@@ -1593,7 +1593,7 @@ getProcess <- function(projectName, proc="all", modelType="baseline", dropNA=TRU
 #' @return The original parameters
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname setBaselineParameters
 #'
 setBaselineParameters <- function(projectName, msg=FALSE, parlist=list(), modelType="all", save=c("last", "java"), ...){
@@ -1681,7 +1681,7 @@ setBaselineParameters <- function(projectName, msg=FALSE, parlist=list(), modelT
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname setBaselineParameters
 #' 
 readBaselineParametersJava <- function(projectName, keepMissing=TRUE){
@@ -1777,7 +1777,7 @@ readBaselineParametersJava <- function(projectName, keepMissing=TRUE){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname setBaselineParameters
 #'
 getBaselineParameters <- function(projectName, modelType="all"){
@@ -1809,7 +1809,7 @@ getBaselineParameters <- function(projectName, modelType="all"){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname setBaselineParameters
 #' 
 modifyBaselineParameters <- function(projectName, parameters, parlist=list(), ...){
@@ -1981,7 +1981,7 @@ R2Javapar <- function(x){
 #' @return Merged list of parameters, duplicates not removed.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getParlist
 #'
 getParlist <- function(parlist=list(), ..., na.rm=TRUE){
@@ -2052,7 +2052,7 @@ getParlist <- function(parlist=list(), ..., na.rm=TRUE){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getParlist
 #'
 applyParlist <- function(parlist, fun){
@@ -2240,7 +2240,7 @@ getProjectDataEnv <- function(projectName){
 #' @param x	A list of vectors of one dimension with column names or names.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname as.matrix_full
 #' 
 as.matrix_full <- function(x, stringsAsFactors=FALSE){
@@ -2286,7 +2286,7 @@ as.matrix_full <- function(x, stringsAsFactors=FALSE){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname as.matrix_full
 #' 
 as.dataFrame_full <- function(x, stringsAsFactors=FALSE){
@@ -2337,7 +2337,7 @@ as.dataFrame_full <- function(x, stringsAsFactors=FALSE){
 #' @param ignore.case	Logical: if TRUE, ignore case when matching.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 abbrMatch <- function(x, table, ignore.case=FALSE){
 	inputTable <- table
@@ -2368,7 +2368,7 @@ abbrMatch <- function(x, table, ignore.case=FALSE){
 #'
 #' @export
 #' @rdname getVar
-#' @keywords internal
+#' @noRd
 #'
 getVar <- function(x, var){
 	getVarOne <- function(var, x){
@@ -2392,7 +2392,7 @@ getVar <- function(x, var){
 #'
 #' @export
 #' @rdname getVar
-#' @keywords internal
+#' @noRd
 #'
 is.empty <- function(x){
 	if(length(x)==0){
@@ -2587,7 +2587,7 @@ loadEnv <- loadProjectData
 #' @param x	A vector of file paths.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 moveToTrash <- function(x){
 	if(length(x)==0 || is.na(x)){
@@ -2615,7 +2615,7 @@ moveToTrash <- function(x){
 #' @param name	The name of the Rstox definition to retrieve.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getRstoxEnv
 #'
 getRstoxEnv <- function(){
@@ -2627,7 +2627,7 @@ getRstoxEnv <- function(){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getRstoxEnv
 #'
 getRstoxDef <- function(name=NULL, ...){
@@ -2649,7 +2649,7 @@ getRstoxDef <- function(name=NULL, ...){
 }
 #' 
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getRstoxEnv
 #' 
 initiateRstoxEnv <- function(){
@@ -2936,7 +2936,7 @@ initiateRstoxEnv <- function(){
 }
 #' 
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getRstoxEnv
 #' 
 getModelType <- function(modelType){
@@ -3004,7 +3004,7 @@ getModelType <- function(modelType){
 #' identical(df1, df2)
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname data.frame2parString
 #'
 data.frame2parString <- function(x){
@@ -3013,7 +3013,7 @@ data.frame2parString <- function(x){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname data.frame2parString
 #'
 parString2data.frame <- function(string){
@@ -3039,7 +3039,7 @@ parString2data.frame <- function(string){
 #' @param URL	The URL(s) of the zipped project(s).
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 isURL <- function(URL, zip=FALSE){
 	# Detect hhtp or ftp AND zip:
@@ -3075,7 +3075,7 @@ isURL <- function(URL, zip=FALSE){
 #' @param i			The index of the bootstrap replicate to generate seeds for.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname sampleSorted
 #'
 sampleSorted <- function(x, size, seed=0, by=NULL, replace=TRUE, sorted=TRUE, drop=FALSE){
@@ -3112,7 +3112,7 @@ sampleSorted <- function(x, size, seed=0, by=NULL, replace=TRUE, sorted=TRUE, dr
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname sampleSorted
 #'
 setSeedSingle <- function(seed){
@@ -3120,7 +3120,7 @@ setSeedSingle <- function(seed){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname sampleSorted
 #'
 getSeedV <- function(seed, nboot){
@@ -3130,7 +3130,7 @@ getSeedV <- function(seed, nboot){
 }		
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname sampleSorted
 #'
 getSeedM <- function(i, seedV, nrow){
@@ -3146,7 +3146,7 @@ getSeedM <- function(i, seedV, nrow){
 }	
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname sampleSorted
 #'
 expandSeed <- function(seed, nboot){
@@ -3164,7 +3164,7 @@ expandSeed <- function(seed, nboot){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname sampleSorted
 #'
 getSequenceToSampleFrom <- function(){
@@ -3185,7 +3185,7 @@ getSequenceToSampleFrom <- function(){
 #' @value A list of two elements ow and jumpToNext.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname getow
 #'
 getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
@@ -3278,7 +3278,7 @@ getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
 #' @value The precision level.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname setPrecisionLevel
 #'
 setPrecisionLevel <- function(projectName, precisionLevel){
@@ -3289,7 +3289,7 @@ setPrecisionLevel <- function(projectName, precisionLevel){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname setPrecisionLevel
 #'
 getPrecisionLevel <- function(projectName){
@@ -3308,7 +3308,7 @@ getPrecisionLevel <- function(projectName){
 #' @value The content of the files in a list named with the process names and possibly names of multiple tables for each process.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname readBaselineFiles
 #'
 readBaselineFiles <- function(x){
@@ -3362,7 +3362,7 @@ readBaselineFiles <- function(x){
 #' @param na.rm	Logical: If FALSE do not remove the NAs.
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #'
 rm.na <- function(x, na.rm=TRUE){
 	if(na.rm){
@@ -3473,7 +3473,7 @@ insertBioticassignment <- function(Stations, file){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname insertToProjectXML
 #' 
 insertToProjectXML <- function(insert, type, file){
@@ -3495,7 +3495,7 @@ insertToProjectXML <- function(insert, type, file){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname insertToProjectXML
 #' 
 getTransectID <- function(Log){
@@ -3511,7 +3511,7 @@ getTransectID <- function(Log){
 }
 #'
 #' @export
-#' @keywords internal
+#' @noRd
 #' @rdname insertToProjectXML
 #' 
 getLogStoXid <- function(Log, timevar="start_time"){
