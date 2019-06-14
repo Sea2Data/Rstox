@@ -850,30 +850,11 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
               CARNeighbours = CARNeighbours))
 }
 
-#' Identifies whichindividuals are from catchsamples with some age readings.
-#' @return logical vector identifying which individuals belong to a catchsample where age was sampled
-#' @keywords internal
-hasAgeInSample <- function(biotic){
-  hasage<-biotic[!is.na(biotic$age),c("serialnumber", "catchcategory", "catchpartnumber")]
-  return(paste(biotic$serialnumber, biotic$catchcategory, biotic$catchpartnumber, sep="/") %in% paste(hasage$serialnumber, hasage$catchcategory, hasage$catchpartnumber, sep="/"))
-}
-
 #' Function for converting to the input format required by ECA (this is the main function):
 #' @keywords internal
 getLengthGivenAge_Biotic <- function(eca, hatchDaySlashMonth, minage, maxage) {
   
-  # Extract the non-NAs:
-  var <- "age"
-  # Remove non-usable catchsamples from the DataMatrix and from the eca$covariateMatrixBiotic:
-  # This is necessary to handle length-stratified sampling
-  # The procedure for handling length-stratified sampling is also sound for unstratified simple random subsampling (ref Hanne), 
-  # so the approach implemented in hasAgeInSample is more roboust to data issues and additions of stratified codes to the format.
-  # filtering by biotic$sampletype might be faster.
-  # This filtering should arguably be done in stox, but it is even less justified to put it here if we filter by sampletype (because of the potential for additional code stratifications be added)
-  valid <- hasAgeInSample(eca$biotic)
-  eca$biotic <- eca$biotic[valid, , drop = FALSE]
-  eca$covariateMatrixBiotic <-
-    eca$covariateMatrixBiotic[valid, , drop = FALSE]
+  # keep all data. Excluding stations with length only should be done in preprosessing
   
   ### 1. DataMatrix: ###
   temp <-
