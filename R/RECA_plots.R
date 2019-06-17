@@ -815,7 +815,7 @@ plot_mission_types <- function(biotic, title="mission types\n# stations", blankc
   labels <- labels[match(labels$code, names(tt)),]
   
   names(tt)[names(tt)==""] <- blankcode
-  pie(tt, labels=paste(labels$name, " (", names(tt), ")", sep=""), main=title, col=pal)
+  pie(tt, labels=paste(labels$name, " (", labels$code, ")", sep=""), main=title, col=pal)
 }
 
 #' Composition of catch sample types in data
@@ -845,10 +845,10 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
   }
   
   if (length(tt)>1){
-    barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)    
+    barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", labels$code, ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)    
   }
   else{
-    pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""), main=title)  
+    pie(tt, labels=paste(labels$shortname, " (", labels$code, ")", sep=""), main=title)  
   }
 }
 
@@ -877,10 +877,10 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
   }
     
   if(length(tt)>1){
-    barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", names(tt), ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)  
+    barplot(tt, xlab=xlab, names=paste(labels$shortname, " (", labels$code, ")", sep=""), horiz = T, las=1, main=title, cex.names = cex.names)  
   }
   else{
-    pie(tt, labels=paste(labels$shortname, " (", names(tt), ")", sep=""), main=title)
+    pie(tt, labels=paste(labels$shortname, " (", labels$code, ")", sep=""), main=title)
   }
   
 }
