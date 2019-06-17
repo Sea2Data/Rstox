@@ -181,6 +181,13 @@ checkCovariateConsistency <- function(modelobj, landingscov){
     stop("Covariates are not ordered consistently in model and landings")
   }
   
+  #check that all sampled values exists in landings
+  for (co in inlandings){
+    if (!all(modelobj$CovariateMatrix[,co] %in% landingscov[,co])){
+      stop(paste("Some sampled values for covariate", co, "does not exist in landings"))
+    }
+  }
+  
   #check that all level are present for all fixed effects
   nonconfixedeffects <- rownames(modelobj$info[modelobj$info[,"random"]==0 & modelobj$info[,"continuous"]==0,])
   
@@ -206,6 +213,7 @@ checkCovariateConsistency <- function(modelobj, landingscov){
   else if (sample_combos != land_combos){
     stop("Not all combinations of fixed effects are sampled")
   }
+  
 }
 
 #' checks formatting on landing cov-matrices

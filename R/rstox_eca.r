@@ -787,6 +787,7 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
       "covariate values are ordered differently in stratumneighbour and covariatelink spatial"
     )
   }
+  
   names(eca$stratumNeighbour) <-
     eca$resources$covariateLink$spatial[ind, 1]
   numNeighbours <-
@@ -836,12 +837,12 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   # Continuous covariates should have only one level:
   info[info[, "continuous"] == 1, "nlev"] <- 1
   
-  # random covariates should have levels equal to max of landing
+  # random covariates in landings should have levels equal to max of landing and samples (if that is different from max of landings, something is wrong, but that must be checked later)
   if (sum(info[, "random"] == 1 & info[, "in.landings"] == 1) > 0) {
     for (n in rownames(info)) {
       if (info[n, "random"] == 1 & info[n, "in.landings"] == 1) {
           info[n, "nlev"] <-
-            length(unique((eca$landing[[n]])))
+            length(unique((c(eca$landing[[n]], eca$biotic[[n]]))))
       }
     }
   }
