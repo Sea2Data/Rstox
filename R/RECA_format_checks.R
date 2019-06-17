@@ -81,7 +81,7 @@ check_cov_vs_info <- function(modelobj){
     if (modelobj$info[co,"CAR"]==1 & !is.null(modelobj$CARNeighbours)){
       if (modelobj$info[co,"nlev"]>1){
         if (max(modelobj$CARNeighbours$idNeighbours)>modelobj$info[co,"nlev"] | max(modelobj$CARNeighbours$idNeighbours)<1){
-          stop(paste("Neigbour matrix not consistent with nlev for CAR vairable", co))
+          stop(paste("Neigbour matrix not consistent with nlev for CAR variable", co))
         }
         if (modelobj$info[co,"CAR"]==1 & (any(modelobj$CARNeighbours$numNeighbours<1) | length(modelobj$CARNeighbours$numNeighbours) < modelobj$info[co,"nlev"])){
           stop(paste("CAR variable specified as", co, "but some areas are missing neighbours in the data."))
