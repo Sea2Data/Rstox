@@ -851,11 +851,26 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
               CARNeighbours = CARNeighbours))
 }
 
-#' Function for converting to the input format required by ECA (this is the main function):
+
+#' Identifies whichindividuals are from catchsamples with some age readings.
+#' @return logical vector identifying which individuals belong to a catchsample where age was sampled
 #' @keywords internal
-getLengthGivenAge_Biotic <- function(eca, hatchDaySlashMonth, minage, maxage) {
+hasAgeInSample <- function(biotic){
+  hasage<-biotic[!is.na(biotic$age),c("serialnumber", "catchcategory", "catchpartnumber")]
+  return(paste(biotic$serialnumber, biotic$catchcategory, biotic$catchpartnumber, sep="/") %in% paste(hasage$serialnumber, hasage$catchcategory, hasage$catchpartnumber, sep="/"))
+}
+
+
+#' Function for converting to the input format required by ECA (this is the main function):
+#' @param onlyagestations If true, only hauls with some aged individiuals are used
+#' @keywords internal
+getLengthGivenAge_Biotic <- function(eca, hatchDaySlashMonth, minage, maxage, onlyagestations=F) {
   
-  # keep all data. Excluding stations with length only should be done in preprosessing
+  if (onlyagestations){
+    valid <- hasAgeInSample(eca$biotic)
+    eca$biotic <- eca$biotic[valid, , drop = FALSE]
+    eca$covariateMatrixBiotic <- eca$covariateMatrixBiotic[valid, , drop = FALSE]
+  }
   
   ### 1. DataMatrix: ###
   temp <-
@@ -955,7 +970,8 @@ get_default_result_dir <-
 #' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
 #' @param temporalresolution temporal resolution for the aggregated landings in days (used to set midSeason the Landings object for \code{\link[eca]{eca.predict}})
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
-#' @param overwrite logical if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
+#' @param overwrite logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
+#' @param agedstationsonly logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model
 #' @export
 prepareRECA <-
   function(projectName,
@@ -966,7 +982,8 @@ prepareRECA <-
            maxlength = NULL,
            hatchDaySlashMonth = "01/01",
            temporalresolution = 92,
-           overwrite=T) {
+           overwrite=T,
+           agedstationsonly=F) {
     if (is.null(resultdir)) {
       resultdir <- get_default_result_dir(projectName)
       if (!(file.exists(resultdir))) {
@@ -1035,7 +1052,7 @@ prepareRECA <-
     #
     
     GlobalParameters <- getGlobalParameters(eca$biotic, resultdir, maxlength, minage, maxage, delta.age)
-    AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage)
+    AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage, onlyagestations=agedstationsonly)
     WeightLength <- getWeightGivenLength_Biotic(eca)
     Landings <- getLandings(eca$landing, AgeLength, WeightLength, landingresolution = temporalresolution)
     
