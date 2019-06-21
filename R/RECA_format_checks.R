@@ -83,6 +83,10 @@ check_cov_vs_info <- function(modelobj){
         if (max(modelobj$CARNeighbours$idNeighbours)>modelobj$info[co,"nlev"] | max(modelobj$CARNeighbours$idNeighbours)<1){
           stop(paste("Neigbour matrix not consistent with nlev for CAR variable", co))
         }
+        #
+        # Checked with Hanne that this condition can be relaxed. ECA will tolarate areas with no neighbours, if
+        # all fixed effects has been sampled for that area.
+        #
         if (modelobj$info[co,"CAR"]==1 & (any(modelobj$CARNeighbours$numNeighbours<1) | length(modelobj$CARNeighbours$numNeighbours) < modelobj$info[co,"nlev"])){
           stop(paste("CAR variable specified as", co, "but some areas are missing neighbours in the data."))
         }
