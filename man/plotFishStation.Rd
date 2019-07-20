@@ -8,30 +8,31 @@
 \alias{getFishStationOneSpecies}
 \title{Plot fish stations by species}
 \usage{
-plotFishStation(projectName, species = "torsk", proc = "FilterBiotic",
-  size = 1, col = 1, shape = 16, alpha = 1, jitter = FALSE,
-  zoom = 1, offset = c(0.5, 0.5))
+plotFishStation(projectName, commonname = "torsk",
+  proc = "FilterBiotic", size = 1, col = TRUE, shape = 16,
+  alpha = 1, jitter = FALSE, zoom = 1, offset = c(0.5, 0.5),
+  type = "p", add0 = FALSE, subset = NULL, legendPos = c(0.05,
+  0.05), unit = "tonnes")
 
 plotLonLat(x, lon = "lon", lat = "lat", species = "species",
-  size = 1, zoom = 1, offset = c(0.5, 0.5), col = 1, shape = 16,
-  alpha = 1, jitter = FALSE)
+  type = "p", size = 1, zoom = 1, offset = c(0.5, 0.5),
+  col = TRUE, shape = 16, alpha = 1, jitter = FALSE,
+  maxPieRadius = 1, legendPos = c(0.05, 0.05), unit = "tonnes")
 
 zoom_xlim_ylim(xlim, ylim, zoom = 1, offset = c(0.5, 0.5))
 
-zoom_lon_lat(x, lon = "lon", lat = "lat", zoom = 1, offset = c(0.5,
-  0.5))
+zoom_lon_lat(x, lon = "lon", lat = "lat", xlim = NA, ylim = NA,
+  zoom = 1, offset = c(0.5, 0.5))
 
-getFishStationOneSpecies(species = "torsk", projectName,
+getFishStationOneSpecies(species = NULL, projectName,
   proc = "FilterBiotic", msg = FALSE)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.}
 
-\item{species}{A vector of the species for which stations will be plotted, given in the current version as the norwegian name ('noname'). there can be several species for each station, which will lead to several points in the same location (see \code{jitter}).}
-
 \item{proc}{The process from which to get the fish stations (an object including the sting "FishStation").}
 
-\item{size}{The size of the points, equal for all points in the current version.}
+\item{size}{The size of the points, equal for all points in the current version. For type = "o", a vector of two element sspecifies the line and point size, respectively.}
 
 \item{col, shape}{The color/shape of the fish stations. If TRUE, use ggplot colors/shapes for each species.}
 
@@ -40,6 +41,10 @@ getFishStationOneSpecies(species = "torsk", projectName,
 \item{jitter}{A vector of 2 or 3 elements, where the first two are the jitter scales in the x (longitude) and y (latitude) direction, respectively (), and the third element is the seed for the jittering. Use jittering with caution, since it shifts the position of the fish stations!}
 
 \item{zoom, offset}{Used for zooming the plot. A value of zoom = 1 indicates no zoom, values samller than 1 zooms in and values larger than one zooms out. The \code{offest} sets the center of the zoom relative to the limits of the original plot, where 0.5 (default) indicates the center of the plot.}
+
+\item{type}{The type of the points/lines, one of "p" (points), "l" (lines) and "o" (both lines and points).}
+
+\item{species}{A vector of the species for which stations will be plotted, given in the current version as the norwegian name ('noname'). there can be several species for each station, which will lead to several points in the same location (see \code{jitter}).}
 }
 \value{
 A ggplot
@@ -56,13 +61,13 @@ End of the details
 projectName <- "Test_Rstox"
 # Show the species sampled during the cruise:
 g <- getBaseline(projectName, input=FALSE, proc="ReadBioticXML")
-speciesFrequency <- sort(table(g$ReadBioticXML_BioticData_CatchSample.txt$noname), decreasing=TRUE)
+speciesFrequency <- sort(table(g$ReadBioticXML_BioticData_catchsample.txt$commonname), decreasing=TRUE)
 species <- names(speciesFrequency)
 
 # Plot the 6 most frequent species:
-plotFishStation(projectName, species=species[1:6], col=TRUE, size=2)
+plotFishStation(projectName, commonname=species[1:6], col=TRUE, size=2)
 # Add jitter to the plot, resolving stations with multiple species. 
 # CAUTION: This adds randmoness to the fish station positions!:
-plotFishStation(projectName, species=species[1:6], col=TRUE, size=2, jitter=c(0.2, 0.2, 1))
+plotFishStation(projectName, commonname=species[1:6], col=TRUE, size=2, jitter=c(0.2, 0.2, 1))
 
 }

@@ -58,6 +58,7 @@
 #' @param subset.out		Logical: Used in \code{is.project}. If TRUE, subset the input project names, and if False, return a logical vector.
 #' @param relative.path		Logical: If TRUE, update the project.xml file with the relative paths in Read* functions.
 #'
+#' @examples
 #' # Show templates:
 #' templ <- createProject()
 #' names(templ)
@@ -838,6 +839,8 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 			unlist(lapply(pattern, grep, x, ...))
 		}
 		out <- lapply(getRstoxDef("StoX_data_type_keys"), grepSeveral, first, ignore.case=TRUE)
+		out <- lapply(out, unlist)
+		out <- lapply(out, unique)
 		
 		if(sum(lengths(out))){
 			out <- lapply(out, function(x) files[x])
@@ -860,6 +863,7 @@ readXMLfiles <- function(files, dir=tempdir(), model=list(), nchars=500){
 		rest <- substring(x, 2)
 		paste0(toupper(first), rest)
 	}
+	
 	# Get the list of files if given as a simple vector of file paths:
 	if(!is.list(files)){
 		if(length(files)==1 && isTRUE(file.info(files)$isdir)){
@@ -3075,7 +3079,6 @@ isURL <- function(URL, zip=FALSE){
 #' @param i			The index of the bootstrap replicate to generate seeds for.
 #'
 #' @export
-#' @noRd
 #' @rdname sampleSorted
 #'
 sampleSorted <- function(x, size, seed=0, by=NULL, replace=TRUE, sorted=TRUE, drop=FALSE){
@@ -3112,7 +3115,6 @@ sampleSorted <- function(x, size, seed=0, by=NULL, replace=TRUE, sorted=TRUE, dr
 }
 #'
 #' @export
-#' @noRd
 #' @rdname sampleSorted
 #'
 setSeedSingle <- function(seed){
@@ -3120,7 +3122,6 @@ setSeedSingle <- function(seed){
 }
 #'
 #' @export
-#' @noRd
 #' @rdname sampleSorted
 #'
 getSeedV <- function(seed, nboot){
@@ -3130,7 +3131,6 @@ getSeedV <- function(seed, nboot){
 }		
 #'
 #' @export
-#' @noRd
 #' @rdname sampleSorted
 #'
 getSeedM <- function(i, seedV, nrow){
@@ -3146,7 +3146,6 @@ getSeedM <- function(i, seedV, nrow){
 }	
 #'
 #' @export
-#' @noRd
 #' @rdname sampleSorted
 #'
 expandSeed <- function(seed, nboot){
@@ -3164,7 +3163,6 @@ expandSeed <- function(seed, nboot){
 }
 #'
 #' @export
-#' @noRd
 #' @rdname sampleSorted
 #'
 getSequenceToSampleFrom <- function(){

@@ -1,4 +1,4 @@
-# Rstox version: 1.11.1 (latest alpha, 2019-06-13)
+# Rstox version: 1.11.1 (latest alpha, 2019-07-20)
 # R version: 3.5
 
 
@@ -64,6 +64,10 @@ devtools::install_github("Sea2Data/Rstox")
 # 7. Fixed bug in writeTransectsINFO(), where survey coverage included transport.
 
 # 8. Added support for only specifying cruise number in getNMDdata(), in which case data from all cruises are downloaded to a single project named only by the cruise number.
+
+# 9. Removed the process SweptAreaDensity in the test project, as this does not naturally belong to an acoustic-trawl StoX project.
+
+# 10. Fixed bug in readXMLfiles(), where biotic data were duplicated.
 
 # For historical release notes see https://github.com/Sea2Data/Rstox/blob/alpha/NEWS
 
