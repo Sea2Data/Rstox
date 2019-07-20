@@ -787,6 +787,7 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
       "covariate values are ordered differently in stratumneighbour and covariatelink spatial"
     )
   }
+  
   names(eca$stratumNeighbour) <-
     eca$resources$covariateLink$spatial[ind, 1]
   numNeighbours <-
@@ -836,12 +837,12 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   # Continuous covariates should have only one level:
   info[info[, "continuous"] == 1, "nlev"] <- 1
   
-  # random covariates should have levels equal to max of landing
+  # random covariates in landings should have levels equal to max of landing and samples (if that is different from max of landings, something is wrong, but that must be checked later)
   if (sum(info[, "random"] == 1 & info[, "in.landings"] == 1) > 0) {
     for (n in rownames(info)) {
       if (info[n, "random"] == 1 & info[n, "in.landings"] == 1) {
           info[n, "nlev"] <-
-            length(unique((eca$landing[[n]])))
+            length(unique((c(eca$landing[[n]], eca$biotic[[n]]))))
       }
     }
   }
@@ -849,6 +850,7 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   return(list(info = info,
               CARNeighbours = CARNeighbours))
 }
+
 
 #' Identifies whichindividuals are from catchsamples with some age readings.
 #' @return logical vector identifying which individuals belong to a catchsample where age was sampled
@@ -858,22 +860,17 @@ hasAgeInSample <- function(biotic){
   return(paste(biotic$serialnumber, biotic$catchcategory, biotic$catchpartnumber, sep="/") %in% paste(hasage$serialnumber, hasage$catchcategory, hasage$catchpartnumber, sep="/"))
 }
 
+
 #' Function for converting to the input format required by ECA (this is the main function):
+#' @param onlyagestations If true, only hauls with some aged individiuals are used
 #' @keywords internal
-getLengthGivenAge_Biotic <- function(eca, hatchDaySlashMonth, minage, maxage) {
+getLengthGivenAge_Biotic <- function(eca, hatchDaySlashMonth, minage, maxage, onlyagestations=F) {
   
-  # Extract the non-NAs:
-  var <- "age"
-  # Remove non-usable catchsamples from the DataMatrix and from the eca$covariateMatrixBiotic:
-  # This is necessary to handle length-stratified sampling
-  # The procedure for handling length-stratified sampling is also sound for unstratified simple random subsampling (ref Hanne), 
-  # so the approach implemented in hasAgeInSample is more roboust to data issues and additions of stratified codes to the format.
-  # filtering by biotic$sampletype might be faster.
-  # This filtering should arguably be done in stox, but it is even less justified to put it here if we filter by sampletype (because of the potential for additional code stratifications be added)
-  valid <- hasAgeInSample(eca$biotic)
-  eca$biotic <- eca$biotic[valid, , drop = FALSE]
-  eca$covariateMatrixBiotic <-
-    eca$covariateMatrixBiotic[valid, , drop = FALSE]
+  if (onlyagestations){
+    valid <- hasAgeInSample(eca$biotic)
+    eca$biotic <- eca$biotic[valid, , drop = FALSE]
+    eca$covariateMatrixBiotic <- eca$covariateMatrixBiotic[valid, , drop = FALSE]
+  }
   
   ### 1. DataMatrix: ###
   temp <-
@@ -973,7 +970,8 @@ get_default_result_dir <-
 #' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
 #' @param temporalresolution temporal resolution for the aggregated landings in days (used to set midSeason the Landings object for \code{\link[eca]{eca.predict}})
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
-#' @param overwrite logical if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
+#' @param overwrite logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
+#' @param agedstationsonly logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model
 #' @export
 prepareRECA <-
   function(projectName,
@@ -984,7 +982,8 @@ prepareRECA <-
            maxlength = NULL,
            hatchDaySlashMonth = "01/01",
            temporalresolution = 92,
-           overwrite=T) {
+           overwrite=T,
+           agedstationsonly=F) {
     if (is.null(resultdir)) {
       resultdir <- get_default_result_dir(projectName)
       if (!(file.exists(resultdir))) {
@@ -1053,7 +1052,7 @@ prepareRECA <-
     #
     
     GlobalParameters <- getGlobalParameters(eca$biotic, resultdir, maxlength, minage, maxage, delta.age)
-    AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage)
+    AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage, onlyagestations=agedstationsonly)
     WeightLength <- getWeightGivenLength_Biotic(eca)
     Landings <- getLandings(eca$landing, AgeLength, WeightLength, landingresolution = temporalresolution)
     

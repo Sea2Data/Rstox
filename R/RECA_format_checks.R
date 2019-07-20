@@ -81,8 +81,12 @@ check_cov_vs_info <- function(modelobj){
     if (modelobj$info[co,"CAR"]==1 & !is.null(modelobj$CARNeighbours)){
       if (modelobj$info[co,"nlev"]>1){
         if (max(modelobj$CARNeighbours$idNeighbours)>modelobj$info[co,"nlev"] | max(modelobj$CARNeighbours$idNeighbours)<1){
-          stop(paste("Neigbour matrix not consistent with nlev for CAR vairable", co))
+          stop(paste("Neigbour matrix not consistent with nlev for CAR variable", co))
         }
+        #
+        # Checked with Hanne that this condition can be relaxed. ECA will tolarate areas with no neighbours, if
+        # all fixed effects has been sampled for that area.
+        #
         if (modelobj$info[co,"CAR"]==1 & (any(modelobj$CARNeighbours$numNeighbours<1) | length(modelobj$CARNeighbours$numNeighbours) < modelobj$info[co,"nlev"])){
           stop(paste("CAR variable specified as", co, "but some areas are missing neighbours in the data."))
         }
@@ -137,7 +141,7 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   check_columns_present(agelength$DataMatrix, c("age", "part.year", "lengthCM", "samplingID", "partnumber", "partcount"))
   check_none_missing(agelength$DataMatrix, c("lengthCM", "samplingID", "partnumber"))
   if (any(is.na(agelength$DataMatrix$partcount))){
-    stop("Missing values for partcount (derived from lengthsamplecount, lengthsampleweight and cathcweight)")
+    stop("Missing values for partcount (derived from lengthsamplecount, lengthsampleweight and catchweight)")
   }
   check_data_matrix(agelength)
   check_covariates(agelength)
@@ -181,6 +185,13 @@ checkCovariateConsistency <- function(modelobj, landingscov){
     stop("Covariates are not ordered consistently in model and landings")
   }
   
+  #check that all sampled values exists in landings
+  for (co in inlandings){
+    if (!all(modelobj$CovariateMatrix[,co] %in% landingscov[,co])){
+      stop(paste("Some sampled values for covariate", co, "does not exist in landings"))
+    }
+  }
+  
   #check that all level are present for all fixed effects
   nonconfixedeffects <- rownames(modelobj$info[modelobj$info[,"random"]==0 & modelobj$info[,"continuous"]==0,])
   
@@ -206,6 +217,7 @@ checkCovariateConsistency <- function(modelobj, landingscov){
   else if (sample_combos != land_combos){
     stop("Not all combinations of fixed effects are sampled")
   }
+  
 }
 
 #' checks formatting on landing cov-matrices
