@@ -2,6 +2,7 @@
 % Please edit documentation in R/rstox_plots.R
 \name{plotFishStation}
 \alias{plotFishStation}
+\alias{plotMap}
 \alias{plotLonLat}
 \alias{zoom_xlim_ylim}
 \alias{zoom_lon_lat}
@@ -13,6 +14,9 @@ plotFishStation(projectName, commonname = "torsk",
   alpha = 1, jitter = FALSE, zoom = 1, offset = c(0.5, 0.5),
   type = "p", add0 = FALSE, subset = NULL, legendPos = c(0.05,
   0.05), unit = "tonnes")
+
+plotMap(x, lon = "lon", lat = "lat", xlim = NA, ylim = NA,
+  zoom = 1, offset = c(0.5, 0.5))
 
 plotLonLat(x, lon = "lon", lat = "lat", species = "species",
   type = "p", size = 1, zoom = 1, offset = c(0.5, 0.5),

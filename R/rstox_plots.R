@@ -89,8 +89,8 @@ plotFishStation <- function(projectName, commonname="torsk", proc="FilterBiotic"
 #' @export
 #' @import ggplot2
 #' @rdname plotFishStation
-#' 
-plotLonLat <- function(x, lon="lon", lat="lat", species="species", type="p", size=1, zoom=1, offset=c(0.5, 0.5), col=TRUE, shape=16, alpha=1, jitter=FALSE, maxPieRadius=1, legendPos=c(0.05, 0.05), unit="tonnes"){
+#'
+plotMap <- function(x, lon="lon", lat="lat", xlim=NA, ylim=NA, zoom=1, offset=c(0.5, 0.5)){
 	# Get the map:
 	gmap <- map_data("world")
 	
@@ -103,15 +103,29 @@ plotLonLat <- function(x, lon="lon", lat="lat", species="species", type="p", siz
 				y="lat", 
 				group="group"
 			)
-		) + 
-		zoom_lon_lat(
-			x = x, 
-			lon = lon, 
-			lat = lat, 
-			zoom = zoom, 
-			offset = offset
-		) + 
-		guides(colour = guide_legend(override.aes = list(size=5)))
+		)
+	p <- p + zoom_lon_lat(
+		x = x, 
+		lon = lon, 
+		lat = lat, 
+		xlim = xlim, 
+		ylim = ylim, 
+		zoom = zoom, 
+		offset = offset
+	)
+		
+	p <- p + guides(colour = guide_legend(override.aes = list(size=5)))
+	
+	p
+}
+#'
+#' @export
+#' @import ggplot2
+#' @rdname plotFishStation
+#'
+plotLonLat <- function(x, lon="lon", lat="lat", species="species", type="p", size=1, zoom=1, offset=c(0.5, 0.5), col=TRUE, shape=16, alpha=1, jitter=FALSE, maxPieRadius=1, legendPos=c(0.05, 0.05), unit="tonnes"){
+	
+	p <- plotMap(x, lon=lon, lat=lat, zoom=zoom, offset=offset)
 	
 	# Apply jittering:	
 	if(length(jitter) == 1 && !identical(jitter, FALSE)){
@@ -269,27 +283,36 @@ zoom_xlim_ylim <- function(xlim, ylim, zoom=1, offset=c(0.5, 0.5)){
 }
 #'
 #' @export
-#' @importFrom ggplot2 coord_fixed
+#' @importFrom ggplot2 coord_fixed last_plot
 #' @rdname plotFishStation
 #' 
 zoom_lon_lat <- function(x, lon="lon", lat="lat", xlim=NA, ylim=NA, zoom=1, offset=c(0.5, 0.5)){
 	# If xlim or ylim is not present:
-	if(length(xlim) && !is.na(xlim) && length(ylim) && !is.na(ylim)){
-		aspectratio <- 1 / cos(mean(ylim) * pi/180)
-	}
-	else{
+	#if(length(xlim) && !is.na(xlim) && length(ylim) && !is.na(ylim)){
+	#	aspectratio <- 1 / cos(mean(ylim) * pi/180)
+	#}
+	#else 
+	if(!missing(x)){
 		# Get xlim and ylim:
 		xlim <- range(x[[lon]], na.rm=TRUE)
 		ylim <- range(x[[lat]], na.rm=TRUE)
 	
 		# Adjust the aspect ratio by latitude:
-		aspectratio <- 1 / cos(mean(ylim) * pi/180)
-	
-		# Apply the zoom_
-		temp <- zoom_xlim_ylim(xlim, ylim, zoom, offset)
-		xlim <- temp$xlim
-		ylim <- temp$ylim	
+	#	aspectratio <- 1 / cos(mean(ylim) * pi/180)
 	}
+	else if(any(length(xlim) == 0, is.na(xlim)) || any(length(ylim) == 0, is.na(ylim))){
+		obj <- ggplot2::last_plot()
+		temp <- ggplot_build(obj)
+		xlim <- temp$layout$panel_params[[1]]$x.range
+		ylim <- temp$layout$panel_params[[1]]$y.range
+	}
+	
+	aspectratio <- 1 / cos(mean(ylim) * pi/180)
+	
+	# Apply the zoom_
+	temp <- zoom_xlim_ylim(xlim, ylim, zoom, offset)
+	xlim <- temp$xlim
+	ylim <- temp$ylim	
 	
 	# Return the coordinates as a ggplot object to add to a plot:
 	coord_fixed(aspectratio, xlim=xlim, ylim=ylim)
