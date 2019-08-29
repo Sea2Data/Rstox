@@ -981,7 +981,7 @@ plotSampleCompositionRECA <- function(biotic, ...){
 #' @param title main title for plot
 #' @themef ggplot2 theme function for plots
 #' @keywords internal
-plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, iter.max=20, nstart=10, agecolors=NULL, lowerquant=.05, upperquant=.95, catlimit=8, title="", themef=theme_classic){
+plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, iter.max=20, nstart=10, agecolors=NULL, lowerquant=.05, upperquant=.95, catlimit=8, title="", themef=theme_classic){
   require(RColorBrewer)
   require(grid)
   require(gridExtra)
@@ -1039,5 +1039,5 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, 
     
     plotnr <- plotnr+1
   }
-  gridExtra::grid.arrange(grobs=plots, top=textGrob(title,gp=gpar(fontsize=20,font=1)))
+  gridExtra::grid.arrange(grobs=plots, top=textGrob(title,gp=gpar(fontsize=20,font=1)), ncol=2)
 }
