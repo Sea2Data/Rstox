@@ -97,25 +97,7 @@ downloaded and unzipped.}
 
 \item{out}{One of "project", "baseline" or "name" (project name), specifying the output.}
 
-\item{relative.path}{Logical: If TRUE, update the project.xml file with the relative paths in Read* functions.
-
-# Show templates:
-templ <- createProject()
-names(templ)
-str(templ)
-
-# See avilable projects, either as full paths or as a list:
-op <- openProject()
-str(op)
-opl <- openProject(list())
-str(opl)
-# A test project "Test_Rstox" is automatically created when openProject("Test_Rstox") is run. 
-# If one wishes to re-create the "Test_Rstox" project, use createProject("Test_Rstox", ow=TRUE).
-
-# Read xml file directly from any location:
-xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")
-list.files(xmlfiles, recursive=TRUE)
-dat <- readXMLfiles(xmlfiles)}
+\item{relative.path}{Logical: If TRUE, update the project.xml file with the relative paths in Read* functions.}
 
 \item{close}{Logical: If TRUE, close the project after updating file paths (used in \code{updateProject}).}
 
@@ -157,4 +139,24 @@ A project object
 \code{isProject} checks whether the project exists on file. \cr \cr
 \code{getAvailableProjects} lists available projects. \cr \cr
 \code{readXMLfiles} reads XML data via a temporary project. \cr \cr
+}
+\examples{
+# Show templates:
+templ <- createProject()
+names(templ)
+str(templ)
+
+# See avilable projects, either as full paths or as a list:
+op <- openProject()
+str(op)
+opl <- openProject(list())
+str(opl)
+# A test project "Test_Rstox" is automatically created when openProject("Test_Rstox") is run. 
+# If one wishes to re-create the "Test_Rstox" project, use createProject("Test_Rstox", ow=TRUE).
+
+# Read xml file directly from any location:
+xmlfiles <- system.file("extdata", "Test_Rstox", package="Rstox", "input")
+list.files(xmlfiles, recursive=TRUE)
+dat <- readXMLfiles(xmlfiles)
+
 }

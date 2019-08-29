@@ -1839,7 +1839,7 @@ saveCatchCovarianceMatrix <- function(pred,
 #'    
 #'    if the project landings differ from totallandings, the fraction in landings for each combination of decomposition variables will be reflect that ratio, and reported estimates will reflect that of project landings
 #'    if there are additional values or levels for the model covariates in the total landings than what exists in the project landings, NAs will be reported for means and sds.
-#' @param projectname
+#' @param projectName
 #' @param filename
 #' @param decomposition variables to use for decomposition, must be available for all rows in landings
 #' @param totallandings workaround variable total landings for decomposition (may be a superset for project landings). If null, project landings are used
@@ -1849,7 +1849,7 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
 #' @noRd
-saveDecomposedCatchMatrix <- function(projectname, filename, decomposition, totallandings, addQuarterToDecomp=F, var = "Abundance",
+saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, totallandings, addQuarterToDecomp=F, var = "Abundance",
                                       unit = "ones",
                                       main = ""){
   

@@ -384,14 +384,14 @@ readHIXSD <- function(xsd="1.4", xsdtype=c("biotic", "acoustic", "landing"), dis
 		# Run through 'lev' and find it in 'type':
 		for(i in locseq){
 			# Locate the current level in the list of types:
-			loc <- which(sapply(type, function(x) lev[i] %in% x))
+			temploc <- which(sapply(type, function(x) lev[i] %in% x))
 			# If not found, use the currentMax:
-			if(length(loc)==0){
+			if(length(temploc)==0){
 				levelNum[i] <- currentMax + 1
 			}
 			# Otherwise use the numeric level of the location:
 			else{
-				levelNum[i] <- levelNum[min(loc)] + 1
+				levelNum[i] <- levelNum[min(temploc)] + 1
 			}
 			currentMax <- max(levelNum)
 		}

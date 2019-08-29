@@ -167,25 +167,6 @@
       <parameter name="LengthDist">Process(RegroupLengthDist)</parameter>
       <output>LengthDist</output>
     </process>
-    <process name="SweptAreaDensity">
-      <function>SweptAreaDensity</function>
-      <enabled>true</enabled>
-      <respondingui>false</respondingui>
-      <breakingui>false</breakingui>
-      <fileoutput>true</fileoutput>
-      <parameter name="ProcessData">Process(ReadProcessData)</parameter>
-      <parameter name="SweptAreaMethod">LengthDependent</parameter>
-      <parameter name="BioticData">Process(FilterBiotic)</parameter>
-      <parameter name="CatchVariable">Weight</parameter>
-      <parameter name="LengthDist">Process(TotalLengthDist)</parameter>
-      <parameter name="SweepWidthMethod">Constant</parameter>
-      <parameter name="SweepWidth">25</parameter>
-      <parameter name="Alpha"></parameter>
-      <parameter name="Beta"></parameter>
-      <parameter name="LMin"></parameter>
-      <parameter name="LMax"></parameter>
-      <output>Density</output>
-    </process>
     <process name="AcousticDensity">
       <function>AcousticDensity</function>
       <enabled>true</enabled>

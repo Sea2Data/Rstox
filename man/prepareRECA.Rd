@@ -6,7 +6,7 @@
 \usage{
 prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
   delta.age = 0.001, maxlength = NULL, hatchDaySlashMonth = "01/01",
-  temporalresolution = 92, overwrite = T)
+  temporalresolution = 92, overwrite = T, agedstationsonly = F)
 }
 \arguments{
 \item{projectName}{name of stox project}
@@ -25,7 +25,9 @@ prepareRECA(projectName, resultdir = NULL, minage = 1, maxage = 20,
 
 \item{temporalresolution}{temporal resolution for the aggregated landings in days (used to set midSeason the Landings object for \code{\link[eca]{eca.predict}})}
 
-\item{overwrite}{logical if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.}
+\item{overwrite}{logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.}
+
+\item{agedstationsonly}{logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model}
 }
 \description{
 Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
