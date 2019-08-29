@@ -965,3 +965,56 @@ plotSampleCompositionRECA <- function(biotic, ...){
   plot_sample_types(biotic, xlab="# catch samples", blankcode = "Uknown")
   par(old.par)
 }
+
+#' Plot of variation in estimated catch at age for each age group divided in nclust different plots (default 4)
+#' Ages are grouped according to mean age, so that ages of similar abundance are plotted together
+#' @param pred RECA prediction object as returned by Reca::eca.predict
+#' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
+#' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
+#' @param nclust the number of plots to distribute the age groups on
+#' @param agecolors named vector matching ages to colors, if null a default color scheme is used
+#' @param catlimit the upper limit for number of ages in a plot using categorical coloring. Plots with more than this number of ages will use a gradient coloring scheme
+#' @keywords internal
+plotMCMCagetraces <- function(pred, var, unit, nclust=6, agecolors=NULL, catlimit=5){
+  require(RColorBrewer)
+  if (var=="Abundance" | var=="Count"){
+    plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="ones", def.out = F)
+    caa <- apply(pred$TotalCount, c(2,3), sum)
+  }
+  else if (var=="Weight"){
+    caa <- apply(pred$TotalCount, c(2,3), sum)*pred$MeanWeight
+    plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="kilograms", def.out = F)
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  if (is.null(agecolors)){
+    agecolors <- c(brewer.pal(8, "Accent"), brewer.pal(9, "Set1"), brewer.pal(8, "Pastel1"), brewer.pal(8, "Dark2"))
+    agecolors <- agecolors[pred$AgeCategories]
+    agecolors <- setNames(agecolors, as.character(pred$AgeCategories))
+  }
+  
+  caa_scaled <- caa/plottingUnit$scale
+  means <- apply(caa_scaled, FUN=mean, MARGIN=1)
+  clust <- kmeans(means, nclust)
+  
+  m<-melt(caa_scaled, c("age", "iteration"), value.name=unit)
+  
+  plots <- list()
+  plotnr <- 1
+  for (i in seq(1,nclust)[order(clust$centers, decreasing = T)]){
+    mcp <- m[m$age %in% pred$AgeCategories[clust$cluster==i],]
+    maxy <- max(mcp[unit]) + max(mcp[unit])*.1
+    if (sum(clust$cluster==i)<=catlimit){
+      mcp$age <- as.character(mcp$age)
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)
+    }
+    else{
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + ylim(0,maxy)
+    }
+    
+    plotnr <- plotnr+1
+  }
+  gridExtra::grid.arrange(grobs=plots)
+}
