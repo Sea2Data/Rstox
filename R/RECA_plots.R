@@ -975,11 +975,13 @@ plotSampleCompositionRECA <- function(biotic, ...){
 #' @param iter.max maximal number of iterations for k-means clustering deciding which ages are ploted in same plot.
 #' @param nstarts the number of random sets chosen for the k-means clustering
 #' @param agecolors named vector matching ages to colors, if null a default color scheme is used
+#' @param lowerquant lower quantile in each age group to plot as points
+#' @param upperquant upper quantile in each age group to plot as points
 #' @param catlimit the upper limit for number of ages in a plot using categorical coloring. Plots with more than this number of ages will use a gradient coloring scheme
 #' @param title main title for plot
 #' @themef ggplot2 theme function for plots
 #' @keywords internal
-plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, iter.max=20, nstart=10, agecolors=NULL, catlimit=8, title="", themef=theme_classic){
+plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, iter.max=20, nstart=10, agecolors=NULL, lowerquant=.05, upperquant=.95, catlimit=8, title="", themef=theme_classic){
   require(RColorBrewer)
   require(grid)
   require(gridExtra)
@@ -1005,6 +1007,11 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, 
   
   caa_scaled <- caa/plottingUnit$scale
   means <- apply(caa_scaled, FUN=mean, MARGIN=1)
+  lq<-apply(caa_scaled, MARGIN=1, FUN=function(x){quantile(x, lowerquant)})
+  names(lq) <- pred$AgeCategories
+  uq<-apply(caa_scaled, MARGIN=1, FUN=function(x){quantile(x, upperquant)})
+  names(uq) <- pred$AgeCategories
+  
   
   #clustering ages in plots. kemans on log(means) seems to work well, but sometimes failes due to 0 means, which is avoided by adding lowest non-zero mean
   llo <- min(means[means>0])
@@ -1013,7 +1020,9 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, 
   clust <- kmeans(log(means+llo), nclust, iter.max = iter.max, nstart = nstart)
   .Random.seed <- storessed
   
-  m<-melt(caa_scaled, c("age", "iteration"), value.name=unit)
+  m <- melt(caa_scaled, c("age", "iteration"), value.name=unit)
+  m <- merge(m, data.frame(age=names(lq), lq=lq))
+  m <- merge(m, data.frame(age=names(uq), uq=uq))
   
   plots <- list()
   plotnr <- 1
@@ -1022,10 +1031,10 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, 
     maxy <- max(mcp[unit]) + max(mcp[unit])*.1
     if (sum(clust$cluster==i)<=catlimit){
       mcp$age <- as.character(mcp$age)
-      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)+themef()
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[unit] > mcp$uq | mcp[unit] < mcp$lq,], aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)+themef()
     }
     else{
-      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + ylim(0,maxy)+themef()
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[unit] > mcp$uq | mcp[unit] < mcp$lq,], aes(color=age)) + ylim(0,maxy)+themef()
     }
     
     plotnr <- plotnr+1
