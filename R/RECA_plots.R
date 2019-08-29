@@ -972,15 +972,19 @@ plotSampleCompositionRECA <- function(biotic, ...){
 #' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @param nclust the number of plots to distribute the age groups on
+#' @param iter.max maximal number of iterations for k-means clustering deciding which ages are ploted in same plot.
+#' @param nstarts the number of random sets chosen for the k-means clustering
 #' @param agecolors named vector matching ages to colors, if null a default color scheme is used
 #' @param catlimit the upper limit for number of ages in a plot using categorical coloring. Plots with more than this number of ages will use a gradient coloring scheme
 #' @param title main title for plot
+#' @themef ggplot2 theme function for plots
 #' @keywords internal
-plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, agecolors=NULL, catlimit=5, title=""){
+plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, iter.max=20, nstart=10, agecolors=NULL, catlimit=5, title="", themef=theme_classic){
   require(RColorBrewer)
   require(grid)
   require(gridExtra)
   require(ggplot2)
+  require(data.table)
   if (var=="Abundance" | var=="Count"){
     plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="ones", def.out = F)
     caa <- apply(pred$TotalCount, c(2,3), sum)
@@ -1001,7 +1005,13 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, 
   
   caa_scaled <- caa/plottingUnit$scale
   means <- apply(caa_scaled, FUN=mean, MARGIN=1)
-  clust <- kmeans(log(means), nclust)
+  
+  #clustering ages in plots. kemans on log(means) seems to work well, but sometimes failes due to 0 means, which is avoided by adding lowest non-zero mean
+  llo <- min(means[means>0])
+  storessed <- .Random.seed
+  set.seed(42) #run with fixed seed for determinism, since only used for viz pruposes
+  clust <- kmeans(log(means+llo), nclust, iter.max = iter.max, nstart = nstart)
+  .Random.seed <- storessed
   
   m<-melt(caa_scaled, c("age", "iteration"), value.name=unit)
   
@@ -1012,10 +1022,10 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, 
     maxy <- max(mcp[unit]) + max(mcp[unit])*.1
     if (sum(clust$cluster==i)<=catlimit){
       mcp$age <- as.character(mcp$age)
-      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)+themef()
     }
     else{
-      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + ylim(0,maxy)
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + ylim(0,maxy)+themef()
     }
     
     plotnr <- plotnr+1
