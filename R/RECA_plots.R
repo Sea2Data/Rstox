@@ -974,9 +974,13 @@ plotSampleCompositionRECA <- function(biotic, ...){
 #' @param nclust the number of plots to distribute the age groups on
 #' @param agecolors named vector matching ages to colors, if null a default color scheme is used
 #' @param catlimit the upper limit for number of ages in a plot using categorical coloring. Plots with more than this number of ages will use a gradient coloring scheme
+#' @param title main title for plot
 #' @keywords internal
-plotMCMCagetraces <- function(pred, var, unit, nclust=6, agecolors=NULL, catlimit=5){
+plotMCMCagetraces <- function(pred, var, unit, nclust=6, agecolors=NULL, catlimit=5, title=""){
   require(RColorBrewer)
+  require(grid)
+  require(gridExtra)
+  require(ggplot2)
   if (var=="Abundance" | var=="Count"){
     plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="ones", def.out = F)
     caa <- apply(pred$TotalCount, c(2,3), sum)
@@ -997,7 +1001,7 @@ plotMCMCagetraces <- function(pred, var, unit, nclust=6, agecolors=NULL, catlimi
   
   caa_scaled <- caa/plottingUnit$scale
   means <- apply(caa_scaled, FUN=mean, MARGIN=1)
-  clust <- kmeans(means, nclust)
+  clust <- kmeans(log(means), nclust)
   
   m<-melt(caa_scaled, c("age", "iteration"), value.name=unit)
   
@@ -1016,5 +1020,5 @@ plotMCMCagetraces <- function(pred, var, unit, nclust=6, agecolors=NULL, catlimi
     
     plotnr <- plotnr+1
   }
-  gridExtra::grid.arrange(grobs=plots)
+  gridExtra::grid.arrange(grobs=plots, top=textGrob(title,gp=gpar(fontsize=20,font=1)))
 }
