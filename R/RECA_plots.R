@@ -976,7 +976,7 @@ plotSampleCompositionRECA <- function(biotic, ...){
 #' @param catlimit the upper limit for number of ages in a plot using categorical coloring. Plots with more than this number of ages will use a gradient coloring scheme
 #' @param title main title for plot
 #' @keywords internal
-plotMCMCagetraces <- function(pred, var, unit, nclust=6, agecolors=NULL, catlimit=5, title=""){
+plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, agecolors=NULL, catlimit=5, title=""){
   require(RColorBrewer)
   require(grid)
   require(gridExtra)
