@@ -979,7 +979,7 @@ plotSampleCompositionRECA <- function(biotic, ...){
 #' @param title main title for plot
 #' @themef ggplot2 theme function for plots
 #' @keywords internal
-plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, iter.max=20, nstart=10, agecolors=NULL, catlimit=5, title="", themef=theme_classic){
+plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, iter.max=20, nstart=10, agecolors=NULL, catlimit=8, title="", themef=theme_classic){
   require(RColorBrewer)
   require(grid)
   require(gridExtra)
@@ -998,7 +998,7 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=6, 
   }
   
   if (is.null(agecolors)){
-    agecolors <- c(brewer.pal(8, "Accent"), brewer.pal(9, "Set1"), brewer.pal(8, "Pastel1"), brewer.pal(8, "Dark2"))
+    agecolors <- c(brewer.pal(8, "Accent"), brewer.pal(9, "Set1"), brewer.pal(8, "Dark2"), brewer.pal(8, "Set3"))
     agecolors <- agecolors[pred$AgeCategories]
     agecolors <- setNames(agecolors, as.character(pred$AgeCategories))
   }

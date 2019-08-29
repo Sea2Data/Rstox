@@ -1267,6 +1267,14 @@ plotRECAresults <-
         }, verbose = verbose, format = format, height = height, width = width, res =
           res, ...)
       out$filename <- c(fn, out$filename)
+      
+      fn <-
+        formatPlot(projectName, "RECA_traceplot", function() {
+          plotMCMCagetraces(rundata$runRECA$pred,
+                                  ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
     }
     else if(rundata$runRECA$GlobalParameters$CC){
       
@@ -1283,6 +1291,16 @@ plotRECAresults <-
           res, ...)
       out$filename <- c(fn, out$filename)
       
+      
+      fn <-
+        formatPlot(projectName, "RECA_traceplot_coastal", function() {
+          plotMCMCagetraces(ccpred$coastal,
+                            ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+      
+      
       fn <-
         formatPlot(projectName, "RECA_results_atlantic", function() {
           plot_RECA_results_panel(ccpred$atlantic,
@@ -1292,6 +1310,15 @@ plotRECAresults <-
         }, verbose = verbose, format = format, height = height, width = width, res =
           res, ...)
       out$filename <- c(fn, out$filename)
+      
+      fn <-
+        formatPlot(projectName, "RECA_traceplot_atlantic", function() {
+          plotMCMCagetraces(ccpred$antlantic,
+                            ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+      
     }
     
     return(out)
