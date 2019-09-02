@@ -1722,6 +1722,7 @@ getCatchMatrix <- function(pred,
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @param savemeans If True, only means and spread statistics for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.
+#' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @keywords internal
 saveCatchMatrix <-
   function(pred,
@@ -1729,7 +1730,8 @@ saveCatchMatrix <-
            var = "Abundance",
            unit = "ones",
            main = "",
-           savemeans = F) {
+           savemeans = F,
+           plusgr=NULL) {
     comments <- c()
     if (savemeans) {
       title <- "Mean catch at age estimates"
@@ -1757,7 +1759,7 @@ saveCatchMatrix <-
     
     comments <- c(main, comments)
     
-    tab <- getCatchMatrix(pred, var, unit)
+    tab <- getCatchMatrix(pred, var, unit, plusgr = plusgr)
     
     f <- file(filename, open = "w")
     write(paste("#", comments), f)
@@ -1794,12 +1796,16 @@ saveCatchMatrix <-
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @param standardize If True, pearson correlations are calculated, rather than covariances.
+#' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 saveCatchCovarianceMatrix <- function(pred,
                                       filename,
                                       var = "Abundance",
                                       unit = "ones",
                                       main = "",
-                                      standardize=F) {
+                                      standardize=F,
+                                      plusgr=NULL) {
+  
+  
   comments <- c()
   
   if (standardize){
@@ -1809,10 +1815,28 @@ saveCatchCovarianceMatrix <- function(pred,
     title <- "variance-Covariance matrix for age groups based on catch at age as"    
   }
 
-  tab <- getCatchMatrix(pred, var, unit)
-
+  
+  if (var == "Abundance" | var == "Count") {
+    
+    if (unit == "ones") {
+      comments <- c(paste(title, "as", var))
+    }
+    if (unit != "ones") {
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    
+  }
+  else if (var == "Weight") {
+    comments <- c(paste(title, "as", var, "in", unit))
+  }
+  else{
+    stop("Not implemented")
+  }
+  
   comments <- c(main, comments)
   
+  tab <- getCatchMatrix(pred, var, unit, plusgr=plusgr)
+
   caa_scaled <- tab$caa_scaled
   if (!standardize){
     covmat <- cov(t(caa_scaled))   
@@ -1851,11 +1875,13 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param addQuarterToDecomp workaround variable for adding quarter to decomp
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
 #' @export
 saveDecomposedCatchMatrix <- function(projectName, filename, decomposition=c("områdegrupperingbokmål"), addQuarterToDecomp=F, var = "Abundance",
                                       unit = "ones",
+                                      plusgr=NULL,
                                       main = ""){
   
   quartcolumnname <- "Quarter"
@@ -1904,7 +1930,7 @@ saveDecomposedCatchMatrix <- function(projectName, filename, decomposition=c("om
     ## extract catchmatrix for decomposition
     decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
     pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
-    catchmatrix <- getCatchMatrix(pred, var = var, unit = unit)
+    catchmatrix <- getCatchMatrix(pred, var = var, unit = unit, plusgr=plusgr)
 
     decompmatrix <- merge(catchmatrix$means, catchmatrix$cv)
     decompmatrix[,decomposition]<-d[1,decomposition]
