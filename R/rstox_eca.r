@@ -1653,7 +1653,8 @@ writeRecaConfiguration <-
 #' @keywords internal
 getCatchMatrix <- function(pred,
                            var = "Abundance",
-                           unit = "ones"){
+                           unit = "ones",
+                           plusgr=NULL){
   if (var == "Abundance" | var == "Count") {
     plottingUnit = getPlottingUnit(
       unit = unit,
@@ -1677,17 +1678,26 @@ getCatchMatrix <- function(pred,
     stop("Not implemented")
   }
   
+  ages <- as.character(pred$AgeCategories)
+  
+  if (!is.null(plusgr)){
+    caa[plusgr,] <- colSums(caa[plusgr:nrow(caa),])
+    caa <- caa[1:plusgr,]
+    ages <- ages[1:plusgr]
+    ages[plusgr] <- paste(ages[plusgr], "+", sep="")
+  }
+  
   caa_scaled <- as.data.frame(caa / plottingUnit$scale)
   means <-
-    as.data.frame(list(age = pred$AgeCategories, mean = rowMeans(caa_scaled)))
+    as.data.frame(list(age = ages, mean = rowMeans(caa_scaled)))
   cv <-
     as.data.frame(list(
-      age = pred$AgeCategories,
+      age = ages,
       sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
     ))
   cv$cv <- cv$sd / means$mean
   colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
-  caa_scaled$age <- pred$AgeCategories
+  caa_scaled$age <- ages
   caa_scaled <-
     caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
   
@@ -1799,41 +1809,11 @@ saveCatchCovarianceMatrix <- function(pred,
     title <- "variance-Covariance matrix for age groups based on catch at age as"    
   }
 
+  tab <- getCatchMatrix(pred, var, unit)
 
-  if (var == "Abundance" | var == "Count") {
-    plottingUnit = getPlottingUnit(
-      unit = unit,
-      var = var,
-      baseunit = "ones",
-      def.out = F
-    )
-    caa <- round(apply(pred$TotalCount, c(2, 3), sum))
-    
-    if (unit == "ones") {
-      comments <- c(paste(title, "as", var))
-    }
-    if (unit != "ones") {
-      comments <- c(paste(title, "as", var, "in", unit))
-    }
-    
-  }
-  else if (var == "Weight") {
-    caa <- apply(pred$TotalCount, c(2, 3), sum) * pred$MeanWeight
-    plottingUnit = getPlottingUnit(
-      unit = unit,
-      var = var,
-      baseunit = "kilograms",
-      def.out = F
-    )
-    comments <- c(paste(title, "as", var, "in", unit))
-  }
-  else{
-    stop("Not implemented")
-  }
-  
   comments <- c(main, comments)
   
-  caa_scaled <- as.data.frame(caa / plottingUnit$scale)  
+  caa_scaled <- tab$caa_scaled
   if (!standardize){
     covmat <- cov(t(caa_scaled))   
   }
@@ -1841,8 +1821,8 @@ saveCatchCovarianceMatrix <- function(pred,
     covmat <- cor(t(caa_scaled))   
   }
   
-  rownames(covmat) <- pred$AgeCategories
-  colnames(covmat) <- pred$AgeCategories
+  rownames(covmat) <- tab$caa_scaled$age
+  colnames(covmat) <- tab$caa_scaled$age
   
   f <- file(filename, open = "w")
   write(paste("#", comments), f)
@@ -1857,30 +1837,39 @@ saveCatchCovarianceMatrix <- function(pred,
 }
 
 #' Make decomposed catch matrix
-#' Contain workaround variables, until reporting setup can be configured in stox.
 #' @description Compiles catch matrix decomposed on given variables
 #' @details 
+#'    Contain options for workaround variables, until reporting setup can be configured in stox.
+#'    
 #'    decomposition variables need not be the same as model covariates, but model covariates will be used for estimation.
 #'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
 #'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
 #'    
-#'    if the project landings differ from totallandings, the fraction in landings for each combination of decomposition variables will be reflect that ratio, and reported estimates will reflect that of project landings
-#'    if there are additional values or levels for the model covariates in the total landings than what exists in the project landings, NAs will be reported for means and sds.
 #' @param projectName
 #' @param filename
 #' @param decomposition variables to use for decomposition, must be available for all rows in landings
-#' @param totallandings workaround variable total landings for decomposition (may be a superset for project landings). If null, project landings are used
 #' @param addQuarterToDecomp workaround variable for adding quarter to decomp
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
-#' @noRd
-saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, totallandings, addQuarterToDecomp=F, var = "Abundance",
+#' @export
+saveDecomposedCatchMatrix <- function(projectName, filename, decomposition=c("områdegrupperingbokmål"), addQuarterToDecomp=F, var = "Abundance",
                                       unit = "ones",
                                       main = ""){
   
-  stop("Fix setting fo quarter and adding to decomposition")
+  quartcolumnname <- "Quarter"
+  if (addQuarterToDecomp){
+    decomposition <- c(decomposition, quartcolumnname)
+  }
+  getQuarter <- function(date){
+    month <- substr(date, 6,7)
+    month[month=="01" | month=="02" | month=="03"] <- "Q1"
+    month[month=="04" | month=="05" | month=="06"] <- "Q2"
+    month[month=="07" | month=="08" | month=="09"] <- "Q3"
+    month[month=="10" | month=="11" | month=="12"] <- "Q4"
+    return(month)
+  }
   
   # load eca configuration and parameterization
   prepdata <- loadProjectData(projectName, var = "prepareRECA")
@@ -1892,8 +1881,8 @@ saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, tota
   prepareRECA <- prepdata$prepareRECA
   
   projectlandings <- prepareRECA$StoxExport$landing
-  if (is.null(totallandings)){
-    totallandings <- projectlandings
+  if (addQuarterToDecomp){
+    projectlandings[,quartcolumnname] <- getQuarter(projectlandings$sistefangstdato)
   }
   projecttempres <- prepareRECA$StoxExport$temporalresolution
   
@@ -1902,50 +1891,32 @@ saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, tota
   runRECA <- rundata$runRECA
   GlobalParameters <- runRECA$GlobalParameters
   
-  agglisttotal <- list()
   agglistproject <- list()
   for (n in decomposition){
-    agglisttotal[[n]]<-totallandings[[n]]
     agglistproject[[n]]<-projectlandings[[n]]
   }
-  aggtotal <- aggregate(weight=totallandings$rundvekt, by=agglisttotal, FUN=sum)
-  aggproject <- aggregate(weight=projectlandings$rundvekt, by=agglistproject, FUN=sum)
   
-  # check that total landings have values filled for all decomposition variables
-  if (any(is.na(totallandings[,decomposition]))){
-    stop("NAs for decomposition variables")
-  }
+  decomps <- split.data.frame(projectlandings, f=agglistproject, drop=T)
   
-  # check that project landings is subset of total landings
-  if (nrow(aggtotal)<nrow(aggproject)){
-    stop("project landings must be a subset of total landings")
-  }
-  comb <- merge(aggtotal, aggproject, by=decomposition, all.x=T, suffixes=c(".tot", ".proj"))
-  if (any(comb$weight.tot<comb$weight.proj)){
-    stop("project landings must be a subset of total landings")
-  }
-  
-  # iterate over all combinations of decomposition variables in total landings
-  for (i in 1:nrow(aggtotal)){
-    ## extract corresponding data in the project landings
-    reducedlandings <- merge(projectlandings,aggtotal[1,decomposition])
+  output <- NULL
+  for (d in decomps){
     
-    if (nrow(reducedlandings)){
-      stop("handle when projectlandings subset of total landings")
+    ## extract catchmatrix for decomposition
+    decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
+    pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+    catchmatrix <- getCatchMatrix(pred, var = var, unit = unit)
+
+    decompmatrix <- merge(catchmatrix$means, catchmatrix$cv)
+    decompmatrix[,decomposition]<-d[1,decomposition]
+    
+    if (is.null(output)){
+      output <- decompmatrix
     }
-    ## get total and fraction
-    
-    ## handle any additional model covariate values
-    warning("Not handling additional covariate value")
-    
-    
-  decompLandings <- getLandings(reducedlandings, AgeLength, WeightLength, projecttempres)
-  pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
-  ## extract catchmatrix for decomposition
-  catchmatrix <- getCatchMatrix(pred, var = "Abundance", unit = "ones")
-  print(catchmatrix)
-  ## add to output dataframe
+    else{
+      output <- rbind(output, decompmatrix)
+    }
   }
+
   # add comments
   comments <- c()
   title <- "Mean catch at age estimates"
@@ -1966,10 +1937,18 @@ saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, tota
     stop("Not implemented")
   }
   
-  comments <- c(main, comments)
+  comments <- c(main, comments, "")
   
-  # save the lot
-  stop("Function under development")
+  f <- file(filename, open = "w")
+  write(paste("#", comments), f)
+  write.table(
+    output,
+    file = f,
+    sep = "\t",
+    dec = ".",
+    row.names = F
+  )
+  close(f)
 }
 
 #' @title Report RECA.
