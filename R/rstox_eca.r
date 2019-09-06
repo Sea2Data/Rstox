@@ -1260,6 +1260,14 @@ plotRECAresults <-
     #different plot if stock splitting (CC) is used
     if (is.null(rundata$runRECA$GlobalParameters$CC) || !rundata$runRECA$GlobalParameters$CC){
       fn <-
+        formatPlot(projectName, "RECA_traceplot", function() {
+          plotMCMCagetraces(rundata$runRECA$pred,
+                            ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+      
+      fn <-
         formatPlot(projectName, "RECA_results", function() {
           plot_RECA_results_panel(rundata$runRECA$pred,
                                   prep$prepareRECA$StoxExport$biotic,
@@ -1268,13 +1276,6 @@ plotRECAresults <-
           res, ...)
       out$filename <- c(fn, out$filename)
       
-      fn <-
-        formatPlot(projectName, "RECA_traceplot", function() {
-          plotMCMCagetraces(rundata$runRECA$pred,
-                                  ...)
-        }, verbose = verbose, format = format, height = height, width = width, res =
-          res, ...)
-      out$filename <- c(fn, out$filename)
     }
     else if(rundata$runRECA$GlobalParameters$CC){
       
@@ -1335,7 +1336,7 @@ plotRECAresults <-
 #' @export
 diagnosticsRECA <-
   function(projectName,
-           verbose = T,
+           verbose = F,
            format = "png",
            ...) {
     out <- list()
