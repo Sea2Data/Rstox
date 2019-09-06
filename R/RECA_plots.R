@@ -1018,10 +1018,7 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
   
   #clustering ages in plots. kemans on log(means) seems to work well, but sometimes failes due to 0 means, which is avoided by adding lowest non-zero mean
   llo <- min(means[means>0])
-  storessed <- .GlobalEnv$.Random.seed
-  set.seed(42) #run with fixed seed for determinism, since only used for viz pruposes
   clust <- kmeans(log(means+llo), nclust, iter.max = iter.max, nstart = nstart)
-  .GlobalEnv$.Random.seed <- storessed
   m <- melt(caa_scaled, c("age", "iteration"), value.name=unit)
   m <- merge(m, data.frame(age=names(lq), lq=lq))
   m <- merge(m, data.frame(age=names(uq), uq=uq))

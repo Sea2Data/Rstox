@@ -1420,7 +1420,7 @@ diagnosticsRECA <-
 #' @export
 plotSamplingOverview <-
   function(projectName,
-           verbose = T,
+           verbose = F,
            format = "png",
            ...) {
     out <- list()
