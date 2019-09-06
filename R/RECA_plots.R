@@ -30,11 +30,12 @@ formatPlot <-
     }
     
     tryCatch({
+      draw()
       if (verbose) {
-        write(paste("Writing plot to:", filename), stderr())
-      }
-      draw()},
+        write(paste("Plot written to:", filename), stderr())
+      }},
       finally={
+        
         if (length(format)) {
           dev.off()
         }
@@ -979,14 +980,12 @@ plotSampleCompositionRECA <- function(biotic, ...){
 #' @param upperquant upper quantile in each age group to plot as points
 #' @param catlimit the upper limit for number of ages in a plot using categorical coloring. Plots with more than this number of ages will use a gradient coloring scheme
 #' @param title main title for plot
-#' @themef ggplot2 theme function for plots
+#' @param themef ggplot2 theme function for plots
+#' @import ggplot2
+#' @import grid
+#' @import data.table
 #' @keywords internal
 plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, iter.max=20, nstart=10, agecolors=NULL, lowerquant=.05, upperquant=.95, catlimit=8, title="", themef=theme_classic){
-  require(RColorBrewer)
-  require(grid)
-  require(gridExtra)
-  require(ggplot2)
-  require(data.table)
   if (var=="Abundance" | var=="Count"){
     plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="ones", def.out = F)
     caa <- apply(pred$TotalCount, c(2,3), sum)
@@ -1000,7 +999,7 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
   }
   
   if (is.null(agecolors)){
-    agecolors <- c(brewer.pal(8, "Accent"), brewer.pal(9, "Set1"), brewer.pal(8, "Dark2"), brewer.pal(8, "Set3"))
+    agecolors <- c(RColorBrewer::brewer.pal(8, "Accent"), RColorBrewer::brewer.pal(9, "Set1"), RColorBrewer::brewer.pal(8, "Dark2"), RColorBrewer::brewer.pal(8, "Set3"))
     agecolors <- agecolors[pred$AgeCategories]
     agecolors <- setNames(agecolors, as.character(pred$AgeCategories))
   }
@@ -1039,5 +1038,5 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
     
     plotnr <- plotnr+1
   }
-  gridExtra::grid.arrange(grobs=plots, top=textGrob(title,gp=gpar(fontsize=20,font=1)), ncol=2)
+  gridExtra::grid.arrange(grobs=plots, top=grid::textGrob(title,gp=grid::gpar(fontsize=20,font=1)), ncol=2)
 }
