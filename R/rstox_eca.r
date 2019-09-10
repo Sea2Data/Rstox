@@ -1798,6 +1798,7 @@ saveCatchMatrix <-
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @param standardize If True, pearson correlations are calculated, rather than covariances.
 #' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
+#' @keywords internal
 saveCatchCovarianceMatrix <- function(pred,
                                       filename,
                                       var = "Abundance",
@@ -1870,8 +1871,8 @@ saveCatchCovarianceMatrix <- function(pred,
 #'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
 #'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
 #'    
-#' @param projectName
-#' @param filename
+#' @param projectName Name identifying StoX project
+#' @param filename filename to write decomposed catch matrix to. If NULL a filename in the projects R-report directory will be generated.
 #' @param decomposition variables to use for decomposition, must be available for all rows in landings
 #' @param addQuarterToDecomp workaround variable for adding quarter to decomp
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
@@ -1880,10 +1881,16 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
 #' @export
-saveDecomposedCatchMatrix <- function(projectName, filename, decomposition=c("områdegrupperingbokmål"), addQuarterToDecomp=F, var = "Abundance",
-                                      unit = "ones",
+saveDecomposedCatchMatrix <- function(projectName, filename=NULL, decomposition=c("områdegrupperingbokmål"), addQuarterToDecomp=T, var = "Abundance",
+                                      unit = "millions",
                                       plusgr=NULL,
                                       main = ""){
+  
+  if (is.null(filename)){
+    resultdir <- getProjectPaths(projectName)$RReportDir
+    filename <- file.path(resultdir, "decomposedcatch.csv")
+  }
+  
   
   quartcolumnname <- "Quarter"
   if (addQuarterToDecomp){
