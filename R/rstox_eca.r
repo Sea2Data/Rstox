@@ -1042,6 +1042,43 @@ prepareRECA <-
     eca <- baseline2eca(projectName)
     eca$temporalresolution <- temporalresolution
 
+    
+    #
+    # run data checks here.
+    # This is not actually the correct place, as it should ideally be run with reports, but checks need to be run before reca, and I don't want to put it in baseline report as the distinction between baseline report and r report will dissapear in next release.
+    # Consider moving this in StoX 3.0
+    #
+    tryCatch({
+      stationissuesfilename <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "stationissues.txt")
+      catchissuesfilename <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "catchissues.txt")
+      imputationissuesfilename  <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "imputationissues.txt") 
+      
+      makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic))  
+      
+      if (file.exists(stationissuesfilename)){
+        out$filename <- c(stationissuesfilename, out$filename)        
+      }  
+      if (file.exists(catchissuesfilename)){
+        out$filename <- c(catchissuesfilename, out$filename)        
+      }
+      if (file.exists(imputationissuesfilename)){
+        out$filename <- c(imputationissuesfilename, out$filename)      
+      }
+      
+    },
+    error = function(e) {
+    },
+    finally = {
+      
+    })  
+    
+    
     #max length in cm
     if (is.null(maxlength)) {
       maxlength <- max(eca$biotic$lengthcentimeter)
@@ -2089,39 +2126,6 @@ reportRECA <-
     finally = {
       
     })
-
-    tryCatch({
-      pd <- loadProjectData(projectName, var = "prepareRECA")
-      stationissuesfilename <-
-        file.path(getProjectPaths(projectName)$RReportDir,
-                  "stationissues.txt")
-      catchissuesfilename <-
-        file.path(getProjectPaths(projectName)$RReportDir,
-                  "catchissues.txt")
-      imputationissuesfilename  <-
-        file.path(getProjectPaths(projectName)$RReportDir,
-                  "imputationissues.txt") 
-
-      makeDataReportReca(pd$prepareRECA$StoxExport, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T)  
-    
-      if (file.exists(stationissuesfilename)){
-        out$filename <- c(stationissuesfilename, out$filename)        
-      }  
-      if (file.exists(catchissuesfilename)){
-        out$filename <- c(catchissuesfilename, out$filename)        
-      }
-      if (file.exists(imputationissuesfilename)){
-        out$filename <- c(imputationissuesfilename, out$filename)      
-      }
-
-    },
-    error = function(e) {
-    },
-    finally = {
-      
-    })  
-    
-    
 
     tryCatch({
       pd <- loadProjectData(projectName, var = "prepareRECA")
