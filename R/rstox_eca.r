@@ -119,6 +119,7 @@ baseline2eca <-
            temporal = NULL,
            gearfactor = NULL,
            spatial = NULL,
+           landingresolution = 92,
            ...) {
     # Function that retreives year, month, day, yearday:
     addYearday <-
@@ -960,15 +961,15 @@ get_default_result_dir <-
 
 #' @title Prepare data for RECA
 #' @description Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
-#' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
+#' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[Reca]{eca.estimate}}
 #'    The parameters minage and maxage define the range of ages that are considered possible in the model. Because R-ECA integrates weight and length measurements, and allows for modelling errors in age determination, predicted ages might fall outside the age range in samples. minage and maxage should be set with this in mind.
 #' @param projectName name of stox project
-#' @param minage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}.
-#' @param maxage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param delta.age see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param minage see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}.
+#' @param maxage see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param delta.age see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
 #' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
-#' @param temporalresolution temporal resolution for the aggregated landings in days (used to set midSeason the Landings object for \code{\link[eca]{eca.predict}})
+#' @param temporalresolution temporal resolution for the aggregated landings in days (used to set midSeason the Landings object for \code{\link[Reca]{eca.predict}})
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @param overwrite logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
 #' @param agedstationsonly logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model
@@ -1075,20 +1076,20 @@ prepareRECA <-
 
 #' @title run RECA
 #' @description Loads data produced by \code{\link{prepareRECA}}, run tests on model configuration, runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
-#' @details Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}.
-#'     For purposes of testing and running ECA detached from StoX, Data files accepted by code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}} can be exported using the option export_only. In this case the analysis is not run, but data files and parameter files are stored at the designated location.
+#' @details Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}.
+#'     For purposes of testing and running ECA detached from StoX, Data files accepted by code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}} can be exported using the option export_only. In this case the analysis is not run, but data files and parameter files are stored at the designated location.
 #' @param projectName name of stox project
-#' @param burnin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param caa.burnin see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
-#' @param nSamples see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param thin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param fitfile see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param predfile see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
-#' @param lgamodel see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param CC see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param CCError see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param seed see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param age.error see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param burnin see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param caa.burnin see specification for GlobalParameters in \code{\link[Reca]{eca.predict}}
+#' @param nSamples see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param thin see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param fitfile see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param predfile see specification for GlobalParameters in \code{\link[Reca]{eca.predict}}
+#' @param lgamodel see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param CC see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param CCError see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param seed see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param age.error see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
 #' @param export_only if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only
 #'
 #' @export
@@ -1576,11 +1577,11 @@ plotRECA <- function(projectName, ...) {
 
 #' @title Writes RECA configuration
 #' @description Writes details about the model configuration to a text file or open connection
-#' @details Configuration are saved reflecting the parameters as passed to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}, even if it is possible to have for instance the GlobalParameters differ between the two for a valid execution.
-#' @param GlobalParameters defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
-#' @param Landings defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
-#' @param WeightLength defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
-#' @param AgeLength defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @details Configuration are saved reflecting the parameters as passed to \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}, even if it is possible to have for instance the GlobalParameters differ between the two for a valid execution.
+#' @param GlobalParameters defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}
+#' @param Landings defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}
+#' @param WeightLength defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}
+#' @param AgeLength defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}
 #' @param fileobj filename or open connection
 #' @param main header to write before configuration
 #' @keywords internal
@@ -1713,11 +1714,11 @@ getCatchMatrix <- function(pred,
 }
 
 #' @title Save catch at age matrix
-#' @description Write catch at age predicted by \code{\link[eca]{eca.predict}} as csv file.
+#' @description Write catch at age predicted by \code{\link[Reca]{eca.predict}} as csv file.
 #' @details Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
 #'    Each row correspond to an age group, and columns to either means or an iteration of the Monte Carlo simulation.
 #'    Units are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
-#' @param pred as returned by \code{\link[eca]{eca.predict}}
+#' @param pred as returned by \code{\link[Reca]{eca.predict}}
 #' @param filename name of file to save to.
 #' @param var Variable to extract. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
@@ -1787,11 +1788,11 @@ saveCatchMatrix <-
   }
 
 #' @title Save catch at age variance-covariance matrix for age groups
-#' @description Write catch at age covariance predicted by \code{\link[eca]{eca.predict}} as csv file.
+#' @description Write catch at age covariance predicted by \code{\link[Reca]{eca.predict}} as csv file.
 #' @details Covariance matrix is written as comma-separated file with quoted strings as row/column names.
 #'    Each row and column correspond to an age group.
 #'    Units for catch at age are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
-#' @param pred as returned by \code{\link[eca]{eca.predict}}
+#' @param pred as returned by \code{\link[Reca]{eca.predict}}
 #' @param filename name of file to save to.
 #' @param var Variable to extract for covariance calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
