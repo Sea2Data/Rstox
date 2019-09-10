@@ -161,6 +161,10 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	hl[hl$SpecCode=="-", "SpecCode"] <- -9
 	ca[ca$SpecCode=="-", "SpecCode"] <- -9
 
+if(exists("applyRawData")) {
+	hh <- applyRawData(hh, cruiseNo, Year)
+}
+
 	##---------------------------------------------------------------------------------
 	## hl and ca data cleaning
 
