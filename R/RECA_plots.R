@@ -834,7 +834,6 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
   catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "catchpartnumber", "catchcategory")]),]
   
-  
   tt <- as.character(catchsample$sampletype)
   tt[is.na(tt)]<-blankcode
   tt <- table(tt)
@@ -913,32 +912,32 @@ plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch s
   catches[is.na(catches$samplequality), "samplequality"] <- rep(blankcode, sum(is.na(catches$samplequality)))
   catches[is.na(catches$group), "group"] <- rep(blankcode, sum(is.na(catches$group)))
   
+  #catchsampleid not imported, generating one based on common restricitons
+  catches$catchsampleid <- paste(catches$serialnumber, catches$catchcategory, catches$catchpartnumber)
+  
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
-  counts = aggregate(list(count=catches$serialnumber), by=list(cruise=catches$cruise, quality=catches$samplequality, group=catches$group), FUN=length)
+  counts = aggregate(list(count=catches$catchsampleid), by=list(cruise=catches$cruise, quality=catches$samplequality, group=catches$group), FUN=length)
   counts$label <- paste(unlist(lapply(counts$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]})), counts$quality, counts$group, sep="/")
   counts$catchrep <- rep(NA, nrow(counts))
   counts$color <- rep(NA, nrow(counts))
   
+  # all Q8 is landed
   counts[counts$quality==8, "catchrep"] <- landname
   counts[counts$quality==8, "color"] <- landcol
   
-  #should ideally be missiontype
-  rfh <- paste("2", year, sep="-")
+  #Q7 is unsorted
+  counts[counts$quality==7, "catchrep"] <- allname
+  counts[counts$quality==7, "color"] <- allcol
   
-  counts[counts$cruise==rfh & counts$quality==7, "catchrep"] <- rep(allname, sum(counts$cruise==rfh & counts$quality==7))
-  counts[counts$cruise==rfh & counts$quality==7, "color"] <- rep(allcol, sum(counts$cruise==rfh & counts$quality==7))
+  # some Q7 is partiioned into landed and discarded
+  counts[counts$group %in% c(26,27,28), "catchrep"] <- landname
+  counts[counts$group %in% c(26,27,28), "color"] <- landcol
   
-  counts[counts$cruise!=rfh & counts$quality==7 & counts$group %in% c(26,27,28), "catchrep"] <- landname
-  counts[counts$cruise!=rfh & counts$quality==7 & counts$group %in% c(26,27,28), "color"] <- landcol
+  counts[counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "catchrep"] <- discname
+  counts[counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "color"] <- disccol
   
-  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "catchrep"] <- discname
-  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "color"] <- disccol
-  
-  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & (counts$group==blankcode | !(counts$group %in% c(23,24,25,26,27,28))), "catchrep"] <- allname
-  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & (counts$group==blankcode | !(counts$group %in% c(23,24,25,26,27,28))), "color"] <- allcol
-  
-  counts[is.na(counts$color), "catchrep"] <- rep(blankcode, sum(is.na(counts$color)))
-  counts[is.na(counts$color), "color"] <- rep(unkowncol, sum(is.na(counts$color)))
+  counts[is.na(counts$color), "catchrep"] <- blankcode
+  counts[is.na(counts$color), "color"] <- unkowncol
   
   if (barplot){
     counts <- counts[order(counts$count, decreasing = T),]
