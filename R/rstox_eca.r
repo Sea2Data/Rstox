@@ -1881,7 +1881,7 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
 #' @export
-saveDecomposedCatchMatrix <- function(projectName, filename=NULL, decomposition=c("områdegrupperingbokmål"), addQuarterToDecomp=T, var = "Abundance",
+saveDecomposedCatchMatrix <- function(projectName, filename=NULL, decomposition=c("omr\u00e5degrupperingbokm\u00e5l"), addQuarterToDecomp=T, var = "Abundance",
                                       unit = "millions",
                                       plusgr=NULL,
                                       main = ""){
