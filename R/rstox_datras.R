@@ -129,7 +129,7 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 
 	## get ship code from ICES
 	# Comment: This seems to allow only one biotic file in the project, since the first cruise number is selected:
-	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_fishstation.txt$cruise)
+	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_mission.txt$cruise)
 	Year <- unique(hh$Year)
 
 	# Try using Cruise Series first, since it's faster
@@ -204,12 +204,14 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	tmp <- aggregate(SpecVal ~ SpecCode + StNo, hl, FUN = function(x) length(unique(x)))
 	tmp <- tmp[tmp$SpecVal>1, ]
 
-	for( rownum in 1: nrow(tmp) ) {
-		tmpSpecs <- hl[(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum]),]$SpecVal
-		if(any(tmpSpecs == 1))
-			hl <- hl[!(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum] & hl$SpecVal!=1),]
-		else
-			hl[(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum]), c("SpecVal")] <- min(tmpSpecs)		
+	if( nrow(tmp) > 0 ) {
+		for( rownum in 1: nrow(tmp) ) {
+			tmpSpecs <- hl[(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum]),]$SpecVal
+			if(any(tmpSpecs == 1))
+				hl <- hl[!(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum] & hl$SpecVal!=1),]
+			else
+				hl[(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum]), c("SpecVal")] <- min(tmpSpecs)
+		}
 	}
 
 	## SpecVal Conditionals
