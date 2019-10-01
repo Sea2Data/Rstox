@@ -350,7 +350,7 @@ if(exists("applyRawData")) {
 	}
 
 	# Use plus group for herring and mackerel individuals with age ring above 15
-	ca[ which((ca$SpecCode==127023 | ca$SpecCode==126417) & ca$AgeRings > 15), c("PlusGr", "AgeRings")] <- list('+', 15)
+	ca[ which((ca$SpecCode==127023 | ca$SpecCode==126417) & ca$AgeRings >= 15), c("PlusGr", "AgeRings")] <- list('+', 15)
 
 	# Save output
 	hl <- hl[order(hl$StNo),]
