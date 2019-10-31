@@ -1529,7 +1529,7 @@ extractCruiseAndShipame <- function(x){
 
 		# Get (and check) snapshot
 		date <- tail(sp, 1)
-		d <- try(as.Date(date))
+		d <- try(as.Date(date), silent=TRUE)
 		if (class(d) == "try-error" || is.na(d)) {
 			date <- NA
 		}
