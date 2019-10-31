@@ -5,10 +5,10 @@
 \title{Save catch at age matrix}
 \usage{
 saveCatchMatrix(pred, filename, var = "Abundance", unit = "ones",
-  main = "", savemeans = F)
+  main = "", savemeans = F, plusgr = NULL)
 }
 \arguments{
-\item{pred}{as returned by \code{\link[eca]{eca.predict}}}
+\item{pred}{as returned by \code{\link[Reca]{eca.predict}}}
 
 \item{filename}{name of file to save to.}
 
@@ -19,9 +19,11 @@ saveCatchMatrix(pred, filename, var = "Abundance", unit = "ones",
 \item{main}{Title for the analysis, to be included as comment in saved file (e.g. species and year)}
 
 \item{savemeans}{If True, only means and spread statistics for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.}
+
+\item{plusgr}{Lower age in plusgr for tabulation. If NULL plusgr is not used.}
 }
 \description{
-Write catch at age predicted by \code{\link[eca]{eca.predict}} as csv file.
+Write catch at age predicted by \code{\link[Reca]{eca.predict}} as csv file.
 }
 \details{
 Catch at age matrix is written as comma-separated file with quoted strings as row/column names.

@@ -1,15 +1,12 @@
-# Rstox version: 1.11.1 (latest alpha, 2019-09-11)
+# Rstox version: 1.11.1 (latest alpha, 2019-10-31)
 # R version: 3.5
 
 
 # The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
 
 
-# Install the latest official version
+# Install the latest developer version
 devtools::install_github("Sea2Data/Rstox")
-
-# It is also possible to install the latest development version, through devtools::install_github("Sea2Data/Rstox", ref = "develop")
-# Note that this does not guarantee a stable version and should ONLY be used to test out new functionality.
 
 
 # To do this, uncheck the box "32-bit Files" when selecting components to install.

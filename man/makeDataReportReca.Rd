@@ -4,11 +4,11 @@
 \alias{makeDataReportReca}
 \title{Checks for data issues wrp to running RECA}
 \usage{
-makeDataReportReca(stoxexport, stationissuesfile, catchissuefile,
-  imputationfile, verbose = T)
+makeDataReportReca(biotic, stationissuesfile, catchissuefile,
+  imputationfile, verbose = T, covariates = NULL)
 }
 \arguments{
-\item{stoxexport}{sample data exported from stox in \code{\link[Rstox]{prepareRECA}}}
+\item{biotic}{sample data exported from stox in \code{\link[Rstox]{prepareRECA}}}
 
 \item{catchissuefile}{file for writing catch sample issues}
 

@@ -5,10 +5,10 @@
 \title{Save catch at age variance-covariance matrix for age groups}
 \usage{
 saveCatchCovarianceMatrix(pred, filename, var = "Abundance",
-  unit = "ones", main = "", standardize = F)
+  unit = "ones", main = "", standardize = F, plusgr = NULL)
 }
 \arguments{
-\item{pred}{as returned by \code{\link[eca]{eca.predict}}}
+\item{pred}{as returned by \code{\link[Reca]{eca.predict}}}
 
 \item{filename}{name of file to save to.}
 
@@ -19,12 +19,15 @@ saveCatchCovarianceMatrix(pred, filename, var = "Abundance",
 \item{main}{Title for the analysis, to be included as comment in saved file (e.g. species and year)}
 
 \item{standardize}{If True, pearson correlations are calculated, rather than covariances.}
+
+\item{plusgr}{Lower age in plusgr for tabulation. If NULL plusgr is not used.}
 }
 \description{
-Write catch at age covariance predicted by \code{\link[eca]{eca.predict}} as csv file.
+Write catch at age covariance predicted by \code{\link[Reca]{eca.predict}} as csv file.
 }
 \details{
 Covariance matrix is written as comma-separated file with quoted strings as row/column names.
    Each row and column correspond to an age group.
    Units for catch at age are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
 }
+\keyword{internal}

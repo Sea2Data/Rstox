@@ -4,7 +4,7 @@
 \alias{diagnosticsRECA}
 \title{Diagonostics RECA}
 \usage{
-diagnosticsRECA(projectName, verbose = T, format = "png", ...)
+diagnosticsRECA(projectName, verbose = F, format = "png", ...)
 }
 \arguments{
 \item{projectName}{name of stox project}

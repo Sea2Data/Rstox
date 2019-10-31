@@ -4,7 +4,7 @@
 \alias{plotSamplingOverview}
 \title{plotSamplingOverview}
 \usage{
-plotSamplingOverview(projectName, verbose = T, format = "png", ...)
+plotSamplingOverview(projectName, verbose = F, format = "png", ...)
 }
 \arguments{
 \item{projectName}{name of stox project}

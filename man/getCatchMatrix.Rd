@@ -4,7 +4,7 @@
 \alias{getCatchMatrix}
 \title{calculates catch matrix for given variable and unit}
 \usage{
-getCatchMatrix(pred, var = "Abundance", unit = "ones")
+getCatchMatrix(pred, var = "Abundance", unit = "ones", plusgr = NULL)
 }
 \value{
 list with three members (means, cv and caa_scaled)
