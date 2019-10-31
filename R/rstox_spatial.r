@@ -1819,7 +1819,7 @@ mergeStrata <- function(strataPolygons, strata="all", prefix="Merged"){
 #' @importFrom utils tail
 #' @rdname surveyPlanner
 #' 
-plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, transport_alpha=0.1, zoom=1.5, aspectratio=NULL, xlab="Longitude", ylab="Latitude", xlim=NULL, ylim=NULL, keep0effort=TRUE, strata="all", strataNameCol="darkblue", transectcol=NULL, quiet=FALSE,  timerange=NULL, headshape=18, ...){
+plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, transport_alpha=0.1, zoom=1.5, aspectratio=NULL, xlab="Longitude", ylab="Latitude", xlim=NULL, ylim=NULL, keep0effort=TRUE, strata="all", strataNameCol="darkblue", transectcol=NULL, bordercol="black", quiet=FALSE,  timerange=NULL, headshape=18, ...){
 	
 	addGeom <- function(p, data, geom="geom_segment", transectcol=NULL, ...){
 		args <- list(
@@ -1907,6 +1907,7 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 		p <- ggplot()
 	}
 	
+	
 	# Add the strata:
 	if(any(c("stratum", "strata") %in% tolower(plot))){
 		p <- p + geom_polygon(data=x$Input$lonlatAll, 
@@ -1917,10 +1918,8 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 				#fill = "stratum", 
 				group = "stratum"
 			), 
-			colour = "black", 
+			colour = NA, 
 			alpha = 0.3, 
-			#colour = "black", 
-			#alpha = 0.3, 
 			inherit.aes = FALSE
 		)
 		#p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", fill="stratum", group="stratum"), colour=NA, alpha=0.3, inherit.aes=FALSE)
@@ -1949,75 +1948,14 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 			
 			p <- addGeom(p, data=x$Transect, geom="geom_segment", transectcol=transectcol)
 			
-			
-		
-			#if(length(transectcol)){
-			#	p <- p + geom_segment(data=x$Transect, 
-			#		aes_string(
-			#			x = "lon_start", 
-			#			y = "lat_start", 
-			#			xend = "lon_stop", 
-			#			yend = "lat_stop", 
-			#			group = "stratum", 
-			#			alpha = "alpha", 
-			#			linetype = "retour" 
-			#		), 
-			#		colour = transectcol, 
-			#		show.legend=TRUE
-			#	)
-			#}
-			#else{
-			#	p <- p + geom_segment(data=x$Transect, 
-			#		aes_string(
-			#			x = "lon_start", 
-			#			y = "lat_start", 
-			#			xend = "lon_stop", 
-			#			yend = "lat_stop", 
-			#			group = "stratum", 
-			#			colour = "stratum", 
-			#			alpha = "alpha", 
-			#			linetype = "retour" 
-			#		), 
-			#		show.legend=TRUE
-			#	)
-			#}
-			
-			
-			
 			p <- p + scale_alpha(range = c(transport_alpha, 1), guide=FALSE) + 
 				scale_colour_discrete(guide=FALSE) + 
 				if(hasRetour) scale_linetype(name="retour") else scale_linetype(guide=FALSE)
 			
 			
-			
-			#if(length(timerange) == 2){
-			#	p <- p + geom_point(data=utils::tail(x$Transect, 1), 
-			#		aes_string(
-			#			x = "lon_start", 
-			#			y = "lat_start", 
-			#			group = "stratum", 
-			#			colour = if(length(transectcol) == 0) NULL else "stratum", 
-			#			alpha = "alpha"
-			#		), 
-			#		colour = if(length(transectcol)) transectcol, 
-			#		shape = 18, 
-			#		size = 3
-			#	)
-			#}
-			
-			
-			
 			if(length(timerange) == 2){
 				p <- addGeom(p, data=utils::tail(x$Transect, 1), geom="geom_point", transectcol=transectcol, shape=18, size=3, alpha=1)
 			}
-			
-			#if(length(headshape && headshape > 0)){
-			#	atend <- which(diff(x$Transect$transect) == 1)
-			#	
-			#	p <- addGeom(p, data=x$Transect[atend, ], geom="geom_point", transectcol=transectcol, shape=18, size=3, alpha=1)
-			#	
-			#	
-			#}
 		}
 	}
 	
@@ -2026,7 +1964,7 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 	
 	# Add stratum names:
 	if(any(c("stratum", "strata") %in% tolower(plot))){
-		p <- addStratumBordersAndNames(p, x, strataNameCol=strataNameCol)
+		p <- addStratumBordersAndNames(p, x, strataNameCol=strataNameCol, bordercol=bordercol)
 	}
 	#annotate("text", x=x$Stratum$lon_centroid, y=x$Stratum$lat_centroid, label=x$Stratum$stratum, alpha=0.5, col=)
 	
@@ -2042,9 +1980,9 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 #' @import ggplot2
 #' @rdname surveyPlanner
 #' 
-addStratumBordersAndNames <- function(p, x, strataNameCol="darkblue"){
+addStratumBordersAndNames <- function(p, x, strataNameCol="darkblue", bordercol="black"){
 	stratum_centroid <- getCentroid(x$Input$lonlat)
-	p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", group="stratum"), fill=NA, colour="black", inherit.aes=FALSE)
+	p <- p + geom_polygon(data=x$Input$lonlatAll, aes_string(x="longitude", y="latitude", group="stratum"), fill=NA, colour=bordercol, inherit.aes=FALSE)
 	p <- p + geom_text(data=stratum_centroid, aes_string(group="stratum", x="lon_centroid", y="lat_centroid", label="stratum"), colour=strataNameCol)
 	p
 }

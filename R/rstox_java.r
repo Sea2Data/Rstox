@@ -71,8 +71,16 @@ getAvailableFunctions <- function(){
 #' 
 addProcesses <- function(project, processes){
 	# Function for adding one process. This should be replaced by something less akward, where .jcall should be used and the function name given as input to .jcall instead of the series of if and else:
-	addOneProcess <- function(i, project, modelFun, processNames, functionNames){
-		getProject(project, modelFun[i])$addProcess(processNames[i], functionNames[i])
+	#addOneProcess <- function(i, project, modelFun, processNames, functionNames){
+	addOneProcess <- function(i, project, processNames, functionNames){
+		if(!isStoxFunction(functionNames[i])){
+			warning("Function not found by StoX: ", functionNames[i])
+		}
+		else{
+			model <- getStoxFunctionCategory(functionNames[i])
+			getProject(project, model)$addProcess(processNames[i], functionNames[i])
+		}
+		
 		###
 		###if(modelFun[i]=="getBaseline"){
 		###	project$getBaseline()$addProcess(processNames[i], functionNames[i])
@@ -103,18 +111,18 @@ addProcesses <- function(project, processes){
 	functionNames[empty] <- processNames[empty]
 	
 	# Remove the processes with invalid functions:
-	availableFunctions <- getAvailableFunctions()
-	availableFunctionsFlat <- unlist(availableFunctions)
-	modelTypes <- rep(names(availableFunctions), sapply(availableFunctions, length))
-	valid <- functionNames %in% unlist(availableFunctions)
-	if(any(!valid)){
-		warning(paste0("The following functions were not recognized (use getAvailableFunctions() to get a list of available functions in Stox):\n"), paste(functionNames[!valid], sep="\n"))
-	}
-	functionNames <- functionNames[valid]
-	processNames <- processNames[valid]
+	#availableFunctions <- getAvailableFunctions()
+	#availableFunctionsFlat <- unlist(availableFunctions)
+	#modelTypes <- rep(names(availableFunctions), sapply(availableFunctions, length))
+	#valid <- functionNames %in% unlist(availableFunctions)
+	#if(any(!valid)){
+	#	warning(paste0("The following functions were not recognized (use getAvailableFunctions() to get a list of available functions in Stox):\n"), paste(functionNames[!valid], sep="\n"))
+	#}
+	#functionNames <- functionNames[valid]
+	#processNames <- processNames[valid]
 	
 	# Identify the model types of the processes:
-	modelFun <- modelTypes[match(functionNames, availableFunctionsFlat)]
+	#modelFun <- modelTypes[match(functionNames, availableFunctionsFlat)]
 	### # Match with the defined modelTypeJavaNames, and extract the corresponding modelTypeJavaFuns:
 	### modelTypeJavaNames <- getRstoxEnv()$Definitions$modelTypeJavaNames
 	### modelTypeJavaFuns <- getRstoxEnv()$Definitions$modelTypeJavaFuns
@@ -122,8 +130,21 @@ addProcesses <- function(project, processes){
 	
 	# Add the processes:
 	#lapply(seq_along(processNames), function(i) project$getBaseline()$addProcess(processNames[i], functionNames[i]))
-	lapply(seq_along(processNames), addOneProcess, project, modelFun, processNames, functionNames)
+	#lapply(seq_along(processNames), addOneProcess, project, modelFun, processNames, functionNames)
+	lapply(seq_along(processNames), addOneProcess, project, processNames, functionNames)
 	return(list(processNames=processNames, functionNames=functionNames))
+}
+# Check whether the function exists or has an alias:
+isStoxFunction <- function(functionName){
+	Rstox.init()
+	projectName <- .jnew("no/imr/stox/model/Project")
+	test <- projectName$getLibrary()$findMetaFunction(functionName)
+	length(test) > 0
+}
+getStoxFunctionCategory <- function(functionName){
+	Rstox.init()
+	projectName <- .jnew("no/imr/stox/model/Project")
+	projectName$getLibrary()$findMetaFunction(functionName)$getCategory()
 }
 
 
