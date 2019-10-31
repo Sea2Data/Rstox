@@ -129,7 +129,7 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 
 	## get ship code from ICES
 	# Comment: This seems to allow only one biotic file in the project, since the first cruise number is selected:
-	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_fishstation.txt$cruise)
+	cruiseNo <- unique(rstox.data$outputData$ReadBioticXML$ReadBioticXML_BioticData_mission.txt$cruise)
 	Year <- unique(hh$Year)
 
 	# Try using Cruise Series first, since it's faster
@@ -160,6 +160,10 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	# Remove specCode "-" in both HL and CA data (if any)
 	hl[hl$SpecCode=="-", "SpecCode"] <- -9
 	ca[ca$SpecCode=="-", "SpecCode"] <- -9
+
+if(exists("applyRawData")) {
+	hh <- applyRawData(hh, cruiseNo, Year)
+}
 
 	##---------------------------------------------------------------------------------
 	## hl and ca data cleaning
@@ -204,12 +208,14 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 	tmp <- aggregate(SpecVal ~ SpecCode + StNo, hl, FUN = function(x) length(unique(x)))
 	tmp <- tmp[tmp$SpecVal>1, ]
 
-	for( rownum in 1: nrow(tmp) ) {
-		tmpSpecs <- hl[(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum]),]$SpecVal
-		if(any(tmpSpecs == 1))
-			hl <- hl[!(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum] & hl$SpecVal!=1),]
-		else
-			hl[(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum]), c("SpecVal")] <- min(tmpSpecs)		
+	if( nrow(tmp) > 0 ) {
+		for( rownum in 1: nrow(tmp) ) {
+			tmpSpecs <- hl[(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum]),]$SpecVal
+			if(any(tmpSpecs == 1))
+				hl <- hl[!(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum] & hl$SpecVal!=1),]
+			else
+				hl[(hl$StNo==tmp$StNo[rownum] & hl$SpecCode==tmp$SpecCode[rownum]), c("SpecVal")] <- min(tmpSpecs)
+		}
 	}
 
 	## SpecVal Conditionals
@@ -342,6 +348,9 @@ prepareDATRAS <- function(projectName, fileName=NULL)
 			hl <- rbind(hl,tmp)
 		}
 	}
+
+	# Use plus group for herring and mackerel individuals with age ring above 15
+	ca[ which((ca$SpecCode==127023 | ca$SpecCode==126417) & ca$AgeRings >= 15), c("PlusGr", "AgeRings")] <- list('+', 15)
 
 	# Save output
 	hl <- hl[order(hl$StNo),]

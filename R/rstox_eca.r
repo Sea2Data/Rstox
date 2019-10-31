@@ -119,6 +119,7 @@ baseline2eca <-
            temporal = NULL,
            gearfactor = NULL,
            spatial = NULL,
+           landingresolution = 92,
            ...) {
     # Function that retreives year, month, day, yearday:
     addYearday <-
@@ -960,15 +961,15 @@ get_default_result_dir <-
 
 #' @title Prepare data for RECA
 #' @description Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
-#' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}}
+#' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[Reca]{eca.estimate}}
 #'    The parameters minage and maxage define the range of ages that are considered possible in the model. Because R-ECA integrates weight and length measurements, and allows for modelling errors in age determination, predicted ages might fall outside the age range in samples. minage and maxage should be set with this in mind.
 #' @param projectName name of stox project
-#' @param minage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}.
-#' @param maxage see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param delta.age see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param minage see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}.
+#' @param maxage see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param delta.age see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
 #' @param maxlength maximum length of fish in the data set in cm. If null the value will be extracted from the data.
 #' @param hatchDaySlashMonth reference day for assumed spawning time of fish, formatted as day / month. Used to estimate fractional age of fish.
-#' @param temporalresolution temporal resolution for the aggregated landings in days (used to set midSeason the Landings object for \code{\link[eca]{eca.predict}})
+#' @param temporalresolution temporal resolution for the aggregated landings in days (used to set midSeason the Landings object for \code{\link[Reca]{eca.predict}})
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @param overwrite logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
 #' @param agedstationsonly logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model
@@ -1041,6 +1042,43 @@ prepareRECA <-
     eca <- baseline2eca(projectName)
     eca$temporalresolution <- temporalresolution
 
+    
+    #
+    # run data checks here.
+    # This is not actually the correct place, as it should ideally be run with reports, but checks need to be run before reca, and I don't want to put it in baseline report as the distinction between baseline report and r report will dissapear in next release.
+    # Consider moving this in StoX 3.0
+    #
+    tryCatch({
+      stationissuesfilename <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "stationissues.txt")
+      catchissuesfilename <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "catchissues.txt")
+      imputationissuesfilename  <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "imputationissues.txt") 
+      
+      makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic))  
+      
+      if (file.exists(stationissuesfilename)){
+        out$filename <- c(stationissuesfilename, out$filename)        
+      }  
+      if (file.exists(catchissuesfilename)){
+        out$filename <- c(catchissuesfilename, out$filename)        
+      }
+      if (file.exists(imputationissuesfilename)){
+        out$filename <- c(imputationissuesfilename, out$filename)      
+      }
+      
+    },
+    error = function(e) {
+    },
+    finally = {
+      
+    })  
+    
+    
     #max length in cm
     if (is.null(maxlength)) {
       maxlength <- max(eca$biotic$lengthcentimeter)
@@ -1075,20 +1113,20 @@ prepareRECA <-
 
 #' @title run RECA
 #' @description Loads data produced by \code{\link{prepareRECA}}, run tests on model configuration, runs parameterization and makes predictions using RECA. Saves results to project data 'runRECA'
-#' @details Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}.
-#'     For purposes of testing and running ECA detached from StoX, Data files accepted by code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}} can be exported using the option export_only. In this case the analysis is not run, but data files and parameter files are stored at the designated location.
+#' @details Most parameters to this function are appended to the argument list produced by prepareRECA and passed as argument GlobalParameters to \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}.
+#'     For purposes of testing and running ECA detached from StoX, Data files accepted by code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}} can be exported using the option export_only. In this case the analysis is not run, but data files and parameter files are stored at the designated location.
 #' @param projectName name of stox project
-#' @param burnin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param caa.burnin see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
-#' @param nSamples see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param thin see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param fitfile see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param predfile see specification for GlobalParameters in \code{\link[eca]{eca.predict}}
-#' @param lgamodel see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param CC see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param CCError see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param seed see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
-#' @param age.error see specification for GlobalParameters in \code{\link[eca]{eca.estimate}}
+#' @param burnin see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param caa.burnin see specification for GlobalParameters in \code{\link[Reca]{eca.predict}}
+#' @param nSamples see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param thin see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param fitfile see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param predfile see specification for GlobalParameters in \code{\link[Reca]{eca.predict}}
+#' @param lgamodel see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param CC see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param CCError see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param seed see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
+#' @param age.error see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
 #' @param export_only if not NULL this indicates that eca should not be run, but all parameters should be exported to the file export_only
 #'
 #' @export
@@ -1260,6 +1298,14 @@ plotRECAresults <-
     #different plot if stock splitting (CC) is used
     if (is.null(rundata$runRECA$GlobalParameters$CC) || !rundata$runRECA$GlobalParameters$CC){
       fn <-
+        formatPlot(projectName, "RECA_traceplot", function() {
+          plotMCMCagetraces(rundata$runRECA$pred,
+                            ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+      
+      fn <-
         formatPlot(projectName, "RECA_results", function() {
           plot_RECA_results_panel(rundata$runRECA$pred,
                                   prep$prepareRECA$StoxExport$biotic,
@@ -1267,6 +1313,7 @@ plotRECAresults <-
         }, verbose = verbose, format = format, height = height, width = width, res =
           res, ...)
       out$filename <- c(fn, out$filename)
+      
     }
     else if(rundata$runRECA$GlobalParameters$CC){
       
@@ -1283,6 +1330,16 @@ plotRECAresults <-
           res, ...)
       out$filename <- c(fn, out$filename)
       
+      
+      fn <-
+        formatPlot(projectName, "RECA_traceplot_coastal", function() {
+          plotMCMCagetraces(ccpred$coastal,
+                            ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+      
+      
       fn <-
         formatPlot(projectName, "RECA_results_atlantic", function() {
           plot_RECA_results_panel(ccpred$atlantic,
@@ -1292,6 +1349,15 @@ plotRECAresults <-
         }, verbose = verbose, format = format, height = height, width = width, res =
           res, ...)
       out$filename <- c(fn, out$filename)
+      
+      fn <-
+        formatPlot(projectName, "RECA_traceplot_atlantic", function() {
+          plotMCMCagetraces(ccpred$antlantic,
+                            ...)
+        }, verbose = verbose, format = format, height = height, width = width, res =
+          res, ...)
+      out$filename <- c(fn, out$filename)
+      
     }
     
     return(out)
@@ -1308,7 +1374,7 @@ plotRECAresults <-
 #' @export
 diagnosticsRECA <-
   function(projectName,
-           verbose = T,
+           verbose = F,
            format = "png",
            ...) {
     out <- list()
@@ -1392,7 +1458,7 @@ diagnosticsRECA <-
 #' @export
 plotSamplingOverview <-
   function(projectName,
-           verbose = T,
+           verbose = F,
            format = "png",
            ...) {
     out <- list()
@@ -1548,11 +1614,11 @@ plotRECA <- function(projectName, ...) {
 
 #' @title Writes RECA configuration
 #' @description Writes details about the model configuration to a text file or open connection
-#' @details Configuration are saved reflecting the parameters as passed to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}, even if it is possible to have for instance the GlobalParameters differ between the two for a valid execution.
-#' @param GlobalParameters defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
-#' @param Landings defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
-#' @param WeightLength defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
-#' @param AgeLength defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}
+#' @details Configuration are saved reflecting the parameters as passed to \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}, even if it is possible to have for instance the GlobalParameters differ between the two for a valid execution.
+#' @param GlobalParameters defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}
+#' @param Landings defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}
+#' @param WeightLength defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}
+#' @param AgeLength defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}
 #' @param fileobj filename or open connection
 #' @param main header to write before configuration
 #' @keywords internal
@@ -1626,7 +1692,8 @@ writeRecaConfiguration <-
 #' @keywords internal
 getCatchMatrix <- function(pred,
                            var = "Abundance",
-                           unit = "ones"){
+                           unit = "ones",
+                           plusgr=NULL){
   if (var == "Abundance" | var == "Count") {
     plottingUnit = getPlottingUnit(
       unit = unit,
@@ -1650,17 +1717,26 @@ getCatchMatrix <- function(pred,
     stop("Not implemented")
   }
   
+  ages <- as.character(pred$AgeCategories)
+  
+  if (!is.null(plusgr)){
+    caa[plusgr,] <- colSums(caa[plusgr:nrow(caa),])
+    caa <- caa[1:plusgr,]
+    ages <- ages[1:plusgr]
+    ages[plusgr] <- paste(ages[plusgr], "+", sep="")
+  }
+  
   caa_scaled <- as.data.frame(caa / plottingUnit$scale)
   means <-
-    as.data.frame(list(age = pred$AgeCategories, mean = rowMeans(caa_scaled)))
+    as.data.frame(list(age = ages, mean = rowMeans(caa_scaled)))
   cv <-
     as.data.frame(list(
-      age = pred$AgeCategories,
+      age = ages,
       sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
     ))
   cv$cv <- cv$sd / means$mean
   colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
-  caa_scaled$age <- pred$AgeCategories
+  caa_scaled$age <- ages
   caa_scaled <-
     caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
   
@@ -1675,16 +1751,17 @@ getCatchMatrix <- function(pred,
 }
 
 #' @title Save catch at age matrix
-#' @description Write catch at age predicted by \code{\link[eca]{eca.predict}} as csv file.
+#' @description Write catch at age predicted by \code{\link[Reca]{eca.predict}} as csv file.
 #' @details Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
 #'    Each row correspond to an age group, and columns to either means or an iteration of the Monte Carlo simulation.
 #'    Units are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
-#' @param pred as returned by \code{\link[eca]{eca.predict}}
+#' @param pred as returned by \code{\link[Reca]{eca.predict}}
 #' @param filename name of file to save to.
 #' @param var Variable to extract. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @param savemeans If True, only means and spread statistics for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.
+#' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @keywords internal
 saveCatchMatrix <-
   function(pred,
@@ -1692,7 +1769,8 @@ saveCatchMatrix <-
            var = "Abundance",
            unit = "ones",
            main = "",
-           savemeans = F) {
+           savemeans = F,
+           plusgr=NULL) {
     comments <- c()
     if (savemeans) {
       title <- "Mean catch at age estimates"
@@ -1720,7 +1798,7 @@ saveCatchMatrix <-
     
     comments <- c(main, comments)
     
-    tab <- getCatchMatrix(pred, var, unit)
+    tab <- getCatchMatrix(pred, var, unit, plusgr = plusgr)
     
     f <- file(filename, open = "w")
     write(paste("#", comments), f)
@@ -1747,22 +1825,27 @@ saveCatchMatrix <-
   }
 
 #' @title Save catch at age variance-covariance matrix for age groups
-#' @description Write catch at age covariance predicted by \code{\link[eca]{eca.predict}} as csv file.
+#' @description Write catch at age covariance predicted by \code{\link[Reca]{eca.predict}} as csv file.
 #' @details Covariance matrix is written as comma-separated file with quoted strings as row/column names.
 #'    Each row and column correspond to an age group.
 #'    Units for catch at age are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
-#' @param pred as returned by \code{\link[eca]{eca.predict}}
+#' @param pred as returned by \code{\link[Reca]{eca.predict}}
 #' @param filename name of file to save to.
 #' @param var Variable to extract for covariance calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @param standardize If True, pearson correlations are calculated, rather than covariances.
+#' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
+#' @keywords internal
 saveCatchCovarianceMatrix <- function(pred,
                                       filename,
                                       var = "Abundance",
                                       unit = "ones",
                                       main = "",
-                                      standardize=F) {
+                                      standardize=F,
+                                      plusgr=NULL) {
+  
+  
   comments <- c()
   
   if (standardize){
@@ -1772,15 +1855,8 @@ saveCatchCovarianceMatrix <- function(pred,
     title <- "variance-Covariance matrix for age groups based on catch at age as"    
   }
 
-
+  
   if (var == "Abundance" | var == "Count") {
-    plottingUnit = getPlottingUnit(
-      unit = unit,
-      var = var,
-      baseunit = "ones",
-      def.out = F
-    )
-    caa <- round(apply(pred$TotalCount, c(2, 3), sum))
     
     if (unit == "ones") {
       comments <- c(paste(title, "as", var))
@@ -1791,13 +1867,6 @@ saveCatchCovarianceMatrix <- function(pred,
     
   }
   else if (var == "Weight") {
-    caa <- apply(pred$TotalCount, c(2, 3), sum) * pred$MeanWeight
-    plottingUnit = getPlottingUnit(
-      unit = unit,
-      var = var,
-      baseunit = "kilograms",
-      def.out = F
-    )
     comments <- c(paste(title, "as", var, "in", unit))
   }
   else{
@@ -1806,7 +1875,9 @@ saveCatchCovarianceMatrix <- function(pred,
   
   comments <- c(main, comments)
   
-  caa_scaled <- as.data.frame(caa / plottingUnit$scale)  
+  tab <- getCatchMatrix(pred, var, unit, plusgr=plusgr)
+
+  caa_scaled <- tab$caa_scaled
   if (!standardize){
     covmat <- cov(t(caa_scaled))   
   }
@@ -1814,8 +1885,8 @@ saveCatchCovarianceMatrix <- function(pred,
     covmat <- cor(t(caa_scaled))   
   }
   
-  rownames(covmat) <- pred$AgeCategories
-  colnames(covmat) <- pred$AgeCategories
+  rownames(covmat) <- tab$caa_scaled$age
+  colnames(covmat) <- tab$caa_scaled$age
   
   f <- file(filename, open = "w")
   write(paste("#", comments), f)
@@ -1830,30 +1901,47 @@ saveCatchCovarianceMatrix <- function(pred,
 }
 
 #' Make decomposed catch matrix
-#' Contain workaround variables, until reporting setup can be configured in stox.
 #' @description Compiles catch matrix decomposed on given variables
 #' @details 
+#'    Contain options for workaround variables, until reporting setup can be configured in stox.
+#'    
 #'    decomposition variables need not be the same as model covariates, but model covariates will be used for estimation.
 #'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
 #'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
 #'    
-#'    if the project landings differ from totallandings, the fraction in landings for each combination of decomposition variables will be reflect that ratio, and reported estimates will reflect that of project landings
-#'    if there are additional values or levels for the model covariates in the total landings than what exists in the project landings, NAs will be reported for means and sds.
-#' @param projectName
-#' @param filename
+#' @param projectName Name identifying StoX project
+#' @param filename filename to write decomposed catch matrix to. If NULL a filename in the projects R-report directory will be generated.
 #' @param decomposition variables to use for decomposition, must be available for all rows in landings
-#' @param totallandings workaround variable total landings for decomposition (may be a superset for project landings). If null, project landings are used
 #' @param addQuarterToDecomp workaround variable for adding quarter to decomp
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
-#' @noRd
-saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, totallandings, addQuarterToDecomp=F, var = "Abundance",
-                                      unit = "ones",
+#' @export
+saveDecomposedCatchMatrix <- function(projectName, filename=NULL, decomposition=c("omr\u00e5degrupperingbokm\u00e5l"), addQuarterToDecomp=T, var = "Abundance",
+                                      unit = "millions",
+                                      plusgr=NULL,
                                       main = ""){
   
-  stop("Fix setting fo quarter and adding to decomposition")
+  if (is.null(filename)){
+    resultdir <- getProjectPaths(projectName)$RReportDir
+    filename <- file.path(resultdir, "decomposedcatch.csv")
+  }
+  
+  
+  quartcolumnname <- "Quarter"
+  if (addQuarterToDecomp){
+    decomposition <- c(decomposition, quartcolumnname)
+  }
+  getQuarter <- function(date){
+    month <- substr(date, 6,7)
+    month[month=="01" | month=="02" | month=="03"] <- "Q1"
+    month[month=="04" | month=="05" | month=="06"] <- "Q2"
+    month[month=="07" | month=="08" | month=="09"] <- "Q3"
+    month[month=="10" | month=="11" | month=="12"] <- "Q4"
+    return(month)
+  }
   
   # load eca configuration and parameterization
   prepdata <- loadProjectData(projectName, var = "prepareRECA")
@@ -1865,8 +1953,8 @@ saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, tota
   prepareRECA <- prepdata$prepareRECA
   
   projectlandings <- prepareRECA$StoxExport$landing
-  if (is.null(totallandings)){
-    totallandings <- projectlandings
+  if (addQuarterToDecomp){
+    projectlandings[,quartcolumnname] <- getQuarter(projectlandings$sistefangstdato)
   }
   projecttempres <- prepareRECA$StoxExport$temporalresolution
   
@@ -1875,50 +1963,32 @@ saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, tota
   runRECA <- rundata$runRECA
   GlobalParameters <- runRECA$GlobalParameters
   
-  agglisttotal <- list()
   agglistproject <- list()
   for (n in decomposition){
-    agglisttotal[[n]]<-totallandings[[n]]
     agglistproject[[n]]<-projectlandings[[n]]
   }
-  aggtotal <- aggregate(weight=totallandings$rundvekt, by=agglisttotal, FUN=sum)
-  aggproject <- aggregate(weight=projectlandings$rundvekt, by=agglistproject, FUN=sum)
   
-  # check that total landings have values filled for all decomposition variables
-  if (any(is.na(totallandings[,decomposition]))){
-    stop("NAs for decomposition variables")
-  }
+  decomps <- split.data.frame(projectlandings, f=agglistproject, drop=T)
   
-  # check that project landings is subset of total landings
-  if (nrow(aggtotal)<nrow(aggproject)){
-    stop("project landings must be a subset of total landings")
-  }
-  comb <- merge(aggtotal, aggproject, by=decomposition, all.x=T, suffixes=c(".tot", ".proj"))
-  if (any(comb$weight.tot<comb$weight.proj)){
-    stop("project landings must be a subset of total landings")
-  }
-  
-  # iterate over all combinations of decomposition variables in total landings
-  for (i in 1:nrow(aggtotal)){
-    ## extract corresponding data in the project landings
-    reducedlandings <- merge(projectlandings,aggtotal[1,decomposition])
+  output <- NULL
+  for (d in decomps){
     
-    if (nrow(reducedlandings)){
-      stop("handle when projectlandings subset of total landings")
+    ## extract catchmatrix for decomposition
+    decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
+    pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+    catchmatrix <- getCatchMatrix(pred, var = var, unit = unit, plusgr=plusgr)
+
+    decompmatrix <- merge(catchmatrix$means, catchmatrix$cv)
+    decompmatrix[,decomposition]<-d[1,decomposition]
+    
+    if (is.null(output)){
+      output <- decompmatrix
     }
-    ## get total and fraction
-    
-    ## handle any additional model covariate values
-    warning("Not handling additional covariate value")
-    
-    
-  decompLandings <- getLandings(reducedlandings, AgeLength, WeightLength, projecttempres)
-  pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
-  ## extract catchmatrix for decomposition
-  catchmatrix <- getCatchMatrix(pred, var = "Abundance", unit = "ones")
-  print(catchmatrix)
-  ## add to output dataframe
+    else{
+      output <- rbind(output, decompmatrix)
+    }
   }
+
   # add comments
   comments <- c()
   title <- "Mean catch at age estimates"
@@ -1939,10 +2009,18 @@ saveDecomposedCatchMatrix <- function(projectName, filename, decomposition, tota
     stop("Not implemented")
   }
   
-  comments <- c(main, comments)
+  comments <- c(main, comments, "")
   
-  # save the lot
-  stop("Function under development")
+  f <- file(filename, open = "w")
+  write(paste("#", comments), f)
+  write.table(
+    output,
+    file = f,
+    sep = "\t",
+    dec = ".",
+    row.names = F
+  )
+  close(f)
 }
 
 #' @title Report RECA.
@@ -2048,39 +2126,6 @@ reportRECA <-
     finally = {
       
     })
-
-    tryCatch({
-      pd <- loadProjectData(projectName, var = "prepareRECA")
-      stationissuesfilename <-
-        file.path(getProjectPaths(projectName)$RReportDir,
-                  "stationissues.txt")
-      catchissuesfilename <-
-        file.path(getProjectPaths(projectName)$RReportDir,
-                  "catchissues.txt")
-      imputationissuesfilename  <-
-        file.path(getProjectPaths(projectName)$RReportDir,
-                  "imputationissues.txt") 
-
-      makeDataReportReca(pd$prepareRECA$StoxExport, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T)  
-    
-      if (file.exists(stationissuesfilename)){
-        out$filename <- c(stationissuesfilename, out$filename)        
-      }  
-      if (file.exists(catchissuesfilename)){
-        out$filename <- c(catchissuesfilename, out$filename)        
-      }
-      if (file.exists(imputationissuesfilename)){
-        out$filename <- c(imputationissuesfilename, out$filename)      
-      }
-
-    },
-    error = function(e) {
-    },
-    finally = {
-      
-    })  
-    
-    
 
     tryCatch({
       pd <- loadProjectData(projectName, var = "prepareRECA")

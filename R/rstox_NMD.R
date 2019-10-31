@@ -1512,22 +1512,28 @@ extractCruiseAndShipame <- function(x){
 	
 	# Get NMD_data_source as the everything before underscore in the file basenames:
 	NMD_data_source <- sapply(strsplit(fileNamesSansExt, "[_]"), "[[", 1)
+	extract <- function (sp) {
+		# Get cruise and ship name
+		sp <- unlist(strsplit(sp, "_"))
+		cruiseNo <- tail(head(sp, 3), 1)
+		shipName <- tail(head(sp, 4), 1)
+
+		# For non-standard cruise number
+		if (nchar(cruiseNo) != 7) {
+			cruiseNo <- paste0(tail(head(sp, 6), 4), collapse = "_")
+			shipName <- tail(head(sp, 7), 1)
+		}
+
+		# Interpret "++" as ". ", and any other "+" as " " ():
+		shipName <- gsub("++", ".+", shipName, fixed=TRUE)
 	
-	# Get cruise number:
-	cruiseNumberString <- "cruiseNumber_"
-	atCruiseNumber <- regexpr(cruiseNumberString, fileNamesSansExt) + nchar(cruiseNumberString)
-	# Extract the position of the last underscore:
-	atUnderscore <- gregexpr("[_]", fileNamesSansExt)
-	atUnderscore <- sapply(atUnderscore, utils::tail, 1)
-	
-	# Get cruise code:
-	Cruise <- substr(fileNamesSansExt, atCruiseNumber, atUnderscore - 1)
-	# Get ship name and interpret "++" as ". ", and any other "+" as " " ():
-	ShipName <- substring(fileNamesSansExt, atUnderscore + 1)
-	ShipName <- gsub("++", ".+", ShipName, fixed=TRUE)
-	
+		return(list(cruiseNo, shipName))
+	}
+
+	extracted <- lapply(fileNamesSansExt, extract)
+
 	# Return the cruise and ship name:
-	out <- data.frame(Cruise=Cruise, ShipName=ShipName, NMD_data_sourceFromFileName=NMD_data_source, x, stringsAsFactors=FALSE)
+	out <- data.frame(Cruise=sapply(extracted, "[[", 1), ShipName=sapply(extracted, "[[", 2), NMD_data_sourceFromFileName=NMD_data_source, x, stringsAsFactors=FALSE)
 	out	
 }
 # Function for extracting file names from the project.xml file, given the 

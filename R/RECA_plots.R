@@ -31,10 +31,14 @@ formatPlot <-
     
     tryCatch({
       if (verbose) {
-        write(paste("Writing plot to:", filename), stderr())
+        write(paste("Plotting ", plotname), stderr())
       }
-      draw()},
+      draw()
+      if (verbose) {
+        write(paste("Plot written to:", filename), stderr())
+      }},
       finally={
+        
         if (length(format)) {
           dev.off()
         }
@@ -830,7 +834,6 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
   catchsample <- biotic[!duplicated(biotic[,c("cruise", "serialnumber", "catchpartnumber", "catchcategory")]),]
   
-  
   tt <- as.character(catchsample$sampletype)
   tt[is.na(tt)]<-blankcode
   tt <- table(tt)
@@ -909,32 +912,32 @@ plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch s
   catches[is.na(catches$samplequality), "samplequality"] <- rep(blankcode, sum(is.na(catches$samplequality)))
   catches[is.na(catches$group), "group"] <- rep(blankcode, sum(is.na(catches$group)))
   
+  #catchsampleid not imported, generating one based on common restricitons
+  catches$catchsampleid <- paste(catches$serialnumber, catches$catchcategory, catches$catchpartnumber)
+  
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
-  counts = aggregate(list(count=catches$serialnumber), by=list(cruise=catches$cruise, quality=catches$samplequality, group=catches$group), FUN=length)
+  counts = aggregate(list(count=catches$catchsampleid), by=list(cruise=catches$cruise, quality=catches$samplequality, group=catches$group), FUN=length)
   counts$label <- paste(unlist(lapply(counts$cruise, FUN=function(x){unlist(strsplit(x, split="-", fixed=T))[1]})), counts$quality, counts$group, sep="/")
   counts$catchrep <- rep(NA, nrow(counts))
   counts$color <- rep(NA, nrow(counts))
   
+  # all Q8 is landed
   counts[counts$quality==8, "catchrep"] <- landname
   counts[counts$quality==8, "color"] <- landcol
   
-  #should ideally be missiontype
-  rfh <- paste("2", year, sep="-")
+  #Q7 is unsorted
+  counts[counts$quality==7, "catchrep"] <- allname
+  counts[counts$quality==7, "color"] <- allcol
   
-  counts[counts$cruise==rfh & counts$quality==7, "catchrep"] <- rep(allname, sum(counts$cruise==rfh & counts$quality==7))
-  counts[counts$cruise==rfh & counts$quality==7, "color"] <- rep(allcol, sum(counts$cruise==rfh & counts$quality==7))
+  # some Q7 is partiioned into landed and discarded
+  counts[counts$group %in% c(26,27,28), "catchrep"] <- landname
+  counts[counts$group %in% c(26,27,28), "color"] <- landcol
   
-  counts[counts$cruise!=rfh & counts$quality==7 & counts$group %in% c(26,27,28), "catchrep"] <- landname
-  counts[counts$cruise!=rfh & counts$quality==7 & counts$group %in% c(26,27,28), "color"] <- landcol
+  counts[counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "catchrep"] <- discname
+  counts[counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "color"] <- disccol
   
-  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "catchrep"] <- discname
-  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & counts$group!=blankcode & counts$group %in% c(23,24,25), "color"] <- disccol
-  
-  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & (counts$group==blankcode | !(counts$group %in% c(23,24,25,26,27,28))), "catchrep"] <- allname
-  counts[counts$cruise!=rfh & counts$quality!=blankcode & counts$quality==7 & (counts$group==blankcode | !(counts$group %in% c(23,24,25,26,27,28))), "color"] <- allcol
-  
-  counts[is.na(counts$color), "catchrep"] <- rep(blankcode, sum(is.na(counts$color)))
-  counts[is.na(counts$color), "color"] <- rep(unkowncol, sum(is.na(counts$color)))
+  counts[is.na(counts$color), "catchrep"] <- blankcode
+  counts[is.na(counts$color), "color"] <- unkowncol
   
   if (barplot){
     counts <- counts[order(counts$count, decreasing = T),]
@@ -964,4 +967,75 @@ plotSampleCompositionRECA <- function(biotic, ...){
   par(mar=c(5.1,12,4.1,2.1))
   plot_sample_types(biotic, xlab="# catch samples", blankcode = "Uknown")
   par(old.par)
+}
+
+#' Plot of variation in estimated catch at age for each age group divided in nclust different plots (default 4)
+#' Ages are grouped according to mean age, so that ages of similar abundance are plotted together
+#' @param pred RECA prediction object as returned by Reca::eca.predict
+#' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
+#' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
+#' @param nclust the number of plots to distribute the age groups on
+#' @param iter.max maximal number of iterations for k-means clustering deciding which ages are ploted in same plot.
+#' @param nstarts the number of random sets chosen for the k-means clustering
+#' @param agecolors named vector matching ages to colors, if null a default color scheme is used
+#' @param lowerquant lower quantile in each age group to plot as points
+#' @param upperquant upper quantile in each age group to plot as points
+#' @param catlimit the upper limit for number of ages in a plot using categorical coloring. Plots with more than this number of ages will use a gradient coloring scheme
+#' @param title main title for plot
+#' @param themef ggplot2 theme function for plots
+#' @import ggplot2
+#' @import grid
+#' @import data.table
+#' @keywords internal
+plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, iter.max=20, nstart=10, agecolors=NULL, lowerquant=.05, upperquant=.95, catlimit=8, title="", themef=theme_classic){
+  
+  if (var=="Abundance" | var=="Count"){
+    plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="ones", def.out = F)
+    caa <- apply(pred$TotalCount, c(2,3), sum)
+  }
+  else if (var=="Weight"){
+    caa <- apply(pred$TotalCount, c(2,3), sum)*pred$MeanWeight
+    plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="kilograms", def.out = F)
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  if (is.null(agecolors)){
+    agecolors <- c(RColorBrewer::brewer.pal(8, "Accent"), RColorBrewer::brewer.pal(9, "Set1"), RColorBrewer::brewer.pal(8, "Dark2"), RColorBrewer::brewer.pal(8, "Set3"))
+    agecolors <- agecolors[pred$AgeCategories]
+    agecolors <- setNames(agecolors, as.character(pred$AgeCategories))
+  }
+  
+  caa_scaled <- caa/plottingUnit$scale
+  means <- apply(caa_scaled, FUN=mean, MARGIN=1)
+  lq<-apply(caa_scaled, MARGIN=1, FUN=function(x){quantile(x, lowerquant)})
+  names(lq) <- pred$AgeCategories
+  uq<-apply(caa_scaled, MARGIN=1, FUN=function(x){quantile(x, upperquant)})
+  names(uq) <- pred$AgeCategories
+  
+  
+  #clustering ages in plots. kemans on log(means) seems to work well, but sometimes failes due to 0 means, which is avoided by adding lowest non-zero mean
+  llo <- min(means[means>0])
+  clust <- kmeans(log(means+llo), nclust, iter.max = iter.max, nstart = nstart)
+  m <- melt(caa_scaled, c("age", "iteration"), value.name=unit)
+  m <- merge(m, data.frame(age=names(lq), lq=lq))
+  m <- merge(m, data.frame(age=names(uq), uq=uq))
+  
+  plots <- list()
+  plotnr <- 1
+  for (i in seq(1,nclust)[order(clust$centers, decreasing = T)]){
+    mcp <- m[m$age %in% pred$AgeCategories[clust$cluster==i],]
+    maxy <- max(mcp[unit]) + max(mcp[unit])*.1
+    if (sum(clust$cluster==i)<=catlimit){
+      mcp$age <- as.character(mcp$age)
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[unit] > mcp$uq | mcp[unit] < mcp$lq,], aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)+themef()
+    }
+    else{
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[unit] > mcp$uq | mcp[unit] < mcp$lq,], aes(color=age)) + ylim(0,maxy)+themef()
+    }
+    
+    plotnr <- plotnr+1
+  }
+  gridExtra::grid.arrange(grobs=plots, top=grid::textGrob(title,gp=grid::gpar(fontsize=20,font=1)), ncol=2)
 }
