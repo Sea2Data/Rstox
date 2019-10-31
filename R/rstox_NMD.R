@@ -1526,14 +1526,21 @@ extractCruiseAndShipame <- function(x){
 
 		# Interpret "++" as ". ", and any other "+" as " " ():
 		shipName <- gsub("++", ".+", shipName, fixed=TRUE)
+
+		# Get (and check) snapshot
+		date <- tail(sp, 1)
+		d <- try(as.Date(date))
+		if (class(d) == "try-error" || is.na(d)) {
+			date <- NA
+		}
 	
-		return(list(cruiseNo, shipName))
+		return(list(cruiseNo, shipName, date))
 	}
 
 	extracted <- lapply(fileNamesSansExt, extract)
 
 	# Return the cruise and ship name:
-	out <- data.frame(Cruise=sapply(extracted, "[[", 1), ShipName=sapply(extracted, "[[", 2), NMD_data_sourceFromFileName=NMD_data_source, x, stringsAsFactors=FALSE)
+	out <- data.frame(Cruise=sapply(extracted, "[[", 1), ShipName=sapply(extracted, "[[", 2), snapshot=sapply(extracted, "[[", 3), NMD_data_sourceFromFileName=NMD_data_source, x, stringsAsFactors=FALSE)
 	out	
 }
 # Function for extracting file names from the project.xml file, given the 
