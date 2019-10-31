@@ -1477,7 +1477,6 @@ downloadProjectXmlToTemp <- function(stsInfo, dir=NULL){
 		seriesName <- getSTSprojectName(stsInfo, year)
 		# Save the project.xml file with that name and xml as file extension:
 		projectXmlFile <- file.path(dir, seriesName, "project.xml")
-		print(projectXmlFile)
 		
 		# Get the URL of the project.xml file of the requested year:
 		projectXmlURL <- stsInfo$projectXmlURL[stsInfo$sampleTime == year]
@@ -1570,7 +1569,7 @@ extractDataFileNames <- function(projectXML){
 		}
 		out
 	}
-
+	
 	# Parse the project.xml via the URL:
 	projectXMLParsed <- XML::xmlParse(projectXML)
 	nsDefs <- XML::xmlNamespaceDefinitions(projectXMLParsed)
@@ -1652,9 +1651,10 @@ getCruiseURLs <- function(cruiseInfo, ver=getRstoxDef("ver"), server="http://tom
 	
 	# If the snapshot is given (non NA) in the cruiseInfo, use this as the shapshot parameter in searchNMDCruise() (change added on 2019-10-31 as getNMDdata() for a survey time series always used the latest snapshot even when it was specified differently in the downloaded project.xml):
 	# First make sure the 'snapshot' has length equal to the number of rows in 'cruiseInfo':
-	snapshot <- rep(snapshot, length.out = nrow(cruiseInfo))
+	# Use a list to be able to mix DateTime objects with strings contained in the cruiseInfo$snapshot:
+	snapshot <- as.list(rep(snapshot, length.out = nrow(cruiseInfo)))
 	snapshotGivenInCruiseInfo <- !is.na(cruiseInfo$snapshot)
-	snapshot[snapshotGivenInCruiseInfo] <- cruiseInfo$snapshot[snapshotGivenInCruiseInfo]
+	snapshot[snapshotGivenInCruiseInfo] <- as.list(cruiseInfo$snapshot[snapshotGivenInCruiseInfo])
 	
 	# search for the cruises:
 	URL <- searchNMDCruise(cruisenr=cruiseInfo$Cruise, shipname=cruiseInfo$ShipName, datasource=cruiseInfo$NMD_data_source, ver=ver, server=server, return.URL=return.URL, snapshot=snapshot)
@@ -2074,7 +2074,7 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, datasource="biotic", ver=ge
 			datasource = datasource[ind], 
 			server = server, 
 			ver = ver, 
-			snapshot = snapshot[ind], 
+			snapshot = snapshot[[ind]], 
 			return.URL = return.URL
 		),
 		info.msg = "Searching for files"
