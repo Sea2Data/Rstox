@@ -8,13 +8,13 @@ writeRecaConfiguration(GlobalParameters, Landings, WeightLength, AgeLength,
   fileobj, main = NULL)
 }
 \arguments{
-\item{GlobalParameters}{defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}}
+\item{GlobalParameters}{defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}}
 
-\item{Landings}{defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}}
+\item{Landings}{defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}}
 
-\item{WeightLength}{defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}}
+\item{WeightLength}{defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}}
 
-\item{AgeLength}{defined in \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}}
+\item{AgeLength}{defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}}
 
 \item{fileobj}{filename or open connection}
 
@@ -24,6 +24,6 @@ writeRecaConfiguration(GlobalParameters, Landings, WeightLength, AgeLength,
 Writes details about the model configuration to a text file or open connection
 }
 \details{
-Configuration are saved reflecting the parameters as passed to \code{\link[eca]{eca.estimate}} and \code{\link[eca]{eca.predict}}, even if it is possible to have for instance the GlobalParameters differ between the two for a valid execution.
+Configuration are saved reflecting the parameters as passed to \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}, even if it is possible to have for instance the GlobalParameters differ between the two for a valid execution.
 }
 \keyword{internal}
