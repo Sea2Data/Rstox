@@ -14,7 +14,7 @@
 #' @param verbose If true, summary and file locations will be printed to stdout
 #' @keywords internal
 makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputationfile, verbose=T, covariates=NULL){
-  print(covariates)
+  
   #
   # station issues
   #
