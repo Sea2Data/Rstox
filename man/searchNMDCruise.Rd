@@ -10,11 +10,19 @@ searchNMDCruise(cruisenr, shipname = NULL, datasource = "biotic",
   return.URL = FALSE, snapshot = Sys.time())
 }
 \arguments{
+\item{cruisenr}{A vector of cruise numbers (see the (time consuming) command cruisenr <- getNMDinfo("cruises")$cruise).}
+
+\item{shipname}{A vector of ship names (see the (time consuming) command shipname <- getNMDinfo("platform")$Ship_name).}
+
 \item{datasource}{The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datasource=NULL (default) returns all possible data.}
 
 \item{ver}{The version of the API. As of 2015-05 only version 1 is available. Version 2 will include the possibility to return a list of all cruises.}
 
-\item{cruisenrANDshipname}{A vector of two elements, the first being the cruise number and the second the ship name.}
+\item{server}{The URL to the server hoding the NMD data.}
+
+\item{return.URL}{Logical: If TRUE return the URL used to search for the cruise.}
+
+\item{snapshot}{The snapshot ID.}
 
 \item{API}{The path to the API.}
 }

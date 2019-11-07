@@ -23,7 +23,4 @@ Suggests:
     ncdf4,
     pgirmess,
     Reca,
-    plotrix,
-    RColorBrewer,
-    grid,
-    gridExtra
+    plotrix

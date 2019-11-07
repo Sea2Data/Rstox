@@ -1512,22 +1512,35 @@ extractCruiseAndShipame <- function(x){
 	
 	# Get NMD_data_source as the everything before underscore in the file basenames:
 	NMD_data_source <- sapply(strsplit(fileNamesSansExt, "[_]"), "[[", 1)
+	extract <- function (sp) {
+		# Get cruise and ship name
+		sp <- unlist(strsplit(sp, "_"))
+		cruiseNo <- tail(head(sp, 3), 1)
+		shipName <- tail(head(sp, 4), 1)
+
+		# For non-standard cruise number
+		if (nchar(cruiseNo) != 7) {
+			cruiseNo <- paste0(tail(head(sp, 6), 4), collapse = "_")
+			shipName <- tail(head(sp, 7), 1)
+		}
+
+		# Interpret "++" as ". ", and any other "+" as " " ():
+		shipName <- gsub("++", ".+", shipName, fixed=TRUE)
+
+		# Get (and check) snapshot
+		date <- tail(sp, 1)
+		d <- try(as.Date(date), silent=TRUE)
+		if (class(d) == "try-error" || is.na(d)) {
+			date <- NA
+		}
 	
-	# Get cruise number:
-	cruiseNumberString <- "cruiseNumber_"
-	atCruiseNumber <- regexpr(cruiseNumberString, fileNamesSansExt) + nchar(cruiseNumberString)
-	# Extract the position of the last underscore:
-	atUnderscore <- gregexpr("[_]", fileNamesSansExt)
-	atUnderscore <- sapply(atUnderscore, utils::tail, 1)
-	
-	# Get cruise code:
-	Cruise <- substr(fileNamesSansExt, atCruiseNumber, atUnderscore - 1)
-	# Get ship name and interpret "++" as ". ", and any other "+" as " " ():
-	ShipName <- substring(fileNamesSansExt, atUnderscore + 1)
-	ShipName <- gsub("++", ".+", ShipName, fixed=TRUE)
-	
+		return(list(cruiseNo, shipName, date))
+	}
+
+	extracted <- lapply(fileNamesSansExt, extract)
+
 	# Return the cruise and ship name:
-	out <- data.frame(Cruise=Cruise, ShipName=ShipName, NMD_data_sourceFromFileName=NMD_data_source, x, stringsAsFactors=FALSE)
+	out <- data.frame(Cruise=sapply(extracted, "[[", 1), ShipName=sapply(extracted, "[[", 2), snapshot=sapply(extracted, "[[", 3), NMD_data_sourceFromFileName=NMD_data_source, x, stringsAsFactors=FALSE)
 	out	
 }
 # Function for extracting file names from the project.xml file, given the 
@@ -1556,7 +1569,7 @@ extractDataFileNames <- function(projectXML){
 		}
 		out
 	}
-
+	
 	# Parse the project.xml via the URL:
 	projectXMLParsed <- XML::xmlParse(projectXML)
 	nsDefs <- XML::xmlNamespaceDefinitions(projectXMLParsed)
@@ -1635,6 +1648,15 @@ replaceFirstOfRepeatedChar <- function(x, pattern="+", replacement="."){
 getCruiseURLs <- function(cruiseInfo, ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi", checkURL=FALSE, return.URL=FALSE, snapshot=Sys.time()){
 	# Pick out the first element of 'x', since a list is always returned from getNMDinfo():
 	#message("Searching for cruises...\n")
+	
+	# If the snapshot is given (non NA) in the cruiseInfo, use this as the shapshot parameter in searchNMDCruise() (change added on 2019-10-31 as getNMDdata() for a survey time series always used the latest snapshot even when it was specified differently in the downloaded project.xml):
+	# First make sure the 'snapshot' has length equal to the number of rows in 'cruiseInfo':
+	# Use a list to be able to mix DateTime objects with strings contained in the cruiseInfo$snapshot:
+	snapshot <- as.list(rep(snapshot, length.out = nrow(cruiseInfo)))
+	snapshotGivenInCruiseInfo <- !is.na(cruiseInfo$snapshot)
+	snapshot[snapshotGivenInCruiseInfo] <- as.list(cruiseInfo$snapshot[snapshotGivenInCruiseInfo])
+	
+	# search for the cruises:
 	URL <- searchNMDCruise(cruisenr=cruiseInfo$Cruise, shipname=cruiseInfo$ShipName, datasource=cruiseInfo$NMD_data_source, ver=ver, server=server, return.URL=return.URL, snapshot=snapshot)
 	
 	# Report files not found:
@@ -2014,10 +2036,14 @@ as.numericDataFrame <- function(data){
 #'
 #' The NMD API enables searching for a cruise identifyer given the cruise number and ship name.
 #'
-#' @param cruisenrANDshipname	A vector of two elements, the first being the cruise number and the second the ship name.
-#' @param datasource				The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datasource=NULL (default) returns all possible data.
-#' @param ver					The version of the API. As of 2015-05 only version 1 is available. Version 2 will include the possibility to return a list of all cruises.
-#' @param API					The path to the API.
+#' @param cruisenr		A vector of cruise numbers (see the (time consuming) command cruisenr <- getNMDinfo("cruises")$cruise).
+#' @param shipname		A vector of ship names (see the (time consuming) command shipname <- getNMDinfo("platform")$Ship_name).
+#' @param datasource	The type of data requested. Currently implemented are "echosunder" and "biotic", while "landing" and "ctd" are in the pipeline. datasource=NULL (default) returns all possible data.
+#' @param ver			The version of the API. As of 2015-05 only version 1 is available. Version 2 will include the possibility to return a list of all cruises.
+#' @param server		The URL to the server hoding the NMD data.
+#' @param API			The path to the API.
+#' @param return.URL	Logical: If TRUE return the URL used to search for the cruise.
+#' @param snapshot		The snapshot ID.
 #'
 #' @export
 #' @importFrom tools file_ext
@@ -2048,7 +2074,7 @@ searchNMDCruise <- function(cruisenr, shipname=NULL, datasource="biotic", ver=ge
 			datasource = datasource[ind], 
 			server = server, 
 			ver = ver, 
-			snapshot = snapshot, 
+			snapshot = snapshot[[ind]], 
 			return.URL = return.URL
 		),
 		info.msg = "Searching for files"
