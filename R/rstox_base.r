@@ -416,7 +416,20 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 		projectPath <- projectPaths$projectPath
 		########## Open the project in Java memory: ##########
 		Rstox.init()
+		
 		project <- J("no.imr.stox.factory.FactoryUtil")$openProject(projectRoot, projectName)
+		
+		# Added check for R and Rstox version, issuing a message that the user should save the project if these should be updated in the project description:
+		savedRVersion <- project$getRVersion()
+		savedRstoxVersion <- project$getRStoxVersion()
+		
+		currentRVersion <- getRversion()
+		currentRstoxVersion <- packageVersion("Rstox")
+		
+		if(currentRVersion != savedRVersion || currentRstoxVersion != savedRstoxVersion) {
+			message("The opened project was saved with different R or Rstox versions. To update the R and Rstox version in the project description file (project.xml) use saveProject()")
+		}
+		
 		# This line was added on 2017-08-23 due to a bug discovered when estimating the area of polygons using the "accurate" method. When baseline is run, Java calls the function polyArea() when AreaMethod="accurate". However, whenever this failed, the simple method implemented in Java was used (which was a bug). The problem was that the path to the R-bin was not set in Rstox. To solve this, a file holding this path (or the command project$setRFolder(PATH_TO_R_BIN)) will be saved by StoX, and called every time a triggerscript is run. In Rstox we solve the problem by the below sequence:
 		RFolder <- project$getRFolder()
 		#__# RFolder <- .jcall(project, "S", "getRFolder")
@@ -621,6 +634,13 @@ modifyProject <- function(projectName, close=TRUE, parlist=list(), ...){
 saveProject <- function(projectName, soft=FALSE){
 	project <- getProject(projectName)
 	if(length(project)){
+		
+		# Change added on 2019-11-01 after it was discovered that the save() in the stox.jar sets rversion and rstoxversion to "":
+		# Set the R and Rstox version:
+		browser()
+		project$setRStoxVersion(as.character(packageVersion("Rstox")))
+		project$setRVersion(as.character(getRversion()))
+		
 		# Save the project:
 		project$save()
 		if(!soft){
