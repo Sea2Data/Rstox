@@ -140,9 +140,16 @@ check_covariates <- function(modelobject){
 checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   check_columns_present(agelength$DataMatrix, c("age", "part.year", "lengthCM", "samplingID", "partnumber", "partcount"))
   check_none_missing(agelength$DataMatrix, c("lengthCM", "samplingID", "partnumber"))
-  if (any(is.na(agelength$DataMatrix$partcount))){
-    stop("Missing values for partcount (derived from lengthsamplecount, lengthsampleweight and catchweight)")
+  
+  samplesPrCatch <- aggregate(list(partCount=agelength$DataMatrix$partnumber), by=list(samplingID=agelength$DataMatrix$samplingID), FUN=function(x){length(unique(x))})
+  samplesPrCatchLT1 <- samplesPrCatch[samplesPrCatch$partCount > 1,]
+  if (nrow(samplesPrCatchLT1) > 0){
+    needpartnumber <- agelength$DataMatrix[agelength$DataMatrix$samplingID %in% samplesPrCatchLT1[, "samplingID"],]
+    if (any(is.na(needpartnumber$partcount))){
+      stop("Missing values for partcount where several samples are taken from a catch")
+    }
   }
+  
   check_data_matrix(agelength)
   check_covariates(agelength)
   if (any(!is.na(agelength$DataMatrix$part.year) & agelength$DataMatrix$part.year<=0)){
@@ -165,9 +172,16 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
 checkWeightLength<-function(weightlength, landings){
   check_columns_present(weightlength$DataMatrix, c("weightKG", "lengthCM", "samplingID", "partnumber", "partcount"))
   check_none_missing(weightlength$DataMatrix, c("lengthCM", "samplingID", "partnumber", "weightKG"))
-  if (any(is.na(weightlength$DataMatrix$partcount))){
-    stop("Missing values for partcount (derived from lengthsamplecount, lengthsampleweight and catchweight)")
+  
+  samplesPrCatch <- aggregate(list(partCount=weightlength$DataMatrix$partnumber), by=list(samplingID=weightlength$DataMatrix$samplingID), FUN=function(x){length(unique(x))})
+  samplesPrCatchLT1 <- samplesPrCatch[samplesPrCatch$partCount > 1,]
+  if (nrow(samplesPrCatchLT1) > 0){
+    needpartnumber <- weightlength$DataMatrix[weightlength$DataMatrix$samplingID %in% samplesPrCatchLT1["samplingID"],]
+    if (any(is.na(needpartnumber$partcount))){
+      stop("Missing values for partcount where several samples are taken from a catch. Partcount is derived from lengthsamplecount, lengthsampleweight and catchweight")
+    }
   }
+  
   check_data_matrix(weightlength)
   check_covariates(weightlength)
 }
