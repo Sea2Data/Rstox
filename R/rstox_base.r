@@ -637,7 +637,6 @@ saveProject <- function(projectName, soft=FALSE){
 		
 		# Change added on 2019-11-01 after it was discovered that the save() in the stox.jar sets rversion and rstoxversion to "":
 		# Set the R and Rstox version:
-		browser()
 		project$setRStoxVersion(as.character(packageVersion("Rstox")))
 		project$setRVersion(as.character(getRversion()))
 		
