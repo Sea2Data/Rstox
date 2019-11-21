@@ -4,7 +4,7 @@
 #' @noRd
 getCatchIssues <- function(catches, biotic, common_columns_catch){
   
-  #get catches with several fractions sampled (delprøve)
+  #get catches with several fractions sampled (delprove)
   delp <- aggregate(list(partnCount=catches$catchpartnumber), by=list(taxa=catches$catchcategory, serialnumber=catches$serialnumber, year=catches$year, mission=catches$cruise), FUN=function(x){length(unique(x))})
   if (nrow(delp)>0){
     delp <- delp[delp$partnCount>1,]  
@@ -19,17 +19,17 @@ getCatchIssues <- function(catches, biotic, common_columns_catch){
   catchissues <- biotic[0,common_columns_catch]
   missingcatchweight <- catches[severalDelp & (is.na(catches$catchweight) | catches$catchweight==0),common_columns_catch]
   if (nrow(missingcatchweight)){
-    missingcatchweight$issue <- "missing or 0 catch weight, with several catch fractions (delprøve)"
+    missingcatchweight$issue <- "missing or 0 catch weight, with several catch fractions (delpr\u00F8ve)"
     catchissues <- rbind(catchissues, missingcatchweight)
   }
   missingsampleweight <- catches[severalDelp & (is.na(catches$lengthsampleweight) | catches$lengthsampleweight==0),common_columns_catch]
   if (nrow(missingsampleweight)){
-    missingsampleweight$issue <- "missing or 0 sample weight, with several catch fractions (delprøve)"  
+    missingsampleweight$issue <- "missing or 0 sample weight, with several catch fractions (delpr\u00F8ve)"  
     catchissues <- rbind(catchissues, missingsampleweight)
   }
   missingsamplecount <- catches[severalDelp & (is.na(catches$lengthsamplecount) | catches$lengthsamplecount==0),common_columns_catch]
   if (nrow(missingsamplecount)){
-    missingsamplecount$issue <- "missing or 0 sample count, with several catch fractions (delprøve)"  
+    missingsamplecount$issue <- "missing or 0 sample count, with several catch fractions (delpr\u00F8ve)"  
     catchsissues <- rbind(catchsissues, missingsamplecount)
   }
   

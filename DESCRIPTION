@@ -18,9 +18,9 @@ Imports:
     rgeos,
     rJava,
     sp,
-    XML
+    XML,
+    plotrix
 Suggests: 
     ncdf4,
     pgirmess,
-    Reca,
-    plotrix
+    Reca

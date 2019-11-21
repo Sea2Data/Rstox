@@ -2,7 +2,7 @@
 % Please edit documentation in R/RECA_data_checks.R
 \name{makeDataReportReca}
 \alias{makeDataReportReca}
-\title{Checks for data issues wrp to running RECA}
+\title{Data report for RECA}
 \usage{
 makeDataReportReca(biotic, stationissuesfile, catchissuefile,
   imputationfile, verbose = T, covariates = NULL)
@@ -22,8 +22,6 @@ makeDataReportReca(biotic, stationissuesfile, catchissuefile,
 Generates reports on data issues that might need to be addressed before running RECA
 }
 \details{
-Data report for RECA
-
 Checks data exported from stox for missing mandatory information, and issues that will invalidate common covariate-configurations
    issues with stations are written as a tab delimited fil to stationissuesfile
    issues with catch samples are written as a tab delimited fil to catchissuefile
