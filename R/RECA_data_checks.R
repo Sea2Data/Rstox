@@ -1,6 +1,41 @@
 #' Checks for data issues wrp to running RECA
 #' 
 
+#' @noRd
+getCatchIssues <- function(catches, biotic, common_columns_catch){
+  
+  #get catches with several fractions sampled (delprove)
+  delp <- aggregate(list(partnCount=catches$catchpartnumber), by=list(taxa=catches$catchcategory, serialnumber=catches$serialnumber, year=catches$year, mission=catches$cruise), FUN=function(x){length(unique(x))})
+  if (nrow(delp)>0){
+    delp <- delp[delp$partnCount>1,]  
+  }
+  
+  severalDelp <- rep(F, nrow(catches))
+  if (nrow(delp)>0){
+    severalDelp <- catches$cruise %in% delp$mission & catches$year %in% delp$year & catches$catchcategory %in% delp$taxa & catches$serialnumber %in% delp$serialnumber
+  }
+  
+  
+  catchissues <- biotic[0,common_columns_catch]
+  missingcatchweight <- catches[severalDelp & (is.na(catches$catchweight) | catches$catchweight==0),common_columns_catch]
+  if (nrow(missingcatchweight)){
+    missingcatchweight$issue <- "missing or 0 catch weight, with several catch fractions (delpr\u00F8ve)"
+    catchissues <- rbind(catchissues, missingcatchweight)
+  }
+  missingsampleweight <- catches[severalDelp & (is.na(catches$lengthsampleweight) | catches$lengthsampleweight==0),common_columns_catch]
+  if (nrow(missingsampleweight)){
+    missingsampleweight$issue <- "missing or 0 sample weight, with several catch fractions (delpr\u00F8ve)"  
+    catchissues <- rbind(catchissues, missingsampleweight)
+  }
+  missingsamplecount <- catches[severalDelp & (is.na(catches$lengthsamplecount) | catches$lengthsamplecount==0),common_columns_catch]
+  if (nrow(missingsamplecount)){
+    missingsamplecount$issue <- "missing or 0 sample count, with several catch fractions (delpr\u00F8ve)"  
+    catchsissues <- rbind(catchsissues, missingsamplecount)
+  }
+  
+  return(catchissues)
+}
+
 #' Data report for RECA
 #' @description Generates reports on data issues that might need to be addressed before running RECA
 #' @details Checks data exported from stox for missing mandatory information, and issues that will invalidate common covariate-configurations
@@ -101,22 +136,7 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
   catches <- biotic[!duplicated(biotic[c("cruise", "serialnumber", "catchcategory", "catchpartnumber")]),]
   common_columns_catch <- c( "cruise", "serialnumber", "catchcategory", "catchpartnumber", "catchweight", "lengthsampleweight", "lengthsamplecount")
   
-  catchissues <- biotic[0,common_columns_catch]
-  missingcatchweight <- catches[is.na(catches$catchweight) | catches$catchweight==0,common_columns_catch]
-  if (nrow(missingcatchweight)){
-    missingcatchweight$issue <- "missing or 0 catch weight"
-    catchissues <- rbind(catchissues, missingcatchweight)
-  }
-  missingsampleweight <- catches[is.na(catches$lengthsampleweight) | catches$lengthsampleweight==0,common_columns_catch]
-  if (nrow(missingsampleweight)){
-    missingsampleweight$issue <- "missing or 0 sample weight"  
-    catchissues <- rbind(catchissues, missingsampleweight)
-  }
-  missingsamplecount <- catches[is.na(catches$lengthsamplecount) | catches$lengthsamplecount==0,common_columns_catch]
-  if (nrow(missingsamplecount)){
-    missingsamplecount$issue <- "missing or 0 sample count"  
-    catchsissues <- rbind(catchsissues, missingsamplecount)
-  }
+  catchissues <- getCatchIssues(catches, biotic, common_columns_catch)
   
   if (nrow(catchissues)>0){
     f <- file(catchissuefile, open = "w")

@@ -6,6 +6,7 @@
 #' @param verbose logical, if TRUE info is written to stderr()
 #' @param ... parameters to be passed on to \code{\link{format}}
 #' @keywords internal
+#' @noRd
 formatPlot <-
   function(projectname,
            plotname,
@@ -58,6 +59,7 @@ formatPlot <-
 #' @param alpha value for the credibility intervals
 #' @return list with means, upper_ci and lower_ci all numeric vectors corresponding to age
 #' @keywords internal
+#' @noRd
 get_eq_tail_ci <- function(age, values, alpha){
   postm <- c()
   upper <- c()
@@ -76,6 +78,7 @@ get_eq_tail_ci <- function(age, values, alpha){
 
 #' Plots means with error bars
 #' @keywords internal
+#' @noRd
 plot_ci <- function(x, means, upper_ci, lower_ci, ...){
   args <- list(...)
   
@@ -101,6 +104,7 @@ plot_ci <- function(x, means, upper_ci, lower_ci, ...){
 #' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @keywords internal
+#' @noRd
 plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior catch", unit), ...){
   
   if (var=="Abundance" | var=="Count"){
@@ -140,6 +144,7 @@ plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior cat
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
 #' @param alpha
 #' @keywords internal
+#' @noRd
 plot_catch_at_age_ci <- function(pred, var, unit, alpha=0.1, xlab="age", ylab=paste("posterior catch", unit), ...){
   if (var=="Abundance" | var=="Count"){
     plottingUnit=getPlottingUnit(unit=unit, var=var, baseunit="ones", def.out = F)
@@ -186,6 +191,7 @@ plot_catch_at_age_ci <- function(pred, var, unit, alpha=0.1, xlab="age", ylab=pa
 #' @param biotic indiviuals as exported by stox
 #' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @keywords internal
+#' @noRd
 plot_weight_at_age <- function(biotic, pred, unit, alpha=0.01, xlab="age", ylab=paste("ind. weight", unit), ...){
   
   plottingUnitEca=getPlottingUnit(unit=unit, var="Weight", baseunit="kilograms", def.out = F)
@@ -242,6 +248,7 @@ plot_weight_at_age <- function(biotic, pred, unit, alpha=0.01, xlab="age", ylab=
 #' @param biotic indiviuals as exported by stox
 #' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @keywords internal
+#' @noRd
 plot_length_at_age <- function(biotic, pred, xlab="age", alpha=0.01, ylab=paste("length cm"), ...){
   
   bioticscale = 1
@@ -299,6 +306,7 @@ plot_length_at_age <- function(biotic, pred, xlab="age", alpha=0.01, ylab=paste(
 #' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @param main title for paneled plot
 #' @keywords internal
+#' @noRd
 plot_RECA_results_panel <- function(pred, biotic, main=NULL, ...){
   if (!is.null(main)){
     layout(matrix(c(1,1,2,3,2,3,2,3,4,5,4,5,4,5),ncol=2, byrow=T))
@@ -328,6 +336,7 @@ default_color_wrong = "white"
 
 #' get matrix of sample and landings from the subset of biotic that contains aged individuals
 #' @keywords internal
+#' @noRd
 get_g_s_a_frame <- function(eca) {
   agedb <- eca$biotic[!is.na(eca$biotic$age), ]
   
@@ -419,6 +428,7 @@ get_g_s_a_frame <- function(eca) {
 
 #' Extracts all combinations of gear, temporal and spatial from landings
 #' @keywords internal
+#' @noRd
 get_gta_landings <- function(stoxexport) {
   gta <- c("gearfactor", "temporal", "spatial")
   landedcol <- lapply(
@@ -438,6 +448,8 @@ get_gta_landings <- function(stoxexport) {
 #' show samples wrp common covariates gear, area and temporal
 #' @param titletext title text for plot. If null a default title is used, set to "" to supress
 #' @keywords internal
+#' @import plotrix
+#' @noRd
 plot_gear_temporal_area <-
   function(eca,
            titletext = NULL,
@@ -507,6 +519,7 @@ plot_gear_temporal_area <-
 
 #' Plot aggregated landings for all cells, labeled with sampling level
 #' @keywords internal
+#' @noRd
 plot_cell_landings <-
   function(eca,
            xlab = "Cells (gear/temp/spatial)",
@@ -570,6 +583,7 @@ plot_cell_landings <-
 
 #' Plot aggregated landings for different kind of sampling level in cells
 #' @keywords internal
+#' @noRd
 plot_cell_coverage <-
   function(eca,
            xlab = "sample clusteredness",
@@ -651,6 +665,7 @@ plot_cell_coverage <-
 
 #' Get aggregated landings for fixed effects
 #' @keywords internal
+#' @noRd
 get_fixed_effects_landings <- function(stoxexport) {
   fixed_effects <-
     stoxexport$resources$covariateInfo[stoxexport$resources$covariateInfo$covType ==
@@ -674,6 +689,7 @@ get_fixed_effects_landings <- function(stoxexport) {
 #' @param stoxexport as returned from \code{\link{baseline2eca}}
 #' @param indparameter the parameters for which data needs to be available
 #' @keywords internal
+#' @noRd
 plot_fixed_effect_coverage <-
   function(stoxexport,
            indparameters = c("age"),
@@ -749,6 +765,7 @@ plot_fixed_effect_coverage <-
 
 #' Paneled plots of cell coverage
 #' @keywords internal
+#' @noRd
 diagnosticsCoverageRECA <- function(stoxexport) {
   par.old <- par(no.readonly = T)
   par(mfrow = c(2, 1))
@@ -759,6 +776,7 @@ diagnosticsCoverageRECA <- function(stoxexport) {
 
 #' Plot table showing coverage of gear, temporal and spatial combinations
 #' @keywords internal
+#' @noRd
 diagnosticsSamplesRECA <- function(stoxexport) {
   plot_gear_temporal_area(stoxexport)
   gooddesc = "> 1 vessel"
@@ -777,6 +795,7 @@ diagnosticsSamplesRECA <- function(stoxexport) {
 
 #' Plots diagnostics for model configuration. Whether all combinations of fixed effects are sampled
 #' @keywords internal
+#' @noRd
 diagnostics_model_configuration <- function(stoxexport, okcol = default_color_ok,
                                             wrongcol = default_color_wrong,
                                             undersampledcol = default_color_empty,
@@ -795,15 +814,16 @@ diagnostics_model_configuration <- function(stoxexport, okcol = default_color_ok
 
 
 #
-# Diverse plot for å vise prøveheterogenitet og enkle feilsjekker som bør håndteres med datafiltrering, datakorreksjon eller datakonvertering.
+# Diverse plot for a vise pr\u00F8veheterogenitet og enkle feilsjekker som b\u00F8r handteres med datafiltrering, datakorreksjon eller datakonvertering.
 #
 
 default_blankcode="--"
 
 #' Composition of mission types in the data
-#' @biotic as exported from stox (one line pr individual)
-#' @pal palette for coloring sections
+#' @param biotic as exported from stox (one line pr individual)
+#' @param pal palette for coloring sections
 #' @keywords internal
+#' @noRd
 plot_mission_types <- function(biotic, title="mission types\n# stations", blankcode=default_blankcode, pal=c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999')){
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
   stations <- biotic[!duplicated(biotic[,c("cruise", "serialnumber")]),]
@@ -829,6 +849,7 @@ plot_mission_types <- function(biotic, title="mission types\n# stations", blankc
 #' @param blankcode code for NA / not registered
 #' @param cex.names expansion factor for bar labels
 #' @keywords internal
+#' @noRd
 plot_sample_types <- function(biotic, title="sample types", xlab="# catch samples", blankcode=default_blankcode, cex.names=0.8){
   
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
@@ -862,6 +883,7 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
 #' @param blankcode code for NA / not registered
 #' @param cex.names expansion factor for bar labels
 #' @keywords internal
+#' @noRd
 plot_station_types <- function(biotic, title="station types", xlab="# stations", blankcode=default_blankcode, cex.names=0.8){
   # NOTE 2019-04-23: As of StoX 2.7.7 (preceding StoX 3.0) and Rstox 1.11.1 (preceding Rstox 1.12) biotic 3.0 definitions is used, where serialno is replaced by serialnumber:
   station <- biotic[!duplicated(biotic[,c("cruise", "serialnumber")]),]
@@ -902,6 +924,7 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
 #' @param unkwoncol color to use when sampled fraction is not coded in data.
 #' @param barplot if T barplot is plotted in stead of pie chart
 #' @keywords internal
+#' @noRd
 plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch samples", allname="Unsorted", landname="Landed", discname="Not landed", allcol="#fee8c8", disccol="#fdbb84", landcol="#e34a33", unkowncol="white", blankcode=default_blankcode, barplot=F){
   year <- biotic$year[1]
   if (length(unique(biotic$year))>1){
@@ -955,6 +978,7 @@ plot_catch_fractions <- function(biotic, title="sampling point", xlab="# catch s
 #' Panelled plot of sample composition wrp potentially problematic heterogenety
 #' @param projectName name of stox project
 #' @keywords internal
+#' @noRd
 plotSampleCompositionRECA <- function(biotic, ...){
   old.par <- par(no.readonly = T)
   par(mfrow=c(2,2))
@@ -987,6 +1011,7 @@ plotSampleCompositionRECA <- function(biotic, ...){
 #' @import grid
 #' @import data.table
 #' @keywords internal
+#' @noRd
 plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, iter.max=20, nstart=10, agecolors=NULL, lowerquant=.05, upperquant=.95, catlimit=8, title="", themef=theme_classic){
   
   if (var=="Abundance" | var=="Count"){
@@ -1018,7 +1043,7 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
   #clustering ages in plots. kemans on log(means) seems to work well, but sometimes failes due to 0 means, which is avoided by adding lowest non-zero mean
   llo <- min(means[means>0])
   clust <- kmeans(log(means+llo), nclust, iter.max = iter.max, nstart = nstart)
-  m <- melt(caa_scaled, c("age", "iteration"), value.name=unit)
+  m <- reshape2::melt(caa_scaled, c("age", "iteration"), value.name=unit)
   m <- merge(m, data.frame(age=names(lq), lq=lq))
   m <- merge(m, data.frame(age=names(uq), uq=uq))
   
@@ -1028,7 +1053,7 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
     mcp <- m[m$age %in% pred$AgeCategories[clust$cluster==i],]
     maxy <- max(mcp[unit]) + max(mcp[unit])*.1
     if (sum(clust$cluster==i)<=catlimit){
-      mcp$age <- as.character(mcp$age)
+      mcp$age <- as.factor(mcp$age)
       plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[unit] > mcp$uq | mcp[unit] < mcp$lq,], aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)+themef()
     }
     else{
