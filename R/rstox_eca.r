@@ -11,12 +11,18 @@ temporal_workaround <- function(data, processdata, sourcetype){
     tempdef$dend <- substr(tempdef$Value, 7,8)
 
     tl <- data
+    
     if (sourcetype=="Biotic"){
-      if (any(is.na(tl$stationstartdate))){
+
+      #attempt to use stopdate if startdate is NA
+      stationdate <- tl$stationstartdate
+      stationdate[is.na(stationstartdate)] <- tl$stationstopdate[is.na(stationstartdate)]
+      
+      if (any(is.na(stationdate))){
         stop("NAs in station startdate")
       }
-      tl$m <- substr(tl$stationstartdate, 4,5)
-      tl$d <- substr(tl$stationstartdate, 1,2)
+      tl$m <- substr(stationdate, 4,5)
+      tl$d <- substr(stationdate, 1,2)
     }
     else if (sourcetype=="Landing"){
       tl$m <- substr(tl$sistefangstdato, 6,7)
