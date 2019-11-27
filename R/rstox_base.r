@@ -423,8 +423,8 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 		savedRVersion <- project$getRVersion()
 		savedRstoxVersion <- project$getRStoxVersion()
 		
-		currentRVersion <- getRversion()
-		currentRstoxVersion <- packageVersion("Rstox")
+		currentRVersion <- as.character(getRversion())
+		currentRstoxVersion <- as.character(packageVersion("Rstox"))
 		
 		if(currentRVersion != savedRVersion || currentRstoxVersion != savedRstoxVersion) {
 			message("The opened project was saved with different R or Rstox versions. To update the R and Rstox version in the project description file (project.xml) use saveProject()")
@@ -637,7 +637,6 @@ saveProject <- function(projectName, soft=FALSE){
 		
 		# Change added on 2019-11-01 after it was discovered that the save() in the stox.jar sets rversion and rstoxversion to "":
 		# Set the R and Rstox version:
-		browser()
 		project$setRStoxVersion(as.character(packageVersion("Rstox")))
 		project$setRVersion(as.character(getRversion()))
 		

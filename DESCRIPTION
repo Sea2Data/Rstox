@@ -9,7 +9,6 @@ URL: https://github.com/Sea2Data/Rstox
 BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
 LazyData: true
-RoxygenNote: 6.1.1
 Imports: 
     data.table (>= 1.10.4-3),
     ggplot2,
@@ -24,3 +23,4 @@ Suggests:
     pgirmess,
     Reca,
     plotrix
+RoxygenNote: 6.1.1
