@@ -1,6 +1,6 @@
 #' Compensates bug in stox where the covariate temporal is not set based on prosessdata when useProsessdata is chosen
 #' @noRd
-temporal_workaround <- function(data, processdata, sourcetype){
+temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
   
   if (!is.null(processdata$temporal)){
     warning(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
@@ -13,16 +13,39 @@ temporal_workaround <- function(data, processdata, sourcetype){
     tl <- data
     
     if (sourcetype=="Biotic"){
-
-      #attempt to use stopdate if startdate is NA
       stationdate <- tl$stationstartdate
-      stationdate[is.na(stationdate)] <- tl$stationstopdate[is.na(stationdate)]
-      
       if (any(is.na(stationdate))){
-        stop("NAs in station startdate")
+      
+        #attempt to use stopdate if startdate is NA  
+        #only invoke workaround when needed
+        if (!is.null(stations)){
+          #need to merge in from original data, as stopdate is not exported by BioticCovData
+          npre <- nrow(tl)
+          tl <- merge(tl[,c("serialnumber", "cruise")], stations[,c("serialnumber", "stationstartdate", "stationstopdate")], all.x=T, by.x="serialnumber", by.y=c("serialnumber"))
+          if (npre != nrow(tl)){
+            stop("Issues with merging in stationdata. Multiple years combined ?")
+          }
+          
+          #reinit as merge might reorder
+          stationdate <- tl$stationstartdate
+          stationdate[is.na(stationdate)] <- tl$stationstopdate[is.na(stationdate)]    
+          
+          if (any(is.na(stationdate))){
+            stop("NAs in station startdate and stopdate")
+          }
+          tl$m <- substr(stationdate, 6,7)
+          tl$d <- substr(stationdate, 9,10)
+        }
+        
       }
-      tl$m <- substr(stationdate, 4,5)
-      tl$d <- substr(stationdate, 1,2)
+      else{
+        if (any(is.na(stationdate))){
+          stop("NAs in station startdate and stopdate")
+        }
+        tl$m <- substr(stationdate, 4,5)
+        tl$d <- substr(stationdate, 1,2)
+      }
+      
     }
     else if (sourcetype=="Landing"){
       tl$m <- substr(tl$sistefangstdato, 6,7)
@@ -166,7 +189,7 @@ baseline2eca <-
       getBaseline(
         projectName,
         input = c("par", "proc"),
-        proc = c(biotic, landing),
+        proc = c(biotic, landing, "FilterBiotic"),
         ...
       )
     
@@ -204,7 +227,7 @@ baseline2eca <-
       }
       
       names(biotic) <- tolower(names(biotic))
-      biotic <- temporal_workaround(biotic, baselineOutput$processData, "Biotic")
+      biotic <- temporal_workaround(biotic, baselineOutput$processData, "Biotic", baselineOutput$outputData$FilterBiotic$FilterBiotic_BioticData_fishstation.txt)
       
       # Detect whether temporal is defined with seasons, and add year and season and remove temporal in the process data:
       # This caused error with cod and could be solved with Jira STOX-153:
