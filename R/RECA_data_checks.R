@@ -15,7 +15,6 @@ getCatchIssues <- function(catches, biotic, common_columns_catch){
     severalDelp <- catches$cruise %in% delp$mission & catches$year %in% delp$year & catches$catchcategory %in% delp$taxa & catches$serialnumber %in% delp$serialnumber
   }
   
-  
   catchissues <- biotic[0,common_columns_catch]
   missingcatchweight <- catches[severalDelp & (is.na(catches$catchweight) | catches$catchweight==0),common_columns_catch]
   if (nrow(missingcatchweight)){
@@ -39,7 +38,7 @@ getCatchIssues <- function(catches, biotic, common_columns_catch){
 #' Data report for RECA
 #' @description Generates reports on data issues that might need to be addressed before running RECA
 #' @details Checks data exported from stox for missing mandatory information, and issues that will invalidate common covariate-configurations
-#'    issues with stations are written as a tab delimited fil to stationissuesfile
+#'    issues with stations are written as a tab delimited file to stationissuesfile
 #'    issues with catch samples are written as a tab delimited fil to catchissuefile
 #'    issues that can be solved with imputation or parameter estimation tools provided by stox are written to imputationfile
 #' @param biotic sample data exported from stox in \code{\link[Rstox]{prepareRECA}}
@@ -55,15 +54,15 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
   #
   
   stations <- biotic[!duplicated(biotic[c("cruise", "serialnumber")]),]
-  common_columns_station <- c("cruise", "serialnumber", "stationstartdate", "latitudestart", "longitudestart", "area", "location", "gear")
+  common_columns_station <- c("cruise", "serialnumber", "stationstartdate", "stationstopdate", "latitudestart", "longitudestart", "area", "location", "gear")
   
   stationissues <- biotic[0,common_columns_station]
   
   if (is.null(covariates) || "temporal" %in% covariates){
     # missing time
-    missingstartdate <- stations[is.na(stations$stationstartdate),common_columns_station]
+    missingstartdate <- stations[is.na(stations$stationstartdate) & is.na(stations$stationstopdate),common_columns_station]
     if (nrow(missingstartdate)>0){
-      missingstartdate$issue <- "missing startdate"
+      missingstartdate$issue <- "missing startdate or stopdate"
       stationissues <- rbind(stationissues, missingstartdate)
     }
     
@@ -71,7 +70,7 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
     if (!is.null(stations$temporal)){
       missingtemporal <- stations[is.na(stations$temporal) & !(stations$serialnumber %in% missingstartdate$serialnumber),common_columns_station]
       if (nrow(missingtemporal)>0){
-        missingtemporal$issue <- "missing temporal covariate (has station startdate)"
+        missingtemporal$issue <- "missing temporal covariate (has station startdate or stopdate)"
         stationissues <- rbind(stationissues, missingtemporal)
       } 
     }
@@ -89,7 +88,7 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
     if (!is.null(stations$spatial)){
       missingposition <- stations[is.na(stations$spatial) & !(stations$serialnumber %in% missingposition$serialnumber),common_columns_station]
       if (nrow(missingposition)>0){
-        missingposition$issue <- "missing spatial covariate (has position or area code)"
+        missingposition$issue <- "missing spatial covariate (has position or area code on station)"
         stationissues <- rbind(stationissues, missingposition)
       }
     }
@@ -107,7 +106,7 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
     if (!is.null(stations$gearfactor)){
       missinggear <- stations[is.na(stations$gearfactor) & !(stations$serialnumber %in% missinggear$serialnumber),common_columns_station]
       if (nrow(missinggear)>0){
-        missinggear$issue <- "missing gear covariate (has gear code)"
+        missinggear$issue <- "missing gear covariate (has gear code on station)"
         stationissues <- rbind(stationissues, missinggear)
       }
     }
