@@ -16,7 +16,7 @@ temporal_workaround <- function(data, processdata, sourcetype){
 
       #attempt to use stopdate if startdate is NA
       stationdate <- tl$stationstartdate
-      stationdate[is.na(stationstartdate)] <- tl$stationstopdate[is.na(stationstartdate)]
+      stationdate[is.na(stationdate)] <- tl$stationstopdate[is.na(stationdate)]
       
       if (any(is.na(stationdate))){
         stop("NAs in station startdate")
