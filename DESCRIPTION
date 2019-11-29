@@ -11,6 +11,11 @@ License: LGPL-3
 LazyData: true
 Imports: 
     data.table (>= 1.10.4-3),
+    RColorBrewer,
+    gridExtra,
+    MASS,
+    methods,
+    scatterpie,
     ggplot2,
     pbapply,
     rgdal,
@@ -22,6 +27,5 @@ Imports:
 Suggests: 
     ncdf4,
     pgirmess,
-    Reca,
-    plotrix
+    Reca
 RoxygenNote: 7.0.1
