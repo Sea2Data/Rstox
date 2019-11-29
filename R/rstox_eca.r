@@ -585,14 +585,14 @@ getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, d
   lengthresM <- getMode(DataMatrix$lengthresM)
   lengthresCM <- lengthresM * 100
   if (!all(DataMatrix$lengthresM == head(DataMatrix$lengthresM, 1))) {
-    warning(
+    write(
       paste0(
         "Several length resolusions applied in the data (",
         paste(table(DataMatrix$lengthresCM), collapse = ", "),
         "). The mode (",
         lengthresCM,
         ") used in the ECA"
-      )
+      ), stderr()
     )
   }
   
