@@ -199,11 +199,16 @@ checkCovariateConsistency <- function(modelobj, landingscov){
     stop("Covariates are not ordered consistently in model and landings")
   }
   
-  #check that all sampled values exists in landings
-  for (co in inlandings){
-    if (!all(modelobj$CovariateMatrix[,co] %in% landingscov[,co])){
-      stop(paste("Some sampled values for covariate", co, "does not exist in landings"))
-    }
+  # check that all cells exists in landings
+  # constant is in inlandings, so case of length(inlandings) == 1, need not be handled.
+  if (length(inlandings)>1){
+    cellsSamples <- apply( modelobj$CovariateMatrix[,inlandings] , 1 , paste , collapse = "/" )
+    cellsLandings <- apply( landingscov[,inlandings] , 1 , paste , collapse = "/" )
+    
+    if (!all(unique(cellsSamples) %in% unique(cellsLandings))){
+      missing <- unique(cellsSamples)[!(unique(cellsSamples) %in% unique(cellsLandings))]
+      stop(paste("Not all sampled cells exist in landings (", length(missing), " missing)", sep=""))
+    }  
   }
   
   #check that all level are present for all fixed effects

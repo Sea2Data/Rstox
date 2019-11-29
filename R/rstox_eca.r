@@ -1124,6 +1124,16 @@ prepareRECA <-
     Landings <- getLandings(eca$landing, AgeLength, WeightLength, landingresolution = temporalresolution)
     
     #
+    # run checks
+    #
+    checkAgeLength(AgeLength)
+    checkWeightLength(WeightLength)
+    checkCovariateConsistency(AgeLength, Landings$AgeLengthCov)
+    checkCovariateConsistency(WeightLength, Landings$WeightLengthCov)
+    checkLandings(Landings)
+    
+    
+    #
     # store results
     #
     
