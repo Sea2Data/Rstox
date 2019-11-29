@@ -3,7 +3,7 @@
 temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
   
   if (!is.null(processdata$temporal)){
-    warning(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
+    write(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""), stderr())
     tempdef <- processdata$temporal[processdata$temporal$CovariateSourceType==sourcetype,]
     tempdef$mstart <- substr(tempdef$Value, 4,5)
     tempdef$mend <- substr(tempdef$Value, 10,11)
@@ -1025,7 +1025,7 @@ prepareRECA <-
     }
     
     if (overwrite){
-      warning("Running prepareECA with overwrite=T")
+      write("Running prepareECA with overwrite=T", stderr())
       setProjectData(
         projectName = projectName,
         var = NULL,
@@ -1059,7 +1059,7 @@ prepareRECA <-
     if (length(list.files(resultdir))>0){
       stop(paste("Directory", resultdir, "contains files."))
     }
-    warning("checking filepath char comp")
+    write("checking filepath char comp", stderr())
     if (grepl(" ", resultdir)) {
       stop(paste(
         "Please make ecadir",
