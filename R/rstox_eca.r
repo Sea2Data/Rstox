@@ -1088,7 +1088,7 @@ prepareRECA <-
         file.path(getProjectPaths(projectName)$RReportDir,
                   "imputationissues.txt") 
       
-      makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic))  
+      makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic), eca$landing)  
       
       if (file.exists(stationissuesfilename)){
         out$filename <- c(stationissuesfilename, out$filename)        

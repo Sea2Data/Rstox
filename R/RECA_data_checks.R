@@ -46,23 +46,26 @@ getCatchIssues <- function(catches, biotic, common_columns_catch){
 #' @param catchissuefile file for writing catch sample issues
 #' @param imputationfile file for writing report on issues that may need data massaging (imputation or estimation)
 #' @param verbose If true, summary and file locations will be printed to stdout
+#' @param covariates vector with names of covariates (identifies columns)
+#' @param landing landing data
 #' @keywords internal
-makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputationfile, verbose=T, covariates=NULL){
+makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputationfile, verbose=T, covariates=NULL, landing=NULL){
   
+
   #
   # station issues
   #
   
   stations <- biotic[!duplicated(biotic[c("cruise", "serialnumber")]),]
-  common_columns_station <- c("cruise", "serialnumber", "stationstartdate", "stationstopdate", "latitudestart", "longitudestart", "area", "location", "gear")
+  common_columns_station <- c("cruise", "serialnumber", "stationstartdate", "latitudestart", "longitudestart", "area", "location", "gear")
   
   stationissues <- biotic[0,common_columns_station]
   
   if (is.null(covariates) || "temporal" %in% covariates){
     # missing time
-    missingstartdate <- stations[is.na(stations$stationstartdate) & is.na(stations$stationstopdate),common_columns_station]
+    missingstartdate <- stations[is.na(stations$stationstartdate),common_columns_station]
     if (nrow(missingstartdate)>0){
-      missingstartdate$issue <- "missing startdate or stopdate"
+      missingstartdate$issue <- "missing startdate (may be OK if stopdate is set.)"
       stationissues <- rbind(stationissues, missingstartdate)
     }
     
@@ -111,6 +114,29 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
       }
     }
   }
+  
+  # sampling frame issues
+  if (length(covariates) > 1 & !is.null(landing)){
+    inlandings <- covariates[covariates %in% names(landing)]
+    if (length(inlandings)>1){
+      cellsSamples <- apply( stations[,inlandings] , 1 , paste , collapse = "/" )
+      cellsLandings <- unique(apply( landing[,inlandings] , 1 , paste , collapse = "/" ))
+      missing <- !(cellsSamples %in% cellsLandings)
+    }
+    else{
+      cellsSamples <- stations[[inlandings]]
+      cellsLandings <- unique(landing[[inlandings]])
+      missing <- !(cellsSamples %in% cellsLandings)
+    }
+    missingLandings <- stations[missing,common_columns_station]
+    if (nrow(missingLandings)>0){
+      missingLandings$issue <- "cell is missing from landings."  
+      stationissues <- rbind(stationissues, missingLandings)
+    }
+    
+  }
+  
+  
   if (nrow(stationissues)>0){
     f <- file(stationissuesfile, open = "w")
     write.table(
