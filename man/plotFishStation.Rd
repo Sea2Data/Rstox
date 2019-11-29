@@ -9,27 +9,70 @@
 \alias{getFishStationOneSpecies}
 \title{Plot fish stations by species}
 \usage{
-plotFishStation(projectName, commonname = "torsk",
-  proc = "FilterBiotic", size = 1, col = TRUE, shape = 16,
-  alpha = 1, jitter = FALSE, zoom = 1, offset = c(0.5, 0.5),
-  type = "p", add0 = FALSE, subset = NULL, legendPos = c(0.05,
-  0.05), unit = "tonnes")
+plotFishStation(
+  projectName,
+  commonname = "torsk",
+  proc = "FilterBiotic",
+  size = 1,
+  col = TRUE,
+  shape = 16,
+  alpha = 1,
+  jitter = FALSE,
+  zoom = 1,
+  offset = c(0.5, 0.5),
+  type = "p",
+  add0 = FALSE,
+  subset = NULL,
+  legendPos = c(0.05, 0.05),
+  unit = "tonnes"
+)
 
-plotMap(x, lon = "lon", lat = "lat", xlim = NA, ylim = NA,
-  zoom = 1, offset = c(0.5, 0.5))
+plotMap(
+  x,
+  lon = "lon",
+  lat = "lat",
+  xlim = NA,
+  ylim = NA,
+  zoom = 1,
+  offset = c(0.5, 0.5)
+)
 
-plotLonLat(x, lon = "lon", lat = "lat", species = "species",
-  type = "p", size = 1, zoom = 1, offset = c(0.5, 0.5),
-  col = TRUE, shape = 16, alpha = 1, jitter = FALSE,
-  maxPieRadius = 1, legendPos = c(0.05, 0.05), unit = "tonnes")
+plotLonLat(
+  x,
+  lon = "lon",
+  lat = "lat",
+  species = "species",
+  type = "p",
+  size = 1,
+  zoom = 1,
+  offset = c(0.5, 0.5),
+  col = TRUE,
+  shape = 16,
+  alpha = 1,
+  jitter = FALSE,
+  maxPieRadius = 1,
+  legendPos = c(0.05, 0.05),
+  unit = "tonnes"
+)
 
 zoom_xlim_ylim(xlim, ylim, zoom = 1, offset = c(0.5, 0.5))
 
-zoom_lon_lat(x, lon = "lon", lat = "lat", xlim = NA, ylim = NA,
-  zoom = 1, offset = c(0.5, 0.5))
+zoom_lon_lat(
+  x,
+  lon = "lon",
+  lat = "lat",
+  xlim = NA,
+  ylim = NA,
+  zoom = 1,
+  offset = c(0.5, 0.5)
+)
 
-getFishStationOneSpecies(species = NULL, projectName,
-  proc = "FilterBiotic", msg = FALSE)
+getFishStationOneSpecies(
+  species = NULL,
+  projectName,
+  proc = "FilterBiotic",
+  msg = FALSE
+)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{getBaseline} or \code{runBaseline}), og a project object (as returned from \code{openProject}). For \code{createProject}, \code{projectName}=NULL (the default) returns available templates, and for \code{openProject}, zeros length \code{projectName} returns all StoX projects in the default workspace either given as a vector of full paths, or, in the case projectName is an empty list, a list of names of StoX projects located in the default workspace and sub directories. Projects locataed in sub directories of the default workspace can be given by the relative path, or are searched for by name.}

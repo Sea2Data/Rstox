@@ -7,19 +7,52 @@
 \alias{factorNAfirst}
 \title{Plot abundance results to the graphics device or to a file}
 \usage{
-plotAbundance(projectName, bootstrapMethod = "AcousticTrawl",
-  var = "count", unit = NULL, baseunit = NULL, grp1 = "age",
-  grp2 = NULL, xlab = NULL, ylab = NULL, main = "",
-  format = "png", log = NULL, filetag = NULL, ...)
+plotAbundance(
+  projectName,
+  bootstrapMethod = "AcousticTrawl",
+  var = "count",
+  unit = NULL,
+  baseunit = NULL,
+  grp1 = "age",
+  grp2 = NULL,
+  xlab = NULL,
+  ylab = NULL,
+  main = "",
+  format = "png",
+  log = NULL,
+  filetag = NULL,
+  ...
+)
 
-plotAbundance_AcousticTrawl(projectName, var = "count", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, xlab = NULL,
-  ylab = NULL, main = "", format = "png", maxcv = 1, log = NULL,
-  filetag = NULL, ...)
+plotAbundance_AcousticTrawl(
+  projectName,
+  var = "count",
+  unit = NULL,
+  baseunit = NULL,
+  grp1 = "age",
+  grp2 = NULL,
+  xlab = NULL,
+  ylab = NULL,
+  main = "",
+  format = "png",
+  maxcv = 1,
+  log = NULL,
+  filetag = NULL,
+  ...
+)
 
-plotAbundance_SweptAreaTotal(projectName, unit = NULL, baseunit = NULL,
-  xlab = NULL, ylab = NULL, main = "", format = "png",
-  log = NULL, filetag = NULL, ...)
+plotAbundance_SweptAreaTotal(
+  projectName,
+  unit = NULL,
+  baseunit = NULL,
+  xlab = NULL,
+  ylab = NULL,
+  main = "",
+  format = "png",
+  log = NULL,
+  filetag = NULL,
+  ...
+)
 
 factorNAfirst(x)
 }

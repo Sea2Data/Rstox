@@ -4,9 +4,13 @@
 \alias{varianceEstimation}
 \title{Parametric variance estimation}
 \usage{
-varianceEstimation(projectName, proc = "SweptAreaDensity",
-  ignore.case = TRUE, na.rm = TRUE, out = c("bySpecCat", "byLevel",
-  "listByLevel"))
+varianceEstimation(
+  projectName,
+  proc = "SweptAreaDensity",
+  ignore.case = TRUE,
+  na.rm = TRUE,
+  out = c("bySpecCat", "byLevel", "listByLevel")
+)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

@@ -4,10 +4,16 @@
 \alias{saveDecomposedCatchMatrix}
 \title{Make decomposed catch matrix}
 \usage{
-saveDecomposedCatchMatrix(projectName, filename = NULL,
+saveDecomposedCatchMatrix(
+  projectName,
+  filename = NULL,
   decomposition = c("områdegrupperingbokmål"),
-  addQuarterToDecomp = T, var = "Abundance", unit = "millions",
-  plusgr = NULL, main = "")
+  addQuarterToDecomp = T,
+  var = "Abundance",
+  unit = "millions",
+  plusgr = NULL,
+  main = ""
+)
 }
 \arguments{
 \item{projectName}{Name identifying StoX project}

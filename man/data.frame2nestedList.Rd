@@ -10,15 +10,28 @@
 \alias{setAttributes}
 \title{Write biotic and acoustic XML files from data frames given a (preferably hierarcical) xsd (xml schema file).}
 \usage{
-data.frame2nestedList(x, pre = NULL, levelnames = NULL,
-  rename = NULL, na.rm = FALSE, lastlevel = NULL)
+data.frame2nestedList(
+  x,
+  pre = NULL,
+  levelnames = NULL,
+  rename = NULL,
+  na.rm = FALSE,
+  lastlevel = NULL
+)
 
 list2XML(node, sublist)
 
 addAttributes(child, l)
 
-getVarSetAttr(x, Attr, Var, pre = NULL, onlyfirst = TRUE,
-  rename = NULL, na.rm = FALSE)
+getVarSetAttr(
+  x,
+  Attr,
+  Var,
+  pre = NULL,
+  onlyfirst = TRUE,
+  rename = NULL,
+  na.rm = FALSE
+)
 
 appendToListKeepAttr(x, add)
 

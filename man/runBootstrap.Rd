@@ -8,34 +8,79 @@
 \alias{runBootstrap_SweptAreaTotal}
 \title{Run a bootstrap in StoX}
 \usage{
-runBootstrap(projectName, bootstrapMethod = "AcousticTrawl",
-  acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum,
-  nboot = 5, startProcess = "TotalLengthDist",
-  endProcess = "SuperIndAbundance", seed = 1, cores = 1,
-  msg = TRUE, sorted = TRUE, JavaMem = getRstoxDef("JavaMem"), ...)
+runBootstrap(
+  projectName,
+  bootstrapMethod = "AcousticTrawl",
+  acousticMethod = PSU ~ Stratum,
+  bioticMethod = PSU ~ Stratum,
+  nboot = 5,
+  startProcess = "TotalLengthDist",
+  endProcess = "SuperIndAbundance",
+  seed = 1,
+  cores = 1,
+  msg = TRUE,
+  sorted = TRUE,
+  JavaMem = getRstoxDef("JavaMem"),
+  ...
+)
 
-runBootstrap_1.6(projectName, bootstrapMethod = "AcousticTrawl",
-  acousticMethod = PSU ~ Stratum, bioticMethod = PSU ~ Stratum,
-  nboot = 5, startProcess = "TotalLengthDist",
-  endProcess = "SuperIndAbundance", seed = 1, cores = 1,
-  msg = TRUE, ...)
+runBootstrap_1.6(
+  projectName,
+  bootstrapMethod = "AcousticTrawl",
+  acousticMethod = PSU ~ Stratum,
+  bioticMethod = PSU ~ Stratum,
+  nboot = 5,
+  startProcess = "TotalLengthDist",
+  endProcess = "SuperIndAbundance",
+  seed = 1,
+  cores = 1,
+  msg = TRUE,
+  ...
+)
 
-runBootstrap_AcousticTrawl(projectName, acousticMethod = PSU ~ Stratum,
-  bioticMethod = PSU ~ Stratum, nboot = 5,
-  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seed = 1, cores = 1, msg = TRUE, sorted = TRUE,
-  JavaMem = getRstoxDef("JavaMem"), ...)
+runBootstrap_AcousticTrawl(
+  projectName,
+  acousticMethod = PSU ~ Stratum,
+  bioticMethod = PSU ~ Stratum,
+  nboot = 5,
+  startProcess = "TotalLengthDist",
+  endProcess = "SuperIndAbundance",
+  seed = 1,
+  cores = 1,
+  msg = TRUE,
+  sorted = TRUE,
+  JavaMem = getRstoxDef("JavaMem"),
+  ...
+)
 
-runBootstrap_SweptAreaLength(projectName, acousticMethod = NULL,
-  bioticMethod = PSU ~ Stratum, nboot = 5,
-  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seed = 1, cores = 1, msg = TRUE, sorted = TRUE,
-  JavaMem = getRstoxDef("JavaMem"), ...)
+runBootstrap_SweptAreaLength(
+  projectName,
+  acousticMethod = NULL,
+  bioticMethod = PSU ~ Stratum,
+  nboot = 5,
+  startProcess = "TotalLengthDist",
+  endProcess = "SuperIndAbundance",
+  seed = 1,
+  cores = 1,
+  msg = TRUE,
+  sorted = TRUE,
+  JavaMem = getRstoxDef("JavaMem"),
+  ...
+)
 
-runBootstrap_SweptAreaTotal(projectName, acousticMethod = NULL,
-  bioticMethod = PSU ~ Stratum, startProcess = "SweptAreaDensity",
-  endProcess = NULL, nboot = 5, seed = 1, cores = 1,
-  ignore.case = TRUE, sorted = TRUE, ...)
+runBootstrap_SweptAreaTotal(
+  projectName,
+  acousticMethod = NULL,
+  bioticMethod = PSU ~ Stratum,
+  startProcess = "SweptAreaDensity",
+  endProcess = NULL,
+  nboot = 5,
+  seed = 1,
+  cores = 1,
+  ignore.case = TRUE,
+  sorted = TRUE,
+  ...
+)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

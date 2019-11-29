@@ -10,7 +10,8 @@ makeDataReportReca(
   catchissuefile,
   imputationfile,
   verbose = T,
-  covariates = NULL
+  covariates = NULL,
+  landing = NULL
 )
 }
 \arguments{
@@ -22,6 +23,10 @@ makeDataReportReca(
 
 \item{verbose}{If true, summary and file locations will be printed to stdout}
 
+\item{covariates}{vector with names of covariates (identifies columns)}
+
+\item{landing}{landing data}
+
 \item{stationussuesfile}{file for writing station issues}
 }
 \description{
@@ -29,7 +34,7 @@ Generates reports on data issues that might need to be addressed before running 
 }
 \details{
 Checks data exported from stox for missing mandatory information, and issues that will invalidate common covariate-configurations
-   issues with stations are written as a tab delimited fil to stationissuesfile
+   issues with stations are written as a tab delimited file to stationissuesfile
    issues with catch samples are written as a tab delimited fil to catchissuefile
    issues that can be solved with imputation or parameter estimation tools provided by stox are written to imputationfile
 }
