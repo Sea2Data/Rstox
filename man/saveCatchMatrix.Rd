@@ -4,8 +4,15 @@
 \alias{saveCatchMatrix}
 \title{Save catch at age matrix}
 \usage{
-saveCatchMatrix(pred, filename, var = "Abundance", unit = "ones",
-  main = "", savemeans = F, plusgr = NULL)
+saveCatchMatrix(
+  pred,
+  filename,
+  var = "Abundance",
+  unit = "ones",
+  main = "",
+  savemeans = F,
+  plusgr = NULL
+)
 }
 \arguments{
 \item{pred}{as returned by \code{\link[Reca]{eca.predict}}}

@@ -4,8 +4,15 @@
 \alias{saveCatchCovarianceMatrix}
 \title{Save catch at age variance-covariance matrix for age groups}
 \usage{
-saveCatchCovarianceMatrix(pred, filename, var = "Abundance",
-  unit = "ones", main = "", standardize = F, plusgr = NULL)
+saveCatchCovarianceMatrix(
+  pred,
+  filename,
+  var = "Abundance",
+  unit = "ones",
+  main = "",
+  standardize = F,
+  plusgr = NULL
+)
 }
 \arguments{
 \item{pred}{as returned by \code{\link[Reca]{eca.predict}}}

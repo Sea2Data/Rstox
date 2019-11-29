@@ -9,8 +9,15 @@
 \alias{getSequenceToSampleFrom}
 \title{Sample a vector after sorting the vector and applying the seed, and functions for setting seeds in Rstox.}
 \usage{
-sampleSorted(x, size, seed = 0, by = NULL, replace = TRUE,
-  sorted = TRUE, drop = FALSE)
+sampleSorted(
+  x,
+  size,
+  seed = 0,
+  by = NULL,
+  replace = TRUE,
+  sorted = TRUE,
+  drop = FALSE
+)
 
 setSeedSingle(seed)
 
@@ -27,7 +34,7 @@ getSequenceToSampleFrom()
 
 \item{size}{A non-negative integer giving the number of items to choose.}
 
-\item{seed}{The seed to apply before sampling.}
+\item{seed}{A single seed.}
 
 \item{by}{The name of the column to sample by when sampling rows of a data frame.}
 
@@ -42,8 +49,6 @@ getSequenceToSampleFrom()
 \item{i}{The index of the bootstrap replicate to generate seeds for.}
 
 \item{seedV}{A vector of seeds.}
-
-\item{seed}{A single seed.}
 }
 \description{
 Sample a vector after sorting the vector and applying the seed, and functions for setting seeds in Rstox.

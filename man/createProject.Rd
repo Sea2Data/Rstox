@@ -18,18 +18,35 @@
 \alias{readXMLfiles}
 \title{Create, open or save a StoX project}
 \usage{
-createProject(projectName = NULL, files = list(), dir = NULL,
-  model = "StationLengthDistTemplate", ow = NULL, open = TRUE,
-  ignore.processXML = FALSE, parlist = list(), msg = TRUE, ...)
+createProject(
+  projectName = NULL,
+  files = list(),
+  dir = NULL,
+  model = "StationLengthDistTemplate",
+  ow = NULL,
+  open = TRUE,
+  ignore.processXML = FALSE,
+  parlist = list(),
+  msg = TRUE,
+  ...
+)
 
-openProject(projectName = NULL, out = c("project", "baseline",
-  "baseline-report", "name"), msg = FALSE)
+openProject(
+  projectName = NULL,
+  out = c("project", "baseline", "baseline-report", "name"),
+  msg = FALSE
+)
 
-reopenProject(projectName, out = c("project", "baseline",
-  "baseline-report", "name"))
+reopenProject(
+  projectName,
+  out = c("project", "baseline", "baseline-report", "name")
+)
 
-getProject(projectName, out = c("project", "baseline", "baseline-report",
-  "name"), msg = FALSE)
+getProject(
+  projectName,
+  out = c("project", "baseline", "baseline-report", "name"),
+  msg = FALSE
+)
 
 listOpenProjects()
 
@@ -39,8 +56,7 @@ modifyProject(projectName, close = TRUE, parlist = list(), ...)
 
 saveProject(projectName, soft = FALSE)
 
-saveasProject(projectName, newProjectName, dir = NULL, ow = NULL,
-  msg = TRUE)
+saveasProject(projectName, newProjectName, dir = NULL, ow = NULL, msg = TRUE)
 
 resetProject(projectName, to = "original")
 

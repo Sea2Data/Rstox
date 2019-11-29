@@ -4,8 +4,14 @@
 \alias{writeRecaConfiguration}
 \title{Writes RECA configuration}
 \usage{
-writeRecaConfiguration(GlobalParameters, Landings, WeightLength, AgeLength,
-  fileobj, main = NULL)
+writeRecaConfiguration(
+  GlobalParameters,
+  Landings,
+  WeightLength,
+  AgeLength,
+  fileobj,
+  main = NULL
+)
 }
 \arguments{
 \item{GlobalParameters}{defined in \code{\link[Reca]{eca.estimate}} and \code{\link[Reca]{eca.predict}}}

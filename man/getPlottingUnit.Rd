@@ -4,8 +4,14 @@
 \alias{getPlottingUnit}
 \title{Interprets a unit key stings as a scaleing factor}
 \usage{
-getPlottingUnit(unit = NULL, var = "count", baseunit = NULL,
-  labl = NULL, def.out = TRUE, ...)
+getPlottingUnit(
+  unit = NULL,
+  var = "count",
+  baseunit = NULL,
+  labl = NULL,
+  def.out = TRUE,
+  ...
+)
 }
 \arguments{
 \item{unit}{A unit key string indicating the unit (see getPlottingUnit()$definitions$units for available key strings), or alternatively a numeric value giving the scaling factor.}

@@ -4,8 +4,13 @@
 \alias{getLengthGivenAge_Biotic}
 \title{Function for converting to the input format required by ECA (this is the main function):}
 \usage{
-getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage,
-  onlyagestations = F)
+getLengthGivenAge_Biotic(
+  eca,
+  hatchDaySlashMonth,
+  minage,
+  maxage,
+  onlyagestations = F
+)
 }
 \arguments{
 \item{onlyagestations}{If true, only hauls with some aged individiuals are used}

@@ -5,8 +5,15 @@
 \alias{getFunsRstox}
 \title{Get various plots and reports in Rstox}
 \usage{
-runFunsRstox(projectName, string, out = "all", options = "",
-  all.out = FALSE, drop.out = TRUE, ...)
+runFunsRstox(
+  projectName,
+  string,
+  out = "all",
+  options = "",
+  all.out = FALSE,
+  drop.out = TRUE,
+  ...
+)
 
 getFunsRstox(string, out = "all")
 }

@@ -8,27 +8,70 @@
 \alias{reportAbundanceAtLevel}
 \title{Calculate a summary of the bootstrap iterations (possibly after imputing unknown ages).}
 \usage{
-reportAbundance(projectName, bootstrapMethod = "AcousticTrawl",
-  var = "count", unit = NULL, baseunit = NULL, grp1 = "age",
-  grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE,
-  write = FALSE, ...)
+reportAbundance(
+  projectName,
+  bootstrapMethod = "AcousticTrawl",
+  var = "count",
+  unit = NULL,
+  baseunit = NULL,
+  grp1 = "age",
+  grp2 = NULL,
+  numberscale = 1e+06,
+  plotOutput = FALSE,
+  write = FALSE,
+  ...
+)
 
-reportAbundance_SweptAreaLength(projectName, var = "count",
-  unit = NULL, baseunit = NULL, grp1 = "age", grp2 = NULL,
-  numberscale = 1e+06, plotOutput = FALSE, write = FALSE,
-  msg = TRUE, ...)
+reportAbundance_SweptAreaLength(
+  projectName,
+  var = "count",
+  unit = NULL,
+  baseunit = NULL,
+  grp1 = "age",
+  grp2 = NULL,
+  numberscale = 1e+06,
+  plotOutput = FALSE,
+  write = FALSE,
+  msg = TRUE,
+  ...
+)
 
-reportAbundance_AcousticTrawl(projectName, var = "count", unit = NULL,
-  baseunit = NULL, grp1 = "age", grp2 = NULL, numberscale = 1e+06,
-  plotOutput = FALSE, write = FALSE, msg = TRUE, ...)
+reportAbundance_AcousticTrawl(
+  projectName,
+  var = "count",
+  unit = NULL,
+  baseunit = NULL,
+  grp1 = "age",
+  grp2 = NULL,
+  numberscale = 1e+06,
+  plotOutput = FALSE,
+  write = FALSE,
+  msg = TRUE,
+  ...
+)
 
-reportAbundance_SweptAreaTotal(projectName, unit = NULL,
-  baseunit = NULL, write = FALSE, ...)
+reportAbundance_SweptAreaTotal(
+  projectName,
+  unit = NULL,
+  baseunit = NULL,
+  write = FALSE,
+  ...
+)
 
-reportAbundanceAtLevel(projectName, var = "count", unit = NULL,
-  baseunit = NULL, level = "bootstrapImpute", grp1 = "age",
-  grp2 = NULL, numberscale = 1e+06, plotOutput = FALSE,
-  write = FALSE, digits = 6, covfun = "cov")
+reportAbundanceAtLevel(
+  projectName,
+  var = "count",
+  unit = NULL,
+  baseunit = NULL,
+  level = "bootstrapImpute",
+  grp1 = "age",
+  grp2 = NULL,
+  numberscale = 1e+06,
+  plotOutput = FALSE,
+  write = FALSE,
+  digits = 6,
+  covfun = "cov"
+)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}
