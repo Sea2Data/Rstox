@@ -69,6 +69,39 @@ temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
   }
 }
 
+#' Sets startdate equal to stopdate for biotic, wher the latter and not the former is defined.
+#' @noRd
+workaraound_set_startdate_from_stopdate <- function(biotic, stations){
+  tl <- biotic
+
+  if (any(is.na(tl$stationstartdate))){
+    
+    #attempt to use stopdate if startdate is NA  
+    #only invoke workaround when needed
+    if (!is.null(stations)){
+      #need to merge in from original data, as stopdate is not exported by BioticCovData
+      npre <- nrow(tl)
+      tl <- merge(tl[, names(tl)[!(names(tl) %in% c("stationstartdate", "stationstopdate"))]],
+                  stations[,c("serialnumber", "stationstartdate", "stationstopdate")], all.x=T, by.x="serialnumber", by.y=c("serialnumber"))
+      if (npre != nrow(tl)){
+        stop("Issues with merging in stationdata. Multiple years combined ?")
+      }
+      
+      #reinit as merge might reorder
+      tl$stationstartdate[is.na(tl$stationstartdate)] <- tl$stationstopdate[is.na(tl$stationstartdate)]    
+      
+      if (any(is.na(tl$stationstartdate))){
+        stop("NAs in station startdate and stopdate")
+      }
+        
+      #reformat startdate
+      tl$stationstartdate <- strftime(tl$stationstartdate, format="%d/%m/%Y")
+      
+    }
+  }
+  return(tl)
+}
+
 #' get random number to pass as seed to RECA
 #' @noRd
 getseed <- function(){
@@ -258,6 +291,8 @@ baseline2eca <-
       covariateDescriptions <- ECACovariates$Description[present]
       covariateProcesses <- ECACovariates$Processe[present]
       
+      write("Applying workaround to set startdate for yearday", stderr())
+      biotic <- workaraound_set_startdate_from_stopdate(biotic, baselineOutput$outputData$FilterBiotic$FilterBiotic_BioticData_fishstation.txt)
       # (2c) Add yearday, year and month:
       biotic <-
         addYearday(biotic,
