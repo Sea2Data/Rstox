@@ -163,7 +163,7 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   }
   if (!is.null(agelength$AgeErrorMatrix)){
     if (any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
-      stop("Rows of age error matrix does not sum to 1")
+      stop("Rows of age error matrix does not sum to 1, for the provided age-range.")
     }
   } 
 }
