@@ -843,7 +843,7 @@ plot_mission_types <- function(biotic, title="mission types\n# stations", blankc
 }
 
 #' Composition of catch sample types in data
-#' @biotic as exported from stox (one line pr individual)
+#' @param biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param blankcode code for NA / not registered
@@ -877,7 +877,7 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
 }
 
 #' Composition of station types (Stasjons: stasjonstype) in data
-#' @biotic as exported from stox (one line pr individual)
+#' @param biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param blankcode code for NA / not registered
@@ -911,7 +911,7 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
 }
 
 #' Plots composition in catchsamples of parameters that determines what kind fraction of catches or landings are sampled
-#' @biotic as exported from stox (one line pr individual)
+#' @param biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param allname name to use for samples where all catch was sampled
