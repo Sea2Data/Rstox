@@ -3199,7 +3199,7 @@ getSequenceToSampleFrom <- function(){
 #' @param onlyone   	Logical: If TRUE, only one project is checked (no for loop).
 #' @param msg			Logical: If TRUE, print messages to the console.
 #'
-#' @value A list of two elements ow and jumpToNext.
+#' @return A list of two elements ow and jumpToNext.
 #'
 #' @export
 #' @noRd
@@ -3292,7 +3292,7 @@ getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
 #' @param projectName   	Project identifyer (see \code{\link{openProject}}).
 #' @param precisionLevel	The precision level to set to the project, where 0L represents the low precision level used prior to Rstox 1.7 and Stox 2.5, and 1L represents the 4-significant digits precision used from those versions and onward.
 #'
-#' @value The precision level.
+#' @return The precision level.
 #'
 #' @export
 #' @noRd
@@ -3322,7 +3322,7 @@ getPrecisionLevel <- function(projectName){
 #'
 #' @param x	The files to read.
 #'
-#' @value The content of the files in a list named with the process names and possibly names of multiple tables for each process.
+#' @return The content of the files in a list named with the process names and possibly names of multiple tables for each process.
 #'
 #' @export
 #' @noRd

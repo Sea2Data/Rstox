@@ -142,7 +142,7 @@ plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior cat
 #' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
-#' @param alpha
+#' @param alpha credible intervals will be cover 1-alpha of the posterior distribution.
 #' @keywords internal
 #' @noRd
 plot_catch_at_age_ci <- function(pred, var, unit, alpha=0.1, xlab="age", ylab=paste("posterior catch", unit), ...){
@@ -843,7 +843,7 @@ plot_mission_types <- function(biotic, title="mission types\n# stations", blankc
 }
 
 #' Composition of catch sample types in data
-#' @biotic as exported from stox (one line pr individual)
+#' @param biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param blankcode code for NA / not registered
@@ -877,7 +877,7 @@ plot_sample_types <- function(biotic, title="sample types", xlab="# catch sample
 }
 
 #' Composition of station types (Stasjons: stasjonstype) in data
-#' @biotic as exported from stox (one line pr individual)
+#' @param biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param blankcode code for NA / not registered
@@ -911,7 +911,7 @@ plot_station_types <- function(biotic, title="station types", xlab="# stations",
 }
 
 #' Plots composition in catchsamples of parameters that determines what kind fraction of catches or landings are sampled
-#' @biotic as exported from stox (one line pr individual)
+#' @param biotic as exported from stox (one line pr individual)
 #' @param title title for plot
 #' @param xlab label for x axis
 #' @param allname name to use for samples where all catch was sampled
@@ -1043,7 +1043,11 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
   #clustering ages in plots. kemans on log(means) seems to work well, but sometimes failes due to 0 means, which is avoided by adding lowest non-zero mean
   llo <- min(means[means>0])
   clust <- kmeans(log(means+llo), nclust, iter.max = iter.max, nstart = nstart)
-  m <- data.table::melt(caa_scaled, c("age", "iteration"), value.name=unit)
+  
+  colnames(caa_scaled) <- 1:ncol(caa_scaled)
+  caa_scaled_dt <- data.table(caa_scaled)
+  caa_scaled_dt$age <- as.character(pred$AgeCategories)
+  m <- data.table::melt(caa_scaled_dt, c("age"), value.name=unit, variable.name="iteration", variable.factor=F)
   m <- merge(m, data.frame(age=names(lq), lq=lq))
   m <- merge(m, data.frame(age=names(uq), uq=uq))
   
@@ -1051,13 +1055,13 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
   plotnr <- 1
   for (i in seq(1,nclust)[order(clust$centers, decreasing = T)]){
     mcp <- m[m$age %in% pred$AgeCategories[clust$cluster==i],]
-    maxy <- max(mcp[unit]) + max(mcp[unit])*.1
+    maxy <- max(mcp[[unit]]) + max(mcp[[unit]])*.1
     if (sum(clust$cluster==i)<=catlimit){
       mcp$age <- as.factor(mcp$age)
-      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[unit] > mcp$uq | mcp[unit] < mcp$lq,], aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)+themef()
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[[unit]] > mcp$uq | mcp[[unit]] < mcp$lq,], aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)+themef()
     }
     else{
-      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[unit] > mcp$uq | mcp[unit] < mcp$lq,], aes(color=age)) + ylim(0,maxy)+themef()
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[[unit]] > mcp$uq | mcp[[unit]] < mcp$lq,], aes(color=age)) + ylim(0,maxy)+themef()
     }
     
     plotnr <- plotnr+1
