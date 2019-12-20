@@ -2057,7 +2057,7 @@ saveDecomposedCatchMatrix <- function(projectName,
     projectlandings[,quartcolumnname] <- getQuarter(projectlandings$sistefangstdato)
   }
   if (length(customMainAreaGrouping) > 0){
-    areacodes<-sprintf("%02d", projectlandings[,"hovedomr\u00e5dekode"])
+    areacodes <- sprintf("%02d", projectlandings[,"hovedomr\u00e5dekode"])
     
     if (!all(areacodes %in% unlist(customMainAreaGrouping))){
       missing <- unique(areacodes[!(areacodes %in% unlist(customMainAreaGrouping))])
@@ -2069,7 +2069,7 @@ saveDecomposedCatchMatrix <- function(projectName,
   }
   
   if (length(customLocationGrouping) > 0){
-    locationcodes<-sprintf("%02d-%02d", projectlandings[,"hovedomr\u00e5dekode"], projectlandings[,"lokasjonkode"])
+    locationcodes <- sprintf("%02d-%02d", projectlandings[,"hovedomr\u00e5dekode"], projectlandings[,"lokasjonkode"])
     
     if (!all(locationcodes %in% unlist(customLocationGrouping))){
       missing <- unique(areacodes[!(areacodes %in% unlist(customLocationGrouping))])
