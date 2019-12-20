@@ -1043,7 +1043,13 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
   #clustering ages in plots. kemans on log(means) seems to work well, but sometimes failes due to 0 means, which is avoided by adding lowest non-zero mean
   llo <- min(means[means>0])
   clust <- kmeans(log(means+llo), nclust, iter.max = iter.max, nstart = nstart)
-  m <- data.table::melt(caa_scaled, c("age", "iteration"), value.name=unit)
+  
+  data.table(caa_scaled, keep.rownames = T)
+  
+  colnames(caa_scaled) <- 1:ncol(caa_scaled)
+  caa_scaled_dt <- data.table(caa_scaled)
+  caa_scaled_dt$age <- pred$AgeCategories
+  m <- data.table::melt(caa_scaled_dt, c("age"), value.name=unit, variable.name="iteration")
   m <- merge(m, data.frame(age=names(lq), lq=lq))
   m <- merge(m, data.frame(age=names(uq), uq=uq))
   
