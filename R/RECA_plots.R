@@ -1044,12 +1044,10 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
   llo <- min(means[means>0])
   clust <- kmeans(log(means+llo), nclust, iter.max = iter.max, nstart = nstart)
   
-  data.table(caa_scaled, keep.rownames = T)
-  
   colnames(caa_scaled) <- 1:ncol(caa_scaled)
   caa_scaled_dt <- data.table(caa_scaled)
-  caa_scaled_dt$age <- pred$AgeCategories
-  m <- data.table::melt(caa_scaled_dt, c("age"), value.name=unit, variable.name="iteration")
+  caa_scaled_dt$age <- as.character(pred$AgeCategories)
+  m <- data.table::melt(caa_scaled_dt, c("age"), value.name=unit, variable.name="iteration", variable.factor=F)
   m <- merge(m, data.frame(age=names(lq), lq=lq))
   m <- merge(m, data.frame(age=names(uq), uq=uq))
   
