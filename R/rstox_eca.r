@@ -1978,26 +1978,57 @@ saveCatchCovarianceMatrix <- function(pred,
 #'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
 #'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
 #'    
+#'    Specifying either customMainAreaGrouping or customLocationGrouping, adds a column "spatialGroup" to the decomposition
+#'    The spatial group is specified by the arguments 'customMainAreaGrouping' or 'customLocationGrouping' as some merge of either main-areas
+#'    or combination of main-area location (Directorate of fisheries).
+#'    
 #' @param projectName Name identifying StoX project
 #' @param filename filename to write decomposed catch matrix to. If NULL a filename in the projects R-report directory will be generated.
 #' @param decomposition variables to use for decomposition, must be available for all rows in landings
 #' @param addQuarterToDecomp workaround variable for adding quarter to decomp
+#' @param customMainAreaGrouping optional, list mapping custom spatial groups to vectors of main area strings (2 character string <mainarea>, e.g. "12" or "09")
+#' @param customLocationGrouping optional, list mapping custom spatial groups to vectors of location strings (5 character string <mainarea>-<location>, e.g.: "12-01" or "09-01")
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
 #' @export
-saveDecomposedCatchMatrix <- function(projectName, filename=NULL, decomposition=c("omr\u00e5degrupperingbokm\u00e5l"), addQuarterToDecomp=T, var = "Abundance",
+saveDecomposedCatchMatrix <- function(projectName, 
+                                      filename=NULL, 
+                                      decomposition=c("omr\u00e5degrupperingbokm\u00e5l"), 
+                                      addQuarterToDecomp=T, 
+                                      customMainAreaGrouping=NULL,
+                                      customLocationGrouping=NULL,
+                                      var = "Abundance",
                                       unit = "millions",
                                       plusgr=NULL,
                                       main = ""){
+  
+  
+  if (length(customMainAreaGrouping) > 0 & length(customLocationGrouping) > 0){
+    stop("You may specify only one of 'customLocationGrouping' and 'customLocationGrouping'")
+  }
+  
+  customSpatialName <- "spatialGroup"
+  if (length(customMainAreaGrouping) > 0){
+    if (any(nchar(unlist(customMainAreaGrouping))!=2)){
+      stop("Provide customMainAreaGrouping as 2-character strings. E.g. \"01\"")
+    }
+    decomposition <- c(decomposition, customSpatialName)
+  }
+  
+  if (length(customLocationGrouping) > 0){
+    if (any(nchar(unlist(customLocationGrouping))!=5)){
+      stop("Provide customLocationGrouping as 5-character strings. E.g. \"01-01\"")
+    }
+    decomposition <- c(decomposition, customSpatialName)
+  }
   
   if (is.null(filename)){
     resultdir <- getProjectPaths(projectName)$RReportDir
     filename <- file.path(resultdir, "decomposedcatch.csv")
   }
-  
   
   quartcolumnname <- "Quarter"
   if (addQuarterToDecomp){
@@ -2025,7 +2056,32 @@ saveDecomposedCatchMatrix <- function(projectName, filename=NULL, decomposition=
   if (addQuarterToDecomp){
     projectlandings[,quartcolumnname] <- getQuarter(projectlandings$sistefangstdato)
   }
+  if (length(customMainAreaGrouping) > 0){
+    areacodes<-sprintf("%02d", projectlandings[,"hovedomr\u00e5dekode"])
+    
+    if (!all(areacodes %in% unlist(customMainAreaGrouping))){
+      missing <- unique(areacodes[!(areacodes %in% unlist(customMainAreaGrouping))])
+      stop(paste("Custom group is not provided for all main areas. Missing: ", paste(missing, collapse=", ")))
+    }
+    
+    areacodes <- rep(names(customMainAreaGrouping), unlist(lapply(customMainAreaGrouping, length)))
+    projectlandings[,customSpatialName] <- areacodes[match(areacodes, unlist(customMainAreaGrouping))]
+  }
+  
+  if (length(customLocationGrouping) > 0){
+    locationcodes<-sprintf("%02d-%02d", projectlandings[,"hovedomr\u00e5dekode"], projectlandings[,"lokasjonkode"])
+    
+    if (!all(locationcodes %in% unlist(customLocationGrouping))){
+      missing <- unique(areacodes[!(areacodes %in% unlist(customLocationGrouping))])
+      stop(paste("Custom group is not provided for all main areas and locations. Missing: ", paste(missing, collapse=", ")))
+    }
+    
+    groupedcodes <- rep(names(customLocationGrouping), unlist(lapply(customLocationGrouping, length)))
+    projectlandings[,customSpatialName] <- groupedcodes[match(locationcodes, unlist(customLocationGrouping))]
+  }
+  
   projecttempres <- prepareRECA$StoxExport$temporalresolution
+  
   
   AgeLength <- prepareRECA$AgeLength
   WeightLength <- prepareRECA$WeightLength
