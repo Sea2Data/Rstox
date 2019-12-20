@@ -2064,8 +2064,8 @@ saveDecomposedCatchMatrix <- function(projectName,
       stop(paste("Custom group is not provided for all main areas. Missing: ", paste(missing, collapse=", ")))
     }
     
-    areacodes <- rep(names(customMainAreaGrouping), unlist(lapply(customMainAreaGrouping, length)))
-    projectlandings[,customSpatialName] <- areacodes[match(areacodes, unlist(customMainAreaGrouping))]
+    groupedcodes <- rep(names(customMainAreaGrouping), unlist(lapply(customMainAreaGrouping, length)))
+    projectlandings[,customSpatialName] <- groupedcodes[match(areacodes, unlist(customMainAreaGrouping))]
   }
   
   if (length(customLocationGrouping) > 0){
