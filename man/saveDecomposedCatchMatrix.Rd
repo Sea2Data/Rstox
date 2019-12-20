@@ -9,6 +9,8 @@ saveDecomposedCatchMatrix(
   filename = NULL,
   decomposition = c("områdegrupperingbokmål"),
   addQuarterToDecomp = T,
+  customMainAreaGrouping = NULL,
+  customLocationGrouping = NULL,
   var = "Abundance",
   unit = "millions",
   plusgr = NULL,
@@ -23,6 +25,10 @@ saveDecomposedCatchMatrix(
 \item{decomposition}{variables to use for decomposition, must be available for all rows in landings}
 
 \item{addQuarterToDecomp}{workaround variable for adding quarter to decomp}
+
+\item{customMainAreaGrouping}{optional, list mapping custom spatial groups to vectors of main area strings (2 character string <mainarea>, e.g. "12" or "09")}
+
+\item{customLocationGrouping}{optional, list mapping custom spatial groups to vectors of location strings (5 character string <mainarea>-<location>, e.g.: "12-01" or "09-01")}
 
 \item{var}{Variable to extract for calculation. Allows for Abundance, Count or Weight}
 
@@ -44,4 +50,8 @@ Contain options for workaround variables, until reporting setup can be configure
    decomposition variables need not be the same as model covariates, but model covariates will be used for estimation.
    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
+   
+   Specifying either customMainAreaGrouping or customLocationGrouping, adds a column "spatialGroup" to the decomposition
+   The spatial group is specified by the arguments 'customMainAreaGrouping' or 'customLocationGrouping' as some merge of either main-areas
+   or combination of main-area location (Directorate of fisheries).
 }
