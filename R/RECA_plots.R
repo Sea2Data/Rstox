@@ -142,7 +142,7 @@ plot_pred_box <- function(pred, var, unit, xlab="age", ylab=paste("posterior cat
 #' @param pred RECA prediction object as returned by Reca::eca.predict
 #' @param var A key string indicating the variable to plot. 'Abundance' and 'Weight' is implemented. 
 #' @param unit A unit key string indicating the unit (see getPlottingUnit()$definitions$unlist.units for available key strings)
-#' @param alpha
+#' @param alpha credible intervals will be cover 1-alpha of the posterior distribution.
 #' @keywords internal
 #' @noRd
 plot_catch_at_age_ci <- function(pred, var, unit, alpha=0.1, xlab="age", ylab=paste("posterior catch", unit), ...){
