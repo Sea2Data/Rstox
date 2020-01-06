@@ -226,6 +226,7 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
 #' @param projectName name of stox project
 #' @param processName process whose output is to be checked
 #' @param issuefile filename for writing issues, if NULL, write to stderr()
+#' @export
 makeSampleHomogeneityReportRECA <- function(projectName, processName="FilterBiotic", issuefile=NULL){
   bl <- Rstox::getBaseline(projectName, endProcess = processName)
   
