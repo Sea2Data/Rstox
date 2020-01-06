@@ -299,9 +299,14 @@ makeSampleHomogeneityReportRECA <- function(projectName, processName="FilterBiot
     stream <- file(issuefile, open="w")
   }
   
-  write(paste("Potential issues with samples in project", projectName, ":", sep=""), stream)
-  for (i in issues){
-    write(i, stream)  
+  if (length(issues > 0)){
+    write(paste("Potential issues with samples in project", projectName, ":", sep=""), stream)
+    for (i in issues){
+      write(i, stream)  
+    }
+  }
+  else{
+    write("No issues found", stdout())
   }
   
   if (!is.null(issuefile)){
