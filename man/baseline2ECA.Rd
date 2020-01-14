@@ -4,9 +4,16 @@
 \alias{baseline2eca}
 \title{Prepare data from a project to the ECA model}
 \usage{
-baseline2eca(projectName, biotic = "BioticCovData",
-  landing = "LandingCovData", temporal = NULL, gearfactor = NULL,
-  spatial = NULL, landingresolution = 92, ...)
+baseline2eca(
+  projectName,
+  biotic = "BioticCovData",
+  landing = "LandingCovData",
+  temporal = NULL,
+  gearfactor = NULL,
+  spatial = NULL,
+  landingresolution = 92,
+  ...
+)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

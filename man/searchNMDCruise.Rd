@@ -4,10 +4,15 @@
 \alias{searchNMDCruise}
 \title{Search for a cruise given the cruise number and ship name.}
 \usage{
-searchNMDCruise(cruisenr, shipname = NULL, datasource = "biotic",
+searchNMDCruise(
+  cruisenr,
+  shipname = NULL,
+  datasource = "biotic",
   ver = getRstoxDef("ver"),
   server = "http://tomcat7.imr.no:8080/apis/nmdapi",
-  return.URL = FALSE, snapshot = Sys.time())
+  return.URL = FALSE,
+  snapshot = Sys.time()
+)
 }
 \arguments{
 \item{cruisenr}{A vector of cruise numbers (see the (time consuming) command cruisenr <- getNMDinfo("cruises")$cruise).}

@@ -420,11 +420,11 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 		project <- J("no.imr.stox.factory.FactoryUtil")$openProject(projectRoot, projectName)
 		
 		# Added check for R and Rstox version, issuing a message that the user should save the project if these should be updated in the project description:
-		savedRVersion <- project$getRVersion()
-		savedRstoxVersion <- project$getRStoxVersion()
+		savedRVersion <- as.character(project$getRVersion())
+		savedRstoxVersion <- as.character(project$getRStoxVersion())
 		
-		currentRVersion <- getRversion()
-		currentRstoxVersion <- packageVersion("Rstox")
+		currentRVersion <- as.character(getRversion())
+		currentRstoxVersion <- as.character(packageVersion("Rstox"))
 		
 		if(currentRVersion != savedRVersion || currentRstoxVersion != savedRstoxVersion) {
 			message("The opened project was saved with different R or Rstox versions. To update the R and Rstox version in the project description file (project.xml) use saveProject()")

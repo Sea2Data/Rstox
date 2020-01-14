@@ -15,19 +15,26 @@ readWKTSplit(x, ...)
 
 polyArea(x, requireClosed = TRUE)
 
-polyArea_test(x, par = list(proj = "laea", units = "kmi", lon_0 = NA,
-  lat_0 = NA, x_0 = 0, y_0 = 0, ellps = "WGS84", datum = "WGS84"),
-  longlat = TRUE, ...)
+polyArea_test(
+  x,
+  par = list(proj = "laea", units = "kmi", lon_0 = NA, lat_0 = NA, x_0 = 0, y_0 = 0,
+    ellps = "WGS84", datum = "WGS84"),
+  longlat = TRUE,
+  ...
+)
 
 getMatrixList(x, drop = TRUE, data.frame.out = FALSE)
 
-getMultipolygon(x, drop = TRUE, data.frame.out = FALSE,
-  requireClosed = TRUE)
+getMultipolygon(x, drop = TRUE, data.frame.out = FALSE, requireClosed = TRUE)
 
 getSpatial(x)
 
-matrix2multipolygon(x, drop = TRUE, data.frame.out = FALSE,
-  requireClosed = TRUE)
+matrix2multipolygon(
+  x,
+  drop = TRUE,
+  data.frame.out = FALSE,
+  requireClosed = TRUE
+)
 
 multipolygon2matrix(x, drop = TRUE, data.frame.out = FALSE)
 }

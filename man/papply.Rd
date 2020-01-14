@@ -4,8 +4,17 @@
 \alias{papply}
 \title{Parallel version of lapply}
 \usage{
-papply(X, FUN, ..., cores = 1, outfile = "", info.msg = NULL,
-  end.msg = "", appendLF = TRUE, pb = TRUE)
+papply(
+  X,
+  FUN,
+  ...,
+  cores = 1,
+  outfile = "",
+  info.msg = NULL,
+  end.msg = "",
+  appendLF = TRUE,
+  pb = TRUE
+)
 }
 \arguments{
 \item{X, FUN, ...}{See \code{\link[pbapply]{pblapply}}.}

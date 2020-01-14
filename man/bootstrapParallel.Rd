@@ -4,11 +4,23 @@
 \alias{bootstrapParallel}
 \title{Bootstrap biotic stations and acoustic data}
 \usage{
-bootstrapParallel(projectName, assignments, psuNASC = NULL,
-  stratumNASC = NULL, resampledNASC = NULL, nboot = 5,
-  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seed = 1, cores = 1, msg = TRUE, parameters = list(),
-  sorted = TRUE, JavaMem = getRstoxDef("JavaMem"), ...)
+bootstrapParallel(
+  projectName,
+  assignments,
+  psuNASC = NULL,
+  stratumNASC = NULL,
+  resampledNASC = NULL,
+  nboot = 5,
+  startProcess = "TotalLengthDist",
+  endProcess = "SuperIndAbundance",
+  seed = 1,
+  cores = 1,
+  msg = TRUE,
+  parameters = list(),
+  sorted = TRUE,
+  JavaMem = getRstoxDef("JavaMem"),
+  ...
+)
 }
 \arguments{
 \item{projectName}{The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).}

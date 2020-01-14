@@ -9,19 +9,23 @@ URL: https://github.com/Sea2Data/Rstox
 BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
 LazyData: true
+Encoding: UTF-8
 Imports: 
     data.table (>= 1.10.4-3),
+    MASS,
+    methods,
+    RColorBrewer,
     ggplot2,
+    gridExtra,
+    plotrix,
     pbapply,
     rgdal,
     rgeos,
     rJava,
     sp,
     XML,
-    plotrix
+    scatterpie
 Suggests: 
-    ncdf4,
     pgirmess,
-    Reca,
-    plotrix
-RoxygenNote: 6.1.1
+    Reca
+RoxygenNote: 7.0.2

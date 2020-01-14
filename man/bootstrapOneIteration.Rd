@@ -4,10 +4,21 @@
 \alias{bootstrapOneIteration}
 \title{Run one bootstrap iteration of biotic stations and acoustic data}
 \usage{
-bootstrapOneIteration(i, projectName, assignments, strataNames,
-  psuNASC = NULL, stratumNASC = NULL, resampledNASC = NULL,
-  startProcess = "TotalLengthDist", endProcess = "SuperIndAbundance",
-  seedV = NULL, sorted = TRUE, JavaMem = getRstoxDef("JavaMem"), ...)
+bootstrapOneIteration(
+  i,
+  projectName,
+  assignments,
+  strataNames,
+  psuNASC = NULL,
+  stratumNASC = NULL,
+  resampledNASC = NULL,
+  startProcess = "TotalLengthDist",
+  endProcess = "SuperIndAbundance",
+  seedV = NULL,
+  sorted = TRUE,
+  JavaMem = getRstoxDef("JavaMem"),
+  ...
+)
 }
 \arguments{
 \item{i}{The boostrap iteration number.}

@@ -7,23 +7,54 @@
 \alias{downloadXML}
 \title{Get NMD API data and reference information}
 \usage{
-getNMDinfo(type = NULL, ver = getRstoxDef("ver"),
-  server = "http://tomcat7.imr.no:8080/apis/nmdapi", recursive = TRUE,
-  msg = FALSE, simplify = TRUE, return.URL = FALSE)
+getNMDinfo(
+  type = NULL,
+  ver = getRstoxDef("ver"),
+  server = "http://tomcat7.imr.no:8080/apis/nmdapi",
+  recursive = TRUE,
+  msg = FALSE,
+  simplify = TRUE,
+  return.URL = FALSE
+)
 
-getNMDdata(cruise = NULL, year = NULL, shipname = NULL,
-  serialnumber = NULL, tsn = NULL, datasource = NULL, dir = NULL,
-  subdir = FALSE, group = "default", abbrev = FALSE, subset = NULL,
-  prefix = "NMD", suffix = NA, ver = getRstoxDef("ver"),
-  server = "http://tomcat7.imr.no:8080/apis/nmdapi", cleanup = TRUE,
-  model = "StationLengthDistTemplate", msg = TRUE, ow = NULL,
-  return.URL = FALSE, info.out = FALSE, run = TRUE, timeout = NULL,
-  snapshot = Sys.time(), ...)
+getNMDdata(
+  cruise = NULL,
+  year = NULL,
+  shipname = NULL,
+  serialnumber = NULL,
+  tsn = NULL,
+  datasource = NULL,
+  dir = NULL,
+  subdir = FALSE,
+  group = "default",
+  abbrev = FALSE,
+  subset = NULL,
+  prefix = "NMD",
+  suffix = NA,
+  ver = getRstoxDef("ver"),
+  server = "http://tomcat7.imr.no:8080/apis/nmdapi",
+  cleanup = TRUE,
+  model = "StationLengthDistTemplate",
+  msg = TRUE,
+  ow = NULL,
+  return.URL = FALSE,
+  info.out = FALSE,
+  run = TRUE,
+  timeout = NULL,
+  snapshot = Sys.time(),
+  ...
+)
 
 getNMDver(ver = NULL)
 
-downloadXML(URL, msg = FALSE, list.out = TRUE, file = NULL,
-  method = "auto", timeout = NULL)
+downloadXML(
+  URL,
+  msg = FALSE,
+  list.out = TRUE,
+  file = NULL,
+  method = "auto",
+  timeout = NULL
+)
 }
 \arguments{
 \item{type}{A character string naming the type of information to return for the specifications given in 'spec'. Possible values are shown in the list below. Any reference data can be requested, and the names of the possible reference data are returned by running getNMDinfo():

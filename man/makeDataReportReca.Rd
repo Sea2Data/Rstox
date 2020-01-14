@@ -4,8 +4,14 @@
 \alias{makeDataReportReca}
 \title{Data report for RECA}
 \usage{
-makeDataReportReca(biotic, stationissuesfile, catchissuefile,
-  imputationfile, verbose = T, covariates = NULL)
+makeDataReportReca(
+  biotic,
+  stationissuesfile,
+  catchissuefile,
+  imputationfile,
+  verbose = T,
+  covariates = NULL
+)
 }
 \arguments{
 \item{biotic}{sample data exported from stox in \code{\link[Rstox]{prepareRECA}}}
