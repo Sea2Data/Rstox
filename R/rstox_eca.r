@@ -1,9 +1,9 @@
 #' Compensates bug in stox where the covariate temporal is not set based on prosessdata when useProsessdata is chosen
 #' @noRd
-temporal_workaround <- function(data, processdata, sourcetype){
+temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
   
   if (!is.null(processdata$temporal)){
-    warning(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
+    write(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""), stderr())
     tempdef <- processdata$temporal[processdata$temporal$CovariateSourceType==sourcetype,]
     tempdef$mstart <- substr(tempdef$Value, 4,5)
     tempdef$mend <- substr(tempdef$Value, 10,11)
@@ -11,12 +11,41 @@ temporal_workaround <- function(data, processdata, sourcetype){
     tempdef$dend <- substr(tempdef$Value, 7,8)
 
     tl <- data
+    
     if (sourcetype=="Biotic"){
-      if (any(is.na(tl$stationstartdate))){
-        stop("NAs in station startdate")
+      stationdate <- tl$stationstartdate
+      if (any(is.na(stationdate))){
+      
+        #attempt to use stopdate if startdate is NA  
+        #only invoke workaround when needed
+        if (!is.null(stations)){
+          #need to merge in from original data, as stopdate is not exported by BioticCovData
+          npre <- nrow(tl)
+          tl <- merge(tl[,c("serialnumber", "cruise")], stations[,c("serialnumber", "stationstartdate", "stationstopdate")], all.x=T, by.x="serialnumber", by.y=c("serialnumber"))
+          if (npre != nrow(tl)){
+            stop("Issues with merging in stationdata. Multiple years combined ?")
+          }
+          
+          #reinit as merge might reorder
+          stationdate <- tl$stationstartdate
+          stationdate[is.na(stationdate)] <- tl$stationstopdate[is.na(stationdate)]    
+          
+          if (any(is.na(stationdate))){
+            stop("NAs in station startdate and stopdate")
+          }
+          tl$m <- substr(stationdate, 6,7)
+          tl$d <- substr(stationdate, 9,10)
+        }
+        
       }
-      tl$m <- substr(tl$stationstartdate, 4,5)
-      tl$d <- substr(tl$stationstartdate, 1,2)
+      else{
+        if (any(is.na(stationdate))){
+          stop("NAs in station startdate and stopdate")
+        }
+        tl$m <- substr(stationdate, 4,5)
+        tl$d <- substr(stationdate, 1,2)
+      }
+      
     }
     else if (sourcetype=="Landing"){
       tl$m <- substr(tl$sistefangstdato, 6,7)
@@ -38,6 +67,39 @@ temporal_workaround <- function(data, processdata, sourcetype){
   else{
     return(data)
   }
+}
+
+#' Sets startdate equal to stopdate for biotic, wher the latter and not the former is defined.
+#' @noRd
+workaraound_set_startdate_from_stopdate <- function(biotic, stations){
+  tl <- biotic
+
+  if (any(is.na(tl$stationstartdate))){
+    
+    #attempt to use stopdate if startdate is NA  
+    #only invoke workaround when needed
+    if (!is.null(stations)){
+      #need to merge in from original data, as stopdate is not exported by BioticCovData
+      npre <- nrow(tl)
+      tl <- merge(tl[, names(tl)[!(names(tl) %in% c("stationstartdate", "stationstopdate"))]],
+                  stations[,c("serialnumber", "stationstartdate", "stationstopdate")], all.x=T, by.x="serialnumber", by.y=c("serialnumber"))
+      if (npre != nrow(tl)){
+        stop("Issues with merging in stationdata. Multiple years combined ?")
+      }
+      
+      #reinit as merge might reorder
+      tl$stationstartdate[is.na(tl$stationstartdate)] <- tl$stationstopdate[is.na(tl$stationstartdate)]    
+      
+      if (any(is.na(tl$stationstartdate))){
+        stop("NAs in station startdate and stopdate")
+      }
+        
+      #reformat startdate
+      tl$stationstartdate <- strftime(tl$stationstartdate, format="%d/%m/%Y")
+      
+    }
+  }
+  return(tl)
 }
 
 #' get random number to pass as seed to RECA
@@ -160,7 +222,7 @@ baseline2eca <-
       getBaseline(
         projectName,
         input = c("par", "proc"),
-        proc = c(biotic, landing),
+        proc = c(biotic, landing, "FilterBiotic"),
         ...
       )
     
@@ -198,7 +260,7 @@ baseline2eca <-
       }
       
       names(biotic) <- tolower(names(biotic))
-      biotic <- temporal_workaround(biotic, baselineOutput$processData, "Biotic")
+      biotic <- temporal_workaround(biotic, baselineOutput$processData, "Biotic", baselineOutput$outputData$FilterBiotic$FilterBiotic_BioticData_fishstation.txt)
       
       # Detect whether temporal is defined with seasons, and add year and season and remove temporal in the process data:
       # This caused error with cod and could be solved with Jira STOX-153:
@@ -229,6 +291,8 @@ baseline2eca <-
       covariateDescriptions <- ECACovariates$Description[present]
       covariateProcesses <- ECACovariates$Processe[present]
       
+      write("Applying workaround to set startdate for yearday", stderr())
+      biotic <- workaraound_set_startdate_from_stopdate(biotic, baselineOutput$outputData$FilterBiotic$FilterBiotic_BioticData_fishstation.txt)
       # (2c) Add yearday, year and month:
       biotic <-
         addYearday(biotic,
@@ -556,14 +620,14 @@ getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, d
   lengthresM <- getMode(DataMatrix$lengthresM)
   lengthresCM <- lengthresM * 100
   if (!all(DataMatrix$lengthresM == head(DataMatrix$lengthresM, 1))) {
-    warning(
+    write(
       paste0(
         "Several length resolusions applied in the data (",
         paste(table(DataMatrix$lengthresCM), collapse = ", "),
         "). The mode (",
         lengthresCM,
         ") used in the ECA"
-      )
+      ), stderr()
     )
   }
   
@@ -996,7 +1060,7 @@ prepareRECA <-
     }
     
     if (overwrite){
-      warning("Running prepareECA with overwrite=T")
+      write("Running prepareECA with overwrite=T", stderr())
       setProjectData(
         projectName = projectName,
         var = NULL,
@@ -1030,7 +1094,7 @@ prepareRECA <-
     if (length(list.files(resultdir))>0){
       stop(paste("Directory", resultdir, "contains files."))
     }
-    warning("checking filepath char comp")
+    write("checking filepath char comp", stderr())
     if (grepl(" ", resultdir)) {
       stop(paste(
         "Please make ecadir",
@@ -1059,7 +1123,7 @@ prepareRECA <-
         file.path(getProjectPaths(projectName)$RReportDir,
                   "imputationissues.txt") 
       
-      makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic))  
+      makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic), eca$landing)  
       
       if (file.exists(stationissuesfilename)){
         out$filename <- c(stationissuesfilename, out$filename)        
@@ -1093,6 +1157,11 @@ prepareRECA <-
     AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage, onlyagestations=agedstationsonly)
     WeightLength <- getWeightGivenLength_Biotic(eca)
     Landings <- getLandings(eca$landing, AgeLength, WeightLength, landingresolution = temporalresolution)
+    
+    #
+    # do not run data checks here, as plots need to be made and data will not be written for fails
+    #
+    
     
     #
     # store results
@@ -1909,26 +1978,57 @@ saveCatchCovarianceMatrix <- function(pred,
 #'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
 #'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
 #'    
+#'    Specifying either customMainAreaGrouping or customLocationGrouping, adds a column "spatialGroup" to the decomposition
+#'    The spatial group is specified by the arguments 'customMainAreaGrouping' or 'customLocationGrouping' as some merge of either main-areas
+#'    or combination of main-area location (Directorate of fisheries).
+#'    
 #' @param projectName Name identifying StoX project
 #' @param filename filename to write decomposed catch matrix to. If NULL a filename in the projects R-report directory will be generated.
 #' @param decomposition variables to use for decomposition, must be available for all rows in landings
 #' @param addQuarterToDecomp workaround variable for adding quarter to decomp
+#' @param customMainAreaGrouping optional, list mapping custom spatial groups to vectors of main area strings (2 character string <mainarea>, e.g. "12" or "09")
+#' @param customLocationGrouping optional, list mapping custom spatial groups to vectors of location strings (5 character string <mainarea>-<location>, e.g.: "12-01" or "09-01")
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
 #' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
 #' @export
-saveDecomposedCatchMatrix <- function(projectName, filename=NULL, decomposition=c("omr\u00e5degrupperingbokm\u00e5l"), addQuarterToDecomp=T, var = "Abundance",
+saveDecomposedCatchMatrix <- function(projectName, 
+                                      filename=NULL, 
+                                      decomposition=c("omr\u00e5degrupperingbokm\u00e5l"), 
+                                      addQuarterToDecomp=T, 
+                                      customMainAreaGrouping=NULL,
+                                      customLocationGrouping=NULL,
+                                      var = "Abundance",
                                       unit = "millions",
                                       plusgr=NULL,
                                       main = ""){
+  
+  
+  if (length(customMainAreaGrouping) > 0 & length(customLocationGrouping) > 0){
+    stop("You may specify only one of 'customLocationGrouping' and 'customLocationGrouping'")
+  }
+  
+  customSpatialName <- "spatialGroup"
+  if (length(customMainAreaGrouping) > 0){
+    if (any(nchar(unlist(customMainAreaGrouping))!=2)){
+      stop("Provide customMainAreaGrouping as 2-character strings. E.g. \"01\"")
+    }
+    decomposition <- c(decomposition, customSpatialName)
+  }
+  
+  if (length(customLocationGrouping) > 0){
+    if (any(nchar(unlist(customLocationGrouping))!=5)){
+      stop("Provide customLocationGrouping as 5-character strings. E.g. \"01-01\"")
+    }
+    decomposition <- c(decomposition, customSpatialName)
+  }
   
   if (is.null(filename)){
     resultdir <- getProjectPaths(projectName)$RReportDir
     filename <- file.path(resultdir, "decomposedcatch.csv")
   }
-  
   
   quartcolumnname <- "Quarter"
   if (addQuarterToDecomp){
@@ -1956,7 +2056,32 @@ saveDecomposedCatchMatrix <- function(projectName, filename=NULL, decomposition=
   if (addQuarterToDecomp){
     projectlandings[,quartcolumnname] <- getQuarter(projectlandings$sistefangstdato)
   }
+  if (length(customMainAreaGrouping) > 0){
+    areacodes <- sprintf("%02d", projectlandings[,"hovedomr\u00e5dekode"])
+    
+    if (!all(areacodes %in% unlist(customMainAreaGrouping))){
+      missing <- unique(areacodes[!(areacodes %in% unlist(customMainAreaGrouping))])
+      stop(paste("Custom group is not provided for all main areas. Missing: ", paste(missing, collapse=", ")))
+    }
+    
+    groupedcodes <- rep(names(customMainAreaGrouping), unlist(lapply(customMainAreaGrouping, length)))
+    projectlandings[,customSpatialName] <- groupedcodes[match(areacodes, unlist(customMainAreaGrouping))]
+  }
+  
+  if (length(customLocationGrouping) > 0){
+    locationcodes <- sprintf("%02d-%02d", projectlandings[,"hovedomr\u00e5dekode"], projectlandings[,"lokasjonkode"])
+    
+    if (!all(locationcodes %in% unlist(customLocationGrouping))){
+      missing <- unique(areacodes[!(areacodes %in% unlist(customLocationGrouping))])
+      stop(paste("Custom group is not provided for all main areas and locations. Missing: ", paste(missing, collapse=", ")))
+    }
+    
+    groupedcodes <- rep(names(customLocationGrouping), unlist(lapply(customLocationGrouping, length)))
+    projectlandings[,customSpatialName] <- groupedcodes[match(locationcodes, unlist(customLocationGrouping))]
+  }
+  
   projecttempres <- prepareRECA$StoxExport$temporalresolution
+  
   
   AgeLength <- prepareRECA$AgeLength
   WeightLength <- prepareRECA$WeightLength

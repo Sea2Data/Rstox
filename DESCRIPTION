@@ -28,4 +28,8 @@ Imports:
 Suggests: 
     pgirmess,
     Reca
+<<<<<<< HEAD
 RoxygenNote: 7.0.2
+=======
+RoxygenNote: 7.0.1
+>>>>>>> 85912a17ae5a5e91eab728bc857fc68332ba8be6

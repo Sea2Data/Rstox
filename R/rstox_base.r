@@ -420,11 +420,11 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 		project <- J("no.imr.stox.factory.FactoryUtil")$openProject(projectRoot, projectName)
 		
 		# Added check for R and Rstox version, issuing a message that the user should save the project if these should be updated in the project description:
-		savedRVersion <- as.character(project$getRVersion())
-		savedRstoxVersion <- as.character(project$getRStoxVersion())
+		savedRVersion <- project$getRVersion()
+		savedRstoxVersion <- project$getRStoxVersion()
 		
-		currentRVersion <- as.character(getRversion())
-		currentRstoxVersion <- as.character(packageVersion("Rstox"))
+		currentRVersion <- getRversion()
+		currentRstoxVersion <- packageVersion("Rstox")
 		
 		if(currentRVersion != savedRVersion || currentRstoxVersion != savedRstoxVersion) {
 			message("The opened project was saved with different R or Rstox versions. To update the R and Rstox version in the project description file (project.xml) use saveProject()")
@@ -3199,7 +3199,7 @@ getSequenceToSampleFrom <- function(){
 #' @param onlyone   	Logical: If TRUE, only one project is checked (no for loop).
 #' @param msg			Logical: If TRUE, print messages to the console.
 #'
-#' @value A list of two elements ow and jumpToNext.
+#' @return A list of two elements ow and jumpToNext.
 #'
 #' @export
 #' @noRd
@@ -3292,7 +3292,7 @@ getow <- function(ow, projectPath, onlyone=TRUE, msg=TRUE){
 #' @param projectName   	Project identifyer (see \code{\link{openProject}}).
 #' @param precisionLevel	The precision level to set to the project, where 0L represents the low precision level used prior to Rstox 1.7 and Stox 2.5, and 1L represents the 4-significant digits precision used from those versions and onward.
 #'
-#' @value The precision level.
+#' @return The precision level.
 #'
 #' @export
 #' @noRd
@@ -3322,7 +3322,7 @@ getPrecisionLevel <- function(projectName){
 #'
 #' @param x	The files to read.
 #'
-#' @value The content of the files in a list named with the process names and possibly names of multiple tables for each process.
+#' @return The content of the files in a list named with the process names and possibly names of multiple tables for each process.
 #'
 #' @export
 #' @noRd
