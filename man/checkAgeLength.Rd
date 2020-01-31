@@ -4,7 +4,7 @@
 \alias{checkAgeLength}
 \title{checks that agelenght is configured correctly}
 \usage{
-checkAgeLength(agelength, num_tolerance = 1e-10)
+checkAgeLength(agelength, num_tolerance = 1e-10, checkAgeErrors = T)
 }
 \description{
 checks that agelenght is configured correctly
