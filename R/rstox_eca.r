@@ -1247,7 +1247,7 @@ runRECA <-
     # Run checks
     #
     
-    checkAgeLength(AgeLength)
+    checkAgeLength(AgeLength, checkAgeErrors=age.error)
     checkWeightLength(WeightLength)
     checkCovariateConsistency(AgeLength, Landings$AgeLengthCov)
     checkCovariateConsistency(WeightLength, Landings$WeightLengthCov)
