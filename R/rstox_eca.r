@@ -848,10 +848,12 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   ind <-
     match(as.numeric(names(eca$stratumNeighbour)), eca$resources$covariateLink$spatial[, 2])
   if (!all(sort(ind) == ind)) {
-    stop(
-      "covariate values are ordered differently in stratumneighbour and covariatelink spatial"
-    )
+    eca$stratumNeighbour <- eca$stratumNeighbour[match(eca$resources$covariateLink$spatial[, 2], names(eca$stratumNeighbour))]
   }
+  
+  ind <-
+    match(names(eca$stratumNeighbour), eca$resources$covariateLink$spatial[, 2])
+  stopifnot(all(sort(ind) == ind))
   
   names(eca$stratumNeighbour) <-
     eca$resources$covariateLink$spatial[ind, 1]
