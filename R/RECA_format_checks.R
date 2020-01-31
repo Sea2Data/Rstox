@@ -137,7 +137,7 @@ check_covariates <- function(modelobject){
 
 #' checks that agelenght is configured correctly
 #' @keywords internal
-checkAgeLength<-function(agelength, num_tolerance = 1e-10){
+checkAgeLength<-function(agelength, num_tolerance = 1e-10, checkAgeErrors=T){
   check_columns_present(agelength$DataMatrix, c("age", "part.year", "lengthCM", "samplingID", "partnumber", "partcount"))
   check_none_missing(agelength$DataMatrix, c("lengthCM", "samplingID", "partnumber"))
   
@@ -158,14 +158,16 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   if (any(!is.na(agelength$DataMatrix$part.year) & agelength$DataMatrix$part.year>1)){
     stop("part.year must be in <0,1]")
   }
-  if (!is.null(agelength$AgeErrorMatrix) & (any(is.na(agelength$AgeErrorMatrix)) || any(agelength$AgeErrorMatrix>1) || any(agelength$AgeErrorMatrix<0))){
-    stop("Invalid values in age error matrix")
-  }
-  if (!is.null(agelength$AgeErrorMatrix)){
-    if (any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
-      stop("Rows of age error matrix does not sum to 1, for the provided age-range.")
+  if (checkAgeErrors){
+    if (!is.null(agelength$AgeErrorMatrix) & (any(is.na(agelength$AgeErrorMatrix)) || any(agelength$AgeErrorMatrix>1) || any(agelength$AgeErrorMatrix<0))){
+      stop("Invalid values in age error matrix")
     }
-  } 
+    if (!is.null(agelength$AgeErrorMatrix)){
+      if (any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
+        stop("Rows of age error matrix does not sum to 1, for the provided age-range.")
+      }
+    } 
+  }
 }
 #' checks that weightlenght is configured correctly
 #' @keywords internal
