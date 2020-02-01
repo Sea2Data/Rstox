@@ -885,8 +885,9 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
       unlist(modelSpecification$interaction)
   }
   else{
-    # defaults to interaction term for all covariates in landings
-    info[, "interaction"] <- info[, "in.landings"]
+    # defaults to no interactions.
+    # To make it defaults to interaction term for all covariates in landings
+    # info[, "interaction"] <- info[, "in.landings"]
     info["constant", "interaction"] <- 0
   }
   
