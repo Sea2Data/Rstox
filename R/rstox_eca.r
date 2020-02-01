@@ -848,10 +848,12 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   ind <-
     match(as.numeric(names(eca$stratumNeighbour)), eca$resources$covariateLink$spatial[, 2])
   if (!all(sort(ind) == ind)) {
-    stop(
-      "covariate values are ordered differently in stratumneighbour and covariatelink spatial"
-    )
+    eca$stratumNeighbour <- eca$stratumNeighbour[match(eca$resources$covariateLink$spatial[, 2], names(eca$stratumNeighbour))]
   }
+  
+  ind <-
+    match(names(eca$stratumNeighbour), eca$resources$covariateLink$spatial[, 2])
+  stopifnot(all(sort(ind) == ind))
   
   names(eca$stratumNeighbour) <-
     eca$resources$covariateLink$spatial[ind, 1]
@@ -883,8 +885,9 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
       unlist(modelSpecification$interaction)
   }
   else{
-    # defaults to interaction term for all covariates in landings
-    info[, "interaction"] <- info[, "in.landings"]
+    # defaults to no interactions.
+    # To make it defaults to interaction term for all covariates in landings
+    # info[, "interaction"] <- info[, "in.landings"]
     info["constant", "interaction"] <- 0
   }
   
@@ -1584,7 +1587,8 @@ plotSamplingOverview <-
     if (all(c("gearfactor", "temporal", "spatial") %in% stoxexp$resources$covariateInfo$name)) {
       rows <-
         nrow(unique(get_gta_landings(stoxexp)[, c("gearfactor", "temporal")]))
-      cols <- length(unique(get_gta_landings(stoxexp)$spatial))
+      colnamefactor <- mean(unlist(lapply(unique(get_gta_landings(stoxexp)$spatial), FUN=function(x){max(5,nchar(x))})))/5
+      cols <- length(unique(get_gta_landings(stoxexp)$spatial)) * colnamefactor
       
       cols <- max(13, cols)
       rows <- max(3, rows)

@@ -255,7 +255,14 @@ makeSampleHomogeneityReportRECA <- function(projectName, processName="FilterBiot
   if (length(lengthmeasurements)!=1){
     issues <- c(issues, c(paste("Several codes for length measurements ('lengthmeasurement') found in data:", paste(lengthmeasurements, collapse = ", "))))
   }
+
+  #sampleproducttype
+  sampleproducttypes <- unique(catches$sampleproducttype)
+  if (length(sampleproducttypes)!=1){
+    issues <- c(issues, c(paste("Several codes for sample product types ('sampleproducttypes') found in data:", paste(sampleproducttypes, collapse = ", "), "consider correcting weights with ConvertLengthAndWeight.")))
+  }
   
+    
   #producttypes when delprove taken
   stationids <- do.call(paste, catches[,c("platform", "startyear", "missiontype", "missionnumber", "serialnumber")])
   duplicates <- duplicated(stationids)
