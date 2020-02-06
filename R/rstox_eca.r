@@ -986,6 +986,12 @@ getWeightGivenLength_Biotic <- function(eca) {
   eca$covariateMatrixBiotic <-
     eca$covariateMatrixBiotic[valid, , drop = FALSE]
   
+  #check that individual weights are of the same product type.
+  if (length(unique(eca$biotic$individualproducttype)) != 1){
+    producttypes <- unique(eca$biotic$individualproducttype)
+    stop(paste("Heterogenous product type composition. Consider using the function 'ConvertLengthAndWeight'. Product types ('individualproducttype') in data:", paste(producttypes, collapse=",")))
+  }
+  
   ### 1. DataMatrix: ###
   temp <-
     getDataMatrixANDCovariateMatrix(eca, vars = var)
