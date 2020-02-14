@@ -845,14 +845,21 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   
   # 3.2. CAR:
   # Make sure the neighbours are ordered according to the 1:n values in the covariateLink:
-  ind <-
-    match(as.numeric(names(eca$stratumNeighbour)), eca$resources$covariateLink$spatial[, 2])
+  
+  if (is.numeric(eca$resources$covariateLink$spatial[, 2])){
+    ind <-
+      match(as.numeric(names(eca$stratumNeighbour)), eca$resources$covariateLink$spatial[, 2])
+  }
+  else{
+    ind <-
+      match(names(eca$stratumNeighbour), eca$resources$covariateLink$spatial[, 2])  
+  }
   if (!all(sort(ind) == ind)) {
     eca$stratumNeighbour <- eca$stratumNeighbour[match(eca$resources$covariateLink$spatial[, 2], names(eca$stratumNeighbour))]
+    ind <-
+      match(names(eca$stratumNeighbour), eca$resources$covariateLink$spatial[, 2])  
   }
   
-  ind <-
-    match(names(eca$stratumNeighbour), eca$resources$covariateLink$spatial[, 2])
   stopifnot(all(sort(ind) == ind))
   
   names(eca$stratumNeighbour) <-
