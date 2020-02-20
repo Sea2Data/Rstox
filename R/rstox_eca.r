@@ -381,6 +381,7 @@ baseline2eca <-
                 covariateDefinition[[i]]$landing[, 2]
               )
             ))
+          
           link <- match(allLevels[[i]], allValues)
           data.frame(
             Numeric = seq_along(link),
@@ -397,6 +398,11 @@ baseline2eca <-
         )
       names(covariateLink) <- names(covariateDefinition)
       
+      rows <- sapply(covariateLink, FUN=function(x){nrow(x)})
+      if (any(rows==0)){
+        stop(paste("Some covariates have zero levels:", paste(names(rows)[rows==0], collapse=",")))
+      }
+
       #covariateLink <- lapply(seq_along(allLevels), function(i) match(allLevels[[i]], covariateDefinition[[i]]$biotic[,2]))
       #covariateLink <- lapply(seq_along(allLevels), function(i) data.frame(Numeric=seq_along(allLevels[[i]]), Covariate=covariateDefinition[[i]]$biotic[covariateLink[[i]], 2], stringsAsFactors=FALSE))
       #names(covariateLink) <- names(covariateDefinition)
@@ -470,7 +476,7 @@ baseline2eca <-
           lapply(stratumNeighbourList, function(xx)
             unlist(strsplit(xx, ",")))
       }
-      
+
       # Extract only the strata present in the data:
       stratumNeighbourList <-
         stratumNeighbourList[names(stratumNeighbourList) %in% covariateLink$spatial[, 2]]
