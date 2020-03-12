@@ -3,7 +3,7 @@
 temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
   
   if (!is.null(processdata$temporal)){
-    write(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""), stderr())
+    message(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
     tempdef <- processdata$temporal[processdata$temporal$CovariateSourceType==sourcetype,]
     tempdef$mstart <- substr(tempdef$Value, 4,5)
     tempdef$mend <- substr(tempdef$Value, 10,11)
@@ -291,7 +291,7 @@ baseline2eca <-
       covariateDescriptions <- ECACovariates$Description[present]
       covariateProcesses <- ECACovariates$Processe[present]
       
-      write("Applying workaround to set startdate for yearday", stderr())
+      message("Applying workaround to set startdate for yearday")
       biotic <- workaraound_set_startdate_from_stopdate(biotic, baselineOutput$outputData$FilterBiotic$FilterBiotic_BioticData_fishstation.txt)
       # (2c) Add yearday, year and month:
       biotic <-
@@ -626,14 +626,14 @@ getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, d
   lengthresM <- getMode(DataMatrix$lengthresM)
   lengthresCM <- lengthresM * 100
   if (!all(DataMatrix$lengthresM == head(DataMatrix$lengthresM, 1))) {
-    write(
+    message(
       paste0(
         "Several length resolusions applied in the data (",
         paste(table(DataMatrix$lengthresCM), collapse = ", "),
         "). The mode (",
         lengthresCM,
         ") used in the ECA"
-      ), stderr()
+      )
     )
   }
   
@@ -1082,7 +1082,7 @@ prepareRECA <-
     }
     
     if (overwrite){
-      write("Running prepareECA with overwrite=T", stderr())
+      message("Running prepareECA with overwrite=T")
       setProjectData(
         projectName = projectName,
         var = NULL,
@@ -1116,7 +1116,7 @@ prepareRECA <-
     if (length(list.files(resultdir))>0){
       stop(paste("Directory", resultdir, "contains files."))
     }
-    write("checking filepath char comp", stderr())
+    message("checking filepath char comp")
     if (grepl(" ", resultdir)) {
       stop(paste(
         "Please make ecadir",
@@ -1352,7 +1352,7 @@ splitBioticCC <- function(biotic){
 
 #' Generates plots and reports from RECA prediction
 #' @param projectName name of stox project
-#' @param verbose logical, if TRUE info is written to stderr()
+#' @param verbose logical, if TRUE info is written as messages
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on plot function and format
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
@@ -1458,7 +1458,7 @@ plotRECAresults <-
 #' @description Generate plots for diagnosis of RECA model configuration.
 #' @details Plots are made conditional on problems. E.g. Fixed effects plot is not made, if all combinations of fixed effects were sampled.
 #' @param projectName name of stox project
-#' @param verbose logical, if TRUE info is written to stderr()
+#' @param verbose logical, if TRUE info is written as messages
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on to plot function and format
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
@@ -1542,7 +1542,7 @@ diagnosticsRECA <-
 #' @description Generate plots to show composition of samples wrp activity in fisheries
 #' @details Compares sampling effort to fisheries along covariates selected in the model, and along some standard covariate choices if available (gear, temporal and spatial). Plots compositions of samples with respect to some important variables informative of sampling heterogenety
 #' @param projectName name of stox project
-#' @param verbose logical, if TRUE info is written to stderr()
+#' @param verbose logical, if TRUE info is written as messages
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on to plot function and format
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
@@ -1587,15 +1587,14 @@ plotSamplingOverview <-
       out$filename <- c(fn, out$filename)
     }
     else{
-      write(
+      message(
         paste(
           "Need all",
           "gearfactor",
           "temporal",
           "spatial",
           "as covariates to produce RECA_cell_coverage"
-        ),
-        stderr()
+        )
       )
     }
     
@@ -1633,15 +1632,14 @@ plotSamplingOverview <-
       out$filename <- c(fn, out$filename)
     }
     else{
-      write(
+      message(
         paste(
           "Need all",
           "gearfactor",
           "temporal",
           "spatial",
           "as covariates to produce RECA_samples_by_cells"
-        ),
-        stderr()
+        )
       )
     }
     

@@ -3,7 +3,7 @@
 #' @param plotname filename for plot without format suffix
 #' @param draw function for drawing the plot. Takes no arguments
 #' @param format function defining plotting device and file suffix, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
-#' @param verbose logical, if TRUE info is written to stderr()
+#' @param verbose logical, if TRUE info is written as messages
 #' @param ... parameters to be passed on to \code{\link{format}}
 #' @keywords internal
 #' @noRd
@@ -32,11 +32,11 @@ formatPlot <-
     
     tryCatch({
       if (verbose) {
-        write(paste("Plotting ", plotname), stderr())
+        message(paste("Plotting ", plotname))
       }
       draw()
       if (verbose) {
-        write(paste("Plot written to:", filename), stderr())
+        message(paste("Plot written to:", filename))
       }},
       finally={
         
