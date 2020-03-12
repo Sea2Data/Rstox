@@ -13,6 +13,7 @@ temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
     tl <- data
     
     if (sourcetype=="Biotic"){
+      
       stationdate <- tl$stationstartdate
       if (any(is.na(stationdate))){
       
@@ -21,7 +22,7 @@ temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
         if (!is.null(stations)){
           #need to merge in from original data, as stopdate is not exported by BioticCovData
           npre <- nrow(tl)
-          tl <- merge(tl[,c("serialnumber", "cruise")], stations[,c("serialnumber", "stationstartdate", "stationstopdate")], all.x=T, by.x="serialnumber", by.y=c("serialnumber"))
+          tl <- merge(tl[,c("serialnumber", "cruise")], unique(stations[,c("serialnumber", "stationstartdate", "stationstopdate")]), all.x=T, by.x="serialnumber", by.y=c("serialnumber"))
           if (npre != nrow(tl)){
             stop("Issues with merging in stationdata. Multiple years combined ?")
           }
@@ -45,7 +46,8 @@ temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
         tl$m <- substr(stationdate, 4,5)
         tl$d <- substr(stationdate, 1,2)
       }
-      
+      tl <- tl[order(tl$serialnumber),]
+      data <- data[order(data$serialnumber),]
     }
     else if (sourcetype=="Landing"){
       tl$m <- substr(tl$sistefangstdato, 6,7)
@@ -61,6 +63,7 @@ temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
       selector <- lte_end & gte_start
       tl[selector, "temporal"] <- tempdef[i, "Covariate"]
     }
+
     data$temporal <- tl$temporal
     return(data)
   }
