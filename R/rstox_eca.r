@@ -1843,6 +1843,44 @@ getCatchMatrix <- function(pred,
   
 }
 
+
+#' calculates catch matrix for given variable and unit
+#' @return data.frame with columns: age, meanLength, meanWeight, sd.of.meanLength, sd.of.meanWeight
+#' @keywords internal
+getAgeGroupParamaters <- function(pred,
+                           plusgr=NULL){
+
+  ages <- as.character(pred$AgeCategories)
+  abundances <- apply(apply(pred$TotalCount, c(2, 3), sum), 1, mean)
+  pred$MeanWeight <- pred$MeanWeight*1000
+  weights <- apply(pred$MeanWeight, 1, mean)
+  weights.var <- apply(pred$MeanWeight, 1, var)
+  lengths <- apply(pred$MeanLength, 1, mean)
+  lengths.var <- apply(pred$MeanLength, 1, var)
+  
+  if (!is.null(plusgr)){
+    #mean of age groups in plusgroup, weighted by age group abundance
+    weights[plusgr] <- weights[plusgr:length(weights)] %*% (abundances[plusgr:length(abundances)]/sum(abundances[plusgr:length(abundances)]))
+    weights.var[plusgr] <- weights.var[plusgr:length(weights.var)] %*% (abundances[plusgr:length(abundances)]/sum(abundances[plusgr:length(abundances)]))**2
+    lengths[plusgr] <- lengths[plusgr:length(lengths)] %*% (abundances[plusgr:length(abundances)]/sum(abundances[plusgr:length(abundances)]))
+    lengths.var[plusgr] <- lengths.var[plusgr:length(lengths.var)] %*% (abundances[plusgr:length(abundances)]/sum(abundances[plusgr:length(abundances)]))**2
+    weights <- weights[1:plusgr]
+    weights.var <- weights.var[1:plusgr]
+    lengths <- lengths[1:plusgr]
+    lengths.var <- lengths.var[1:plusgr]
+    ages <- ages[1:plusgr]
+    ages[plusgr] <- paste(ages[plusgr], "+", sep="")
+  }
+  
+  lengths.sd <- sqrt(lengths.var)
+  weights.sd <- sqrt(weights.var)
+  
+  tab <- data.frame(age=ages, meanLengthCm=lengths, meanLengthCm.sd=lengths.sd, meanWeightsG=weights, meanWeightsG.sd=weights.sd)
+  
+  return (tab)
+  
+}
+
 #' @title Save catch at age matrix
 #' @description Write catch at age predicted by \code{\link[Reca]{eca.predict}} as csv file.
 #' @details Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
@@ -2016,7 +2054,7 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
-#' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
+#' @return data frame with rows for each combination of decomposition variables and age groups, and columns with values or levels for age groups and decomposition variables, in addition to columns for the catch at age and standard deviation
 #' @export
 saveDecomposedCatchMatrix <- function(projectName, 
                                       filename=NULL, 
