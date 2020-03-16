@@ -9,7 +9,7 @@ diagnosticsRECA(projectName, verbose = F, format = "png", ...)
 \arguments{
 \item{projectName}{name of stox project}
 
-\item{verbose}{logical, if TRUE info is written to stderr()}
+\item{verbose}{logical, if TRUE info is written as messages}
 
 \item{format}{function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp}
 
