@@ -135,10 +135,18 @@ check_covariates <- function(modelobject){
   check_cov_vs_info(modelobject)
 }
 
+#' @keywords internal
+check_length_complete <- function(datamatrix){
+  if (any(is.na(datamatrix$lengthCM))){
+    stop("Length is missing for some fish. lengthCM has missing value.")
+  }
+}
+
 #' checks that agelenght is configured correctly
 #' @keywords internal
 checkAgeLength<-function(agelength, num_tolerance = 1e-10, checkAgeErrors=T){
   check_columns_present(agelength$DataMatrix, c("age", "part.year", "lengthCM", "samplingID", "partnumber", "partcount"))
+  check_length_complete(agelength$DataMatrix)
   check_none_missing(agelength$DataMatrix, c("lengthCM", "samplingID", "partnumber"))
   
   samplesPrCatch <- aggregate(list(partCount=agelength$DataMatrix$partnumber), by=list(samplingID=agelength$DataMatrix$samplingID), FUN=function(x){length(unique(x))})
@@ -173,6 +181,7 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10, checkAgeErrors=T){
 #' @keywords internal
 checkWeightLength<-function(weightlength, landings){
   check_columns_present(weightlength$DataMatrix, c("weightKG", "lengthCM", "samplingID", "partnumber", "partcount"))
+  check_length_complete(weightlength$DataMatrix)
   check_none_missing(weightlength$DataMatrix, c("lengthCM", "samplingID", "partnumber", "weightKG"))
   
   samplesPrCatch <- aggregate(list(partCount=weightlength$DataMatrix$partnumber), by=list(samplingID=weightlength$DataMatrix$samplingID), FUN=function(x){length(unique(x))})
