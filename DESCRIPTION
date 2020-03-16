@@ -27,5 +27,6 @@ Imports:
     scatterpie
 Suggests: 
     pgirmess,
-    Reca
+    Reca,
+    testthat
 RoxygenNote: 7.0.2
