@@ -274,6 +274,14 @@ checkLandings <- function(landings){
 #' 
 #' @keywords internal
 checkGlobalParameters <- function(globalparameters, agelength, weightlength){
+  if (globalparameters$CC){
+    if (all(is.na(agelength$DataMatrix$otolithtype))){
+      stop("CC is set, but otolithtypes are not provided")
+    }
+    if (length(table(agelength$DataMatrix$otolithtype)) == 1){
+      stop("CC is set, but all records have the same otolithtype")
+    }
+  }
   if (is.na(globalparameters$lengthresCM)){
     stop("Length resolution not set (lengthresCM)")
   }
