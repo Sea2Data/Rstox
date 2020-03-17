@@ -1781,6 +1781,50 @@ writeRecaConfiguration <-
   }
 
 #' calculates catch matrix for given variable and unit
+#' @return data.frame with columns: age, meanLength, meanWeight, sd.of.meanLength, sd.of.meanWeight
+#' @keywords internal
+getCatchAtLength <- function(pred,
+                             var = "Abundance",
+                             unit = "ones"
+                             ){
+  
+  totc <- pred$TotalCount
+  if (var == "Abundance" | var == "Count") {
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "ones",
+      def.out = F
+    )
+    cal <- apply(pred$TotalCount, c(1,3), function(x){sum(x)}) / plottingUnit$scale
+  }
+  else if (var == "Weight") {
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "kilograms",
+      def.out = F
+    )
+    
+    cal <- apply(pred$TotalCount, c(1,3), function(x){sum(x*pred$MeanWeight)}) / plottingUnit$scale
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  lengthGroupsCm <- format(exp(pred$LengthIntervalsLog), digits = 3, nsmall = 1)
+  meanCal <- apply(cal, 1, mean)
+  sdCal <- apply(cal, 1, sd)
+  qLow <- apply(cal, 1, function(x){quantile(x, probs=c(0.05))})
+  qHigh <- apply(cal, 1, function(x){quantile(x, probs=c(0.95))})
+  
+  tab <- data.frame(lengthGroupsCm=lengthGroupsCm, mean=meanCal, sd=sdCal)
+  
+  return (tab)
+  
+}
+
+#' calculates catch matrix for given variable and unit
 #' @return list with three members (means, cv and caa_scaled)
 #' @keywords internal
 getCatchMatrix <- function(pred,
@@ -1843,7 +1887,6 @@ getCatchMatrix <- function(pred,
   
 }
 
-
 #' calculates catch matrix for given variable and unit
 #' @return data.frame with columns: age, meanLength, meanWeight, sd.of.meanLength, sd.of.meanWeight
 #' @keywords internal
@@ -1881,17 +1924,13 @@ getAgeGroupParamaters <- function(pred,
   
 }
 
-#' @title Save catch at age matrix
-#' @description Write catch at age predicted by \code{\link[Reca]{eca.predict}} as csv file.
-#' @details Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
-#'    Each row correspond to an age group, and columns to either means or an iteration of the Monte Carlo simulation.
-#'    Units are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
+#' @title Save age group parameters (mean length and weight)
+#' @description Write age group parameters predicted by \code{\link[Reca]{eca.predict}} as csv file.
+#' @details Age group parameters are written as comma-separated file with quoted strings as row/column names.
+#'    Each row correspond to an age group, and columns to means and standard deviations.
 #' @param pred as returned by \code{\link[Reca]{eca.predict}}
 #' @param filename name of file to save to.
-#' @param var Variable to extract. Allows for Abundance, Count or Weight
-#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
-#' @param savemeans If True, only means and spread statistics for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.
 #' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @keywords internal
 saveAgeGroupParameters <-
@@ -1917,6 +1956,62 @@ saveAgeGroupParameters <-
       close(f)
   }
 
+
+#' @title Save catch at Length
+#' @description Write catch at length predicted by \code{\link[Reca]{eca.predict}} as csv file.
+#' @details Catch at age length is written as comma-separated file with quoted strings as row/column names.
+#'    Each row correspond to an age group, and columns to means and standard deviations.
+#'    Units are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
+#' @param pred as returned by \code{\link[Reca]{eca.predict}}
+#' @param filename name of file to save to.
+#' @param var Variable to extract. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @keywords internal
+saveCatchAtLength <-
+  function(pred,
+           filename,
+           var = "Abundance",
+           unit = "millions",
+           main = "") {
+    
+    
+    comments <- c()
+    title <- "Catch at length estimates"
+    
+    if (var == "Abundance" | var == "Count") {
+      
+      if (unit == "ones") {
+        comments <- c(paste(title, "as", var))
+      }
+      if (unit != "ones") {
+        comments <- c(paste(title, "as", var, "in", unit))
+      }
+      
+    }
+    else if (var == "Weight") {
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    else{
+      stop("Not implemented")
+    }
+    
+    comments <- c(main, comments)
+    
+    tab <- getCatchAtLength(pred, var = var, unit = unit)
+    
+    f <- file(filename, open = "w")
+    write(paste("#", comments), f)
+    write.table(
+      tab,
+      file = f,
+      sep = "\t",
+      dec = ".",
+      row.names = F
+    )
+    close(f)
+  }
+
 #' @title Save catch at age matrix
 #' @description Write catch at age predicted by \code{\link[Reca]{eca.predict}} as csv file.
 #' @details Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
@@ -1934,7 +2029,7 @@ saveCatchMatrix <-
   function(pred,
            filename,
            var = "Abundance",
-           unit = "ones",
+           unit = "millions",
            main = "",
            savemeans = F,
            plusgr=NULL) {
@@ -2459,10 +2554,10 @@ reportRECA <-
     tryCatch({
       saveAgeGroupParameters(
         pd$runRECA$pred,
-        get_filename("meanLengthWeight"),
+        "meanLengthWeight.txt",
         main = projectName,
       )
-      out$filename <- c(get_filename("meanLengthWeight"), out$filename)
+      out$filename <- c("meanLengthWeight.txt", out$filename)
     },
     error = function(e) {
     },
@@ -2471,15 +2566,15 @@ reportRECA <-
     })
     
     tryCatch({
-      saveCatchMatrix(
+      saveCatchAtLength(
         pd$runRECA$pred,
-        get_filename("means"),
+        get_filename("CatchAtLength"),
         main = projectName,
         savemeans = T,
         var = var,
         unit = unit
       )
-      out$filename <- c(get_filename("means"), out$filename)
+      out$filename <- c(get_filename("CatchAtLength"), out$filename)
     },
     error = function(e) {
     },
@@ -2490,13 +2585,30 @@ reportRECA <-
     tryCatch({
       saveCatchMatrix(
         pd$runRECA$pred,
-        get_filename("distribution"),
+        get_filename("CatchAtAgeMeans"),
+        main = projectName,
+        savemeans = T,
+        var = var,
+        unit = unit
+      )
+      out$filename <- c(get_filename("CatchAtAgeMeans"), out$filename)
+    },
+    error = function(e) {
+    },
+    finally = {
+      
+    })
+    
+    tryCatch({
+      saveCatchMatrix(
+        pd$runRECA$pred,
+        get_filename("CatchAtAgeDistribution"),
         main = projectName,
         savemeans = F,
         var = var,
         unit = unit
       )
-      out$filename <- c(get_filename("distribution"), out$filename)
+      out$filename <- c(get_filename("CatchAtAgeDistribution"), out$filename)
     },
     error = function(e) {
     },
