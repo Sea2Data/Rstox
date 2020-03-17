@@ -2541,6 +2541,14 @@ reportRECA <-
         ))
       }
     }
+    get_filename_no_units <- function(stat) {
+        return(paste0(
+          file.path(
+            getProjectPaths(projectName)$RReportDir,
+            paste0(stat,
+          ".txt")))
+        )
+      }
     tryCatch({
       pd <- loadProjectData(projectName, var = "runRECA")
       
@@ -2550,14 +2558,14 @@ reportRECA <-
     finally = {
       
     })
-
+    
     tryCatch({
       saveAgeGroupParameters(
         pd$runRECA$pred,
-        "meanLengthWeight.txt",
+        get_filename_no_units("meanLengthWeight"),
         main = projectName,
       )
-      out$filename <- c("meanLengthWeight.txt", out$filename)
+      out$filename <- c(get_filename_no_units("meanLengthWeight"), out$filename)
     },
     error = function(e) {
     },
@@ -2569,10 +2577,7 @@ reportRECA <-
       saveCatchAtLength(
         pd$runRECA$pred,
         get_filename("CatchAtLength"),
-        main = projectName,
-        savemeans = T,
-        var = var,
-        unit = unit
+        main = projectName
       )
       out$filename <- c(get_filename("CatchAtLength"), out$filename)
     },
