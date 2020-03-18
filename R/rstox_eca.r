@@ -1874,6 +1874,7 @@ getCatchMatrix <- function(pred,
   cv$cv <- cv$sd / means$mean
   colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
   caa_scaled$age <- ages
+  caa_scaled <- caa_scaled[,c("age", names(caa_scaled)[names(caa_scaled)!="age"])]
   caa_scaled <-
     caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
   
@@ -2062,11 +2063,17 @@ saveCatchMatrix <-
     
     tab <- getCatchMatrix(pred, var, unit, plusgr = plusgr)
     
+    meanstab <- tab$means
+    meanstab$order <- 1:nrow(meanstab)
+    meanstab <- merge(meanstab, tab$cv)
+    meanstab <- meanstab[order(meanstab$order),]
+    meanstab$order <- NULL
+    
     f <- file(filename, open = "w")
     write(paste("#", comments), f)
     if (savemeans) {
       write.table(
-        merge(tab$means, tab$cv),
+        meanstab,
         file = f,
         sep = "\t",
         dec = ".",
