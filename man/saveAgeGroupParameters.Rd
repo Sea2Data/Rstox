@@ -2,7 +2,7 @@
 % Please edit documentation in R/rstox_eca.r
 \name{saveAgeGroupParameters}
 \alias{saveAgeGroupParameters}
-\title{Save catch at age matrix}
+\title{Save age group parameters (mean length and weight)}
 \usage{
 saveAgeGroupParameters(pred, filename, main = "", plusgr = NULL)
 }
@@ -14,19 +14,12 @@ saveAgeGroupParameters(pred, filename, main = "", plusgr = NULL)
 \item{main}{Title for the analysis, to be included as comment in saved file (e.g. species and year)}
 
 \item{plusgr}{Lower age in plusgr for tabulation. If NULL plusgr is not used.}
-
-\item{var}{Variable to extract. Allows for Abundance, Count or Weight}
-
-\item{unit}{Unit for extracted variable. See \code{\link{getPlottingUnit}}}
-
-\item{savemeans}{If True, only means and spread statistics for each age group will be saved, otherwise extracted variable is saved for each iteration of the Monte Carlo simulation.}
 }
 \description{
-Write catch at age predicted by \code{\link[Reca]{eca.predict}} as csv file.
+Write age group parameters predicted by \code{\link[Reca]{eca.predict}} as csv file.
 }
 \details{
-Catch at age matrix is written as comma-separated file with quoted strings as row/column names.
-   Each row correspond to an age group, and columns to either means or an iteration of the Monte Carlo simulation.
-   Units are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
+Age group parameters are written as comma-separated file with quoted strings as row/column names.
+   Each row correspond to an age group, and columns to means and standard deviations.
 }
 \keyword{internal}

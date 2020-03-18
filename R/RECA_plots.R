@@ -1058,10 +1058,10 @@ plotMCMCagetraces <- function(pred, var="Abundance", unit="millions", nclust=8, 
     maxy <- max(mcp[[unit]]) + max(mcp[[unit]])*.1
     if (sum(clust$cluster==i)<=catlimit){
       mcp$age <- as.factor(mcp$age)
-      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[[unit]] > mcp$uq | mcp[[unit]] < mcp$lq,], aes(color=age)) + scale_color_manual(values = agecolors) + ylim(0,maxy)+themef()
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes_string(color="age")) + geom_point(data=mcp[mcp[[unit]] > mcp$uq | mcp[[unit]] < mcp$lq,], aes_string(color="age")) + scale_color_manual(values = agecolors) + ylim(0,maxy) + scale_x_discrete(breaks=c(max(m$iteration))) + themef()
     }
     else{
-      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes(color=age)) + geom_point(data=mcp[mcp[[unit]] > mcp$uq | mcp[[unit]] < mcp$lq,], aes(color=age)) + ylim(0,maxy)+themef()
+      plots[[plotnr]]<-ggplot(data=mcp, aes_string(x="iteration", y=unit, group="age"))+geom_line(data=mcp, aes_string(color="age")) + geom_point(data=mcp[mcp[[unit]] > mcp$uq | mcp[[unit]] < mcp$lq,], aes_string(color="age")) + ylim(0,maxy) + scale_x_discrete(breaks=c(max(m$iteration))) + themef()
     }
     
     plotnr <- plotnr+1
