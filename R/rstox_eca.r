@@ -1875,8 +1875,6 @@ getCatchMatrix <- function(pred,
   colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
   caa_scaled$age <- ages
   caa_scaled <- caa_scaled[,c("age", names(caa_scaled)[names(caa_scaled)!="age"])]
-  caa_scaled <-
-    caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
   
   
   tab <- list()
