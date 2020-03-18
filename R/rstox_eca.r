@@ -1812,7 +1812,7 @@ getCatchAtLength <- function(pred,
     stop("Not implemented")
   }
   
-  lengthGroupsCm <- format(exp(pred$LengthIntervalsLog), digits = 3, nsmall = 1)
+  lengthGroupsCm <- trimws(format(exp(pred$LengthIntervalsLog), digits = 3, nsmall = 1))
   meanCal <- apply(cal, 1, mean)
   sdCal <- apply(cal, 1, sd)
   qLow <- apply(cal, 1, function(x){quantile(x, probs=c(0.05))})
@@ -1865,12 +1865,12 @@ getCatchMatrix <- function(pred,
   
   caa_scaled <- as.data.frame(caa / plottingUnit$scale)
   means <-
-    as.data.frame(list(age = ages, mean = rowMeans(caa_scaled)))
+    data.frame(age = ages, mean = rowMeans(caa_scaled), stringsAsFactors = F)
   cv <-
-    as.data.frame(list(
+    data.frame(
       age = ages,
-      sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
-    ))
+      sd = apply(caa_scaled, FUN = sd, MARGIN = 1), stringsAsFactors = F
+    )
   cv$cv <- cv$sd / means$mean
   colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
   caa_scaled$age <- ages
