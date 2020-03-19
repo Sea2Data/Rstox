@@ -4,6 +4,7 @@ context("get table for sample cellplot")
 
 mm <- get_g_s_a_frame(prep$StoxExport)
 expect_equal(sum(!is.na(prep$StoxExport$biotic$age)), sum(mm$aged))
+expect_equal(sum(prep$StoxExport$landing$rundvekt)/(1000*1000), sum(mm$landed_kt))
 
 m20 <- get_g_s_a_frame(prep$StoxExport, agesampletypes=c(20))
 expect_equal(sum(!is.na(prep$StoxExport$biotic$sampletype) & prep$StoxExport$biotic$sampletype==20), sum(m20$aged))
