@@ -1070,7 +1070,7 @@ get_default_result_dir <-
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @param overwrite logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
 #' @param agedstationsonly logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model
-#' @param landingAdjuster optional function to manipulate landings before conversion. Used when running from R, for setting covariates not supported by the StoX pipeline. input and output format for this funcition can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)
+#' @param landingAdjuster optional function to manipulate landings before conversion. Used when running from R, for setting covariates not supported by the StoX pipeline, adjusting with logbook records, etc. input and output format for this funcition can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)
 #' @export
 prepareRECA <-
   function(projectName,
