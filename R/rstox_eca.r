@@ -398,6 +398,7 @@ baseline2eca <-
             stringsAsFactors = FALSE
           )
         }
+      
       covariateLink <-
         lapply(
           seq_along(allLevels),
@@ -682,6 +683,7 @@ getLandings <- function(landing, AgeLength, WeightLength, landingresolution) {
       #
       # test that covariateLink is the same for AgeLength and WeightLength
       #
+      
       if (!(all(AgeLength$resources$covariateLink[[n]]==WeightLength$resources$covariateLink[[n]]))){
         stop("Different covariate levels for Age given length model and Weight given length model is not supported")
       }
@@ -1083,7 +1085,7 @@ prepareRECA <-
            temporalresolution = 92,
            overwrite=T,
            agedstationsonly=F,
-           landingsAdjuster=NULL) {
+           landingAdjuster=NULL) {
     if (is.null(resultdir)) {
       resultdir <- get_default_result_dir(projectName)
       if (!(file.exists(resultdir))) {
