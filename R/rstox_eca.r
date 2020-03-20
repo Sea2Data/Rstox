@@ -1062,6 +1062,7 @@ get_default_result_dir <-
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @param overwrite logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
 #' @param agedstationsonly logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model
+#' @param landingsAdjuster optional function that maps an internal representation of landings to the adjusted landings in the same format. Allows for adaptations with logbooks etc., when run from R. Format can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)
 #' @export
 prepareRECA <-
   function(projectName,
@@ -1073,7 +1074,8 @@ prepareRECA <-
            hatchDaySlashMonth = "01/01",
            temporalresolution = 92,
            overwrite=T,
-           agedstationsonly=F) {
+           agedstationsonly=F,
+           landingsAdjuster=NULL) {
     if (is.null(resultdir)) {
       resultdir <- get_default_result_dir(projectName)
       if (!(file.exists(resultdir))) {
@@ -1177,6 +1179,10 @@ prepareRECA <-
     #
     # convert data
     #
+    
+    if (!is.null(landingsAdjuster)){
+      eca$landing <- landingsAdjuster(eca$landing)
+    }
     
     GlobalParameters <- getGlobalParameters(eca$biotic, resultdir, maxlength, minage, maxage, delta.age)
     AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage, onlyagestations=agedstationsonly)

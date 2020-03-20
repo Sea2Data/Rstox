@@ -14,7 +14,8 @@ prepareRECA(
   hatchDaySlashMonth = "01/01",
   temporalresolution = 92,
   overwrite = T,
-  agedstationsonly = F
+  agedstationsonly = F,
+  landingsAdjuster = NULL
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ prepareRECA(
 \item{overwrite}{logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.}
 
 \item{agedstationsonly}{logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model}
+
+\item{landingsAdjuster}{optional function that maps an internal representation of landings to the adjusted landings in the same format. Allows for adaptations with logbooks etc., when run from R. Format can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)}
 }
 \description{
 Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
