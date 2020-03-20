@@ -170,6 +170,7 @@ getCovariateMatrix <- function(data, covariateNames, allLevels) {
 #' @param gearfactor	Optional definition of the gearfactor covariate (not yet implemented).
 #' @param spatial		Optional definition of the spatial covariate (not yet implemented).
 #' @param landingresolution The temporal resolution in days to use for aggregating the landing data.
+#' @param landingAdjuster function to manipulate landings before conversion. Used when running from R, for setting covariates not supported by the StoX pipeline.
 #' @param ...			Parameters passed to \code{\link{getBaseline}}.
 #'
 #' @return A reference to the StoX Java baseline object
@@ -185,6 +186,7 @@ baseline2eca <-
            gearfactor = NULL,
            spatial = NULL,
            landingresolution = 92,
+           landingAdjuster = NULL,
            ...) {
     # Function that retreives year, month, day, yearday:
     addYearday <-
@@ -241,7 +243,11 @@ baseline2eca <-
         stop("Landing table is empty.")
       }
       names(landing) <- tolower(names(landing))
-
+      if (!is.null(landingAdjuster)){
+        landing <- landingAdjuster(landing)
+      }
+      
+      
       landing <- temporal_workaround(landing, baselineOutput$processData, "Landing")
       # 2018-08-28: Changed to using 'sistefangstdato' as per comment from Edvin:
       landing <-
@@ -1052,6 +1058,8 @@ get_default_result_dir <-
 #' @description Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
 #' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[Reca]{eca.estimate}}
 #'    The parameters minage and maxage define the range of ages that are considered possible in the model. Because R-ECA integrates weight and length measurements, and allows for modelling errors in age determination, predicted ages might fall outside the age range in samples. minage and maxage should be set with this in mind.
+#'    
+#'    In order to provide ad-hoc support for manipulations of landings data not provided by StoX
 #' @param projectName name of stox project
 #' @param minage see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}.
 #' @param maxage see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
@@ -1062,7 +1070,7 @@ get_default_result_dir <-
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @param overwrite logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
 #' @param agedstationsonly logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model
-#' @param landingsAdjuster optional function that maps an internal representation of landings to the adjusted landings in the same format. Allows for adaptations with logbooks etc., when run from R. Format can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)
+#' @param landingAdjuster optional function to manipulate landings before conversion. Used when running from R, for setting covariates not supported by the StoX pipeline. input and output format for this funcition can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)
 #' @export
 prepareRECA <-
   function(projectName,
@@ -1130,7 +1138,7 @@ prepareRECA <-
         ") contain no spaces."
       ))
     }
-    eca <- baseline2eca(projectName)
+    eca <- baseline2eca(projectName, landingAdjuster=landingAdjuster)
     eca$temporalresolution <- temporalresolution
 
     
@@ -1179,11 +1187,7 @@ prepareRECA <-
     #
     # convert data
     #
-    
-    if (!is.null(landingsAdjuster)){
-      eca$landing <- landingsAdjuster(eca$landing)
-    }
-    
+
     GlobalParameters <- getGlobalParameters(eca$biotic, resultdir, maxlength, minage, maxage, delta.age)
     AgeLength <- getLengthGivenAge_Biotic(eca, hatchDaySlashMonth, minage, maxage, onlyagestations=agedstationsonly)
     WeightLength <- getWeightGivenLength_Biotic(eca)
