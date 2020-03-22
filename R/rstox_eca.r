@@ -1620,7 +1620,8 @@ plotSamplingOverview <-
     if (all(c("gearfactor", "temporal", "spatial") %in% stoxexp$resources$covariateInfo$name)) {
       rows <-
         nrow(unique(get_gta_landings(stoxexp)[, c("gearfactor", "temporal")]))
-      colnamefactor <- mean(unlist(lapply(unique(get_gta_landings(stoxexp)$spatial), FUN=function(x){max(5,nchar(x))})))/5
+      #ideally, check sizes of cell contents as well. Settle for a min width of 9/5 for now.
+      colnamefactor <- mean(unlist(lapply(unique(get_gta_landings(stoxexp)$spatial), FUN=function(x){max(9,nchar(x))})))/5
       cols <- length(unique(get_gta_landings(stoxexp)$spatial)) * colnamefactor
       
       cols <- max(13, cols)
