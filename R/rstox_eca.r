@@ -1844,6 +1844,11 @@ getCatchMatrix <- function(pred,
                            var = "Abundance",
                            unit = "ones",
                            plusgr=NULL){
+  
+  if (!is.null(plusgr)){
+    plsugrindex <- match(plusgr, as.integer(pred$AgeCategories))
+  }
+
   if (var == "Abundance" | var == "Count") {
     plottingUnit = getPlottingUnit(
       unit = unit,
@@ -1870,10 +1875,10 @@ getCatchMatrix <- function(pred,
   ages <- as.character(pred$AgeCategories)
   
   if (!is.null(plusgr)){
-    caa[plusgr,] <- colSums(caa[plusgr:nrow(caa),])
-    caa <- caa[1:plusgr,]
-    ages <- ages[1:plusgr]
-    ages[plusgr] <- paste(ages[plusgr], "+", sep="")
+    caa[plsugrindex,] <- colSums(caa[plsugrindex:nrow(caa),])
+    caa <- caa[1:plsugrindex,]
+    ages <- ages[1:plsugrindex]
+    ages[plsugrindex] <- paste(ages[plsugrindex], "+", sep="")
   }
   
   caa_scaled <- as.data.frame(caa / plottingUnit$scale)
@@ -1905,6 +1910,10 @@ getCatchMatrix <- function(pred,
 getAgeGroupParamaters <- function(pred,
                                   plusgr=NULL){
   
+  if (!is.null(plusgr)){
+    plsugrindex <- match(plusgr, as.integer(pred$AgeCategories))
+  }
+  
   ages <- as.character(pred$AgeCategories)
   abundances <- apply(apply(pred$TotalCount, c(2, 3), sum), 1, mean)
   pred$MeanWeight <- pred$MeanWeight*1000
@@ -1915,22 +1924,22 @@ getAgeGroupParamaters <- function(pred,
   
   if (!is.null(plusgr)){
     #mean of age groups in plusgroup, weighted by age group abundance
-    weights[plusgr] <- weights[plusgr:length(weights)] %*% (abundances[plusgr:length(abundances)]/sum(abundances[plusgr:length(abundances)]))
-    weights.var[plusgr] <- weights.var[plusgr:length(weights.var)] %*% (abundances[plusgr:length(abundances)]/sum(abundances[plusgr:length(abundances)]))**2
-    lengths[plusgr] <- lengths[plusgr:length(lengths)] %*% (abundances[plusgr:length(abundances)]/sum(abundances[plusgr:length(abundances)]))
-    lengths.var[plusgr] <- lengths.var[plusgr:length(lengths.var)] %*% (abundances[plusgr:length(abundances)]/sum(abundances[plusgr:length(abundances)]))**2
-    weights <- weights[1:plusgr]
-    weights.var <- weights.var[1:plusgr]
-    lengths <- lengths[1:plusgr]
-    lengths.var <- lengths.var[1:plusgr]
-    ages <- ages[1:plusgr]
-    ages[plusgr] <- paste(ages[plusgr], "+", sep="")
+    weights[plsugrindex] <- weights[plsugrindex:length(weights)] %*% (abundances[plsugrindex:length(abundances)]/sum(abundances[plsugrindex:length(abundances)]))
+    weights.var[plsugrindex] <- weights.var[plsugrindex:length(weights.var)] %*% (abundances[plsugrindex:length(abundances)]/sum(abundances[plsugrindex:length(abundances)]))**2
+    lengths[plsugrindex] <- lengths[plsugrindex:length(lengths)] %*% (abundances[plsugrindex:length(abundances)]/sum(abundances[plsugrindex:length(abundances)]))
+    lengths.var[plsugrindex] <- lengths.var[plsugrindex:length(lengths.var)] %*% (abundances[plsugrindex:length(abundances)]/sum(abundances[plsugrindex:length(abundances)]))**2
+    weights <- weights[1:plsugrindex]
+    weights.var <- weights.var[1:plsugrindex]
+    lengths <- lengths[1:plsugrindex]
+    lengths.var <- lengths.var[1:plsugrindex]
+    ages <- ages[1:plsugrindex]
+    ages[plsugrindex] <- paste(ages[plsugrindex], "+", sep="")
   }
   
   lengths.sd <- sqrt(lengths.var)
   weights.sd <- sqrt(weights.var)
   
-  tab <- data.frame(age=ages, meanLengthCm=lengths, meanLengthCm.sd=lengths.sd, meanWeightG=weights, meanWeightG.sd=weights.sd)
+  tab <- data.frame(age=ages, meanLengthCm=lengths, meanLengthCm.sd=lengths.sd, meanWeightG=weights, meanWeightG.sd=weights.sd, stringsAsFactors = F)
   
   return (tab)
   
