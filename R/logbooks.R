@@ -10,6 +10,88 @@ read_psv <- function(file, encoding, col_types){
 
 #' Parses logbooks (ERS) 
 #' @description 
+#'  Parses electronic logbooks (ERS) from tabular format .lst
+#' @details 
+#'  The format is a ;-separated format encoding aggregated ERS records (logbooks).
+#'  It is based on files provided to IMR on a regular basis from FDIR.
+#'  Column headers are in Norwegian.
+#'  
+#'  Columns:
+#'  \describe{
+#'    \item{FAAR}{Year of catch}
+#'    \item{REGM}{License number of vessel}
+#'    \item{RKAL}{Radio call signal}
+#'    \item{FM}{Month of catch}
+#'    \item{FD}{Day of catch}
+#'    \item{DBNR}{Logbook number}
+#'    \item{TUR}{Trip id}
+#'    \item{AM}{Month of depature for trip}
+#'    \item{AD}{First day of departure for trip}
+#'    \item{AH}{Port of departure}
+#'    \item{LM}{Month of landing of catch}
+#'    \item{LD}{Day of landing of catch}
+#'    \item{LH}{Port of landing of catch}
+#'    \item{RE}{Gear (main gear for the day of catch)}
+#'    \item{MA}{Mesh-size of gear}
+#'    \item{HA}{Number of hauls / sets for the day of catch}
+#'    \item{VAR}{Total duration of hauls for the day of catch}
+#'    \item{OMRA}{Area code (ICES, NAFO etc)}
+#'    \item{OKSO}{Economic zone}
+#'    \item{HO}{Main area (defined by Norwegian directorate of Fisheries)}
+#'    \item{LO}{Location (within main area)}
+#'    \item{LENG}{Vessel length in meters}
+#'    \item{BTON}{Gross tonnage of vessel}
+#'    \item{TENH}{Tonnage of vessel}
+#'    \item{HEST}{Enigine horsepower for vessel}
+#'    \item{FISK}{Code for type of fish (species). Code list provided by Norwegian directorate of Fisheries}
+#'    \item{VEKT}{Love weight in kg}
+#'  }
+#'  
+#' @param file path to file
+#' @param encoding encoding for 'file'
+#' @return data.table() with logbooks, columns described in details.
+#' @export
+readLstFile <- function(file, encoding="latin1"){
+  loc <- readr::default_locale()
+  loc$decimal_mark <- "."
+  loc$encoding <- encoding
+  
+  spec_log <- readr::cols(
+    FAAR = readr::col_integer(),
+    REGM = readr::col_character(),
+    RKAL = readr::col_character(),
+    FM = readr::col_integer(),
+    FD = readr::col_integer(),
+    DBNR = readr::col_character(),
+    TUR = readr::col_character(),
+    AM = readr::col_integer(),
+    AD = readr::col_integer(),
+    AH = readr::col_character(),
+    LM = readr::col_integer(),
+    LD = readr::col_integer(),
+    LH = readr::col_character(),
+    RE = readr::col_character(),
+    MA = readr::col_double(),
+    HA = readr::col_integer(),
+    VAR = readr::col_character(),
+    OMRA = readr::col_character(),
+    OKSO = readr::col_character(),
+    HO = readr::col_character(),
+    LO = readr::col_character(),
+    LENG = readr::col_double(),
+    BTON = readr::col_double(),
+    TENH = readr::col_double(),
+    HEST = readr::col_double(),
+    FISK = readr::col_character(),
+    VEKT = readr::col_double()
+  )
+  logb <- readr::read_delim(file,locale = loc, delim=";", trim_ws = T, col_types = spec_log, col_names = T)
+  
+  return(data.table::as.data.table(logb))
+}
+
+#' Parses logbooks (ERS) 
+#' @description 
 #'  Parses electronic logbooks (ERS) from tabular format delivered by Directorate of Fisheries (FDIR)
 #' @details 
 #'  The format is a pipe-separated format encoding aggregated ERS records (logbooks).
@@ -109,6 +191,9 @@ calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"),
   if (!all(subcell %in% names(logbook))){
     stop("Not all columns defining subcell is in logbooks")
   }
+  if (!(weight %in% names(logbook))){
+    stop(paste("Column", weight, "not in logbooks."))
+  }
   if (any(is.na(logbook[,c(totalcell, subcell)]))){
     stop("NA for some columns specifying cells")
   }
@@ -125,16 +210,22 @@ calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"),
   aggvar <- list(var=logbook[[weight]])
   names(aggvar) <- weight
   
-  totalcells <- aggregate(list(totalweight=logbook[[weight]]), by=totallist, FUN=function(x){sum(x, na.rm=na.rm)})
-  subcells <- aggregate(list(subcellweight=logbook[[weight]]), by=sublist, FUN=function(x){sum(x, na.rm=na.rm)})
+  totalcells <- stats::aggregate(list(totalweight=logbook[[weight]]), by=totallist, FUN=function(x){sum(x, na.rm=na.rm)})
+  subcells <- stats::aggregate(list(subcellweight=logbook[[weight]]), by=sublist, FUN=function(x){sum(x, na.rm=na.rm)})
   
   partitioning <- merge(totalcells, subcells)
   partitioning$fraction <- partitioning$subcellweight / partitioning$totalweight
   partitioning$totalweight <- NULL
   partitioning$subcellweight <- NULL
   
-  stopifnot(all(!is.na(partitioning$fraction)))
+  if(any(is.na(partitioning$fraction))){
+    stop("got NA fractions for some partitions.")
+  }
   
   return(partitioning)
+  
+}
+
+adjustLandingsWithLogbooks <- function(){
   
 }

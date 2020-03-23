@@ -20,8 +20,38 @@ expect_true(all(c("HOMR", "Q") %in% names(ll)))
 agg <- aggregate(list(total=ll$fraction), by=list(REGM=ll$REGM, FANFSTART=ll$FANGSTART), FUN=sum)
 expect_true(all(ll$total == 1))
 
+context("test lst parser")
+logbooks <- readLstFile(system.file("extdata", "testresources","dagbok_2019_trunc.lst", package="Rstox"))
+expect_true(all(c("FISK", "FAAR") %in% names(logbooks)))
+expect_true(all(!is.na(logbooks$VEKT)))
+expect_true(is.numeric(logbooks$VEKT))
+
+expect_error(calculateCatchProportions(logbooks, totalcell = c("FISK", "REGM"), subcell = c("HO", "FM")), "Column RUNDVEKT not in logbooks")
+
+ll <- calculateCatchProportions(logbooks, totalcell = c("FISK", "REGM"), subcell = c("HO", "FM"), weight = "VEKT")
+expect_true(all(c("HO", "FM") %in% names(ll)))
+agg <- aggregate(list(total=ll$fraction), by=list(REGM=ll$REGM, FANFSTART=ll$FISK), FUN=sum)
+expect_true(all(ll$total == 1))
+
+
+context("test NAs")
+logbooks <- readErsFile(system.file("extdata", "testresources","logbooks_trimmed_2015.psv", package="Rstox"))
+
+#NA not covering complete cell
+logbooks$RUNDVEKT[2] <- NA
+expect_error(calculateCatchProportions(logbooks), "got NA fractions for some partitions.")
+calculateCatchProportions(logbooks, na.rm = T)
+
 
 #context("landingscorrections")
+#
+# filtrer logbøker på aktivitet ?
+# annoter område, kvartal, og o15m (+ kyst/hav for kysttorsk? basert på posisjon eller lokasjon eller use.key i Sondre sitt script ?)
+# hent ut trål vha processdata
+# fordel trål på område og kvartal
+# juster sluttsedler
+# 
+#
 #logbooks <- readErsFile(system.file("extdata", "testresources","logbooks_trimmed_2015.psv", package="Rstox"))
 #prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
 #landings <- prepExample$StoxExport$landing
