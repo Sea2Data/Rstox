@@ -1,0 +1,7 @@
+context("readErsFile: normal run")
+data <- readErsFile(system.file("extdata", "testresources","logbooks_trimmed_2015.psv", package="RstoxData"))
+expect_true(data.table::is.data.table(data))
+expect_true("RC" %in% names(data))
+expect_true(is.numeric(data$RUNDVEKT))
+expect_true(is.numeric(data[["ST\u00D8RSTE_LENGDE"]]))
+expect_equal(nrow(data),9)

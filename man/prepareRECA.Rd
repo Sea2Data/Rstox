@@ -15,7 +15,7 @@ prepareRECA(
   temporalresolution = 92,
   overwrite = T,
   agedstationsonly = F,
-  landingsAdjuster = NULL
+  landingAdjuster = NULL
 )
 }
 \arguments{
@@ -39,7 +39,7 @@ prepareRECA(
 
 \item{agedstationsonly}{logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model}
 
-\item{landingsAdjuster}{optional function that maps an internal representation of landings to the adjusted landings in the same format. Allows for adaptations with logbooks etc., when run from R. Format can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)}
+\item{landingAdjuster}{optional function to manipulate landings before conversion. Used when running from R, for setting covariates not supported by the StoX pipeline, adjusting with logbook records, etc. input and output format for this funcition can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)}
 }
 \description{
 Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
@@ -47,4 +47,6 @@ Convert data to exported from stox to eca format. Save results to project data '
 \details{
 Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[Reca]{eca.estimate}}
    The parameters minage and maxage define the range of ages that are considered possible in the model. Because R-ECA integrates weight and length measurements, and allows for modelling errors in age determination, predicted ages might fall outside the age range in samples. minage and maxage should be set with this in mind.
+   
+   In order to provide ad-hoc support for manipulations of landings data not provided by StoX
 }

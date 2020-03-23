@@ -1,6 +1,6 @@
 Package: Rstox
 Title: Running StoX functionality independently in R
-Version: 1.11.1
+Version: 1.0
 Authors@R: c(
   person(given = "Given Name", family = "Family Name", role = c("cre", "aut"), email = "arnejh@hi.no"))
 Depends: R (>= 3.5)
@@ -22,6 +22,7 @@ Imports:
     rgdal,
     rgeos,
     rJava,
+    readr,
     sp,
     XML,
     scatterpie
