@@ -24,3 +24,13 @@ tt <- read.csv(tempf, sep="\t", comment.char = "#")
 expect_equal(nrow(tt),14)
 expect_equal(ncol(tt),5)
 file.remove(tempf)
+
+context("get catch at age 3+")
+pred <- readRDS(system.file("extdata", "testresources", "ecaPredExampleAge3_24.rds", package = "Rstox"))
+tab<-getAgeGroupParamaters(pred)
+expect_equal(nrow(tab), 22)
+expect_equal(ncol(tab), 5)
+
+context("get catch at age 3+ plusgr")
+tab<-getAgeGroupParamaters(pred, plusgr = 6)
+expect_equal(nrow(tab), 4)

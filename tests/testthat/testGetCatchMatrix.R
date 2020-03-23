@@ -25,3 +25,13 @@ expect_equal(ncol(tt),101)
 expect_equal(names(tt)[1], "age")
 
 file.remove(tempf)
+
+context("get catch at age 3+")
+pred <- readRDS(system.file("extdata", "testresources", "ecaPredExampleAge3_24.rds", package = "Rstox"))
+tab<-getCatchMatrix(pred)
+expect_equal(nrow(tab$means), 24-3+1)
+expect_equal(tab$means$age[1], "3")
+expect_equal(nrow(tab$cv), 24-3+1)
+expect_equal(tab$cv$age[1], "3")
+
+

@@ -1,5 +1,7 @@
 pred <- readRDS(system.file("extdata", "testresources", "ecaPredExample.rds", package = "Rstox"))
 
+context("get Catch at length")
+
 calDefault <- getCatchAtLength(pred)
 expect_equal(nrow(calDefault), 140)
 expect_equal(ncol(calDefault), 3)
