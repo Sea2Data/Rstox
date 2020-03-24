@@ -317,12 +317,23 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
   }
   
   #
+  # get totals for all totalcells, and
+  # get proprotions for each totalcell included in landings
+  # identify which are missing from landings
+  #
+  totals <- aggregate(list(totalWeight=touch[[weight]]), by=list(totalcellId=touch$totalcellId), FUN=sum)
+  included <- aggregate(list(included=proportions$fraction[proportions$combinedCellId %in% touch$combinedCellId]), by=list(totalcellId=proportions$totalcellId[proportions$combinedCellId %in% touch$combinedCellId]), FUN=sum)
+  
+  nonzeroprop <- proportions[proportions$fraction>0,]
+  missing <- nonzeroprop[!(nonzeroprop$combinedCellId %in% touch$combinedCellId) & (nonzeroprop$totalcellId %in% touch$totalcellId),]
+  
+  #
   # adjust cells
   #
-  
   touchProportions <- calculateCatchProportions(touch, totalcell, subcell, weight=weight)
   scaling <- merge(touchProportions, proportions, suffixes=c(".land", ".prop"), by=c(totalcell, subcell))
-  scaling$scalingFactor <- scaling$fraction.prop / scaling$fraction.land
+  scaling <- merge(scaling, included)
+  scaling$scalingFactor <- scaling$fraction.prop * scaling$included / scaling$fraction.land
   touch <- merge(touch, scaling)
   touch[[weight]] <- touch[[weight]] * touch$scalingFactor
   
@@ -330,25 +341,23 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
   # subcells in 'proportions', but not in 'landings'
   # impute
   #
-  
-  nonzeroprop <- proportions[proportions$fraction>0,]
-  missing <- nonzeroprop[!(nonzeroprop$combinedCellId %in% touch$combinedCellId) & !(nonzeroprop$totalcellID %in% touch$totalcellID),]
   if (nrow(missing) > 0){
+    
     # get weight for totalcell and assign weight to subcells
-    totalWeights <- aggregate(list(totalCellWeight=touch[touch$totalcellID %in% missing$totalcellID, weight]), by=list(totalcellID=touch$totalcellID), FUN=sum)
-    assignedWeights <- merge(totalWeights, proportions[proportions$combinedCellId %in% missing$combinedCellId,])
-    assignedWeights$assignedWeight <- assignedWeights$totalCellWeight * assignedWeights$fraction
+    totalWeights <- totals[totals$totalcellId %in% missing$totalcellId,]
+    assignedWeights <- merge(totalWeights, missing)
+    assignedWeights$assignedWeight <- assignedWeights$totalWeight * assignedWeights$fraction
     
     #sample for each missing subcell
     selectedIndecies <- c()
-    weight <- c()
+    newWeights <- c()
     for (i in 1:nrow(assignedWeights)){
-      frame <- (1:nrow(touch))[touch$totalcellID == assignedWeights$totalcellId[i]]
-      selectedIndecies <- c(selectedIndecies, frame[sample.int(length(frame)), 1])
-      weight <- c(weight, assignedWeights$assignedWeight[i])
+      frame <- (1:nrow(touch))[touch$totalcellId == assignedWeights$totalcellId[i]]
+      selectedIndecies <- c(selectedIndecies, frame[sample.int(length(frame),size=1)])
+      newWeights <- c(newWeights, assignedWeights$assignedWeight[i])
     }
-    selectedLandings <- touch[selectedIndecies]
-    selectedLandings[[weight]] <- weight
+    selectedLandings <- touch[selectedIndecies,]
+    selectedLandings[[weight]] <- newWeights
     
     #add to landings
     touch <- rbind(touch, selectedLandings)
@@ -356,9 +365,9 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
   
   # set touched and untouched landings back together
   touch <- touch[,originalColumns]
-  landings <- rbind(touch, dontTouch)
+  combined <- rbind(touch, dontTouch)
   
-  return(landings)
+  return(combined)
 
 }
 
@@ -392,25 +401,31 @@ adjustGearLandingsWithLogbooksReca <- function(landingsStox, logbooksLst, gearTa
   
   #
   # annotate with compareable codes, gear
+  # and reduce logbooks to desired gear
   #
   landingsStox$gearCategory <- NA
   landingsStox$gearCategory[as.character(landingsStox$redskapkode) %in% gearvector] <- gearCode
   logbooksLst$gearCategory <- NA
   logbooksLst$gearCategory[as.character(logbooksLst$RE) %in% gearvector] <- gearCode
-
+  logbooksLst <- logbooksLst[!is.na(logbooksLst$gearCategory)]
+  
   #
   # annotate with compareable codes, species
+  # and reduce lobooks to species that are in landings
   #
   landingsStox$speciesCategory <- substring(as.character(landingsStox$artkode), 1,4)
   logbooksLst$speciesCategory <- substring(as.character(logbooksLst$FISK), 1,4)
+  logbooksLst <- logbooksLst[logbooksLst$speciesCategory %in% landingsStox$speciesCategory,]
   
   #
   # annotate with compareable codes, vessel size
+  # and reduce logbooks to desired vessel size
   #
   landingsStox$vesselSizeCategory <- NA
   landingsStox$vesselSizeCategory[landingsStox$størstelengde>=minVesselSize] <- "o15"
   logbooksLst$vesselSizeCategory <- NA
   logbooksLst$vesselSizeCategory[logbooksLst$LENG>=minVesselSize] <- "o15"
+  logbooksLst <- logbooksLst[!is.na(logbooksLst$vesselSizeCategory),]
   
   
   #
@@ -435,18 +450,13 @@ adjustGearLandingsWithLogbooksReca <- function(landingsStox, logbooksLst, gearTa
   landingsStox$areaCategory <- as.integer(landingsStox$hovedområdekode)
   logbooksLst$areaCategory <- as.integer(logbooksLst$HO)
   
+  
   #
   # Define cells and adjust landings
   #
   totalcell <- c("vesselSizeCategory", "speciesCategory", "gearCategory")
   subcell <- c("quarterCategory", "areaCategory")
   
-  #remove NA cells from logbooks
-  logbooksLst <- logbooksLst[!is.na(logbooksLst$vesselSizeCategory) 
-                             & !is.na(logbooksLst$speciesCategory)
-                             & !is.na(logbooksLst$gearCategory)
-                             & !is.na(logbooksLst$quarterCategory)
-                             & !is.na(logbooksLst$areaCategory),]
   proportions <- calculateCatchProportions(logbooksLst, totalcell, subcell, weight="VEKT")
   
   adjustedLandings <- adjustLandings(landingsStox, proportions, totalcell, subcell, "rundvekt")
