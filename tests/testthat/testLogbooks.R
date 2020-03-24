@@ -44,33 +44,4 @@ expect_error(calculateCatchProportions(logbooks), "got NA fractions for some par
 calculateCatchProportions(logbooks, na.rm = T)
 
 
-context("landingscorrections")
-prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
-gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
-landings <- prepExample$StoxExport$landing
-
-mockLog <- data.table::data.table(FAAR=as.integer(landings$fangstår), REGM=as.character(landings$registreringsmerkeseddel), RE=as.character(landings$redskapkode), FM=substr(as.character(landings$sistefangstdato),6,7), HO=as.character(landings$hovedområdekode), LENG=as.double(landings$størstelengde), FISK=as.character(substr(landings$artkode,1,4)), VEKT=as.double(landings$rundvekt))
-#mockLog[mockLog$HO=="43", "VEKT"] <- mockLog[mockLog$HO=="43", "VEKT"]*1.2
-
-adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
-expect_equal(nrow(adjustedLandings), nrow(landings))
-expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
-expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$hovedområdekode==43]), sum(landings$rundvekt[landings$hovedområdekode==43]))
-
-
-context("landingscorrections")
-
-context("landingscorrections incomplete landings cells")
-
-context("landingscorrections incomplete logbook cells")
-
-#
-# filtrer logbøker på aktivitet ?
-# annoter område, kvartal, og o15m (+ kyst/hav for kysttorsk? basert på posisjon eller lokasjon eller use.key i Sondre sitt script ?)
-# hent ut trål vha processdata
-# fordel trål på område og kvartal
-# juster sluttsedler
-# 
-#
-
 
