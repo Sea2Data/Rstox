@@ -29,7 +29,7 @@ Calculates the proportion of catch that was caught in specified cells,
  according to logbook (ERS) records.
 }
 \details{
-A cell is a combination of categorical values, e.g. quarter.
+A cell is a combination of categorical values, e.g. quarter and area.
  'totalcell' are cells which should have total fraction of 1.
  'subcells' are cells which should be assigned a proportion of the total. 
  These are defined relative to totalcell.

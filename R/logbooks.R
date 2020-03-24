@@ -317,30 +317,25 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
   }
   
   #
-  # get totals for all totalcells, and
-  # get proprotions for each totalcell included in landings
-  # identify which are missing from landings
+  # get totals for all totalcells, before adjusting anything
   #
   totals <- aggregate(list(totalWeight=touch[[weight]]), by=list(totalcellId=touch$totalcellId), FUN=sum)
-  included <- aggregate(list(included=proportions$fraction[proportions$combinedCellId %in% touch$combinedCellId]), by=list(totalcellId=proportions$totalcellId[proportions$combinedCellId %in% touch$combinedCellId]), FUN=sum)
-  
-  nonzeroprop <- proportions[proportions$fraction>0,]
-  missing <- nonzeroprop[!(nonzeroprop$combinedCellId %in% touch$combinedCellId) & (nonzeroprop$totalcellId %in% touch$totalcellId),]
   
   #
   # adjust cells
   #
   touchProportions <- calculateCatchProportions(touch, totalcell, subcell, weight=weight)
   scaling <- merge(touchProportions, proportions, suffixes=c(".land", ".prop"), by=c(totalcell, subcell))
-  scaling <- merge(scaling, included)
-  scaling$scalingFactor <- scaling$fraction.prop * scaling$included / scaling$fraction.land
+  scaling$scalingFactor <- scaling$fraction.prop / scaling$fraction.land
   touch <- merge(touch, scaling)
   touch[[weight]] <- touch[[weight]] * touch$scalingFactor
+  
   
   #
   # subcells in 'proportions', but not in 'landings'
   # impute
   #
+  missing <- proportions[!(proportions$combinedCellId %in% touch$combinedCellId) & (proportions$totalcellId %in% touch$totalcellId),]
   if (nrow(missing) > 0){
     
     # get weight for totalcell and assign weight to subcells

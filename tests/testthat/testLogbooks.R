@@ -84,19 +84,15 @@ adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTa
 expect_gt(nrow(adjustedLandings), nrow(landings))
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 
-context("landingscorrections")
+context("landingscorrections area missing logbooks")
+prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
+gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
+landings <- prepExample$StoxExport$landing
+mockLog <- data.table::data.table(FAAR=as.integer(landings$fangstår), REGM=as.character(landings$registreringsmerkeseddel), RE=as.character(landings$redskapkode), FM=as.integer(substr(landings$sistefangstdato,6,7)), HO=as.character(landings$hovedområdekode), LENG=as.double(landings$størstelengde), FISK=as.character(substr(landings$artkode,1,4)), VEKT=as.double(landings$rundvekt))
+mockLog <- mockLog[mockLog$HO!=43,]
 
-context("landingscorrections incomplete landings cells")
-
-context("landingscorrections incomplete logbook cells")
-
-#
-# filtrer logbøker på aktivitet ?
-# annoter område, kvartal, og o15m (+ kyst/hav for kysttorsk? basert på posisjon eller lokasjon eller use.key i Sondre sitt script ?)
-# hent ut trål vha processdata
-# fordel trål på område og kvartal
-# juster sluttsedler
-# 
-#
+adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
+expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
+expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$landings$hovedområdekode==43]), 0)
 
 
