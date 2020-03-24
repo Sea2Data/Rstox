@@ -165,7 +165,7 @@ readErsFile <- function(file, encoding="latin1"){
 #'  Calculates the proportion of catch that was caught in specified cells,
 #'  according to logbook (ERS) records.
 #' @details 
-#'  A cell is a combination of categorical values, e.g. quarter.
+#'  A cell is a combination of categorical values, e.g. quarter and area.
 #'  'totalcell' are cells which should have total fraction of 1.
 #'  'subcells' are cells which should be assigned a proportion of the total. 
 #'  These are defined relative to totalcell.
@@ -194,8 +194,10 @@ calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"),
   if (!(weight %in% names(logbook))){
     stop(paste("Column", weight, "not in logbooks."))
   }
-  if (any(is.na(logbook[,c(totalcell, subcell)]))){
-    stop("NA for some columns specifying cells")
+  for (cellvar in c(totalcell, subcell)){
+    if (any(is.na(logbook[[cellvar]]))){
+      stop("NA for some columns specifying cells")
+    }
   }
   
   totallist <- list()
@@ -226,6 +228,230 @@ calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"),
   
 }
 
-adjustLandingsWithLogbooks <- function(){
+#' Adjust landings
+#' @description 
+#'  Adjust weights of landings according to pre-calculated proportions
+#' @details 
+#'  Note: This is prototype functionaltiy consider for proper inclusion in later versions of StoX
+#'  Note: Ideally such adjustments are done on aggregated formats, but are included at an earlier stage here because of existing software structures
+#'  Note: Some landings may be introduced by resampling, and identifying information may be incorrect (e.g. sale notes ids)
+#'  
+#'  A cell is a combination of categorical values, e.g. quarter and area.
+#'  'totalcell' are cells whose totals should be unchanged by by the adjustment.
+#'  'subcells' are cells which should be assigned a proportion of the in each totalcell. 
+#'  These are defined relative to totalcell.
+#'  
+#'  Any cells with NA for some totalcell variables in 'landings', are left untouched
+#'  Any totalcell in proportions, but not in landings will raise an error.
+#'  Any subcells in 'proportions', but not in 'landings' will be added by sampling one landing from the same totalcell, and assign the appropriate fraction of the total catch
+#'  Any subcells in 'landings', but not in 'proportions will treated as if the proportions for these cells are zero.
+#'  
+#' @param landings landings to be adjusted
+#' @param proportions data.table of proportions in cells. Proportion should be in a column named 'fraction'
+#' @param totalcells vector of strings, identifies cells (in 'landings' and 'proportions') within which total catch is to be kept constant.
+#' @param subcell vector of strings, identfies cells (in 'landings' and 'proportions'), relative to totalcells which ar to be adjusted
+#' @param weight string identifying the column where landed weight is given in 'landings'
+#' @return adjusted landings, formatted as 'landings'
+adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
   
+  originalColumns <- names(landings)
+  
+  if (!all(c(totalcell,subcell) %in% names(landings))){
+    stop("Columns for all cells not present in landings")
+  }
+  if (!all(c(totalcell,subcell) %in% names(proportions))){
+    stop("Columns for all cells not present in proportions")
+  }
+  if (any(is.na(landings[[weight]]))){
+    stop(paste("NA for",weight,"in landings"))
+  }
+  if (any(is.na(proportions$fraction))){
+    stop(paste("NA for fraction in proportions"))
+  }
+  
+  #
+  # total cells in landings, but not in proportions
+  # will be left untouched
+  #
+  dontTouchFilter <- rep(F, nrow(landings))
+  for (cellVar in totalcell){
+    dontTouchFilter <- dontTouchFilter | is.na(landings[[cellVar]])
+  }
+  dontTouch <- landings[dontTouchFilter,]
+  
+  touch <- landings[!dontTouchFilter,]
+  touch$totalcellId <- rep("", nrow(touch))
+  proportions$totalcellId <- rep("", nrow(proportions))
+  for (cellVar in totalcell){
+    proportions$totalcellId <- paste(proportions$totalcellId, proportions[[cellVar]], sep="-")
+    touch$totalcellId <- paste(touch$totalcellId, touch[[cellVar]], sep="-")
+  }
+  
+  #
+  # total cells in proportions, but not in landings
+  # error
+  #
+  if (!all(proportions$totalcellId %in% touch$totalcellId)){
+    stop("Some total cells in proportions are not in landings")
+  }
+
+  touch$subcellId <- rep("", nrow(touch))
+  proportions$subcellId <- rep("", nrow(proportions))
+  for (cellVar in subcell){
+    proportions$subcellId <- paste(proportions$subcellId, proportions[[cellVar]], sep="-")
+    touch$subcellId <- paste(touch$subcellId, touch[[cellVar]], sep="-")
+  }
+
+  #
+  # subcells in 'landings', but not in 'proportions'
+  # set fraction to 0
+  #
+  touch$combinedCellId <- paste(touch$totalcellId, touch$subcellId, sep="-")
+  proportions$combinedCellId <- paste(proportions$totalcellId, proportions$subcellId, sep="-")
+  missing <- touch[!(touch$combinedCellId %in% proportions$combinedCellId),]
+  if (nrow(missing) > 0){
+    prop <- missing[!duplicated(missing$combinedCellId), names(missing)[names(missing) %in% names(proportions)]]
+    prop$fraction <- 0
+    
+    proportions <- rbind(proportions, prop)
+  }
+  
+  #
+  # adjust cells
+  #
+  
+  touchProportions <- calculateCatchProportions(touch, totalcell, subcell, weight=weight)
+  scaling <- merge(touchProportions, proportions, suffixes=c(".land", ".prop"), by=c(totalcell, subcell))
+  scaling$scalingFactor <- scaling$fraction.prop / scaling$fraction.land
+  touch <- merge(touch, scaling)
+  touch[[weight]] <- touch[[weight]] * touch$scalingFactor
+  
+  #
+  # subcells in 'proportions', but not in 'landings'
+  # impute
+  #
+  
+  nonzeroprop <- proportions[proportions$fraction>0,]
+  missing <- nonzeroprop[!(nonzeroprop$combinedCellId %in% touch$combinedCellId) & !(nonzeroprop$totalcellID %in% touch$totalcellID),]
+  if (nrow(missing) > 0){
+    # get weight for totalcell and assign weight to subcells
+    totalWeights <- aggregate(list(totalCellWeight=touch[touch$totalcellID %in% missing$totalcellID, weight]), by=list(totalcellID=touch$totalcellID), FUN=sum)
+    assignedWeights <- merge(totalWeights, proportions[proportions$combinedCellId %in% missing$combinedCellId,])
+    assignedWeights$assignedWeight <- assignedWeights$totalCellWeight * assignedWeights$fraction
+    
+    #sample for each missing subcell
+    selectedIndecies <- c()
+    weight <- c()
+    for (i in 1:nrow(assignedWeights)){
+      frame <- (1:nrow(touch))[touch$totalcellID == assignedWeights$totalcellId[i]]
+      selectedIndecies <- c(selectedIndecies, frame[sample.int(length(frame)), 1])
+      weight <- c(weight, assignedWeights$assignedWeight[i])
+    }
+    selectedLandings <- touch[selectedIndecies]
+    selectedLandings[[weight]] <- weight
+    
+    #add to landings
+    touch <- rbind(touch, selectedLandings)
+  }
+  
+  # set touched and untouched landings back together
+  touch <- touch[,originalColumns]
+  landings <- rbind(touch, dontTouch)
+  
+  return(landings)
+
 }
+
+#' Adjusts landings for Reca
+#' @description 
+#'  Adjust landings for selected gears.
+#' @details 
+#'  Note: This is prototype functionaltiy consider for proper inclusion in later versions of StoX
+#'  Note: Ideally such adjustments are done on aggregated formats, but are included at an earlier stage here because of existing software structures
+#'  Note: Some landings may be introduced by resampling, and identifying information may be incorrect (e.g. sale notes ids)
+#'  
+#'  Calculates proportions of catch of each species, in quarters and main areas (hovedområde) for a specified gear
+#'  in logbooks, and adjust the landed weights accordingly.
+#'  
+#'  Adjustments are done by uniformly scaling all landings within a cell.
+#'  
+#'  For instance trawl-landings, or other landing from multi-day trips can be adjusted to
+#'  reflect the higher spatial and temporal resolution in logbooks as opposed to landings (sales notes)
+#'  
+#'  Fits the format for landings used internally in the Reca scripts.
+#' @param landingStox the landings, formatted as in stoxExport$landing, stored by \code{\link[Rstox]{prepareRECA}} 
+#' @param logbookLst Aggregated logbook on lst format, as parsed by \code{\link[Rstox]{readLstFile}}
+#' @param gearTable table of gear mappings. As exported to processData by the ECA template stox-baseline.
+#' @param gearCode code identifying the gear (as in gearTabe$Covariate).
+#' @param minVesselSize the minimal vessel size that logbook corrections should be applied to
+#' @return landings, formatted as 'landingStox'
+#' @export
+adjustGearLandingsWithLogbooksReca <- function(landingsStox, logbooksLst, gearTable, gearCode, minVesselSize=15){
+  gearvector <- unlist(strsplit(gearTable$Value[gearTable$CovariateSourceType=="Landing" & gearTable$Covariate==gearCode], ","))
+  originalColumns <- names(landingsStox)
+  
+  #
+  # annotate with compareable codes, gear
+  #
+  landingsStox$gearCategory <- NA
+  landingsStox$gearCategory[as.character(landingsStox$redskapkode) %in% gearvector] <- gearCode
+  logbooksLst$gearCategory <- NA
+  logbooksLst$gearCategory[as.character(logbooksLst$RE) %in% gearvector] <- gearCode
+
+  #
+  # annotate with compareable codes, species
+  #
+  landingsStox$speciesCategory <- substring(as.character(landingsStox$artkode), 1,4)
+  logbooksLst$speciesCategory <- substring(as.character(logbooksLst$FISK), 1,4)
+  
+  #
+  # annotate with compareable codes, vessel size
+  #
+  landingsStox$vesselSizeCategory <- NA
+  landingsStox$vesselSizeCategory[landingsStox$størstelengde>=minVesselSize] <- "o15"
+  logbooksLst$vesselSizeCategory <- NA
+  logbooksLst$vesselSizeCategory[logbooksLst$LENG>=minVesselSize] <- "o15"
+  
+  
+  #
+  # annotate with compareable codes, quarter
+  #
+  landingsStox$month <- substr(landingsStox$sistefangstdato, 6,7)
+  landingsStox$quarterCategory <- NA
+  landingsStox$quarterCategory[landingsStox$month %in% c("01","02","03")] <- "Q1"
+  landingsStox$quarterCategory[landingsStox$month %in% c("04","05","06")] <- "Q2"
+  landingsStox$quarterCategory[landingsStox$month %in% c("07","08","09")] <- "Q3"
+  landingsStox$quarterCategory[landingsStox$month %in% c("10","11","12")] <- "Q4"
+  
+  logbooksLst$quarterCategory <- NA
+  logbooksLst$quarterCategory[logbooksLst$FM %in% c(1,2,3)] <- "Q1"
+  logbooksLst$quarterCategory[logbooksLst$FM %in% c(4,5,6)] <- "Q2"
+  logbooksLst$quarterCategory[logbooksLst$FM %in% c(7,8,9)] <- "Q3"
+  logbooksLst$quarterCategory[logbooksLst$FM %in% c(10,11,12)] <- "Q4"
+  
+  #
+  # annotate with compareable codes, area
+  #
+  landingsStox$areaCategory <- as.integer(landingsStox$hovedområdekode)
+  logbooksLst$areaCategory <- as.integer(logbooksLst$HO)
+  
+  #
+  # Define cells and adjust landings
+  #
+  totalcell <- c("vesselSizeCategory", "speciesCategory", "gearCategory")
+  subcell <- c("quarterCategory", "areaCategory")
+  
+  #remove NA cells from logbooks
+  logbooksLst <- logbooksLst[!is.na(logbooksLst$vesselSizeCategory) 
+                             & !is.na(logbooksLst$speciesCategory)
+                             & !is.na(logbooksLst$gearCategory)
+                             & !is.na(logbooksLst$quarterCategory)
+                             & !is.na(logbooksLst$areaCategory),]
+  proportions <- calculateCatchProportions(logbooksLst, totalcell, subcell, weight="VEKT")
+  
+  adjustedLandings <- adjustLandings(landingsStox, proportions, totalcell, subcell, "rundvekt")
+  
+  return(adjustedLandings[,originalColumns])
+}
+  
+  
