@@ -196,7 +196,7 @@ calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"),
   }
   for (cellvar in c(totalcell, subcell)){
     if (any(is.na(logbook[[cellvar]]))){
-      stop("NA for some columns specifying cells")
+      stop(paste("NA for some columns specifying cells: ", cellvar))
     }
   }
   
@@ -354,6 +354,13 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
     selectedLandings <- touch[selectedIndecies,]
     selectedLandings[[weight]] <- newWeights
     
+    #put cellnames on imputed landings
+    for (i in 1:nrow(assignedWeights)){
+      for (cellVar in subcell){
+        selectedLandings[i, cellVar] <- assignedWeights[i, cellVar]
+      }
+    }
+    
     #add to landings
     touch <- rbind(touch, selectedLandings)
   }
@@ -390,9 +397,11 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
 #' @param minVesselSize the minimal vessel size that logbook corrections should be applied to
 #' @return landings, formatted as 'landingStox'
 #' @export
-adjustGearLandingsWithLogbooksReca <- function(landingsStox, logbooksLst, gearTable, gearCode, minVesselSize=15){
+adjustGearLandingsWithLogbooksReca <- function(landingsStox, logbooksLst, gearTable, gearCode, minVesselSize=15, temporalCovariate="temporal"){
   gearvector <- unlist(strsplit(gearTable$Value[gearTable$CovariateSourceType=="Landing" & gearTable$Covariate==gearCode], ","))
   originalColumns <- names(landingsStox)
+  
+  stop("Need to implement setting logbook-covariates from processData objects (gear, spatial and temporal)")
   
   #
   # annotate with compareable codes, gear
@@ -424,33 +433,31 @@ adjustGearLandingsWithLogbooksReca <- function(landingsStox, logbooksLst, gearTa
   
   
   #
-  # annotate with compareable codes, quarter
+  # annotate with covariate temporal
+  # and reduce to covariates in landings
   #
-  landingsStox$month <- substr(landingsStox$sistefangstdato, 6,7)
-  landingsStox$quarterCategory <- NA
-  landingsStox$quarterCategory[landingsStox$month %in% c("01","02","03")] <- "Q1"
-  landingsStox$quarterCategory[landingsStox$month %in% c("04","05","06")] <- "Q2"
-  landingsStox$quarterCategory[landingsStox$month %in% c("07","08","09")] <- "Q3"
-  landingsStox$quarterCategory[landingsStox$month %in% c("10","11","12")] <- "Q4"
   
-  logbooksLst$quarterCategory <- NA
-  logbooksLst$quarterCategory[logbooksLst$FM %in% c(1,2,3)] <- "Q1"
-  logbooksLst$quarterCategory[logbooksLst$FM %in% c(4,5,6)] <- "Q2"
-  logbooksLst$quarterCategory[logbooksLst$FM %in% c(7,8,9)] <- "Q3"
-  logbooksLst$quarterCategory[logbooksLst$FM %in% c(10,11,12)] <- "Q4"
+  logbooksLst[[temporalCovariate]] <- as.character(NA)
+  logbooksLst[logbooksLst$FM %in% c(1,2,3),][[temporalCovariate]] <- "Q1"
+  logbooksLst[logbooksLst$FM %in% c(4,5,6),][[temporalCovariate]] <- "Q2"
+  logbooksLst[logbooksLst$FM %in% c(7,8,9),][[temporalCovariate]] <- "Q3"
+  logbooksLst[logbooksLst$FM %in% c(10,11,12),][[temporalCovariate]] <- "Q4"
+  logbooksLst <- logbooksLst[logbooksLst[[temporalCovariate]] %in% landingsStox[[temporalCovariate]],]
   
   #
-  # annotate with compareable codes, area
+  # annotate covariate spatial
+  # and reduce logbooks to areas in landings
   #
   landingsStox$areaCategory <- as.integer(landingsStox$hovedområdekode)
   logbooksLst$areaCategory <- as.integer(logbooksLst$HO)
+  logbooksLst <- logbooksLst[logbooksLst$areaCategory %in% landingsStox$areaCategory,]
   
   
   #
   # Define cells and adjust landings
   #
   totalcell <- c("vesselSizeCategory", "speciesCategory", "gearCategory")
-  subcell <- c("quarterCategory", "areaCategory")
+  subcell <- c(temporalCovariate, "areaCategory")
   
   proportions <- calculateCatchProportions(logbooksLst, totalcell, subcell, weight="VEKT")
   

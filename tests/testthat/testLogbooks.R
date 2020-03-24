@@ -56,6 +56,21 @@ expect_equal(nrow(adjustedLandings), nrow(landings))
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$hovedområdekode==43]), sum(landings$rundvekt[landings$hovedområdekode==43]))
 
+context("landingscorrections extra areas in logbooks")
+prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
+gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
+landings <- prepExample$StoxExport$landing
+
+mockLog <- data.table::data.table(FAAR=as.integer(landings$fangstår), REGM=as.character(landings$registreringsmerkeseddel), RE=as.character(landings$redskapkode), FM=as.integer(substr(landings$sistefangstdato,6,7)), HO=as.character(landings$hovedområdekode), LENG=as.double(landings$størstelengde), FISK=as.character(substr(landings$artkode,1,4)), VEKT=as.double(landings$rundvekt))
+extraA <- mockLog[1:10,]
+extraA$HO<-99
+mockLog <- rbind(mockLog, extraA)
+
+adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
+expect_equal(nrow(adjustedLandings), nrow(landings))
+expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
+expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$hovedområdekode==43]), sum(landings$rundvekt[landings$hovedområdekode==43]))
+
 
 context("landingscorrections area adjusted")
 prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
@@ -78,11 +93,13 @@ prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", 
 gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
 landings <- prepExample$StoxExport$landing
 mockLog <- data.table::data.table(FAAR=as.integer(landings$fangstår), REGM=as.character(landings$registreringsmerkeseddel), RE=as.character(landings$redskapkode), FM=as.integer(substr(landings$sistefangstdato,6,7)), HO=as.character(landings$hovedområdekode), LENG=as.double(landings$størstelengde), FISK=as.character(substr(landings$artkode,1,4)), VEKT=as.double(landings$rundvekt))
-landings <- landings[landings$hovedområdekode!=43,]
+referenceFraction <- sum(landings$rundvekt[landings$hovedområdekode == 8 & landings$temporal=="Q3"]) / sum(landings$rundvekt)
+landings <- landings[landings$hovedområdekode != 8 & landings$temporal!="Q3",]
 
 adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
-expect_gt(nrow(adjustedLandings), nrow(landings))
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
+expect_gt(nrow(adjustedLandings), nrow(landings))
+expect_equal(sum(landings$rundvekt[landings$hovedområdekode == 8 & landings$temporal=="Q3"]) / sum(landings$rundvekt), referenceFraction)
 
 context("landingscorrections area missing logbooks")
 prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
