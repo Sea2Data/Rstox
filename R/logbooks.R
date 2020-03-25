@@ -216,6 +216,7 @@ calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"),
   subcells <- stats::aggregate(list(subcellweight=logbook[[weight]]), by=sublist, FUN=function(x){sum(x, na.rm=na.rm)})
   
   partitioning <- merge(totalcells, subcells)
+  partitioning <- partitioning[partitioning$totalweight>0,]
   partitioning$fraction <- partitioning$subcellweight / partitioning$totalweight
   partitioning$totalweight <- NULL
   partitioning$subcellweight <- NULL
@@ -226,6 +227,49 @@ calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"),
   
   return(partitioning)
   
+}
+
+#' @noRd
+setWeightsUnion <- function(unionL, unionP, totalcell, subcell, weight, totalweights){
+  
+  unionLWeights <- merge(totalweights, unionP)
+  unionLWeights$subcellTargetWeights <- unionLWeights$totalWeight * unionLWeights$fraction
+  
+  currentWeights <- aggregate(list(currentWeight=unionL$rundvekt), by=list(combinedCellId=unionL$combinedCellId), FUN=sum)
+  unionLWeights <- merge(unionLWeights, currentWeights)
+  unionLWeights$scalingFactor <- unionLWeights$subcellTargetWeights / unionLWeights$currentWeight
+
+  unionL <- merge(unionL, unionLWeights)
+  unionL[[weight]] <- unionL[[weight]] * unionL$scalingFactor
+  return(unionL)
+}
+
+#' @noRd
+imputeLandings <- function(touch, onlyInProportions, totalcell, subcell, weight, totalweights){
+  
+  #
+  # get totals for all totalcells, before adjusting anything
+  #
+  
+  # get weight for totalcell and assign weight to subcells
+  totalWeights <- totalweights[totalweights$totalcellId %in% onlyInProportions$totalcellId,]
+  assignedWeights <- merge(totalWeights, onlyInProportions)
+  assignedWeights$assignedWeight <- assignedWeights$totalWeight * assignedWeights$fraction
+  
+  #sample for each missing subcell
+  
+  newRows <- NULL
+  for (i in 1:nrow(assignedWeights)){
+    row <- touch[1,]
+    row[1,] <- rep(NA, ncol(row))
+    for (cellVar in c(totalcell, subcell)){
+      row[1, cellVar] <- assignedWeights[i, cellVar]
+    }
+    row[1,weight] <- assignedWeights$assignedWeight[i]
+    newRows <- rbind(row, newRows)
+  }
+  
+  return(newRows)
 }
 
 #' Adjust landings
@@ -241,7 +285,7 @@ calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"),
 #'  'subcells' are cells which should be assigned a proportion of the in each totalcell. 
 #'  These are defined relative to totalcell.
 #'  
-#'  Any cells with NA for some totalcell variables in 'landings', are left untouched
+#'  Any cells with with totalcell variables in 'landings' that are not in logbooks are left untouched
 #'  Any totalcell in proportions, but not in landings will raise an error.
 #'  Any subcells in 'proportions', but not in 'landings' will be added by sampling one landing from the same totalcell, and assign the appropriate fraction of the total catch
 #'  Any subcells in 'landings', but not in 'proportions will treated as if the proportions for these cells are zero.
@@ -275,7 +319,7 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
   #
   dontTouchFilter <- rep(F, nrow(landings))
   for (cellVar in totalcell){
-    dontTouchFilter <- dontTouchFilter | is.na(landings[[cellVar]])
+    dontTouchFilter <- dontTouchFilter | is.na(landings[[cellVar]]) | !(landings[[cellVar]] %in% proportions[[cellVar]])
   }
   dontTouch <- landings[dontTouchFilter,]
   
@@ -301,74 +345,32 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
     proportions$subcellId <- paste(proportions$subcellId, proportions[[cellVar]], sep="-")
     touch$subcellId <- paste(touch$subcellId, touch[[cellVar]], sep="-")
   }
+  
+  touch$combinedCellId <- paste(touch$totalcellId, touch$subcellId, sep="/")
+  proportions$combinedCellId <- paste(proportions$totalcellId, proportions$subcellId, sep="/")
+  
+  totalWeights <- aggregate(list(totalWeight=touch[[weight]]), by=list(totalcellId=touch$totalcellId), FUN=sum)
+  
+  # divide data
+  onlyInLandings <- touch[!(touch$combinedCellId %in% proportions$combinedCellId),]
+  unionL <- touch[(touch$combinedCellId %in% proportions$combinedCellId),]
+  unionP <- proportions[(proportions$combinedCellId %in% touch$combinedCellId),]
+  onlyInProportions <- proportions[!(proportions$combinedCellId %in% touch$combinedCellId),]
+  
+  combined <- dontTouch
+  if (nrow(unionL) > 0){
+    unionL <- setWeightsUnion(unionL, unionP, totalcell, subcell, weight, totalWeights)  
+    combined <- rbind(unionL[,originalColumns], combined)
+  }
+  if (nrow(onlyInLandings) > 0){
+    onlyInLandings[[weight]] <- 0    
+    combined <- rbind(onlyInLandings[,originalColumns], combined)
+  }
+  if (nrow(onlyInProportions) > 0){
+    onlyInProportionsL <- imputeLandings(touch, onlyInProportions, totalcell, subcell, weight, totalWeights)  
+    combined <- rbind(onlyInProportionsL[,originalColumns], combined)
+  }
 
-  #
-  # subcells in 'landings', but not in 'proportions'
-  # set fraction to 0
-  #
-  touch$combinedCellId <- paste(touch$totalcellId, touch$subcellId, sep="-")
-  proportions$combinedCellId <- paste(proportions$totalcellId, proportions$subcellId, sep="-")
-  missing <- touch[!(touch$combinedCellId %in% proportions$combinedCellId),]
-  if (nrow(missing) > 0){
-    prop <- missing[!duplicated(missing$combinedCellId), names(missing)[names(missing) %in% names(proportions)]]
-    prop$fraction <- 0
-    
-    proportions <- rbind(proportions, prop)
-  }
-  
-  #
-  # get totals for all totalcells, before adjusting anything
-  #
-  totals <- aggregate(list(totalWeight=touch[[weight]]), by=list(totalcellId=touch$totalcellId), FUN=sum)
-  
-  #
-  # adjust cells
-  #
-  touchProportions <- calculateCatchProportions(touch, totalcell, subcell, weight=weight)
-  scaling <- merge(touchProportions, proportions, suffixes=c(".land", ".prop"), by=c(totalcell, subcell))
-  scaling$scalingFactor <- scaling$fraction.prop / scaling$fraction.land
-  touch <- merge(touch, scaling)
-  touch[[weight]] <- touch[[weight]] * touch$scalingFactor
-  
-  
-  #
-  # subcells in 'proportions', but not in 'landings'
-  # impute
-  #
-  
-  missing <- proportions[!(proportions$combinedCellId %in% touch$combinedCellId) & (proportions$totalcellId %in% touch$totalcellId),]
-  if (nrow(missing) > 0){
-    # get weight for totalcell and assign weight to subcells
-    totalWeights <- totals[totals$totalcellId %in% missing$totalcellId,]
-    assignedWeights <- merge(totalWeights, missing)
-    assignedWeights$assignedWeight <- assignedWeights$totalWeight * assignedWeights$fraction
-    
-    #sample for each missing subcell
-    selectedIndecies <- c()
-    newWeights <- c()
-    for (i in 1:nrow(assignedWeights)){
-      frame <- (1:nrow(touch))[touch$totalcellId == assignedWeights$totalcellId[i]]
-      selectedIndecies <- c(selectedIndecies, frame[sample.int(length(frame),size=1)])
-      newWeights <- c(newWeights, assignedWeights$assignedWeight[i])
-    }
-    selectedLandings <- touch[selectedIndecies,]
-    selectedLandings[[weight]] <- newWeights
-    
-    #put cellnames on imputed landings
-    for (i in 1:nrow(assignedWeights)){
-      for (cellVar in subcell){
-        selectedLandings[i, cellVar] <- assignedWeights[i, cellVar]
-      }
-    }
-    
-    #add to landings
-    touch <- rbind(touch, selectedLandings)
-  }
-  
-  # set touched and untouched landings back together
-  touch <- touch[,originalColumns]
-  combined <- rbind(touch, dontTouch)
-  
   return(combined)
 
 }
@@ -425,12 +427,12 @@ annotateLogbooksSpatial <- function(logbook, processData, covariateName){
   logbook[[covariateName]] <- as.character(NA)
   
   logbookCoordinates <- sp::SpatialPoints(logbook[,c("START_LG","START_LT")])
-  sp::proj4string(logbookCoordinates) <- CRS("+proj=longlat")
+  sp::proj4string(logbookCoordinates) <- sp::CRS("+proj=longlat")
 
   for (i in 1:length(processData$Stratum)){
     level <- processData$Stratum[i]
     polygon <- readWKTSplit(processData$Polygon[[i]])
-    sp::proj4string(polygon) <- CRS("+proj=longlat")
+    sp::proj4string(polygon) <- sp::CRS("+proj=longlat")
     containsVector <- rgeos::gContains(polygon, logbookCoordinates, byid = T)[,1]
     logbook[[covariateName]][containsVector] <- level
   }
@@ -440,7 +442,7 @@ annotateLogbooksSpatial <- function(logbook, processData, covariateName){
 
 
 #' Adjust landings with logbooks
-#' @describe
+#' @description
 #'  Adjusts total weight in spatial and temporal covariates for a given gear, based on logbook data.
 #' @details 
 #'  NOTE: <note on prototyping>
@@ -454,9 +456,10 @@ annotateLogbooksSpatial <- function(logbook, processData, covariateName){
 #' @param temporalCovariate the name of the temporal covariate
 #' @param spatialCovariate the name of the spatial covariate
 #' @param gearCovariate the name of the gear covariate
-#' @param minVesselSize minimal size in meters for vessels to include in logbook adjusted data
+#' @param minVesselSize minimal size in meters for vessels to include in logbook adjusted data. Vessels without length will be assumed smaller than this threshold
 #' @param logbookActivityCodes vector specifying the activity codes to include from logbooks (field AKTIVITET).
 #' @return landings, formatted as landingStox
+#' @export
 adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, processDataTemporal, processDataSpatial, gearSelection, temporalCovariate="temporal", spatialCovariate="spatial", gearCovariate="gearfactor", minVesselSize=15, logbookActivityCodes=c("I fiske")){
   
   if (!(all(c(gearCovariate, spatialCovariate, temporalCovariate) %in% names(landingsStox)))){
@@ -478,11 +481,11 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   # anotate logbooks with covariates
   # and get rid of NAs for each annotation, they are not in landings pr. the check above
   logbook <- annotateLogbooksGear(logbook, processDataGear, gearCovariate)
-  logbook <- logbook[!is.na(logbook[[gearCovariate]])]
+  logbook <- logbook[!is.na(logbook[[gearCovariate]]),]
   logbook <- annotateLogbooksTemporal(logbook, processDataTemporal, temporalCovariate)
-  logbook <- logbook[!is.na(logbook[[temporalCovariate]])]
+  logbook <- logbook[!is.na(logbook[[temporalCovariate]]),]
   logbook <- annotateLogbooksSpatial(logbook, processDataSpatial, spatialCovariate)
-  logbook <- logbook[!is.na(logbook[[spatialCovariate]])]
+  logbook <- logbook[!is.na(logbook[[spatialCovariate]]),]
   
   
   #
@@ -495,8 +498,9 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   # annotate logbooks and landings with vessel size
   # get rid of vessels under size for logbooks
   landingsStox$vesselSizeCategory <- NA
-  landingsStox$vesselSizeCategory[landingsStox$størstelengde>=minVesselSize] <- "o15"
-  landingsStox$vesselSizeCategory[landingsStox$størstelengde<minVesselSize] <- "u15"
+  landingsStox$vesselSizeCategory[is.na(landingsStox$størstelengde)] <- "u15"
+  landingsStox$vesselSizeCategory[!is.na(landingsStox$størstelengde) & landingsStox$størstelengde>=minVesselSize] <- "o15"
+  landingsStox$vesselSizeCategory[!is.na(landingsStox$størstelengde) & landingsStox$størstelengde<minVesselSize] <- "u15"
   logbook$vesselSizeCategory <- NA
   logbook$vesselSizeCategory[logbook$STØRSTE_LENGDE>=minVesselSize] <- "o15"
   logbook <- logbook[!is.na(logbook$vesselSizeCategory),]
@@ -510,11 +514,14 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   
   totalcell <- c("vesselSizeCategory", "species4l", gearCovariate)
   subcell <- c(temporalCovariate, spatialCovariate)
-
+  
   # call adjustLandings with totalcell gear, species and vesselSize
   # and subcell spatial and temporal
   logbookProportions <- calculateCatchProportions(logbook, totalcell, subcell, "RUNDVEKT")
   adjustedLandings <- adjustLandings(landingsStox, logbookProportions, totalcell, subcell, "rundvekt")
+  
+  #return only landings with positive catch
+  adjustedLandings <- adjustedLandings[adjustedLandings$rundvekt>0,]
   return(adjustedLandings)
   
 }

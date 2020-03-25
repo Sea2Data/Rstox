@@ -33,7 +33,7 @@ Note: This is prototype functionaltiy consider for proper inclusion in later ver
  'subcells' are cells which should be assigned a proportion of the in each totalcell. 
  These are defined relative to totalcell.
  
- Any cells with NA for some totalcell variables in 'landings', are left untouched
+ Any cells with with totalcell variables in 'landings' that are not in logbooks are left untouched
  Any totalcell in proportions, but not in landings will raise an error.
  Any subcells in 'proportions', but not in 'landings' will be added by sampling one landing from the same totalcell, and assign the appropriate fraction of the total catch
  Any subcells in 'landings', but not in 'proportions will treated as if the proportions for these cells are zero.

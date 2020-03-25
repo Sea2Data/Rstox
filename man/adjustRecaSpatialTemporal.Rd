@@ -45,7 +45,7 @@ adjustRecaSpatialTemporal(
 landings, formatted as landingStox
 }
 \description{
-Adjust landings with logbooks
+Adjusts total weight in spatial and temporal covariates for a given gear, based on logbook data.
 }
 \details{
 NOTE: <note on prototyping>

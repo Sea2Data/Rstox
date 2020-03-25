@@ -20,6 +20,16 @@ expect_true(all(c("HOMR", "Q") %in% names(ll)))
 agg <- aggregate(list(total=ll$fraction), by=list(REGM=ll$REGM, FANFSTART=ll$FANGSTART), FUN=sum)
 expect_true(all(ll$total == 1))
 
+context("calculateProportions, check cells")
+logbook <- readRDS(system.file("extdata", "testresources","HAD_logbook_2018.rds", package="Rstox"))
+logbook <- logbook[logbook$AKTIVITET=="I fiske",]
+logbook <- logbook[!is.na(logbook$REDSKAP_NS),]
+logbook$MONTH <- substr(logbook$STARTTIDSPUNKT,6,7)
+proportions <- calculateCatchProportions(logbook, totalcell= c("FANGSTART_FAO"), subcell = c("REDSKAP_NS", "MONTH"), weight = "RUNDVEKT")
+proportions[1,"fraction"]
+expect_equal(proportions[1,"fraction"], sum(logbook[logbook$REDSKAP_NS==proportions$REDSKAP_NS[1] & logbook$MONTH == proportions$MONTH[1], "RUNDVEKT"]) / sum(logbook$RUNDVEKT))
+expect_equal(proportions[10,"fraction"], sum(logbook[logbook$REDSKAP_NS==proportions$REDSKAP_NS[10] & logbook$MONTH == proportions$MONTH[10], "RUNDVEKT"]) / sum(logbook$RUNDVEKT))
+
 context("test lst parser")
 logbooks <- readLstFile(system.file("extdata", "testresources","dagbok_2019_trunc.lst", package="Rstox"))
 expect_true(all(c("FISK", "FAAR") %in% names(logbooks)))
@@ -118,10 +128,9 @@ testAdjustLandingsWithLst <- function(landingsStox, logbooksLst, gearTable, gear
   subcell <- c("quarterCategory", "areaCategory")
   
   proportions <- calculateCatchProportions(logbooksLst, totalcell, subcell, weight="VEKT")
-  
   adjustedLandings <- adjustLandings(landingsStox, proportions, totalcell, subcell, "rundvekt")
   
-  return(adjustedLandings[,originalColumns])
+  return(adjustedLandings)
 }
 
 context("landingscorrections no difference")
@@ -174,14 +183,14 @@ gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", pac
 landings <- prepExample$StoxExport$landing
 mockLog <- data.table::data.table(FAAR=as.integer(landings$fangstår), REGM=as.character(landings$registreringsmerkeseddel), RE=as.character(landings$redskapkode), FM=as.integer(substr(landings$sistefangstdato,6,7)), HO=as.character(landings$hovedområdekode), LENG=as.double(landings$størstelengde), FISK=as.character(substr(landings$artkode,1,4)), VEKT=as.double(landings$rundvekt))
 referenceFraction <- sum(landings$rundvekt[landings$hovedområdekode == 8 & landings$temporal=="Q3"]) / sum(landings$rundvekt)
-landings <- landings[landings$hovedområdekode != 8 & landings$temporal!="Q3",]
+landings <- landings[!(landings$hovedområdekode == 8 & landings$temporal=="Q3"),]
 expect_true(sum(mockLog$HO==8 & (mockLog$FM %in% c(7,8,9))) > 0)
 expect_equal(sum(landings$hovedområdekode==8 & (substr(landings$sistefangstdato,6,7) %in% c("07","08","09"))), 0)
 
 adjustedLandings <- testAdjustLandingsWithLst(landings, mockLog, gearTable, "Trawl")
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 expect_gt(nrow(adjustedLandings), nrow(landings))
-expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$areaCategory == 8 & adjustedLandings$quarterCategory == "Q3"]) / sum(adjustedLandings$rundvekt), referenceFraction)
+expect_lt(abs((sum(adjustedLandings$rundvekt[adjustedLandings$areaCategory == 8 & adjustedLandings$quarterCategory == "Q3"]) / sum(adjustedLandings$rundvekt)) - referenceFraction)/referenceFraction, 1e-3)
 
 context("landingscorrections area missing logbooks")
 prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
@@ -213,6 +222,12 @@ logbook <- annotateLogbooksGear(logbook, gearTable, "gearfactor")
 expect_true(all(logbook$gearfactor == "Seine+pots"))
 expect_equal(nrow(logbook), nrowPre)
 
+logbook <- readRDS(system.file("extdata", "testresources","HAD_logbook_2018.rds", package="Rstox"))
+logbook <- annotateLogbooksGear(logbook, gearTable, "gearfactor")
+gearECA <- c("51","52","54","50","53")
+expect_equal(sum(!is.na(logbook$gearfactor) & logbook$gearfactor=="Trawl"), sum(!is.na(logbook$REDSKAP_NS) & logbook$REDSKAP_NS %in% gearECA))
+
+
 context("annotate temporal psv logbooks")
 logbook <- readErsFile(system.file("extdata", "testresources","logbooks_trimmed_2015.psv", package="Rstox"))
 nrowPre <- nrow(logbook)
@@ -228,5 +243,48 @@ spatialTable <- readRDS(system.file("extdata", "testresources","stratumpolygon.r
 logbook <- annotateLogbooksSpatial(logbook, spatialTable, "spatial")
 area4 <- logbook[logbook$spatial=="4",]
 expect_true(all(substr(area4$LOKASJON_START,1,2) == "04"))
+
+
+context("adjust laninggs Reca psv logbooks")
+logbook <- readRDS(system.file("extdata", "testresources","HAD_logbook_2018.rds", package="Rstox"))
+landings <- readRDS(system.file("extdata", "testresources","HAD_landings_2018_sampled10K.rds", package="Rstox"))
+spatialTable <- readRDS(system.file("extdata", "testresources","stratumpolygon.rds", package="Rstox"))
+temporalTable <- readRDS(system.file("extdata", "testresources","temporalTable.rds", package="Rstox"))
+gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
+
+adjustedLandings <- adjustRecaSpatialTemporal(landings, logbook, gearTable, temporalTable, spatialTable, "Trawl")
+expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
+expect_equal(sum(landings$gearfactor!="Trawl"), sum(adjustedLandings$gearfactor!="Trawl"))
+expect_equal(sum(landings$rundvekt[landings$gearfactor!="Trawl"]), sum(adjustedLandings$rundvekt[adjustedLandings$gearfactor!="Trawl"]))
+
+context("adjust lanings Reca psv logbooks check fraction o 15")
+logbook <- readRDS(system.file("extdata", "testresources","HAD_logbook_2018.rds", package="Rstox"))
+landings <- readRDS(system.file("extdata", "testresources","HAD_landings_2018_sampled10K.rds", package="Rstox"))
+spatialTable <- readRDS(system.file("extdata", "testresources","stratumpolygon.rds", package="Rstox"))
+temporalTable <- readRDS(system.file("extdata", "testresources","temporalTable.rds", package="Rstox"))
+gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
+
+adjustedLandings <- adjustRecaSpatialTemporal(landings, logbook, gearTable, temporalTable, spatialTable, "Trawl")
+
+omr1 <- c("20","21","22","23","25","26","27")
+omr2 <- c("3", "2", "10", "11", "13", "14", "15", "16", "17", "18", "24", "1")
+months <- c(1,2,3)
+gearECA <- c("51","52","54","50","53")
+
+
+logbook <- annotateLogbooksSpatial(logbook, spatialTable, "spatial")
+logbook <- annotateLogbooksGear(logbook, gearTable, "gearfactor")
+logbook <- annotateLogbooksTemporal(logbook, temporalTable, "temporal")
+cell1log <- logbook[!is.na(logbook$spatial) & logbook$spatial=="20-21-22-23-25-26-27" & !is.na(logbook$gearfactor) & logbook$gearfactor == "Trawl" & !is.na(logbook$temporal) & logbook$temporal=="Q1",]
+cell2log <- logbook[!is.na(logbook$spatial) & logbook$spatial=="3-2-10-11-13-14-15-16-17-18-24-1" & !is.na(logbook$gearfactor) & logbook$gearfactor == "Trawl" & !is.na(logbook$temporal) & logbook$temporal=="Q1",]
+ratioLog <- sum(cell1log$RUNDVEKT) / sum(cell2log$RUNDVEKT)
+
+trawlo15 <- adjustedLandings[adjustedLandings$gearfactor == "Trawl",]
+cell1adj <- trawlo15[trawlo15$spatial=="20-21-22-23-25-26-27" & trawlo15$gearfactor == "Trawl" & trawlo15$temporal=="Q1",]
+cell2adj <- trawlo15[trawlo15$spatial=="3-2-10-11-13-14-15-16-17-18-24-1" & trawlo15$gearfactor == "Trawl" & trawlo15$temporal=="Q1",]
+ratioAdj <- sum(cell1adj$rundvekt) / sum(cell2adj$rundvekt)
+
+expect_lt(abs(ratioLog-ratioAdj)/ratioLog, 1e6)
+
 
 
