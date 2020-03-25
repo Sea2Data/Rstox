@@ -44,6 +44,86 @@ expect_error(calculateCatchProportions(logbooks), "got NA fractions for some par
 calculateCatchProportions(logbooks, na.rm = T)
 
 
+#
+#
+# Test logbook cleaning
+#
+#
+
+
+
+#' For testing adjustLandings based on lst files
+testAdjustLandingsWithLst <- function(landingsStox, logbooksLst, gearTable, gearCode, minVesselSize=15){
+  gearvector <- unlist(strsplit(gearTable$Value[gearTable$CovariateSourceType=="Landing" & gearTable$Covariate==gearCode], ","))
+  originalColumns <- names(landingsStox)
+  
+  #
+  # annotate with compareable codes, gear
+  # and reduce logbooks to desired gear
+  #
+  landingsStox$gearCategory <- NA
+  landingsStox$gearCategory[as.character(landingsStox$redskapkode) %in% gearvector] <- gearCode
+  logbooksLst$gearCategory <- NA
+  logbooksLst$gearCategory[as.character(logbooksLst$RE) %in% gearvector] <- gearCode
+  logbooksLst <- logbooksLst[!is.na(logbooksLst$gearCategory)]
+  
+  #
+  # annotate with compareable codes, species
+  # and reduce lobooks to species that are in landings
+  #
+  landingsStox$speciesCategory <- substring(as.character(landingsStox$artkode), 1,4)
+  logbooksLst$speciesCategory <- substring(as.character(logbooksLst$FISK), 1,4)
+  logbooksLst <- logbooksLst[logbooksLst$speciesCategory %in% landingsStox$speciesCategory,]
+  
+  #
+  # annotate with compareable codes, vessel size
+  # and reduce logbooks to desired vessel size
+  #
+  landingsStox$vesselSizeCategory <- NA
+  landingsStox$vesselSizeCategory[landingsStox$størstelengde>=minVesselSize] <- "o15"
+  logbooksLst$vesselSizeCategory <- NA
+  logbooksLst$vesselSizeCategory[logbooksLst$LENG>=minVesselSize] <- "o15"
+  logbooksLst <- logbooksLst[!is.na(logbooksLst$vesselSizeCategory),]
+  
+  
+  #
+  # annotate with compareable codes, quarter
+  #
+  landingsStox$month <- substr(landingsStox$sistefangstdato, 6,7)
+  landingsStox$quarterCategory <- NA
+  landingsStox$quarterCategory[landingsStox$month %in% c("01","02","03")] <- "Q1"
+  landingsStox$quarterCategory[landingsStox$month %in% c("04","05","06")] <- "Q2"
+  landingsStox$quarterCategory[landingsStox$month %in% c("07","08","09")] <- "Q3"
+  landingsStox$quarterCategory[landingsStox$month %in% c("10","11","12")] <- "Q4"
+  
+  logbooksLst$quarterCategory <- NA
+  logbooksLst$quarterCategory[logbooksLst$FM %in% c(1,2,3)] <- "Q1"
+  logbooksLst$quarterCategory[logbooksLst$FM %in% c(4,5,6)] <- "Q2"
+  logbooksLst$quarterCategory[logbooksLst$FM %in% c(7,8,9)] <- "Q3"
+  logbooksLst$quarterCategory[logbooksLst$FM %in% c(10,11,12)] <- "Q4"
+  
+  #
+  # annotate with compareable codes, area
+  # and reduce logbooks to areas in landings
+  #
+  landingsStox$areaCategory <- as.integer(landingsStox$hovedområdekode)
+  logbooksLst$areaCategory <- as.integer(logbooksLst$HO)
+  logbooksLst <- logbooksLst[logbooksLst$areaCategory %in% landingsStox$areaCategory,]
+  browser()
+  
+  #
+  # Define cells and adjust landings
+  #
+  totalcell <- c("vesselSizeCategory", "speciesCategory", "gearCategory")
+  subcell <- c("quarterCategory", "areaCategory")
+  
+  proportions <- calculateCatchProportions(logbooksLst, totalcell, subcell, weight="VEKT")
+  
+  adjustedLandings <- adjustLandings(landingsStox, proportions, totalcell, subcell, "rundvekt")
+  
+  return(adjustedLandings[,originalColumns])
+}
+
 context("landingscorrections no difference")
 prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
 gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
@@ -51,7 +131,7 @@ landings <- prepExample$StoxExport$landing
 
 mockLog <- data.table::data.table(FAAR=as.integer(landings$fangstår), REGM=as.character(landings$registreringsmerkeseddel), RE=as.character(landings$redskapkode), FM=as.integer(substr(landings$sistefangstdato,6,7)), HO=as.character(landings$hovedområdekode), LENG=as.double(landings$størstelengde), FISK=as.character(substr(landings$artkode,1,4)), VEKT=as.double(landings$rundvekt))
 
-adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
+adjustedLandings <- testAdjustLandingsWithLst(landings, mockLog, gearTable, "Trawl")
 expect_equal(nrow(adjustedLandings), nrow(landings))
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$hovedområdekode==43]), sum(landings$rundvekt[landings$hovedområdekode==43]))
@@ -66,7 +146,7 @@ extraA <- mockLog[1:10,]
 extraA$HO<-99
 mockLog <- rbind(mockLog, extraA)
 
-adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
+adjustedLandings <- testAdjustLandingsWithLst(landings, mockLog, gearTable, "Trawl")
 expect_equal(nrow(adjustedLandings), nrow(landings))
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$hovedområdekode==43]), sum(landings$rundvekt[landings$hovedområdekode==43]))
@@ -82,7 +162,7 @@ mockLog[mockLog$HO=="43", "VEKT"] <- mockLog[mockLog$HO=="43", "VEKT"]*1.2
 frac43Log <- sum(mockLog[mockLog$HO=="43", "VEKT"]) / sum(mockLog$VEKT)
 frac43Land <- sum(landings[landings$hovedområdekode=="43", "rundvekt"]) / sum(landings$rundvekt)
 
-adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
+adjustedLandings <- testAdjustLandingsWithLst(landings, mockLog, gearTable, "Trawl")
 expect_equal(nrow(adjustedLandings), nrow(landings))
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 expect_lt(abs(sum(adjustedLandings$rundvekt[adjustedLandings$hovedområdekode==43])/sum(adjustedLandings$rundvekt) - frac43Log)/frac43Log, 1e-4)
@@ -95,11 +175,13 @@ landings <- prepExample$StoxExport$landing
 mockLog <- data.table::data.table(FAAR=as.integer(landings$fangstår), REGM=as.character(landings$registreringsmerkeseddel), RE=as.character(landings$redskapkode), FM=as.integer(substr(landings$sistefangstdato,6,7)), HO=as.character(landings$hovedområdekode), LENG=as.double(landings$størstelengde), FISK=as.character(substr(landings$artkode,1,4)), VEKT=as.double(landings$rundvekt))
 referenceFraction <- sum(landings$rundvekt[landings$hovedområdekode == 8 & landings$temporal=="Q3"]) / sum(landings$rundvekt)
 landings <- landings[landings$hovedområdekode != 8 & landings$temporal!="Q3",]
+expect_true(sum(mockLog$HO==8 & (mockLog$FM %in% c(7,8,9))) > 0)
+expect_equal(sum(landings$hovedområdekode==8 & (substr(landings$sistefangstdato,6,7) %in% c("07","08","09"))), 0)
 
-adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
+adjustedLandings <- testAdjustLandingsWithLst(landings, mockLog, gearTable, "Trawl")
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 expect_gt(nrow(adjustedLandings), nrow(landings))
-expect_equal(sum(landings$rundvekt[landings$hovedområdekode == 8 & landings$temporal=="Q3"]) / sum(landings$rundvekt), referenceFraction)
+expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$areaCategory == 8 & adjustedLandings$quarterCategory == "Q3"]) / sum(adjustedLandings$rundvekt), referenceFraction)
 
 context("landingscorrections area missing logbooks")
 prepExample <- readRDS(system.file("extdata", "testresources","prepEcaWHB.rds", package="Rstox"))
@@ -108,7 +190,7 @@ landings <- prepExample$StoxExport$landing
 mockLog <- data.table::data.table(FAAR=as.integer(landings$fangstår), REGM=as.character(landings$registreringsmerkeseddel), RE=as.character(landings$redskapkode), FM=as.integer(substr(landings$sistefangstdato,6,7)), HO=as.character(landings$hovedområdekode), LENG=as.double(landings$størstelengde), FISK=as.character(substr(landings$artkode,1,4)), VEKT=as.double(landings$rundvekt))
 mockLog <- mockLog[mockLog$HO!=43,]
 
-adjustedLandings <- adjustGearLandingsWithLogbooksReca(landings, mockLog, gearTable, "Trawl")
+adjustedLandings <- testAdjustLandingsWithLst(landings, mockLog, gearTable, "Trawl")
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$landings$hovedområdekode==43]), 0)
 

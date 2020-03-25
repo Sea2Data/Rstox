@@ -335,9 +335,9 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
   # subcells in 'proportions', but not in 'landings'
   # impute
   #
+  
   missing <- proportions[!(proportions$combinedCellId %in% touch$combinedCellId) & (proportions$totalcellId %in% touch$totalcellId),]
   if (nrow(missing) > 0){
-    
     # get weight for totalcell and assign weight to subcells
     totalWeights <- totals[totals$totalcellId %in% missing$totalcellId,]
     assignedWeights <- merge(totalWeights, missing)
@@ -373,97 +373,5 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
 
 }
 
-#' Adjusts landings for Reca
-#' @description 
-#'  Adjust landings for selected gears.
-#' @details 
-#'  Note: This is prototype functionaltiy consider for proper inclusion in later versions of StoX
-#'  Note: Ideally such adjustments are done on aggregated formats, but are included at an earlier stage here because of existing software structures
-#'  Note: Some landings may be introduced by resampling, and identifying information may be incorrect (e.g. sale notes ids)
-#'  
-#'  Calculates proportions of catch of each species, in quarters and main areas (hovedområde) for a specified gear
-#'  in logbooks, and adjust the landed weights accordingly.
-#'  
-#'  Adjustments are done by uniformly scaling all landings within a cell.
-#'  
-#'  For instance trawl-landings, or other landing from multi-day trips can be adjusted to
-#'  reflect the higher spatial and temporal resolution in logbooks as opposed to landings (sales notes)
-#'  
-#'  Fits the format for landings used internally in the Reca scripts.
-#' @param landingStox the landings, formatted as in stoxExport$landing, stored by \code{\link[Rstox]{prepareRECA}} 
-#' @param logbookLst Aggregated logbook on lst format, as parsed by \code{\link[Rstox]{readLstFile}}
-#' @param gearTable table of gear mappings. As exported to processData by the ECA template stox-baseline.
-#' @param gearCode code identifying the gear (as in gearTabe$Covariate).
-#' @param minVesselSize the minimal vessel size that logbook corrections should be applied to
-#' @return landings, formatted as 'landingStox'
-#' @export
-adjustGearLandingsWithLogbooksReca <- function(landingsStox, logbooksLst, gearTable, gearCode, minVesselSize=15, temporalCovariate="temporal"){
-  gearvector <- unlist(strsplit(gearTable$Value[gearTable$CovariateSourceType=="Landing" & gearTable$Covariate==gearCode], ","))
-  originalColumns <- names(landingsStox)
-  
-  stop("Need to implement setting logbook-covariates from processData objects (gear, spatial and temporal)")
-  
-  #
-  # annotate with compareable codes, gear
-  # and reduce logbooks to desired gear
-  #
-  landingsStox$gearCategory <- NA
-  landingsStox$gearCategory[as.character(landingsStox$redskapkode) %in% gearvector] <- gearCode
-  logbooksLst$gearCategory <- NA
-  logbooksLst$gearCategory[as.character(logbooksLst$RE) %in% gearvector] <- gearCode
-  logbooksLst <- logbooksLst[!is.na(logbooksLst$gearCategory)]
-  
-  #
-  # annotate with compareable codes, species
-  # and reduce lobooks to species that are in landings
-  #
-  landingsStox$speciesCategory <- substring(as.character(landingsStox$artkode), 1,4)
-  logbooksLst$speciesCategory <- substring(as.character(logbooksLst$FISK), 1,4)
-  logbooksLst <- logbooksLst[logbooksLst$speciesCategory %in% landingsStox$speciesCategory,]
-  
-  #
-  # annotate with compareable codes, vessel size
-  # and reduce logbooks to desired vessel size
-  #
-  landingsStox$vesselSizeCategory <- NA
-  landingsStox$vesselSizeCategory[landingsStox$størstelengde>=minVesselSize] <- "o15"
-  logbooksLst$vesselSizeCategory <- NA
-  logbooksLst$vesselSizeCategory[logbooksLst$LENG>=minVesselSize] <- "o15"
-  logbooksLst <- logbooksLst[!is.na(logbooksLst$vesselSizeCategory),]
-  
-  
-  #
-  # annotate with covariate temporal
-  # and reduce to covariates in landings
-  #
-  
-  logbooksLst[[temporalCovariate]] <- as.character(NA)
-  logbooksLst[logbooksLst$FM %in% c(1,2,3),][[temporalCovariate]] <- "Q1"
-  logbooksLst[logbooksLst$FM %in% c(4,5,6),][[temporalCovariate]] <- "Q2"
-  logbooksLst[logbooksLst$FM %in% c(7,8,9),][[temporalCovariate]] <- "Q3"
-  logbooksLst[logbooksLst$FM %in% c(10,11,12),][[temporalCovariate]] <- "Q4"
-  logbooksLst <- logbooksLst[logbooksLst[[temporalCovariate]] %in% landingsStox[[temporalCovariate]],]
-  
-  #
-  # annotate covariate spatial
-  # and reduce logbooks to areas in landings
-  #
-  landingsStox$areaCategory <- as.integer(landingsStox$hovedområdekode)
-  logbooksLst$areaCategory <- as.integer(logbooksLst$HO)
-  logbooksLst <- logbooksLst[logbooksLst$areaCategory %in% landingsStox$areaCategory,]
-  
-  
-  #
-  # Define cells and adjust landings
-  #
-  totalcell <- c("vesselSizeCategory", "speciesCategory", "gearCategory")
-  subcell <- c(temporalCovariate, "areaCategory")
-  
-  proportions <- calculateCatchProportions(logbooksLst, totalcell, subcell, weight="VEKT")
-  
-  adjustedLandings <- adjustLandings(landingsStox, proportions, totalcell, subcell, "rundvekt")
-  
-  return(adjustedLandings[,originalColumns])
-}
   
   
