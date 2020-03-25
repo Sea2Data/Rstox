@@ -373,5 +373,151 @@ adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
 
 }
 
+#' @noRd
+annotateLogbooksGear <- function(logbook, processData, covariateName){
+  if (covariateName %in% names(logbook)){
+    stop(paste("logbook already has a column:", covariateName))
+  }
+  stopifnot("REDSKAP_NS" %in% names(logbook))
+  logbook[[covariateName]] <- as.character(NA)
+  
+  for (level in processData$Covariate[processData$CovariateSourceType=="Landing"]){
+    gearvector <- unlist(strsplit(processData$Value[processData$CovariateSourceType=="Landing" & processData$Covariate==level], ","))
+    logbook[[covariateName]][logbook$REDSKAP_NS %in% gearvector] <- level
+  }
+
+  return(logbook)  
+}
+#' @noRd
+annotateLogbooksTemporal <- function(logbook, processData, covariateName){
+  if (covariateName %in% names(logbook)){
+    stop(paste("logbook already has a column:", covariateName))
+  }
+  stopifnot("STARTTIDSPUNKT" %in% names(logbook))
+  logbook[[covariateName]] <- as.character(NA)
+  
+  for (level in processData$Covariate[processData$CovariateSourceType=="Landing"]){
+    dateRangeString <- processData$Value[processData$CovariateSourceType=="Landing" & processData$Covariate==level]
+    startdate <- strsplit(dateRangeString, "-")[[1]][1]
+    startday <- as.integer(strsplit(startdate, "/")[[1]][1])
+    startmonth <- as.integer(strsplit(startdate, "/")[[1]][2])
+    stopdate <- strsplit(dateRangeString, "-")[[1]][2]
+    stopday <- as.integer(strsplit(stopdate, "/")[[1]][1])
+    stopmonth <- as.integer(strsplit(stopdate, "/")[[1]][2])
+    
+    logbookday <- as.integer(substr(logbook$STARTTIDSPUNKT,9,10))
+    logbookmonth <- as.integer(substr(logbook$STARTTIDSPUNKT,6,7))
+    
+    afterInclusive <- logbookmonth > startmonth | (logbookmonth == startmonth & logbookday >= startday)
+    beforeInclusive <- logbookmonth < stopmonth | (logbookmonth == stopmonth & logbookday <= stopday)
+
+    logbook[[covariateName]][afterInclusive & beforeInclusive] <- level
+  }
+  return(logbook)
+}
+#' @noRd
+annotateLogbooksSpatial <- function(logbook, processData, covariateName){
+  if (covariateName %in% names(logbook)){
+    stop(paste("logbook already has a column:", covariateName))
+  }
+  stopifnot("START_LG" %in% names(logbook))
+  stopifnot("START_LT" %in% names(logbook))
+  logbook[[covariateName]] <- as.character(NA)
+  
+  logbookCoordinates <- sp::SpatialPoints(logbook[,c("START_LG","START_LT")])
+  sp::proj4string(logbookCoordinates) <- CRS("+proj=longlat")
+
+  for (i in 1:length(processData$Stratum)){
+    level <- processData$Stratum[i]
+    polygon <- readWKTSplit(processData$Polygon[[i]])
+    sp::proj4string(polygon) <- CRS("+proj=longlat")
+    containsVector <- rgeos::gContains(polygon, logbookCoordinates, byid = T)[,1]
+    logbook[[covariateName]][containsVector] <- level
+  }
+  
+  return(logbook)
+}
+
+
+#' Adjust landings with logbooks
+#' @describe
+#'  Adjusts total weight in spatial and temporal covariates for a given gear, based on logbook data.
+#' @details 
+#'  NOTE: <note on prototyping>
+#'  ss
+#' @param landingStox landings as passed between the Reca-scripts. E.g. as saved by \code{\link[Rstox]{prepareReca}}
+#' @param logbook logbooks as parser by \code{\link[Rstox]{readErsFile}}
+#' @param processDataGear processdata gerfactor as exported from Stox-baseline
+#' @param processDataTemporal processdata temporal
+#' @param processDataSpatial processdata stratumpolygon as exported from Stox-baseline
+#' @param gearSelection identifies the gear to clean for. One of the options on processDataGear$Covariate
+#' @param temporalCovariate the name of the temporal covariate
+#' @param spatialCovariate the name of the spatial covariate
+#' @param gearCovariate the name of the gear covariate
+#' @param minVesselSize minimal size in meters for vessels to include in logbook adjusted data
+#' @param logbookActivityCodes vector specifying the activity codes to include from logbooks (field AKTIVITET).
+#' @return landings, formatted as landingStox
+adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, processDataTemporal, processDataSpatial, gearSelection, temporalCovariate="temporal", spatialCovariate="spatial", gearCovariate="gearfactor", minVesselSize=15, logbookActivityCodes=c("I fiske")){
+  
+  if (!(all(c(gearCovariate, spatialCovariate, temporalCovariate) %in% names(landingsStox)))){
+    stop("Some of the specifed covariate names are not columns in 'landingsStox'")
+  }
+  if (any(is.na(landingsStox[[spatialCovariate]]))){
+    stop("NA for spatial covariate in landings")
+  }
+  if (any(is.na(landingsStox[[gearCovariate]]))){
+    stop("NA for gear covariate in landings")
+  }
+  if (any(is.na(landingsStox[[temporalCovariate]]))){
+    stop("NA for temporal covariate in landings")
+  }
+  
+  #filter logbooks for relevant aktivities
+  logbook <- logbook[logbook$AKTIVITET %in% logbookActivityCodes,]
+
+  # anotate logbooks with covariates
+  # and get rid of NAs for each annotation, they are not in landings pr. the check above
+  logbook <- annotateLogbooksGear(logbook, processDataGear, gearCovariate)
+  logbook <- logbook[!is.na(logbook[[gearCovariate]])]
+  logbook <- annotateLogbooksTemporal(logbook, processDataTemporal, temporalCovariate)
+  logbook <- logbook[!is.na(logbook[[temporalCovariate]])]
+  logbook <- annotateLogbooksSpatial(logbook, processDataSpatial, spatialCovariate)
+  logbook <- logbook[!is.na(logbook[[spatialCovariate]])]
   
   
+  #
+  # set up totalcell
+  #
+  
+  # get rid of other gears for logbooks
+  logbook <- logbook[logbook[[gearCovariate]] == gearSelection,]
+  
+  # annotate logbooks and landings with vessel size
+  # get rid of vessels under size for logbooks
+  landingsStox$vesselSizeCategory <- NA
+  landingsStox$vesselSizeCategory[landingsStox$størstelengde>=minVesselSize] <- "o15"
+  landingsStox$vesselSizeCategory[landingsStox$størstelengde<minVesselSize] <- "u15"
+  logbook$vesselSizeCategory <- NA
+  logbook$vesselSizeCategory[logbook$STØRSTE_LENGDE>=minVesselSize] <- "o15"
+  logbook <- logbook[!is.na(logbook$vesselSizeCategory),]
+  
+  
+  # annotate logbooks with species
+  # get rid of species not in landings, from logbooks, us substr 4 letters
+  landingsStox$species4l <- substr(landingsStox$artkode, 1,4)
+  logbook$species4l <- substr(logbook$FANGSTART_NS, 1,4)
+  logbook <- logbook[logbook$species4l %in% landingsStox$species4l,]
+  
+  totalcell <- c("vesselSizeCategory", "species4l", gearCovariate)
+  subcell <- c(temporalCovariate, spatialCovariate)
+
+  # call adjustLandings with totalcell gear, species and vesselSize
+  # and subcell spatial and temporal
+  logbookProportions <- calculateCatchProportions(logbook, totalcell, subcell, "RUNDVEKT")
+  adjustedLandings <- adjustLandings(landingsStox, logbookProportions, totalcell, subcell, "rundvekt")
+  return(adjustedLandings)
+  
+}
+  
+
+

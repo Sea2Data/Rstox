@@ -109,7 +109,7 @@ testAdjustLandingsWithLst <- function(landingsStox, logbooksLst, gearTable, gear
   landingsStox$areaCategory <- as.integer(landingsStox$hovedområdekode)
   logbooksLst$areaCategory <- as.integer(logbooksLst$HO)
   logbooksLst <- logbooksLst[logbooksLst$areaCategory %in% landingsStox$areaCategory,]
-  browser()
+  
   
   #
   # Define cells and adjust landings
@@ -193,5 +193,40 @@ mockLog <- mockLog[mockLog$HO!=43,]
 adjustedLandings <- testAdjustLandingsWithLst(landings, mockLog, gearTable, "Trawl")
 expect_equal(sum(adjustedLandings$rundvekt), sum(landings$rundvekt))
 expect_equal(sum(adjustedLandings$rundvekt[adjustedLandings$landings$hovedområdekode==43]), 0)
+
+
+
+
+#
+# landing annotation with psv files
+#
+
+
+#
+# test annotate gear
+#
+context("annotate gear psv logbooks")
+logbook <- readErsFile(system.file("extdata", "testresources","logbooks_trimmed_2015.psv", package="Rstox"))
+gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
+nrowPre <- nrow(logbook)
+logbook <- annotateLogbooksGear(logbook, gearTable, "gearfactor")
+expect_true(all(logbook$gearfactor == "Seine+pots"))
+expect_equal(nrow(logbook), nrowPre)
+
+context("annotate temporal psv logbooks")
+logbook <- readErsFile(system.file("extdata", "testresources","logbooks_trimmed_2015.psv", package="Rstox"))
+nrowPre <- nrow(logbook)
+temporalTable <- readRDS(system.file("extdata", "testresources","temporalTable.rds", package="Rstox"))
+logbook <- annotateLogbooksTemporal(logbook, temporalTable, "temporal")
+expect_true(all(logbook$temporal == "Q1"))
+expect_equal(nrow(logbook), nrowPre)
+
+context("annotate spatial psv logbooks")
+logbook <- readErsFile(system.file("extdata", "testresources","logbooks_trimmed_2015.psv", package="Rstox"))
+nrowPre <- nrow(logbook)
+spatialTable <- readRDS(system.file("extdata", "testresources","stratumpolygon.rds", package="Rstox"))
+logbook <- annotateLogbooksSpatial(logbook, spatialTable, "spatial")
+area4 <- logbook[logbook$spatial=="4",]
+expect_true(all(substr(area4$LOKASJON_START,1,2) == "04"))
 
 
