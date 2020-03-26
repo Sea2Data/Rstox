@@ -12,6 +12,7 @@ baseline2eca(
   gearfactor = NULL,
   spatial = NULL,
   landingresolution = 92,
+  landingAdjuster = NULL,
   ...
 )
 }
@@ -29,6 +30,8 @@ baseline2eca(
 \item{spatial}{Optional definition of the spatial covariate (not yet implemented).}
 
 \item{landingresolution}{The temporal resolution in days to use for aggregating the landing data.}
+
+\item{landingAdjuster}{function to manipulate landings before conversion. Used when running from R, for setting covariates not supported by the StoX pipeline.}
 
 \item{...}{Parameters passed to \code{\link{getBaseline}}.}
 }

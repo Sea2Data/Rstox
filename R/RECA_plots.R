@@ -335,10 +335,19 @@ default_color_empty = "gray"
 default_color_wrong = "white"
 
 #' get matrix of sample and landings from the subset of biotic that contains aged individuals
+#' Extracts aged individuals.
+#' If sampletypes are given, all fish from samples of that type will be extracted in stead of the aged individuals.
 #' @keywords internal
 #' @noRd
-get_g_s_a_frame <- function(eca) {
-  agedb <- eca$biotic[!is.na(eca$biotic$age), ]
+get_g_s_a_frame <- function(eca, agesampletypes=NULL) {
+  
+  if (is.null(agesampletypes)){
+    agedb <- eca$biotic[!is.na(eca$biotic$age), ]    
+  }
+  else{
+    agedb <- eca$biotic[!is.na(eca$biotic$sampletype) & (eca$biotic$sampletype %in% agesampletypes),]
+  }
+
   
   cols <- c("temporal", "gearfactor", "spatial")
   if (!all(cols %in% names(eca$covariateMatrixBiotic)) |
@@ -403,15 +412,13 @@ get_g_s_a_frame <- function(eca) {
     )
   totaged <-
     aggregate(
-      list(aged = agedb$age),
+      list(aged = agedb$serialnumber),
       by = list(
         temporal = agedb$temporal,
         gearfactor = agedb$gearfactor,
         spatial = agedb$spatial
       ),
-      FUN = function(x) {
-        sum(!is.na(x))
-      }
+      FUN = length
     )
   
   m <- merge(totland, totvessel, by = cols, all = T)
