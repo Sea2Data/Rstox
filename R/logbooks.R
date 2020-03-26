@@ -456,10 +456,8 @@ annotateLogbooksSpatial <- function(logbook, processData, covariateName){
 #'  Note: but the covariates, 'sistefangstdato', 'artkode', and weight parameters are set in representative fashion.
 #'  
 #'  Logbook-adjustment ensures that:
-#'  \itemze{
-#'   \item total weight in adjusted landings are the same as total weight before adjustment
-#'   \item the relative proportions of the part of the landings that are covered by logbooks are the same as in logbooks
-#'  }
+#'   * total weight in adjusted landings are the same as total weight before adjustment
+#'   * the relative proportions of the part of the landings that are covered by logbooks are the same as in logbooks
 #'  The portion covered by logbooks are considered identified by 'gearselection' and 'minVesselSize'
 #'   
 #' @param landingsStox landings as passed between the Reca-scripts. E.g. as saved by \code{\link[Rstox]{prepareRECA}}
@@ -513,11 +511,11 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   # annotate logbooks and landings with vessel size
   # get rid of vessels under size for logbooks
   landingsStox$vesselSizeCategory <- NA
-  landingsStox$vesselSizeCategory[is.na(landingsStox$størstelengde)] <- "u15"
-  landingsStox$vesselSizeCategory[!is.na(landingsStox$størstelengde) & landingsStox$størstelengde>=minVesselSize] <- "o15"
-  landingsStox$vesselSizeCategory[!is.na(landingsStox$størstelengde) & landingsStox$størstelengde<minVesselSize] <- "u15"
+  landingsStox$vesselSizeCategory[is.na(landingsStox[["st\u00F8rstelengde"]])] <- "u15"
+  landingsStox$vesselSizeCategory[!is.na(landingsStox[["st\u00F8rstelengde"]]) & landingsStox[["st\u00F8rstelengde"]] >= minVesselSize] <- "o15"
+  landingsStox$vesselSizeCategory[!is.na(landingsStox[["st\u00F8rstelengde"]]) & landingsStox[["st\u00F8rstelengde"]] < minVesselSize] <- "u15"
   logbook$vesselSizeCategory <- NA
-  logbook$vesselSizeCategory[logbook$STØRSTE_LENGDE>=minVesselSize] <- "o15"
+  logbook$vesselSizeCategory[logbook[["ST\u00D8RSTE_LENGDE"]] >= minVesselSize] <- "o15"
   logbook <- logbook[!is.na(logbook$vesselSizeCategory),]
   
   

@@ -55,9 +55,7 @@ Note: This is prototype functionaltiy consider for proper inclusion in later ver
  Note: but the covariates, 'sistefangstdato', 'artkode', and weight parameters are set in representative fashion.
  
  Logbook-adjustment ensures that:
- \itemze{
-  \item total weight in adjusted landings are the same as total weight before adjustment
-  \item the relative proportions of the part of the landings that are covered by logbooks are the same as in logbooks
- }
+  * total weight in adjusted landings are the same as total weight before adjustment
+  * the relative proportions of the part of the landings that are covered by logbooks are the same as in logbooks
  The portion covered by logbooks are considered identified by 'gearselection' and 'minVesselSize'
 }
