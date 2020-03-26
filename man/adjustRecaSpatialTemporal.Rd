@@ -19,6 +19,8 @@ adjustRecaSpatialTemporal(
 )
 }
 \arguments{
+\item{landingsStox}{landings as passed between the Reca-scripts. E.g. as saved by \code{\link[Rstox]{prepareRECA}}}
+
 \item{logbook}{logbooks as parser by \code{\link[Rstox]{readErsFile}}}
 
 \item{processDataGear}{processdata gerfactor as exported from Stox-baseline}
@@ -38,8 +40,6 @@ adjustRecaSpatialTemporal(
 \item{minVesselSize}{minimal size in meters for vessels to include in logbook adjusted data. Vessels without length will be assumed smaller than this threshold}
 
 \item{logbookActivityCodes}{vector specifying the activity codes to include from logbooks (field AKTIVITET).}
-
-\item{landingStox}{landings as passed between the Reca-scripts. E.g. as saved by \code{\link[Rstox]{prepareReca}}}
 }
 \value{
 landings, formatted as landingStox
@@ -48,6 +48,16 @@ landings, formatted as landingStox
 Adjusts total weight in spatial and temporal covariates for a given gear, based on logbook data.
 }
 \details{
-NOTE: <note on prototyping>
- ss
+Note: This is prototype functionaltiy consider for proper inclusion in later versions of StoX
+ Note: Ideally such adjustments are done on aggregated formats, but are included at an earlier stage here because of existing software structures
+ Note: Some landings may be introduced by resampling
+ Note: Some columns on resamled records may be missing or incorrect, 
+ Note: but the covariates, 'sistefangstdato', 'artkode', and weight parameters are set in representative fashion.
+ 
+ Logbook-adjustment ensures that:
+ \itemze{
+  \item total weight in adjusted landings are the same as total weight before adjustment
+  \item the relative proportions of the part of the landings that are covered by logbooks are the same as in logbooks
+ }
+ The portion covered by logbooks are considered identified by 'gearselection' and 'minVesselSize'
 }

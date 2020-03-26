@@ -20,9 +20,11 @@ calculateCatchProportions(
 \item{subcell}{vector of strings identifying column names in 'logbook', identifying cells which are to be assigned a proportion}
 
 \item{weight}{string identifying the column containing weights.}
+
+\item{na.rm}{logical() whether NAs shoudl be removed before aggregation for weight.}
 }
 \value{
-
+data.frame with proportions aggregated on the totalcell and subcell variables. Proportions are listed in the column 'fraction'
 }
 \description{
 Calculates the proportion of catch that was caught in specified cells,

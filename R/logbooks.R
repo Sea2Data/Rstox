@@ -178,7 +178,8 @@ readErsFile <- function(file, encoding="latin1"){
 #' @param totalcell vector of strings identifying column names in 'logbook', identifying cells with totals
 #' @param subcell vector of strings identifying column names in 'logbook', identifying cells which are to be assigned a proportion
 #' @param weight string identifying the column containing weights.
-#' @return
+#' @param na.rm logical() whether NAs shoudl be removed before aggregation for weight.
+#' @return data.frame with proportions aggregated on the totalcell and subcell variables. Proportions are listed in the column 'fraction'
 #' @export
 calculateCatchProportions <- function(logbook, totalcell=c("REGM", "FANGSTART"), subcell=c("LOKASJON_START"), weight="RUNDVEKT", na.rm=F){
   
@@ -278,24 +279,27 @@ imputeLandings <- function(touch, onlyInProportions, totalcell, subcell, weight,
 #' @details 
 #'  Note: This is prototype functionaltiy consider for proper inclusion in later versions of StoX
 #'  Note: Ideally such adjustments are done on aggregated formats, but are included at an earlier stage here because of existing software structures
-#'  Note: Some landings may be introduced by resampling, and identifying information may be incorrect (e.g. sale notes ids)
+#'  Note: Some landings may be introduced by resampling
+#'  Note: Some columns on resamled records may be missing or incorrect, 
+#'  Note: but the 'totalcell', 'subcell', and weight parameters are set in representative fashion.
 #'  
 #'  A cell is a combination of categorical values, e.g. quarter and area.
 #'  'totalcell' are cells whose totals should be unchanged by by the adjustment.
 #'  'subcells' are cells which should be assigned a proportion of the in each totalcell. 
 #'  These are defined relative to totalcell.
 #'  
-#'  Any cells with with totalcell variables in 'landings' that are not in logbooks are left untouched
+#'  Any cells with with totalcell variables in 'landings' that are not in 'proportions' are left untouched
 #'  Any totalcell in proportions, but not in landings will raise an error.
-#'  Any subcells in 'proportions', but not in 'landings' will be added by sampling one landing from the same totalcell, and assign the appropriate fraction of the total catch
+#'  Any subcells in 'proportions', but not in 'landings' will be added by resampling one landing from the same totalcell, and assign the appropriate fraction of the total catch
 #'  Any subcells in 'landings', but not in 'proportions will treated as if the proportions for these cells are zero.
 #'  
 #' @param landings landings to be adjusted
 #' @param proportions data.table of proportions in cells. Proportion should be in a column named 'fraction'
-#' @param totalcells vector of strings, identifies cells (in 'landings' and 'proportions') within which total catch is to be kept constant.
+#' @param totalcell vector of strings, identifies cells (in 'landings' and 'proportions') within which total catch is to be kept constant.
 #' @param subcell vector of strings, identfies cells (in 'landings' and 'proportions'), relative to totalcells which ar to be adjusted
 #' @param weight string identifying the column where landed weight is given in 'landings'
 #' @return adjusted landings, formatted as 'landings'
+#' @noRd
 adjustLandings <- function(landings, proportions, totalcell, subcell, weight){
   
   originalColumns <- names(landings)
@@ -445,9 +449,20 @@ annotateLogbooksSpatial <- function(logbook, processData, covariateName){
 #' @description
 #'  Adjusts total weight in spatial and temporal covariates for a given gear, based on logbook data.
 #' @details 
-#'  NOTE: <note on prototyping>
-#'  ss
-#' @param landingStox landings as passed between the Reca-scripts. E.g. as saved by \code{\link[Rstox]{prepareReca}}
+#'  Note: This is prototype functionaltiy consider for proper inclusion in later versions of StoX
+#'  Note: Ideally such adjustments are done on aggregated formats, but are included at an earlier stage here because of existing software structures
+#'  Note: Some landings may be introduced by resampling
+#'  Note: Some columns on resamled records may be missing or incorrect, 
+#'  Note: but the covariates, 'sistefangstdato', 'artkode', and weight parameters are set in representative fashion.
+#'  
+#'  Logbook-adjustment ensures that:
+#'  \itemze{
+#'   \item total weight in adjusted landings are the same as total weight before adjustment
+#'   \item the relative proportions of the part of the landings that are covered by logbooks are the same as in logbooks
+#'  }
+#'  The portion covered by logbooks are considered identified by 'gearselection' and 'minVesselSize'
+#'   
+#' @param landingsStox landings as passed between the Reca-scripts. E.g. as saved by \code{\link[Rstox]{prepareRECA}}
 #' @param logbook logbooks as parser by \code{\link[Rstox]{readErsFile}}
 #' @param processDataGear processdata gerfactor as exported from Stox-baseline
 #' @param processDataTemporal processdata temporal
