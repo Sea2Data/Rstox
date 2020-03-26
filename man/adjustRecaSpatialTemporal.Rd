@@ -35,7 +35,7 @@ adjustRecaSpatialTemporal(
 
 \item{gearCovariate}{the name of the gear covariate}
 
-\item{minVesselSize}{minimal size in meters for vessels to include in logbook adjusted data}
+\item{minVesselSize}{minimal size in meters for vessels to include in logbook adjusted data. Vessels without length will be assumed smaller than this threshold}
 
 \item{logbookActivityCodes}{vector specifying the activity codes to include from logbooks (field AKTIVITET).}
 

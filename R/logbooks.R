@@ -520,6 +520,26 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   logbookProportions <- calculateCatchProportions(logbook, totalcell, subcell, "RUNDVEKT")
   adjustedLandings <- adjustLandings(landingsStox, logbookProportions, totalcell, subcell, "rundvekt")
   
+  
+  #
+  # Fix missing values for imputed data, that is needed by the Stox-Reca pipeline
+  #
+  for (temp in unique(adjustedLandings[[temporalCovariate]])){
+    imputedRows <- adjustedLandings[[temporalCovariate]] == temp & is.na(adjustedLandings$sistefangstdato)
+    if (sum(imputedRows)>0){
+      notImputedRows <- adjustedLandings[adjustedLandings[[temporalCovariate]] == temp & !is.na(adjustedLandings$sistefangstdato),]
+      
+      #set date
+      selectedSisteFangstDato <- notImputedRows$sistefangstdato[sample.int(nrow(notImputedRows), size=sum(imputedRows), replace = T)]
+      adjustedLandings$sistefangstdato[imputedRows] <- selectedSisteFangstDato
+      
+      #set sepcies
+      selectedArtkode <- notImputedRows$artkode[sample.int(nrow(notImputedRows), size=sum(imputedRows), replace = T)]
+      adjustedLandings$artkode[imputedRows] <- selectedArtkode
+      
+    }
+  }
+  
   #return only landings with positive catch
   adjustedLandings <- adjustedLandings[adjustedLandings$rundvekt>0,]
   return(adjustedLandings)
