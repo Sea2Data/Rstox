@@ -288,5 +288,29 @@ ratioAdj <- sum(cell1adj$rundvekt) / sum(cell2adj$rundvekt)
 
 expect_lt(abs(ratioLog-ratioAdj)/ratioLog, 1e6)
 
+context("adjust lanings Reca error messages")
+logbook <- readRDS(system.file("extdata", "testresources","HAD_logbook_2018.rds", package="Rstox"))
+landings <- readRDS(system.file("extdata", "testresources","HAD_landings_2018_sampled10K.rds", package="Rstox"))
+spatialTable <- readRDS(system.file("extdata", "testresources","stratumpolygon.rds", package="Rstox"))
+temporalTable <- readRDS(system.file("extdata", "testresources","temporalTable.rds", package="Rstox"))
+gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
+landings$spatial[1] <- "Not a spatial"
+expect_error(adjustRecaSpatialTemporal(landings, logbook, gearTable, temporalTable, spatialTable, "Trawl"), "Landings contain illegal values for covariate: spatial")
+
+logbook <- readRDS(system.file("extdata", "testresources","HAD_logbook_2018.rds", package="Rstox"))
+landings <- readRDS(system.file("extdata", "testresources","HAD_landings_2018_sampled10K.rds", package="Rstox"))
+spatialTable <- readRDS(system.file("extdata", "testresources","stratumpolygon.rds", package="Rstox"))
+temporalTable <- readRDS(system.file("extdata", "testresources","temporalTable.rds", package="Rstox"))
+gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
+landings$gearfactor[1] <- "Not a gear"
+expect_error(adjustRecaSpatialTemporal(landings, logbook, gearTable, temporalTable, spatialTable, "Trawl"), "Landings contain illegal values for covariate: gearfactor")
+
+logbook <- readRDS(system.file("extdata", "testresources","HAD_logbook_2018.rds", package="Rstox"))
+landings <- readRDS(system.file("extdata", "testresources","HAD_landings_2018_sampled10K.rds", package="Rstox"))
+spatialTable <- readRDS(system.file("extdata", "testresources","stratumpolygon.rds", package="Rstox"))
+temporalTable <- readRDS(system.file("extdata", "testresources","temporalTable.rds", package="Rstox"))
+gearTable <- readRDS(system.file("extdata", "testresources","gearTable.rds", package="Rstox"))
+landings$temporal[1] <- "Not a temporal"
+expect_error(adjustRecaSpatialTemporal(landings, logbook, gearTable, temporalTable, spatialTable, "Trawl"), "Landings contain illegal values for covariate: temporal")
 
 

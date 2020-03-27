@@ -488,6 +488,16 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
     stop("NA for temporal covariate in landings")
   }
   
+  if (!all(landingsStox[[spatialCovariate]] %in% processDataSpatial$Stratum)){
+    stop(paste("Landings contain illegal values for covariate:", spatialCovariate))
+  }
+  if (!all(landingsStox[[gearCovariate]] %in% processDataGear$Covariate)){
+    stop(paste("Landings contain illegal values for covariate:", gearCovariate))
+  }
+  if (!all(landingsStox[[temporalCovariate]] %in% processDataTemporal$Covariate)){
+    stop(paste("Landings contain illegal values for covariate:", temporalCovariate))
+  }
+  
   #filter logbooks for relevant aktivities
   logbook <- logbook[logbook$AKTIVITET %in% logbookActivityCodes,]
 
@@ -530,6 +540,11 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   
   # call adjustLandings with totalcell gear, species and vesselSize
   # and subcell spatial and temporal
+  
+  if (nrow(logbook) == 0){
+    stop("No logbook-records covers cells in landings")
+  }
+  
   logbookProportions <- calculateCatchProportions(logbook, totalcell, subcell, "RUNDVEKT")
   adjustedLandings <- adjustLandings(landingsStox, logbookProportions, totalcell, subcell, "rundvekt")
   
