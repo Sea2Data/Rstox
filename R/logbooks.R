@@ -482,6 +482,8 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
     stop("NA for spatial covariate in landings")
   }
   if (any(is.na(landingsStox[[gearCovariate]]))){
+    nagears <- landingsStox$redskapkode[is.na(landingsStox[[gearCovariate]])]
+    message(paste("gears with NA for", gearCovariate, paste(unique(nagears), collapse=",")))
     stop("NA for gear covariate in landings")
   }
   if (any(is.na(landingsStox[[temporalCovariate]]))){

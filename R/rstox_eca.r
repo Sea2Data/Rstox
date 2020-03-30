@@ -1141,6 +1141,10 @@ prepareRECA <-
       ))
     }
     
+    eca <- baseline2eca(projectName, landingAdjuster=landingAdjuster)
+    eca$temporalresolution <- temporalresolution
+    
+    
     #
     # run data checks here.
     # This is not actually the correct place, as it should ideally be run with reports, but checks need to be run before reca, and I don't want to put it in baseline report as the distinction between baseline report and r report will dissapear in next release.
@@ -1159,9 +1163,6 @@ prepareRECA <-
       landingissuesfilename  <-
         file.path(getProjectPaths(projectName)$RReportDir,
                   "landingsissues.txt") 
-      
-      eca <- baseline2eca(projectName, landingAdjuster=landingAdjuster)
-      eca$temporalresolution <- temporalresolution
       
       makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic), eca$landing, landingsissuesfile = landingissuesfilename)  
       
