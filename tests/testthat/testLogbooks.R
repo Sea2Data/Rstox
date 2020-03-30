@@ -258,6 +258,7 @@ expect_equal(sum(landings$gearfactor!="Trawl"), sum(adjustedLandings$gearfactor!
 expect_equal(sum(landings$rundvekt[landings$gearfactor!="Trawl"]), sum(adjustedLandings$rundvekt[adjustedLandings$gearfactor!="Trawl"]))
 expect_true(all(!is.na(adjustedLandings$sistefangstdato)))
 expect_true(all(!is.na(adjustedLandings$artkode)))
+expect_true(all(!is.na(adjustedLandings$redskapkode)))
 
 context("adjust lanings Reca psv logbooks check fraction o 15")
 logbook <- readRDS(system.file("extdata", "testresources","HAD_logbook_2018.rds", package="Rstox"))

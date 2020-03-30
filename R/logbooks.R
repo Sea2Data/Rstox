@@ -502,7 +502,7 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   
   #filter logbooks for relevant aktivities
   logbook <- logbook[logbook$AKTIVITET %in% logbookActivityCodes,]
-
+  
   # anotate logbooks with covariates
   # and get rid of NAs for each annotation, they are not in landings pr. the check above
   logbook <- annotateLogbooksGear(logbook, processDataGear, gearCovariate)
@@ -566,6 +566,18 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
       #set sepcies
       selectedArtkode <- notImputedRows$artkode[sample.int(nrow(notImputedRows), size=sum(imputedRows), replace = T)]
       adjustedLandings$artkode[imputedRows] <- selectedArtkode
+      
+    }
+  }
+  
+  for (gear in unique(adjustedLandings[[gearCovariate]])){
+    imputedRows <- adjustedLandings[[gearCovariate]] == gear & is.na(adjustedLandings$redskapkode)
+    if (sum(imputedRows)>0){
+      notImputedRows <- adjustedLandings[adjustedLandings[[gearCovariate]] == gear & !is.na(adjustedLandings$redskapkode),]
+      
+      #set date
+      selectedRedskap <- notImputedRows$redskapkode[sample.int(nrow(notImputedRows), size=sum(imputedRows), replace = T)]
+      adjustedLandings$redskapkode[imputedRows] <- selectedRedskap
       
     }
   }
