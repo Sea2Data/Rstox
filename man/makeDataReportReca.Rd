@@ -11,7 +11,8 @@ makeDataReportReca(
   imputationfile,
   verbose = T,
   covariates = NULL,
-  landing = NULL
+  landing = NULL,
+  landingsissuesfile = NULL
 )
 }
 \arguments{
@@ -21,11 +22,13 @@ makeDataReportReca(
 
 \item{imputationfile}{file for writing report on issues that may need data massaging (imputation or estimation)}
 
-\item{verbose}{If true, summary and file locations will be printed to stdout}
+\item{verbose}{If true, summary and file locations will be printed as}
 
 \item{covariates}{vector with names of covariates (identifies columns)}
 
 \item{landing}{landing data}
+
+\item{landingsissuesfile}{file for writing landings issues}
 
 \item{stationussuesfile}{file for writing station issues}
 }
