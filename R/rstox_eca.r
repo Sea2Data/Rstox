@@ -1140,9 +1140,6 @@ prepareRECA <-
         ") contain no spaces."
       ))
     }
-    eca <- baseline2eca(projectName, landingAdjuster=landingAdjuster)
-    eca$temporalresolution <- temporalresolution
-    
     
     #
     # run data checks here.
@@ -1162,6 +1159,9 @@ prepareRECA <-
       landingissuesfilename  <-
         file.path(getProjectPaths(projectName)$RReportDir,
                   "landingsissues.txt") 
+      
+      eca <- baseline2eca(projectName, landingAdjuster=landingAdjuster)
+      eca$temporalresolution <- temporalresolution
       
       makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic), eca$landing, landingsissuesfile = landingissuesfilename)  
       
