@@ -2830,6 +2830,46 @@ writeReports <- function(pred,
   return(filenames) 
 }
 
+#' Summarizes estimated fraction in each stock
+#' @noRd
+writeStockSplit <- function(stock1Pred, stock2Pred, projectName, stock1name, stock2name){
+  
+  filename <- file.path(
+    getProjectPaths(projectName)$RReportDir,
+    paste0("stock_split.txt")
+  )
+  
+  comments <- c("Estimated catch by stock in tonnes.")
+  totalStock1 <- apply(apply(stock1Pred$TotalCount, c(2,3), sum)*stock1Pred$MeanWeight, 2, sum)/1000
+  totalStock2 <- apply(apply(stock2Pred$TotalCount, c(2,3), sum)*stock2Pred$MeanWeight, 2, sum)/1000
+  
+  s1 <- data.frame(stock = stock1name, catchT=format(mean(totalStock1), digits = 3, nsmall = 2), 
+                   sd=format(sd(totalStock1), digits = 3, nsmall = 2), 
+                   cv=format(sd(totalStock1)/mean(totalStock1), digits = 3, nsmall = 2), 
+                   CI.5pc=format(quantile(totalStock1, p=.05)[[1]], digits = 3, nsmall = 2),
+                   CI.95pc=format(quantile(totalStock1, p=.95)[[1]], digits = 3, nsmall = 2), stringsAsFactors = F)
+  s2 <- data.frame(stock = stock2name, catchT=format(mean(totalStock2), digits = 3, nsmall = 2), 
+                   sd=format(sd(totalStock2), digits = 3, nsmall = 2), 
+                   cv=format(sd(totalStock2)/mean(totalStock2), digits = 3, nsmall = 2), 
+                   CI.5pc=format(quantile(totalStock2, p=.05)[[1]], digits = 3, nsmall = 2),
+                   CI.95pc=format(quantile(totalStock2, p=.95)[[1]], digits = 3, nsmall = 2), stringsAsFactors = F)
+
+  tab <- rbind(s1,s2)
+  
+  f <- file(filename, open = "w")
+  write(paste("#", comments), f)
+  write.table(
+    tab,
+    file = f,
+    sep = "\t",
+    dec = ".",
+    row.names = F
+  )
+  close(f)
+  
+  
+}
+
 #' @title Report RECA.
 #' @description Produces reports for for RECA. Fails silently on errors.
 #' @details Exports a tab separated file with means of catch at age (produced by \code{\link{saveCatchMatrix}}), one for the posterior distribution of catch at age (produced by \code{\link{saveCatchMatrix}}), and a file summarizing the model configuration (produced by \code{\link{writeRecaConfiguration}})
@@ -2873,7 +2913,7 @@ reportRECA <-
       ccpred <- splitPredCC(rundata$runRECA$pred)
       out$filename <- c(writeReports(ccpred$coastal, projectName, analysistype = "coastal", var=var, unit=unit), out$filename)
       out$filename <- c(writeReports(ccpred$atlantic, projectName, analysistype = "atlantic", var=var, unit=unit), out$filename)
-      
+      out$filename <- c(writeStockSplit(ccpred$coastal, ccpred$atlantic, projectName, "coastal", "atlantic"), out$filename)
     }
     
     tryCatch({
