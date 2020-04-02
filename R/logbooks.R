@@ -482,15 +482,27 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
     stop("NA for spatial covariate in landings")
   }
   if (any(is.na(landingsStox[[gearCovariate]]))){
+    nagears <- landingsStox$redskapkode[is.na(landingsStox[[gearCovariate]])]
+    message(paste("gears with NA for", gearCovariate, paste(unique(nagears), collapse=",")))
     stop("NA for gear covariate in landings")
   }
   if (any(is.na(landingsStox[[temporalCovariate]]))){
     stop("NA for temporal covariate in landings")
   }
   
+  if (!all(landingsStox[[spatialCovariate]] %in% processDataSpatial$Stratum)){
+    stop(paste("Landings contain illegal values for covariate:", spatialCovariate))
+  }
+  if (!all(landingsStox[[gearCovariate]] %in% processDataGear$Covariate)){
+    stop(paste("Landings contain illegal values for covariate:", gearCovariate))
+  }
+  if (!all(landingsStox[[temporalCovariate]] %in% processDataTemporal$Covariate)){
+    stop(paste("Landings contain illegal values for covariate:", temporalCovariate))
+  }
+  
   #filter logbooks for relevant aktivities
   logbook <- logbook[logbook$AKTIVITET %in% logbookActivityCodes,]
-
+  
   # anotate logbooks with covariates
   # and get rid of NAs for each annotation, they are not in landings pr. the check above
   logbook <- annotateLogbooksGear(logbook, processDataGear, gearCovariate)
@@ -530,6 +542,11 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   
   # call adjustLandings with totalcell gear, species and vesselSize
   # and subcell spatial and temporal
+  
+  if (nrow(logbook) == 0){
+    stop("No logbook-records covers cells in landings")
+  }
+  
   logbookProportions <- calculateCatchProportions(logbook, totalcell, subcell, "RUNDVEKT")
   adjustedLandings <- adjustLandings(landingsStox, logbookProportions, totalcell, subcell, "rundvekt")
   
@@ -549,6 +566,18 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
       #set sepcies
       selectedArtkode <- notImputedRows$artkode[sample.int(nrow(notImputedRows), size=sum(imputedRows), replace = T)]
       adjustedLandings$artkode[imputedRows] <- selectedArtkode
+      
+    }
+  }
+  
+  for (gear in unique(adjustedLandings[[gearCovariate]])){
+    imputedRows <- adjustedLandings[[gearCovariate]] == gear & is.na(adjustedLandings$redskapkode)
+    if (sum(imputedRows)>0){
+      notImputedRows <- adjustedLandings[adjustedLandings[[gearCovariate]] == gear & !is.na(adjustedLandings$redskapkode),]
+      
+      #set date
+      selectedRedskap <- notImputedRows$redskapkode[sample.int(nrow(notImputedRows), size=sum(imputedRows), replace = T)]
+      adjustedLandings$redskapkode[imputedRows] <- selectedRedskap
       
     }
   }
