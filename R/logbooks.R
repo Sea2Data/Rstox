@@ -470,10 +470,9 @@ annotateLogbooksSpatial <- function(logbook, processData, covariateName){
 #' @param spatialCovariate the name of the spatial covariate
 #' @param gearCovariate the name of the gear covariate
 #' @param minVesselSize minimal size in meters for vessels to include in logbook adjusted data. Vessels without length will be assumed smaller than this threshold
-#' @param logbookActivityCodes vector specifying the activity codes to include from logbooks (field AKTIVITET).
 #' @return landings, formatted as landingStox
 #' @export
-adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, processDataTemporal, processDataSpatial, gearSelection, temporalCovariate="temporal", spatialCovariate="spatial", gearCovariate="gearfactor", minVesselSize=15, logbookActivityCodes=c("I fiske")){
+adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, processDataTemporal, processDataSpatial, gearSelection, temporalCovariate="temporal", spatialCovariate="spatial", gearCovariate="gearfactor", minVesselSize=15){
   
   if (!(all(c(gearCovariate, spatialCovariate, temporalCovariate) %in% names(landingsStox)))){
     stop("Some of the specifed covariate names are not columns in 'landingsStox'")
@@ -499,9 +498,6 @@ adjustRecaSpatialTemporal <- function(landingsStox, logbook, processDataGear, pr
   if (!all(landingsStox[[temporalCovariate]] %in% processDataTemporal$Covariate)){
     stop(paste("Landings contain illegal values for covariate:", temporalCovariate))
   }
-  
-  #filter logbooks for relevant aktivities
-  logbook <- logbook[logbook$AKTIVITET %in% logbookActivityCodes,]
   
   # anotate logbooks with covariates
   # and get rid of NAs for each annotation, they are not in landings pr. the check above
