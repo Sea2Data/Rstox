@@ -655,7 +655,7 @@ plotAbundance_AcousticTrawl <- plotAbundance_SweptAreaLength <- function(project
 	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
 	
 	# Process the boostrap runs:
-	temp <- reportAbundance(projectName, grp1=grp1, grp2=grp2, numberscale=plottingUnit$scale, plotOutput=TRUE, msg=FALSE)
+	temp <- reportAbundance(projectName, var = var, grp1=grp1, grp2=grp2, numberscale=plottingUnit$scale, plotOutput=TRUE, msg=FALSE)
 	if(length(temp)==0){
 		warning("No plots generated. Possibly due to mismatch between the parameter 'bootstrapMethod' in the bootstrapping and in the plotting function.")
 	}
@@ -1095,7 +1095,6 @@ reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit
 	plottingUnit <- getPlottingUnit(unit=unit, var=var, baseunit=baseunit, def.out=FALSE)
 	#plottingUnit <- getPlottingUnit(var=var, def.out=FALSE)
 	
-	
 	#varInd <- abbrMatch(var[1], c("Abundance", "weight"), ignore.case=TRUE)
 	
 	# Combine all the bootstrap runs in one data table:
@@ -1144,12 +1143,15 @@ reportAbundanceAtLevel <- function(projectName, var="count", unit=NULL, baseunit
 	Ab.Sum <- NULL
 	Abundance <- NULL
 	Stratum <- NULL
-	IndividualWeightGram <- NULL
+	#IndividualWeightGram <- NULL
+	weight <- NULL
 	if(plottingUnit$labl == "Abundance"){
 		abundanceSumDT <- DT[Stratum %in% strata, .(Ab.Sum=sum(Abundance, na.rm=TRUE) / plottingUnit$scale), by=byGrp]
 	}
 	else if(plottingUnit$labl == "Biomass"){
 		abundanceSumDT <- DT[Stratum %in% strata, .(Ab.Sum=sum(Abundance * IndividualWeightGram, na.rm=TRUE) / plottingUnit$scale), by=byGrp]
+		# Used for the Laksesild 2020 short-deadlinne project to temporary fix the bug with TSB in Rstox 1.11.0: 
+		#abundanceSumDT <- DT[Stratum %in% strata, .(Ab.Sum=sum(Abundance * weight, na.rm=TRUE) / plottingUnit$scale), by=byGrp]
 	}
 	else{
 		warning(paste0("'var' does not match the available values (", getPlottingUnit()$defaults$Rstox_var, ")"))

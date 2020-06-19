@@ -1,10 +1,14 @@
 Package: Rstox
-Title: Running StoX functionality independently in R
+Title: Running StoX Functionality Independently in R
 Version: 1.11.1
 Authors@R: c(
-  person(given = "Given Name", family = "Family Name", role = c("cre", "aut"), email = "arnejh@hi.no"))
+  person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
+  person(given = "Edvin", family = "Fuglebakk", role = "aut"), 
+  person(given = "Gjert Endre", family = "Dingsoer", role = "aut"), 
+  person(given = "Aasmund", family = "Skaalevik", role = "aut"), 
+  person(given = "Espen", family = "Johnsen", role = "aut"))
 Depends: R (>= 3.5)
-Description: The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
+Description: R implementation of the functionality of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
 URL: https://github.com/Sea2Data/Rstox
 BugReports: https://github.com/Sea2Data/Rstox/issues
 License: LGPL-3
@@ -22,10 +26,14 @@ Imports:
     rgdal,
     rgeos,
     rJava,
+    readr,
     sp,
     XML,
     scatterpie
 Suggests: 
+    ncdf4,
     pgirmess,
-    Reca
+    Reca,
+    plotrix,
+    testthat
 RoxygenNote: 7.0.2

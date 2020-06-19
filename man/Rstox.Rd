@@ -4,9 +4,9 @@
 \name{Rstox}
 \alias{Rstox}
 \alias{Rstox-package}
-\title{Running StoX functionality independently in R}
+\title{Running StoX Functionality Independently in R}
 \description{
-The package Rstox contains most of the functionality of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
+R implementation of the functionality of the stock assesment utility StoX, which is an open source application fo acoustic-trawl and swept-area survey estimation.
 }
 \details{
 The core funciton of the package is \code{\link{getBaseline}} which runs a StoX project and retrieves the output and input parameters. The functions \code{\link{runBootstrap}} and \code{\link{imputeByAge}} are used by StoX for estimating the variance of the survey estimate. The functions \code{\link{getReports}} and \code{\link{getPlots}} are used to run report and plot funcitons relevant for the type of StoX project.
@@ -26,6 +26,14 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Given Name Family Name \email{arnejh@hi.no}
+\strong{Maintainer}: Arne Johannes Holmin \email{arnejh@hi.no}
+
+Authors:
+\itemize{
+  \item Edvin Fuglebakk
+  \item Gjert Endre Dingsoer
+  \item Aasmund Skaalevik
+  \item Espen Johnsen
+}
 
 }
