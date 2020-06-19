@@ -1,6 +1,7 @@
 Package: Rstox
-Title: Running StoX Functionality Independently in R
 Version: 1.11.1
+Date: 2020-06-19
+Title: Running StoX Functionality Independently in R
 Authors@R: c(
   person(given = "Arne Johannes", family = "Holmin", role = c("cre", "aut"), email = "arnejh@hi.no"), 
   person(given = "Edvin", family = "Fuglebakk", role = "aut"), 
