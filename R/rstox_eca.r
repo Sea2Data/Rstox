@@ -3,25 +3,26 @@
 temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
   
   if (!is.null(processdata$temporal)){
-    write(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""), stderr())
+    message(paste("Applying workaround to set temporal for ", sourcetype, ". Does not support non-seasonal definitions", sep=""))
     tempdef <- processdata$temporal[processdata$temporal$CovariateSourceType==sourcetype,]
     tempdef$mstart <- substr(tempdef$Value, 4,5)
     tempdef$mend <- substr(tempdef$Value, 10,11)
     tempdef$dstart <- substr(tempdef$Value, 1,2)
     tempdef$dend <- substr(tempdef$Value, 7,8)
-
+    
     tl <- data
     
     if (sourcetype=="Biotic"){
+      
       stationdate <- tl$stationstartdate
       if (any(is.na(stationdate))){
-      
+        
         #attempt to use stopdate if startdate is NA  
         #only invoke workaround when needed
         if (!is.null(stations)){
           #need to merge in from original data, as stopdate is not exported by BioticCovData
           npre <- nrow(tl)
-          tl <- merge(tl[,c("serialnumber", "cruise")], stations[,c("serialnumber", "stationstartdate", "stationstopdate")], all.x=T, by.x="serialnumber", by.y=c("serialnumber"))
+          tl <- merge(tl[,c("serialnumber", "cruise")], unique(stations[,c("serialnumber", "stationstartdate", "stationstopdate")]), all.x=T, by.x="serialnumber", by.y=c("serialnumber"))
           if (npre != nrow(tl)){
             stop("Issues with merging in stationdata. Multiple years combined ?")
           }
@@ -45,7 +46,8 @@ temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
         tl$m <- substr(stationdate, 4,5)
         tl$d <- substr(stationdate, 1,2)
       }
-      
+      tl <- tl[order(tl$serialnumber),]
+      data <- data[order(data$serialnumber),]
     }
     else if (sourcetype=="Landing"){
       tl$m <- substr(tl$sistefangstdato, 6,7)
@@ -54,13 +56,14 @@ temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
     else{
       stop("Source type not supported for workarund")
     }
-
+    
     for (i in 1:nrow(tempdef)){
       lte_end <- (tl$m < tempdef[i,"mend"] | (tl$m == tempdef[i,"mend"] & tl$d <= tempdef[i,"dend"]))
       gte_start <- (tl$m > tempdef[i,"mstart"] | (tl$m == tempdef[i,"mstart"] & tl$d >= tempdef[i,"dstart"]))
       selector <- lte_end & gte_start
       tl[selector, "temporal"] <- tempdef[i, "Covariate"]
     }
+    
     data$temporal <- tl$temporal
     return(data)
   }
@@ -73,7 +76,7 @@ temporal_workaround <- function(data, processdata, sourcetype, stations=NULL){
 #' @noRd
 workaraound_set_startdate_from_stopdate <- function(biotic, stations){
   tl <- biotic
-
+  
   if (any(is.na(tl$stationstartdate))){
     
     #attempt to use stopdate if startdate is NA  
@@ -93,7 +96,7 @@ workaraound_set_startdate_from_stopdate <- function(biotic, stations){
       if (any(is.na(tl$stationstartdate))){
         stop("NAs in station startdate and stopdate")
       }
-        
+      
       #reformat startdate
       tl$stationstartdate <- strftime(tl$stationstartdate, format="%d/%m/%Y")
       
@@ -167,6 +170,7 @@ getCovariateMatrix <- function(data, covariateNames, allLevels) {
 #' @param gearfactor	Optional definition of the gearfactor covariate (not yet implemented).
 #' @param spatial		Optional definition of the spatial covariate (not yet implemented).
 #' @param landingresolution The temporal resolution in days to use for aggregating the landing data.
+#' @param landingAdjuster function to manipulate landings before conversion. Used when running from R, for setting covariates not supported by the StoX pipeline.
 #' @param ...			Parameters passed to \code{\link{getBaseline}}.
 #'
 #' @return A reference to the StoX Java baseline object
@@ -182,6 +186,7 @@ baseline2eca <-
            gearfactor = NULL,
            spatial = NULL,
            landingresolution = 92,
+           landingAdjuster = NULL,
            ...) {
     # Function that retreives year, month, day, yearday:
     addYearday <-
@@ -238,7 +243,11 @@ baseline2eca <-
         stop("Landing table is empty.")
       }
       names(landing) <- tolower(names(landing))
-
+      if (!is.null(landingAdjuster)){
+        landing <- landingAdjuster(landing)
+      }
+      
+      
       landing <- temporal_workaround(landing, baselineOutput$processData, "Landing")
       # 2018-08-28: Changed to using 'sistefangstdato' as per comment from Edvin:
       landing <-
@@ -291,7 +300,7 @@ baseline2eca <-
       covariateDescriptions <- ECACovariates$Description[present]
       covariateProcesses <- ECACovariates$Processe[present]
       
-      write("Applying workaround to set startdate for yearday", stderr())
+      message("Applying workaround to set startdate for yearday")
       biotic <- workaraound_set_startdate_from_stopdate(biotic, baselineOutput$outputData$FilterBiotic$FilterBiotic_BioticData_fishstation.txt)
       # (2c) Add yearday, year and month:
       biotic <-
@@ -381,6 +390,7 @@ baseline2eca <-
                 covariateDefinition[[i]]$landing[, 2]
               )
             ))
+          
           link <- match(allLevels[[i]], allValues)
           data.frame(
             Numeric = seq_along(link),
@@ -388,6 +398,7 @@ baseline2eca <-
             stringsAsFactors = FALSE
           )
         }
+      
       covariateLink <-
         lapply(
           seq_along(allLevels),
@@ -396,6 +407,11 @@ baseline2eca <-
           covariateDefinition = covariateDefinition
         )
       names(covariateLink) <- names(covariateDefinition)
+      
+      rows <- sapply(covariateLink, FUN=function(x){nrow(x)})
+      if (any(rows==0)){
+        stop(paste("Some covariates have zero levels:", paste(names(rows)[rows==0], collapse=",")))
+      }
       
       #covariateLink <- lapply(seq_along(allLevels), function(i) match(allLevels[[i]], covariateDefinition[[i]]$biotic[,2]))
       #covariateLink <- lapply(seq_along(allLevels), function(i) data.frame(Numeric=seq_along(allLevels[[i]]), Covariate=covariateDefinition[[i]]$biotic[covariateLink[[i]], 2], stringsAsFactors=FALSE))
@@ -620,14 +636,14 @@ getGlobalParameters <- function (biotic, resultdir, maxlength, minage, maxage, d
   lengthresM <- getMode(DataMatrix$lengthresM)
   lengthresCM <- lengthresM * 100
   if (!all(DataMatrix$lengthresM == head(DataMatrix$lengthresM, 1))) {
-    write(
+    message(
       paste0(
         "Several length resolusions applied in the data (",
         paste(table(DataMatrix$lengthresCM), collapse = ", "),
         "). The mode (",
         lengthresCM,
         ") used in the ECA"
-      ), stderr()
+      )
     )
   }
   
@@ -667,6 +683,7 @@ getLandings <- function(landing, AgeLength, WeightLength, landingresolution) {
       #
       # test that covariateLink is the same for AgeLength and WeightLength
       #
+      
       if (!(all(AgeLength$resources$covariateLink[[n]]==WeightLength$resources$covariateLink[[n]]))){
         stop("Different covariate levels for Age given length model and Weight given length model is not supported")
       }
@@ -845,13 +862,22 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   
   # 3.2. CAR:
   # Make sure the neighbours are ordered according to the 1:n values in the covariateLink:
-  ind <-
-    match(as.numeric(names(eca$stratumNeighbour)), eca$resources$covariateLink$spatial[, 2])
-  if (!all(sort(ind) == ind)) {
-    stop(
-      "covariate values are ordered differently in stratumneighbour and covariatelink spatial"
-    )
+  
+  if (is.numeric(eca$resources$covariateLink$spatial[, 2])){
+    ind <-
+      match(as.numeric(names(eca$stratumNeighbour)), eca$resources$covariateLink$spatial[, 2])
   }
+  else{
+    ind <-
+      match(names(eca$stratumNeighbour), eca$resources$covariateLink$spatial[, 2])  
+  }
+  if (!all(sort(ind) == ind)) {
+    eca$stratumNeighbour <- eca$stratumNeighbour[match(eca$resources$covariateLink$spatial[, 2], names(eca$stratumNeighbour))]
+    ind <-
+      match(names(eca$stratumNeighbour), eca$resources$covariateLink$spatial[, 2])  
+  }
+  
+  stopifnot(all(sort(ind) == ind))
   
   names(eca$stratumNeighbour) <-
     eca$resources$covariateLink$spatial[ind, 1]
@@ -883,8 +909,9 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
       unlist(modelSpecification$interaction)
   }
   else{
-    # defaults to interaction term for all covariates in landings
-    info[, "interaction"] <- info[, "in.landings"]
+    # defaults to no interactions.
+    # To make it defaults to interaction term for all covariates in landings
+    # info[, "interaction"] <- info[, "in.landings"]
     info["constant", "interaction"] <- 0
   }
   
@@ -906,8 +933,8 @@ getInfo <- function(eca, CovariateMatrix, modelSpecification=NULL) {
   if (sum(info[, "random"] == 1 & info[, "in.landings"] == 1) > 0) {
     for (n in rownames(info)) {
       if (info[n, "random"] == 1 & info[n, "in.landings"] == 1) {
-          info[n, "nlev"] <-
-            length(unique((c(eca$landing[[n]], eca$biotic[[n]]))))
+        info[n, "nlev"] <-
+          length(unique((c(eca$landing[[n]], eca$biotic[[n]]))))
       }
     }
   }
@@ -983,6 +1010,12 @@ getWeightGivenLength_Biotic <- function(eca) {
   eca$covariateMatrixBiotic <-
     eca$covariateMatrixBiotic[valid, , drop = FALSE]
   
+  #check that individual weights are of the same product type.
+  if (length(unique(eca$biotic$individualproducttype)) != 1){
+    producttypes <- unique(eca$biotic$individualproducttype)
+    stop(paste("Heterogenous product type composition. Consider using the function 'ConvertLengthAndWeight'. Product types ('individualproducttype') in data:", paste(producttypes, collapse=",")))
+  }
+  
   ### 1. DataMatrix: ###
   temp <-
     getDataMatrixANDCovariateMatrix(eca, vars = var)
@@ -1027,6 +1060,8 @@ get_default_result_dir <-
 #' @description Convert data to exported from stox to eca format. Save results to project data 'prepareRECA'
 #' @details Most parameters to this funciton are set as named members of a list which is passed as argument GlobalParameters to \code{\link[Reca]{eca.estimate}}
 #'    The parameters minage and maxage define the range of ages that are considered possible in the model. Because R-ECA integrates weight and length measurements, and allows for modelling errors in age determination, predicted ages might fall outside the age range in samples. minage and maxage should be set with this in mind.
+#'    
+#'    In order to provide ad-hoc support for manipulations of landings data not provided by StoX
 #' @param projectName name of stox project
 #' @param minage see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}.
 #' @param maxage see specification for GlobalParameters in \code{\link[Reca]{eca.estimate}}
@@ -1037,6 +1072,7 @@ get_default_result_dir <-
 #' @param resultdir location where R-ECA will store temporal files. Defaults (if null) to a subdirectory of getProjectPaths(projectName)$RDataDir called `reca` whcih will be created if it does not already exist
 #' @param overwrite logical, if true, projectData for prepareRECA and runRECA will be nulled before running, and resultdir will be cleaned of any existing output files located in subdirectories cfiles and resfiles.
 #' @param agedstationsonly logical, if true, only hauls with some aged individuals will be used for the age model. This does not affect the weight-length model
+#' @param landingAdjuster optional function to manipulate landings before conversion. Used when running from R, for setting covariates not supported by the StoX pipeline, adjusting with logbook records, etc. input and output format for this funcition can be inspected from the output of \code{\link[Restox]{prepareRECA}} (loadProjectData(projectName)$prepareRECA$StoxExport$landing)
 #' @export
 prepareRECA <-
   function(projectName,
@@ -1048,7 +1084,8 @@ prepareRECA <-
            hatchDaySlashMonth = "01/01",
            temporalresolution = 92,
            overwrite=T,
-           agedstationsonly=F) {
+           agedstationsonly=F,
+           landingAdjuster=NULL) {
     if (is.null(resultdir)) {
       resultdir <- get_default_result_dir(projectName)
       if (!(file.exists(resultdir))) {
@@ -1060,7 +1097,7 @@ prepareRECA <-
     }
     
     if (overwrite){
-      write("Running prepareECA with overwrite=T", stderr())
+      message("Running prepareECA with overwrite=T")
       setProjectData(
         projectName = projectName,
         var = NULL,
@@ -1076,25 +1113,25 @@ prepareRECA <-
     
     #clean resultdir if needed
     if (length(list.files(resultdir))>0 & overwrite){
-        for (f in list.files(file.path(resultdir, "cfiles"))){
-          fn <- file.path(resultdir, "cfiles", f)
-          if (file.exists(fn) && !dir.exists(fn)){
-            unlink(fn)
-          }
+      for (f in list.files(file.path(resultdir, "cfiles"))){
+        fn <- file.path(resultdir, "cfiles", f)
+        if (file.exists(fn) && !dir.exists(fn)){
+          unlink(fn)
         }
-        unlink(file.path(resultdir, "cfiles"), recursive=T)
-        for (f in list.files(file.path(resultdir, "resfiles"))){
-          fn <- file.path(resultdir, "resfiles", f)
-          if (file.exists(fn) && !dir.exists(fn)){
-            unlink(fn)
-          }
+      }
+      unlink(file.path(resultdir, "cfiles"), recursive=T)
+      for (f in list.files(file.path(resultdir, "resfiles"))){
+        fn <- file.path(resultdir, "resfiles", f)
+        if (file.exists(fn) && !dir.exists(fn)){
+          unlink(fn)
         }
-        unlink(file.path(resultdir, "resfiles"), recursive = T)
+      }
+      unlink(file.path(resultdir, "resfiles"), recursive = T)
     }
     if (length(list.files(resultdir))>0){
       stop(paste("Directory", resultdir, "contains files."))
     }
-    write("checking filepath char comp", stderr())
+    message("checking filepath char comp")
     if (grepl(" ", resultdir)) {
       stop(paste(
         "Please make ecadir",
@@ -1103,9 +1140,10 @@ prepareRECA <-
         ") contain no spaces."
       ))
     }
-    eca <- baseline2eca(projectName)
+    
+    eca <- baseline2eca(projectName, landingAdjuster=landingAdjuster)
     eca$temporalresolution <- temporalresolution
-
+    
     
     #
     # run data checks here.
@@ -1122,8 +1160,11 @@ prepareRECA <-
       imputationissuesfilename  <-
         file.path(getProjectPaths(projectName)$RReportDir,
                   "imputationissues.txt") 
+      landingissuesfilename  <-
+        file.path(getProjectPaths(projectName)$RReportDir,
+                  "landingsissues.txt") 
       
-      makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic), eca$landing)  
+      makeDataReportReca(eca$biotic, stationissuesfilename, catchissuesfilename, imputationissuesfilename, T, covariates=names(eca$covariateMatrixBiotic), eca$landing, landingsissuesfile = landingissuesfilename)  
       
       if (file.exists(stationissuesfilename)){
         out$filename <- c(stationissuesfilename, out$filename)        
@@ -1134,6 +1175,10 @@ prepareRECA <-
       if (file.exists(imputationissuesfilename)){
         out$filename <- c(imputationissuesfilename, out$filename)      
       }
+      if (file.exists(landingissuesfilename)){
+        out$filename <- c(landingissuesfilename, out$filename)      
+      }
+      
       
     },
     error = function(e) {
@@ -1220,11 +1265,11 @@ runRECA <-
     if (is.null(prepdata)) {
       stop("Could not load project data")
     }
-
+    
     if (is.null(seed)){
       seed <- getseed()
     }
-
+    
     prepareRECA <- prepdata$prepareRECA
     GlobalParameters <- prepareRECA$GlobalParameters
     AgeLength <- prepareRECA$AgeLength
@@ -1247,7 +1292,7 @@ runRECA <-
     # Run checks
     #
     
-    checkAgeLength(AgeLength)
+    checkAgeLength(AgeLength, checkAgeErrors=age.error)
     checkWeightLength(WeightLength)
     checkCovariateConsistency(AgeLength, Landings$AgeLengthCov)
     checkCovariateConsistency(WeightLength, Landings$WeightLengthCov)
@@ -1306,7 +1351,7 @@ splitPredCC <- function(pred){
   
   ret$atlantic$MeanWeight <- ret$atlantic$MeanWeight[1:ncat,]
   ret$coastal$MeanWeight <- ret$coastal$MeanWeight[(ncat+1):(2*ncat),]
-
+  
   ret$atlantic$MeanLength <- ret$atlantic$MeanLength[1:ncat,]
   ret$coastal$MeanLength <- ret$coastal$MeanLength[(ncat+1):(2*ncat),]
   
@@ -1330,7 +1375,7 @@ splitBioticCC <- function(biotic){
 
 #' Generates plots and reports from RECA prediction
 #' @param projectName name of stox project
-#' @param verbose logical, if TRUE info is written to stderr()
+#' @param verbose logical, if TRUE info is written as messages
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on plot function and format
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
@@ -1421,7 +1466,7 @@ plotRECAresults <-
       
       fn <-
         formatPlot(projectName, "RECA_traceplot_atlantic", function() {
-          plotMCMCagetraces(ccpred$antlantic,
+          plotMCMCagetraces(ccpred$atlantic,
                             ...)
         }, verbose = verbose, format = format, height = height, width = width, res =
           res, ...)
@@ -1436,7 +1481,7 @@ plotRECAresults <-
 #' @description Generate plots for diagnosis of RECA model configuration.
 #' @details Plots are made conditional on problems. E.g. Fixed effects plot is not made, if all combinations of fixed effects were sampled.
 #' @param projectName name of stox project
-#' @param verbose logical, if TRUE info is written to stderr()
+#' @param verbose logical, if TRUE info is written as messages
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on to plot function and format
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
@@ -1520,7 +1565,7 @@ diagnosticsRECA <-
 #' @description Generate plots to show composition of samples wrp activity in fisheries
 #' @details Compares sampling effort to fisheries along covariates selected in the model, and along some standard covariate choices if available (gear, temporal and spatial). Plots compositions of samples with respect to some important variables informative of sampling heterogenety
 #' @param projectName name of stox project
-#' @param verbose logical, if TRUE info is written to stderr()
+#' @param verbose logical, if TRUE info is written as messages
 #' @param format function defining filtetype for plots, supports grDevices::pdf, grDevices::png, grDevices::jpeg, grDevices::tiff, grDevices::bmp
 #' @param ... parameters passed on to plot function and format
 #' @return list, with at least one named element 'filename', a vector of file-paths to generated plots.
@@ -1565,15 +1610,14 @@ plotSamplingOverview <-
       out$filename <- c(fn, out$filename)
     }
     else{
-      write(
+      message(
         paste(
           "Need all",
           "gearfactor",
           "temporal",
           "spatial",
           "as covariates to produce RECA_cell_coverage"
-        ),
-        stderr()
+        )
       )
     }
     
@@ -1584,7 +1628,9 @@ plotSamplingOverview <-
     if (all(c("gearfactor", "temporal", "spatial") %in% stoxexp$resources$covariateInfo$name)) {
       rows <-
         nrow(unique(get_gta_landings(stoxexp)[, c("gearfactor", "temporal")]))
-      cols <- length(unique(get_gta_landings(stoxexp)$spatial))
+      #ideally, check sizes of cell contents as well. Settle for a min width of 9/5 for now.
+      colnamefactor <- mean(unlist(lapply(unique(get_gta_landings(stoxexp)$spatial), FUN=function(x){max(9,nchar(x))})))/5
+      cols <- length(unique(get_gta_landings(stoxexp)$spatial)) * colnamefactor
       
       cols <- max(13, cols)
       rows <- max(3, rows)
@@ -1610,15 +1656,14 @@ plotSamplingOverview <-
       out$filename <- c(fn, out$filename)
     }
     else{
-      write(
+      message(
         paste(
           "Need all",
           "gearfactor",
           "temporal",
           "spatial",
           "as covariates to produce RECA_samples_by_cells"
-        ),
-        stderr()
+        )
       )
     }
     
@@ -1757,12 +1802,61 @@ writeRecaConfiguration <-
   }
 
 #' calculates catch matrix for given variable and unit
+#' @return data.frame with columns: age, meanLength, meanWeight, sd.of.meanLength, sd.of.meanWeight
+#' @keywords internal
+getCatchAtLength <- function(pred,
+                             var = "Abundance",
+                             unit = "ones"
+){
+  
+  totc <- pred$TotalCount
+  if (var == "Abundance" | var == "Count") {
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "ones",
+      def.out = F
+    )
+    cal <- apply(pred$TotalCount, c(1,3), function(x){sum(x)}) / plottingUnit$scale
+  }
+  else if (var == "Weight") {
+    plottingUnit = getPlottingUnit(
+      unit = unit,
+      var = var,
+      baseunit = "kilograms",
+      def.out = F
+    )
+    
+    cal <- apply(pred$TotalCount, c(1,3), function(x){sum(x*pred$MeanWeight)}) / plottingUnit$scale
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  lengthGroupsCm <- trimws(format(exp(pred$LengthIntervalsLog), digits = 3, nsmall = 1))
+  meanCal <- apply(cal, 1, mean)
+  sdCal <- apply(cal, 1, sd)
+  qLow <- apply(cal, 1, function(x){quantile(x, probs=c(0.05))})
+  qHigh <- apply(cal, 1, function(x){quantile(x, probs=c(0.95))})
+  
+  tab <- data.frame(lengthGroupsCm=lengthGroupsCm, mean=meanCal, sd=sdCal)
+  
+  return (tab)
+  
+}
+
+#' calculates catch matrix for given variable and unit
 #' @return list with three members (means, cv and caa_scaled)
 #' @keywords internal
 getCatchMatrix <- function(pred,
                            var = "Abundance",
                            unit = "ones",
                            plusgr=NULL){
+  
+  if (!is.null(plusgr)){
+    plsugrindex <- match(plusgr, as.integer(pred$AgeCategories))
+  }
+
   if (var == "Abundance" | var == "Count") {
     plottingUnit = getPlottingUnit(
       unit = unit,
@@ -1771,7 +1865,7 @@ getCatchMatrix <- function(pred,
       def.out = F
     )
     caa <- round(apply(pred$TotalCount, c(2, 3), sum))
-
+    
   }
   else if (var == "Weight") {
     caa <- apply(pred$TotalCount, c(2, 3), sum) * pred$MeanWeight
@@ -1789,35 +1883,163 @@ getCatchMatrix <- function(pred,
   ages <- as.character(pred$AgeCategories)
   
   if (!is.null(plusgr)){
-    caa[plusgr,] <- colSums(caa[plusgr:nrow(caa),])
-    caa <- caa[1:plusgr,]
-    ages <- ages[1:plusgr]
-    ages[plusgr] <- paste(ages[plusgr], "+", sep="")
+    caa[plsugrindex,] <- colSums(caa[plsugrindex:nrow(caa),])
+    caa <- caa[1:plsugrindex,]
+    ages <- ages[1:plsugrindex]
+    ages[plsugrindex] <- paste(ages[plsugrindex], "+", sep="")
   }
   
   caa_scaled <- as.data.frame(caa / plottingUnit$scale)
   means <-
-    as.data.frame(list(age = ages, mean = rowMeans(caa_scaled)))
+    data.frame(age = ages, mean = rowMeans(caa_scaled), stringsAsFactors = F)
   cv <-
-    as.data.frame(list(
+    data.frame(
       age = ages,
-      sd = apply(caa_scaled, FUN = sd, MARGIN = 1)
-    ))
+      sd = apply(caa_scaled, FUN = sd, MARGIN = 1), stringsAsFactors = F
+    )
   cv$cv <- cv$sd / means$mean
   colnames(caa_scaled) <- paste("Iteration", 1:ncol(caa_scaled))
   caa_scaled$age <- ages
-  caa_scaled <-
-    caa_scaled[, names(caa_scaled)[order(names(caa_scaled))]]
+  caa_scaled <- caa_scaled[,c("age", names(caa_scaled)[names(caa_scaled)!="age"])]
   
   
   tab <- list()
   tab$means <- means
   tab$cv <- cv
   tab$caa_scaled <- caa_scaled
-
+  
   return (tab)
   
 }
+
+#' calculates catch matrix for given variable and unit
+#' @return data.frame with columns: age, meanLength, meanWeight, sd.of.meanLength, sd.of.meanWeight
+#' @keywords internal
+getAgeGroupParamaters <- function(pred,
+                                  plusgr=NULL){
+  
+  if (!is.null(plusgr)){
+    plsugrindex <- match(plusgr, as.integer(pred$AgeCategories))
+  }
+  
+  ages <- as.character(pred$AgeCategories)
+  abundances <- apply(apply(pred$TotalCount, c(2, 3), sum), 1, mean)
+  pred$MeanWeight <- pred$MeanWeight*1000
+  weights <- apply(pred$MeanWeight, 1, mean)
+  weights.var <- apply(pred$MeanWeight, 1, var)
+  lengths <- apply(pred$MeanLength, 1, mean)
+  lengths.var <- apply(pred$MeanLength, 1, var)
+  
+  if (!is.null(plusgr)){
+    #mean of age groups in plusgroup, weighted by age group abundance
+    weights[plsugrindex] <- weights[plsugrindex:length(weights)] %*% (abundances[plsugrindex:length(abundances)]/sum(abundances[plsugrindex:length(abundances)]))
+    weights.var[plsugrindex] <- weights.var[plsugrindex:length(weights.var)] %*% (abundances[plsugrindex:length(abundances)]/sum(abundances[plsugrindex:length(abundances)]))**2
+    lengths[plsugrindex] <- lengths[plsugrindex:length(lengths)] %*% (abundances[plsugrindex:length(abundances)]/sum(abundances[plsugrindex:length(abundances)]))
+    lengths.var[plsugrindex] <- lengths.var[plsugrindex:length(lengths.var)] %*% (abundances[plsugrindex:length(abundances)]/sum(abundances[plsugrindex:length(abundances)]))**2
+    weights <- weights[1:plsugrindex]
+    weights.var <- weights.var[1:plsugrindex]
+    lengths <- lengths[1:plsugrindex]
+    lengths.var <- lengths.var[1:plsugrindex]
+    ages <- ages[1:plsugrindex]
+    ages[plsugrindex] <- paste(ages[plsugrindex], "+", sep="")
+  }
+  
+  lengths.sd <- sqrt(lengths.var)
+  weights.sd <- sqrt(weights.var)
+  
+  tab <- data.frame(age=ages, meanLengthCm=lengths, meanLengthCm.sd=lengths.sd, meanWeightG=weights, meanWeightG.sd=weights.sd, stringsAsFactors = F)
+  
+  return (tab)
+  
+}
+
+#' @title Save age group parameters (mean length and weight)
+#' @description Write age group parameters predicted by \code{\link[Reca]{eca.predict}} as csv file.
+#' @details Age group parameters are written as comma-separated file with quoted strings as row/column names.
+#'    Each row correspond to an age group, and columns to means and standard deviations.
+#' @param pred as returned by \code{\link[Reca]{eca.predict}}
+#' @param filename name of file to save to.
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
+#' @keywords internal
+saveAgeGroupParameters <-
+  function(pred,
+           filename,
+           main="",
+           plusgr=NULL) {
+    comments <- c(main)
+    title <- "Mean length and weight by age group"
+    comments <- c(title,comments)
+    
+    tab <- getAgeGroupParamaters(pred, plusgr = plusgr)
+    
+    f <- file(filename, open = "w")
+    write(paste("#", comments), f)
+    write.table(
+      tab,
+      file = f,
+      sep = "\t",
+      dec = ".",
+      row.names = F
+    )
+    close(f)
+  }
+
+
+#' @title Save catch at Length
+#' @description Write catch at length predicted by \code{\link[Reca]{eca.predict}} as csv file.
+#' @details Catch at age length is written as comma-separated file with quoted strings as row/column names.
+#'    Each row correspond to an age group, and columns to means and standard deviations.
+#'    Units are controlled by parameters, and written as metainformation in a preamble identified by the comment charater '#', along with any text provided in other arguments (parameter main).
+#' @param pred as returned by \code{\link[Reca]{eca.predict}}
+#' @param filename name of file to save to.
+#' @param var Variable to extract. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @keywords internal
+saveCatchAtLength <-
+  function(pred,
+           filename,
+           var = "Abundance",
+           unit = "millions",
+           main = "") {
+    
+    
+    comments <- c()
+    title <- "Catch at length estimates"
+    
+    if (var == "Abundance" | var == "Count") {
+      
+      if (unit == "ones") {
+        comments <- c(paste(title, "as", var))
+      }
+      if (unit != "ones") {
+        comments <- c(paste(title, "as", var, "in", unit))
+      }
+      
+    }
+    else if (var == "Weight") {
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    else{
+      stop("Not implemented")
+    }
+    
+    comments <- c(main, comments)
+    
+    tab <- getCatchAtLength(pred, var = var, unit = unit)
+    
+    f <- file(filename, open = "w")
+    write(paste("#", comments), f)
+    write.table(
+      tab,
+      file = f,
+      sep = "\t",
+      dec = ".",
+      row.names = F
+    )
+    close(f)
+  }
 
 #' @title Save catch at age matrix
 #' @description Write catch at age predicted by \code{\link[Reca]{eca.predict}} as csv file.
@@ -1836,7 +2058,7 @@ saveCatchMatrix <-
   function(pred,
            filename,
            var = "Abundance",
-           unit = "ones",
+           unit = "millions",
            main = "",
            savemeans = F,
            plusgr=NULL) {
@@ -1869,11 +2091,17 @@ saveCatchMatrix <-
     
     tab <- getCatchMatrix(pred, var, unit, plusgr = plusgr)
     
+    meanstab <- tab$means
+    meanstab$order <- 1:nrow(meanstab)
+    meanstab <- merge(meanstab, tab$cv)
+    meanstab <- meanstab[order(meanstab$order),]
+    meanstab$order <- NULL
+    
     f <- file(filename, open = "w")
     write(paste("#", comments), f)
     if (savemeans) {
       write.table(
-        merge(tab$means, tab$cv),
+        meanstab,
         file = f,
         sep = "\t",
         dec = ".",
@@ -1923,7 +2151,7 @@ saveCatchCovarianceMatrix <- function(pred,
   else{
     title <- "variance-Covariance matrix for age groups based on catch at age as"    
   }
-
+  
   
   if (var == "Abundance" | var == "Count") {
     
@@ -1945,7 +2173,7 @@ saveCatchCovarianceMatrix <- function(pred,
   comments <- c(main, comments)
   
   tab <- getCatchMatrix(pred, var, unit, plusgr=plusgr)
-
+  
   caa_scaled <- tab$caa_scaled
   if (!standardize){
     covmat <- cov(t(caa_scaled))   
@@ -1959,14 +2187,14 @@ saveCatchCovarianceMatrix <- function(pred,
   
   f <- file(filename, open = "w")
   write(paste("#", comments), f)
-    write.table(
-      covmat,
-      file = f,
-      sep = "\t",
-      dec = ".",
-      row.names = T
-    )
-    close(f)
+  write.table(
+    covmat,
+    file = f,
+    sep = "\t",
+    dec = ".",
+    row.names = T
+  )
+  close(f)
 }
 
 #' Make decomposed catch matrix
@@ -1992,7 +2220,7 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
-#' @return data frame with rows for each combination of decomposition varirables, and columns (a1..an: values or levels for decomposition variables, an+1: total weight, an+2: the fraction covered by landings used for parameterization, an+3...am: columns for the mean and columns for sd for each age group
+#' @return data frame with rows for each combination of decomposition variables and age groups, and columns with values or levels for age groups and decomposition variables, in addition to columns for the catch at age and standard deviation
 #' @export
 saveDecomposedCatchMatrix <- function(projectName, 
                                       filename=NULL, 
@@ -2102,7 +2330,7 @@ saveDecomposedCatchMatrix <- function(projectName,
     decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
     pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
     catchmatrix <- getCatchMatrix(pred, var = var, unit = unit, plusgr=plusgr)
-
+    
     decompmatrix <- merge(catchmatrix$means, catchmatrix$cv)
     decompmatrix[,decomposition]<-d[1,decomposition]
     
@@ -2113,7 +2341,7 @@ saveDecomposedCatchMatrix <- function(projectName,
       output <- rbind(output, decompmatrix)
     }
   }
-
+  
   # add comments
   comments <- c()
   title <- "Mean catch at age estimates"
@@ -2148,6 +2376,500 @@ saveDecomposedCatchMatrix <- function(projectName,
   close(f)
 }
 
+
+#' Make decomposed catch at length
+#' @description Compiles catch at length table decomposed on given variables
+#' @details 
+#'    Contain options for workaround variables, until reporting setup can be configured in stox.
+#'    
+#'    decomposition variables need not be the same as model covariates, but model covariates will be used for estimation.
+#'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
+#'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
+#'    
+#'    Specifying either customMainAreaGrouping or customLocationGrouping, adds a column "spatialGroup" to the decomposition
+#'    The spatial group is specified by the arguments 'customMainAreaGrouping' or 'customLocationGrouping' as some merge of either main-areas
+#'    or combination of main-area location (Directorate of fisheries).
+#'    
+#' @param projectName Name identifying StoX project
+#' @param filename filename to write decomposed catch at length to. If NULL a filename in the projects R-report directory will be generated.
+#' @param decomposition variables to use for decomposition, must be available for all rows in landings
+#' @param addQuarterToDecomp workaround variable for adding quarter to decomp
+#' @param customMainAreaGrouping optional, list mapping custom spatial groups to vectors of main area strings (2 character string <mainarea>, e.g. "12" or "09")
+#' @param customLocationGrouping optional, list mapping custom spatial groups to vectors of location strings (5 character string <mainarea>-<location>, e.g.: "12-01" or "09-01")
+#' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
+#' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @return data frame with rows for each combination of decomposition variables and length groups, and columns with values or levels for length groups and decomposition variables, in addition to columns for the catch at length and standard deviation
+#' @export
+saveDecomposedCatchAtLength <- function(projectName, 
+                                        filename=NULL, 
+                                        decomposition=c("omr\u00e5degrupperingbokm\u00e5l"), 
+                                        addQuarterToDecomp=T, 
+                                        customMainAreaGrouping=NULL,
+                                        customLocationGrouping=NULL,
+                                        var = "Abundance",
+                                        unit = "millions",
+                                        main = ""){
+  
+  
+  if (length(customMainAreaGrouping) > 0 & length(customLocationGrouping) > 0){
+    stop("You may specify only one of 'customLocationGrouping' and 'customLocationGrouping'")
+  }
+  
+  customSpatialName <- "spatialGroup"
+  if (length(customMainAreaGrouping) > 0){
+    if (any(nchar(unlist(customMainAreaGrouping))!=2)){
+      stop("Provide customMainAreaGrouping as 2-character strings. E.g. \"01\"")
+    }
+    decomposition <- c(decomposition, customSpatialName)
+  }
+  
+  if (length(customLocationGrouping) > 0){
+    if (any(nchar(unlist(customLocationGrouping))!=5)){
+      stop("Provide customLocationGrouping as 5-character strings. E.g. \"01-01\"")
+    }
+    decomposition <- c(decomposition, customSpatialName)
+  }
+  
+  if (is.null(filename)){
+    resultdir <- getProjectPaths(projectName)$RReportDir
+    filename <- file.path(resultdir, "decomposedcatch.csv")
+  }
+  
+  quartcolumnname <- "Quarter"
+  if (addQuarterToDecomp){
+    decomposition <- c(decomposition, quartcolumnname)
+  }
+  getQuarter <- function(date){
+    month <- substr(date, 6,7)
+    month[month=="01" | month=="02" | month=="03"] <- "Q1"
+    month[month=="04" | month=="05" | month=="06"] <- "Q2"
+    month[month=="07" | month=="08" | month=="09"] <- "Q3"
+    month[month=="10" | month=="11" | month=="12"] <- "Q4"
+    return(month)
+  }
+  
+  # load eca configuration and parameterization
+  prepdata <- loadProjectData(projectName, var = "prepareRECA")
+  rundata <- loadProjectData(projectName, var = "runRECA")
+  if (is.null(prepdata) | is.null(rundata)) {
+    stop("Could not load project data")
+  }
+  
+  prepareRECA <- prepdata$prepareRECA
+  
+  projectlandings <- prepareRECA$StoxExport$landing
+  if (addQuarterToDecomp){
+    projectlandings[,quartcolumnname] <- getQuarter(projectlandings$sistefangstdato)
+  }
+  if (length(customMainAreaGrouping) > 0){
+    areacodes <- sprintf("%02d", projectlandings[,"hovedomr\u00e5dekode"])
+    
+    if (!all(areacodes %in% unlist(customMainAreaGrouping))){
+      missing <- unique(areacodes[!(areacodes %in% unlist(customMainAreaGrouping))])
+      stop(paste("Custom group is not provided for all main areas. Missing: ", paste(missing, collapse=", ")))
+    }
+    
+    groupedcodes <- rep(names(customMainAreaGrouping), unlist(lapply(customMainAreaGrouping, length)))
+    projectlandings[,customSpatialName] <- groupedcodes[match(areacodes, unlist(customMainAreaGrouping))]
+  }
+  
+  if (length(customLocationGrouping) > 0){
+    locationcodes <- sprintf("%02d-%02d", projectlandings[,"hovedomr\u00e5dekode"], projectlandings[,"lokasjonkode"])
+    
+    if (!all(locationcodes %in% unlist(customLocationGrouping))){
+      missing <- unique(areacodes[!(areacodes %in% unlist(customLocationGrouping))])
+      stop(paste("Custom group is not provided for all main areas and locations. Missing: ", paste(missing, collapse=", ")))
+    }
+    
+    groupedcodes <- rep(names(customLocationGrouping), unlist(lapply(customLocationGrouping, length)))
+    projectlandings[,customSpatialName] <- groupedcodes[match(locationcodes, unlist(customLocationGrouping))]
+  }
+  
+  projecttempres <- prepareRECA$StoxExport$temporalresolution
+  
+  
+  AgeLength <- prepareRECA$AgeLength
+  WeightLength <- prepareRECA$WeightLength
+  runRECA <- rundata$runRECA
+  GlobalParameters <- runRECA$GlobalParameters
+  
+  agglistproject <- list()
+  for (n in decomposition){
+    agglistproject[[n]]<-projectlandings[[n]]
+  }
+  
+  decomps <- split.data.frame(projectlandings, f=agglistproject, drop=T)
+  
+  output <- NULL
+  for (d in decomps){
+    
+    ## extract catch at length for decomposition
+    decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
+    pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+    catchAtLength <- getCatchAtLength(pred, var = var, unit = unit)
+    
+    decompmatrix <- catchAtLength
+    decompmatrix[,decomposition]<-d[1,decomposition]
+    
+    if (is.null(output)){
+      output <- decompmatrix
+    }
+    else{
+      output <- rbind(output, decompmatrix)
+    }
+  }
+  
+  # add comments
+  comments <- c()
+  title <- "Mean catch at length estimates"
+  if (var == "Abundance" | var == "Count") {
+    
+    if (unit == "ones") {
+      comments <- c(paste(title, "as", var))
+    }
+    if (unit != "ones") {
+      comments <- c(paste(title, "as", var, "in", unit))
+    }
+    
+  }
+  else if (var == "Weight") {
+    comments <- c(paste(title, "as", var, "in", unit))
+  }
+  else{
+    stop("Not implemented")
+  }
+  
+  comments <- c(main, comments, "")
+  
+  f <- file(filename, open = "w")
+  write(paste("#", comments), f)
+  write.table(
+    output,
+    file = f,
+    sep = "\t",
+    dec = ".",
+    row.names = F
+  )
+  close(f)
+}
+
+
+#' Make decomposed age group parameters
+#' @description Compiles age group parameters (mean length and weight) decomposed on given variables
+#' @details 
+#'    Contain options for workaround variables, until reporting setup can be configured in stox.
+#'    
+#'    decomposition variables need not be the same as model covariates, but model covariates will be used for estimation.
+#'    if the model covariates represent a finer decomposition of the sampling frame than the decomposition variables, interpretation is straightforward.
+#'    if the model covariates represent a coarser decomposition of the sampling frame than the decomposition variables this implies an assumption of validity of parameteres outside the covariate combinations they are obtained for.
+#'    
+#'    Specifying either customMainAreaGrouping or customLocationGrouping, adds a column "spatialGroup" to the decomposition
+#'    The spatial group is specified by the arguments 'customMainAreaGrouping' or 'customLocationGrouping' as some merge of either main-areas
+#'    or combination of main-area location (Directorate of fisheries).
+#'    
+#' @param projectName Name identifying StoX project
+#' @param filename filename to write decomposed catch matrix to. If NULL a filename in the projects R-report directory will be generated.
+#' @param decomposition variables to use for decomposition, must be available for all rows in landings
+#' @param addQuarterToDecomp workaround variable for adding quarter to decomp
+#' @param customMainAreaGrouping optional, list mapping custom spatial groups to vectors of main area strings (2 character string <mainarea>, e.g. "12" or "09")
+#' @param customLocationGrouping optional, list mapping custom spatial groups to vectors of location strings (5 character string <mainarea>-<location>, e.g.: "12-01" or "09-01")
+#' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
+#' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @return data frame with rows for each combination of decomposition variables and age groups, and columns with values or levels for age groups and decomposition variables, in addition to columns for the mean length and weight and corresponding standard deviations
+#' @export
+saveDecomposedAgeGroupParameters <- function(projectName, 
+                                             filename=NULL, 
+                                             decomposition=c("omr\u00e5degrupperingbokm\u00e5l"), 
+                                             addQuarterToDecomp=T, 
+                                             customMainAreaGrouping=NULL,
+                                             customLocationGrouping=NULL,
+                                             plusgr=NULL,
+                                             main = "Report og mean weight and length"){
+  
+  
+  if (length(customMainAreaGrouping) > 0 & length(customLocationGrouping) > 0){
+    stop("You may specify only one of 'customLocationGrouping' and 'customLocationGrouping'")
+  }
+  
+  customSpatialName <- "spatialGroup"
+  if (length(customMainAreaGrouping) > 0){
+    if (any(nchar(unlist(customMainAreaGrouping))!=2)){
+      stop("Provide customMainAreaGrouping as 2-character strings. E.g. \"01\"")
+    }
+    decomposition <- c(decomposition, customSpatialName)
+  }
+  
+  if (length(customLocationGrouping) > 0){
+    if (any(nchar(unlist(customLocationGrouping))!=5)){
+      stop("Provide customLocationGrouping as 5-character strings. E.g. \"01-01\"")
+    }
+    decomposition <- c(decomposition, customSpatialName)
+  }
+  
+  if (is.null(filename)){
+    resultdir <- getProjectPaths(projectName)$RReportDir
+    filename <- file.path(resultdir, "decomposedcatch.csv")
+  }
+  
+  quartcolumnname <- "Quarter"
+  if (addQuarterToDecomp){
+    decomposition <- c(decomposition, quartcolumnname)
+  }
+  getQuarter <- function(date){
+    month <- substr(date, 6,7)
+    month[month=="01" | month=="02" | month=="03"] <- "Q1"
+    month[month=="04" | month=="05" | month=="06"] <- "Q2"
+    month[month=="07" | month=="08" | month=="09"] <- "Q3"
+    month[month=="10" | month=="11" | month=="12"] <- "Q4"
+    return(month)
+  }
+  
+  # load eca configuration and parameterization
+  prepdata <- loadProjectData(projectName, var = "prepareRECA")
+  rundata <- loadProjectData(projectName, var = "runRECA")
+  if (is.null(prepdata) | is.null(rundata)) {
+    stop("Could not load project data")
+  }
+  
+  prepareRECA <- prepdata$prepareRECA
+  
+  projectlandings <- prepareRECA$StoxExport$landing
+  if (addQuarterToDecomp){
+    projectlandings[,quartcolumnname] <- getQuarter(projectlandings$sistefangstdato)
+  }
+  if (length(customMainAreaGrouping) > 0){
+    areacodes <- sprintf("%02d", projectlandings[,"hovedomr\u00e5dekode"])
+    
+    if (!all(areacodes %in% unlist(customMainAreaGrouping))){
+      missing <- unique(areacodes[!(areacodes %in% unlist(customMainAreaGrouping))])
+      stop(paste("Custom group is not provided for all main areas. Missing: ", paste(missing, collapse=", ")))
+    }
+    
+    groupedcodes <- rep(names(customMainAreaGrouping), unlist(lapply(customMainAreaGrouping, length)))
+    projectlandings[,customSpatialName] <- groupedcodes[match(areacodes, unlist(customMainAreaGrouping))]
+  }
+  
+  if (length(customLocationGrouping) > 0){
+    locationcodes <- sprintf("%02d-%02d", projectlandings[,"hovedomr\u00e5dekode"], projectlandings[,"lokasjonkode"])
+    
+    if (!all(locationcodes %in% unlist(customLocationGrouping))){
+      missing <- unique(areacodes[!(areacodes %in% unlist(customLocationGrouping))])
+      stop(paste("Custom group is not provided for all main areas and locations. Missing: ", paste(missing, collapse=", ")))
+    }
+    
+    groupedcodes <- rep(names(customLocationGrouping), unlist(lapply(customLocationGrouping, length)))
+    projectlandings[,customSpatialName] <- groupedcodes[match(locationcodes, unlist(customLocationGrouping))]
+  }
+  
+  projecttempres <- prepareRECA$StoxExport$temporalresolution
+  
+  
+  AgeLength <- prepareRECA$AgeLength
+  WeightLength <- prepareRECA$WeightLength
+  runRECA <- rundata$runRECA
+  GlobalParameters <- runRECA$GlobalParameters
+  
+  agglistproject <- list()
+  for (n in decomposition){
+    agglistproject[[n]]<-projectlandings[[n]]
+  }
+  
+  decomps <- split.data.frame(projectlandings, f=agglistproject, drop=T)
+  
+  output <- NULL
+  for (d in decomps){
+    
+    ## extract parameters for decomposition
+    decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
+    pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+    paramTable <- getAgeGroupParamaters(pred, plusgr=plusgr)
+    
+    decompmatrix <- paramTable
+    decompmatrix[,decomposition]<-d[1,decomposition]
+    
+    if (is.null(output)){
+      output <- decompmatrix
+    }
+    else{
+      output <- rbind(output, decompmatrix)
+    }
+  }
+  
+  # add comments
+  comments <- c(main, "")
+  
+  f <- file(filename, open = "w")
+  write(paste("#", comments), f)
+  write.table(
+    output,
+    file = f,
+    sep = "\t",
+    dec = ".",
+    row.names = F
+  )
+  close(f)
+}
+
+#' @noRd
+#' @keywords internal
+writeReports <- function(pred,
+                         projectName,
+                         var = "Abundance",
+                         unit = "millions",
+                         analysistype=""){
+  
+  filenames <- c()
+  get_filename <- function(stat) {
+    if (unit == "ones") {
+      return(paste0(
+        file.path(
+          getProjectPaths(projectName)$RReportDir,
+          paste0(c(stat, var), collapse = "_")
+        ),
+        ".txt"
+      ))
+    }
+    else{
+      return(paste0(
+        file.path(
+          getProjectPaths(projectName)$RReportDir,
+          paste0(c(stat, var, unit), collapse = "_")
+        ),
+        ".txt"
+      ))
+    }
+  }
+  get_filename_no_units <- function(stat) {
+    return(paste0(
+      file.path(
+        getProjectPaths(projectName)$RReportDir,
+        paste0(stat,
+               ".txt")))
+    )
+  }
+  
+  tryCatch({
+    saveAgeGroupParameters(
+      pred,
+      get_filename_no_units(paste("meanLengthWeight", analysistype, sep="_")),
+      main = projectName,
+    )
+    filenames <- c(get_filename_no_units(paste("meanLengthWeight", analysistype, sep="_")), filenames)
+  },
+  error = function(e) {
+  },
+  finally = {
+    
+  })
+  
+  tryCatch({
+    saveCatchAtLength(
+      pred,
+      get_filename(paste("CatchAtLength", analysistype, sep="_")),
+      main = projectName
+    )
+    filenames <- c(get_filename(paste("CatchAtLength", analysistype, sep="_")), filenames)
+  },
+  error = function(e) {
+  },
+  finally = {
+    
+  })
+  
+  tryCatch({
+    saveCatchMatrix(
+      pred,
+      get_filename(paste("CatchAtAgeMeans", analysistype, sep="_")),
+      main = projectName,
+      savemeans = T,
+      var = var,
+      unit = unit
+    )
+    filenames <- c(get_filename(paste("CatchAtAgeMeans", analysistype, sep="_")), filenames)
+  },
+  error = function(e) {
+  },
+  finally = {
+    
+  })
+  
+  tryCatch({
+    saveCatchMatrix(
+      pred,
+      get_filename(paste("CatchAtAgeDistribution", analysistype, sep="_")),
+      main = projectName,
+      savemeans = F,
+      var = var,
+      unit = unit
+    )
+    filenames <- c(get_filename(paste("CatchAtAgeDistribution", analysistype, sep="_")), filenames)
+  },
+  error = function(e) {
+  },
+  finally = {
+    
+  })
+  
+  tryCatch({
+    saveCatchCovarianceMatrix(
+      pred,
+      get_filename(paste("covariance", analysistype, sep="_")),
+      main = projectName,
+      standardize = F,
+      var = var,
+      unit = unit
+    )
+    filenames <- c(get_filename(paste("covariance", analysistype, sep="_")), filenames)
+  },
+  error = function(e) {
+  },
+  finally = {
+    
+  })  
+  return(filenames) 
+}
+
+#' Summarizes estimated fraction in each stock
+#' @noRd
+writeStockSplit <- function(stock1Pred, stock2Pred, projectName, stock1name, stock2name){
+  
+  filename <- file.path(
+    getProjectPaths(projectName)$RReportDir,
+    paste0("stock_split.txt")
+  )
+  
+  comments <- c("Estimated catch by stock in tonnes.")
+  totalStock1 <- apply(apply(stock1Pred$TotalCount, c(2,3), sum)*stock1Pred$MeanWeight, 2, sum)/1000
+  totalStock2 <- apply(apply(stock2Pred$TotalCount, c(2,3), sum)*stock2Pred$MeanWeight, 2, sum)/1000
+  
+  s1 <- data.frame(stock = stock1name, catchT=format(mean(totalStock1), digits = 3, nsmall = 2), 
+                   sd=format(sd(totalStock1), digits = 3, nsmall = 2), 
+                   cv=format(sd(totalStock1)/mean(totalStock1), digits = 3, nsmall = 2), 
+                   CI.5pc=format(quantile(totalStock1, p=.05)[[1]], digits = 3, nsmall = 2),
+                   CI.95pc=format(quantile(totalStock1, p=.95)[[1]], digits = 3, nsmall = 2), stringsAsFactors = F)
+  s2 <- data.frame(stock = stock2name, catchT=format(mean(totalStock2), digits = 3, nsmall = 2), 
+                   sd=format(sd(totalStock2), digits = 3, nsmall = 2), 
+                   cv=format(sd(totalStock2)/mean(totalStock2), digits = 3, nsmall = 2), 
+                   CI.5pc=format(quantile(totalStock2, p=.05)[[1]], digits = 3, nsmall = 2),
+                   CI.95pc=format(quantile(totalStock2, p=.95)[[1]], digits = 3, nsmall = 2), stringsAsFactors = F)
+
+  tab <- rbind(s1,s2)
+  
+  f <- file(filename, open = "w")
+  write(paste("#", comments), f)
+  write.table(
+    tab,
+    file = f,
+    sep = "\t",
+    dec = ".",
+    row.names = F
+  )
+  close(f)
+  
+  
+}
+
 #' @title Report RECA.
 #' @description Produces reports for for RECA. Fails silently on errors.
 #' @details Exports a tab separated file with means of catch at age (produced by \code{\link{saveCatchMatrix}}), one for the posterior distribution of catch at age (produced by \code{\link{saveCatchMatrix}}), and a file summarizing the model configuration (produced by \code{\link{writeRecaConfiguration}})
@@ -2171,46 +2893,11 @@ reportRECA <-
     
     out <- list()
     out$filename <- c()
-    get_filename <- function(stat) {
-      if (unit == "ones") {
-        return(paste0(
-          file.path(
-            getProjectPaths(projectName)$RReportDir,
-            paste0(c(stat, var), collapse = "_")
-          ),
-          ".txt"
-        ))
-      }
-      else{
-        return(paste0(
-          file.path(
-            getProjectPaths(projectName)$RReportDir,
-            paste0(c(stat, var, unit), collapse = "_")
-          ),
-          ".txt"
-        ))
-      }
-    }
+
     tryCatch({
       pd <- loadProjectData(projectName, var = "runRECA")
+      rundata <- loadProjectData(projectName, var = "runRECA")
       
-    },
-    error = function(e) {
-    },
-    finally = {
-      
-    })
-
-    tryCatch({
-      saveCatchMatrix(
-        pd$runRECA$pred,
-        get_filename("means"),
-        main = projectName,
-        savemeans = T,
-        var = var,
-        unit = unit
-      )
-      out$filename <- c(get_filename("means"), out$filename)
     },
     error = function(e) {
     },
@@ -2218,40 +2905,17 @@ reportRECA <-
       
     })
     
-    tryCatch({
-      saveCatchMatrix(
-        pd$runRECA$pred,
-        get_filename("distribution"),
-        main = projectName,
-        savemeans = F,
-        var = var,
-        unit = unit
-      )
-      out$filename <- c(get_filename("distribution"), out$filename)
-    },
-    error = function(e) {
-    },
-    finally = {
-      
-    })
+    if (is.null(rundata$runRECA$GlobalParameters$CC) || !rundata$runRECA$GlobalParameters$CC){
+      out$filename <- c(writeReports(pd$runRECA$pred, projectName, var=var, unit=unit), out$filename)
+    }
     
-    tryCatch({
-      saveCatchCovarianceMatrix(
-        pd$runRECA$pred,
-        get_filename("covariance"),
-        main = projectName,
-        standardize = F,
-        var = var,
-        unit = unit
-      )
-      out$filename <- c(get_filename("covariance"), out$filename)
-    },
-    error = function(e) {
-    },
-    finally = {
-      
-    })
-
+    if (!is.null(rundata$runRECA$GlobalParameters$CC) & rundata$runRECA$GlobalParameters$CC){
+      ccpred <- splitPredCC(rundata$runRECA$pred)
+      out$filename <- c(writeReports(ccpred$coastal, projectName, analysistype = "coastal", var=var, unit=unit), out$filename)
+      out$filename <- c(writeReports(ccpred$atlantic, projectName, analysistype = "atlantic", var=var, unit=unit), out$filename)
+      out$filename <- c(writeStockSplit(ccpred$coastal, ccpred$atlantic, projectName, "coastal", "atlantic"), out$filename)
+    }
+    
     tryCatch({
       pd <- loadProjectData(projectName, var = "prepareRECA")
       filename <-

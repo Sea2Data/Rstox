@@ -135,10 +135,18 @@ check_covariates <- function(modelobject){
   check_cov_vs_info(modelobject)
 }
 
+#' @keywords internal
+check_length_complete <- function(datamatrix){
+  if (any(is.na(datamatrix$lengthCM))){
+    stop("Length is missing for some fish. lengthCM has missing value.")
+  }
+}
+
 #' checks that agelenght is configured correctly
 #' @keywords internal
-checkAgeLength<-function(agelength, num_tolerance = 1e-10){
+checkAgeLength<-function(agelength, num_tolerance = 1e-10, checkAgeErrors=T){
   check_columns_present(agelength$DataMatrix, c("age", "part.year", "lengthCM", "samplingID", "partnumber", "partcount"))
+  check_length_complete(agelength$DataMatrix)
   check_none_missing(agelength$DataMatrix, c("lengthCM", "samplingID", "partnumber"))
   
   samplesPrCatch <- aggregate(list(partCount=agelength$DataMatrix$partnumber), by=list(samplingID=agelength$DataMatrix$samplingID), FUN=function(x){length(unique(x))})
@@ -158,19 +166,22 @@ checkAgeLength<-function(agelength, num_tolerance = 1e-10){
   if (any(!is.na(agelength$DataMatrix$part.year) & agelength$DataMatrix$part.year>1)){
     stop("part.year must be in <0,1]")
   }
-  if (!is.null(agelength$AgeErrorMatrix) & (any(is.na(agelength$AgeErrorMatrix)) || any(agelength$AgeErrorMatrix>1) || any(agelength$AgeErrorMatrix<0))){
-    stop("Invalid values in age error matrix")
-  }
-  if (!is.null(agelength$AgeErrorMatrix)){
-    if (any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
-      stop("Rows of age error matrix does not sum to 1, for the provided age-range.")
+  if (checkAgeErrors){
+    if (!is.null(agelength$AgeErrorMatrix) & (any(is.na(agelength$AgeErrorMatrix)) || any(agelength$AgeErrorMatrix>1) || any(agelength$AgeErrorMatrix<0))){
+      stop("Invalid values in age error matrix")
     }
-  } 
+    if (!is.null(agelength$AgeErrorMatrix)){
+      if (any(abs(rowSums(agelength$AgeErrorMatrix)-1)>num_tolerance)){
+        stop("Rows of age error matrix does not sum to 1, for the provided age-range.")
+      }
+    } 
+  }
 }
 #' checks that weightlenght is configured correctly
 #' @keywords internal
 checkWeightLength<-function(weightlength, landings){
   check_columns_present(weightlength$DataMatrix, c("weightKG", "lengthCM", "samplingID", "partnumber", "partcount"))
+  check_length_complete(weightlength$DataMatrix)
   check_none_missing(weightlength$DataMatrix, c("lengthCM", "samplingID", "partnumber", "weightKG"))
   
   samplesPrCatch <- aggregate(list(partCount=weightlength$DataMatrix$partnumber), by=list(samplingID=weightlength$DataMatrix$samplingID), FUN=function(x){length(unique(x))})
@@ -272,6 +283,14 @@ checkLandings <- function(landings){
 #' 
 #' @keywords internal
 checkGlobalParameters <- function(globalparameters, agelength, weightlength){
+  if (globalparameters$CC){
+    if (all(is.na(agelength$DataMatrix$otolithtype))){
+      stop("CC is set, but otolithtypes are not provided")
+    }
+    if (length(table(agelength$DataMatrix$otolithtype)) == 1){
+      stop("CC is set, but all records have the same otolithtype")
+    }
+  }
   if (is.na(globalparameters$lengthresCM)){
     stop("Length resolution not set (lengthresCM)")
   }

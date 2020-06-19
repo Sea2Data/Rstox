@@ -983,7 +983,7 @@ factorNAfirst <- function(x){
 #' \code{reportAbundanceAtLevel} is used in \code{reportAbundance_AcousticTrawl} and \code{reportAbundance_SweptAreaLength} for generating the report for each level "bootstra" or "bootstrapImpute". \cr \cr
 #' 
 #' @param projectName   The name or full path of the project, a baseline object (as returned from \code{\link{getBaseline}} or \code{\link{runBaseline}}, og a project object (as returned from \code{\link{openProject}}).
-#' @param bootstrapMethod	The method used when bootstrapping (see \code{\link{runBootstrap}}). This option selects different versions of functions such as \code{\link{reportAbundance}}}}. Note: Currently (Rstox_1.7) the report is equal for bootstrapMethod = "AcousticTrawl" and "SweptAreaLength".
+#' @param bootstrapMethod	The method used when bootstrapping (see \code{\link{runBootstrap}}). This option selects different versions of functions such as \code{\link{reportAbundance}}. Note: Currently (Rstox_1.7) the report is equal for bootstrapMethod = "AcousticTrawl" and "SweptAreaLength".
 #' @param var				A key string indicating the variable to plot (see getPlottingUnit()$defaults$Rstox_var for available values).
 #' @param unit				A unit key string indicating the unit, or alternatively a numeric value giving the scaling factor (run getPlottingUnit() to see available values).
 #' @param baseunit			The unit used in the data.

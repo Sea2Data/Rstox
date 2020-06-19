@@ -35,6 +35,46 @@ getCatchIssues <- function(catches, biotic, common_columns_catch){
   return(catchissues)
 }
 
+#' @noRd
+writeLandingsIssues <- function(landingsissuesfile, landing, covariates, verbose){
+  #
+  # landings issues
+  #
+  landingsissues <- c()
+  if (is.null(covariates) || "temporal" %in% covariates){
+    if (any(is.na(landing$sistefangstdato))){
+      landingsissues <- c(landingsissues, "Some landings are missing date of catch (\'sistefangstdato\')")
+    }
+    if (any(is.na(landing$temporal))){
+      landingsissues <- c("Some landings are not assigned covariate \'temporal\'")      
+    }
+  }
+  if (is.null(covariates) || "gearfactor" %in% covariates){
+    if (any(is.na(landing$redskapkode))){
+      landingsissues <- c(landingsissues, "Some landings are missing gear code (\'redskapkode\')")
+    }
+    if (any(is.na(landing$gearfactor))){
+      gearcodes <- landing[is.na(landing$gearfactor), "redskapkode"]
+      gearcodes <- gearcodes[!is.na(gearcodes)]
+      landingsissues <- c(paste("Some landings are not assigned covariate \'gearfactor\' (redskapskode: ", paste(unique(gearcodes),collapse=","), ")"))
+    }
+  }
+  if (is.null(covariates) || "spatial" %in% covariates){
+    if (any(is.na(landing$spatial))){
+      landingsissues <- c("Some landings are not assigned covariate \'spatial\'")
+    }
+  }
+  
+  if (length(landingsissues) > 0){
+    f <- file(landingsissuesfile, open="w")
+    writeLines(landingsissues, f)
+    close(f)
+    if (verbose){
+      message(paste("Some landings have issues that might prevent common covariateconfigurations. See report in:", landingsissuesfile))
+    }
+  }
+}
+
 #' Data report for RECA
 #' @description Generates reports on data issues that might need to be addressed before running RECA
 #' @details Checks data exported from stox for missing mandatory information, and issues that will invalidate common covariate-configurations
@@ -45,13 +85,17 @@ getCatchIssues <- function(catches, biotic, common_columns_catch){
 #' @param stationussuesfile file for writing station issues
 #' @param catchissuefile file for writing catch sample issues
 #' @param imputationfile file for writing report on issues that may need data massaging (imputation or estimation)
-#' @param verbose If true, summary and file locations will be printed to stdout
+#' @param verbose If true, summary and file locations will be printed as
 #' @param covariates vector with names of covariates (identifies columns)
 #' @param landing landing data
+#' @param landingsissuesfile file for writing landings issues
 #' @keywords internal
-makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputationfile, verbose=T, covariates=NULL, landing=NULL){
+makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputationfile, verbose=T, covariates=NULL, landing=NULL, landingsissuesfile=NULL){
   
-
+  if (!is.null(landing) & !is.null(landingsissuesfile)){
+    writeLandingsIssues(landingsissuesfile, landing, covariates, verbose)
+  }
+  
   #
   # station issues
   #
@@ -149,7 +193,7 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
     close(f)
     
     if (verbose){
-      write(paste("Some stations have issues that might prevent common covariateconfigurations. See report in:", stationissuesfile), file = "")
+      message(paste("Some stations have issues that might prevent common covariateconfigurations. See report in:", stationissuesfile))
     }
   }
   
@@ -175,7 +219,7 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
     close(f)
     
     if (verbose){
-      write(paste("Some catch samples have issues that might prevent estimation. See report in:", catchissuefile), file = "")
+      message(paste("Some catch samples have issues that might prevent estimation. See report in:", catchissuefile))
     }
   }
   
@@ -203,13 +247,12 @@ makeDataReportReca <- function(biotic, stationissuesfile, catchissuefile, imputa
     close(f)
     
     if (verbose){
-      write(paste("The data has some issues that might require imputation or parameter estimation. See report in:", imputationfile), file = "")
+      message(paste("The data has some issues that might require imputation or parameter estimation. See report in:", imputationfile))
     }
     
   }
   
 }
-
 
 #' Sample Homogeneity
 #' @description 
@@ -255,7 +298,14 @@ makeSampleHomogeneityReportRECA <- function(projectName, processName="FilterBiot
   if (length(lengthmeasurements)!=1){
     issues <- c(issues, c(paste("Several codes for length measurements ('lengthmeasurement') found in data:", paste(lengthmeasurements, collapse = ", "))))
   }
+
+  #sampleproducttype
+  sampleproducttypes <- unique(catches$sampleproducttype)
+  if (length(sampleproducttypes)!=1){
+    issues <- c(issues, c(paste("Several codes for sample product types ('sampleproducttypes') found in data:", paste(sampleproducttypes, collapse = ", "), "consider correcting weights with ConvertLengthAndWeight.")))
+  }
   
+    
   #producttypes when delprove taken
   stationids <- do.call(paste, catches[,c("platform", "startyear", "missiontype", "missionnumber", "serialnumber")])
   duplicates <- duplicated(stationids)
