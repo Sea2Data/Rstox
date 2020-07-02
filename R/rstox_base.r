@@ -423,8 +423,8 @@ openProject <- function(projectName=NULL, out=c("project", "baseline", "baseline
 		savedRVersion <- project$getRVersion()
 		savedRstoxVersion <- project$getRStoxVersion()
 		
-		currentRVersion <- getRversion()
-		currentRstoxVersion <- packageVersion("Rstox")
+		currentRVersion <- as.character(getRversion())
+		currentRstoxVersion <- as.character(packageVersion("Rstox"))
 		
 		if(currentRVersion != savedRVersion || currentRstoxVersion != savedRstoxVersion) {
 			message("The opened project was saved with different R or Rstox versions. To update the R and Rstox version in the project description file (project.xml) use saveProject()")
