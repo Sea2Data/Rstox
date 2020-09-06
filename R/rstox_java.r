@@ -16,7 +16,7 @@
 Rstox.init <- function() {
 	# Package initialization of rJava. Note that the documentatino of this functions also contains importing of the four packages grDevices, graphics, stats and utils. This is a bit of cheating, but avoids using :: for such common functions.
 	pkgname <- "Rstox";
-	loc = dirname(path.package(pkgname))
+	loc <- dirname(system.file(package = pkgname))
 	# rJava - load jar files in package java directory 
 	.jpackage(pkgname, lib.loc=loc)
 }
