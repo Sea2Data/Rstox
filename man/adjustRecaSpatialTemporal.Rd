@@ -14,8 +14,7 @@ adjustRecaSpatialTemporal(
   temporalCovariate = "temporal",
   spatialCovariate = "spatial",
   gearCovariate = "gearfactor",
-  minVesselSize = 15,
-  logbookActivityCodes = c("I fiske")
+  minVesselSize = 15
 )
 }
 \arguments{
@@ -38,8 +37,6 @@ adjustRecaSpatialTemporal(
 \item{gearCovariate}{the name of the gear covariate}
 
 \item{minVesselSize}{minimal size in meters for vessels to include in logbook adjusted data. Vessels without length will be assumed smaller than this threshold}
-
-\item{logbookActivityCodes}{vector specifying the activity codes to include from logbooks (field AKTIVITET).}
 }
 \value{
 landings, formatted as landingStox

@@ -12,7 +12,8 @@ saveDecomposedAgeGroupParameters(
   customMainAreaGrouping = NULL,
   customLocationGrouping = NULL,
   plusgr = NULL,
-  main = "Report og mean weight and length"
+  main = "Report og mean weight and length",
+  stock = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ saveDecomposedAgeGroupParameters(
 \item{plusgr}{Lower age in plusgr for tabulation. If NULL plusgr is not used.}
 
 \item{main}{Title for the analysis, to be included as comment in saved file (e.g. species and year)}
+
+\item{stock}{stock to extract results for if stock-splitting analysis was run. E.g. "coastal" or "atlantic"}
 }
 \value{
 data frame with rows for each combination of decomposition variables and age groups, and columns with values or levels for age groups and decomposition variables, in addition to columns for the mean length and weight and corresponding standard deviations
