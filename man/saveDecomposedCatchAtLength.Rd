@@ -13,7 +13,8 @@ saveDecomposedCatchAtLength(
   customLocationGrouping = NULL,
   var = "Abundance",
   unit = "millions",
-  main = ""
+  main = "",
+  stock = NULL
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ saveDecomposedCatchAtLength(
 \item{unit}{Unit for extracted variable. See \code{\link{getPlottingUnit}}}
 
 \item{main}{Title for the analysis, to be included as comment in saved file (e.g. species and year)}
+
+\item{stock}{stock to extract results for if stock-splitting analysis was run. E.g. "coastal" or "atlantic"}
 }
 \value{
 data frame with rows for each combination of decomposition variables and length groups, and columns with values or levels for length groups and decomposition variables, in addition to columns for the catch at length and standard deviation

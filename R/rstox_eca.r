@@ -2220,6 +2220,7 @@ saveCatchCovarianceMatrix <- function(pred,
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @param stock stock to extract results for if stock-splitting analysis was run. E.g. "coastal" or "atlantic"
 #' @return data frame with rows for each combination of decomposition variables and age groups, and columns with values or levels for age groups and decomposition variables, in addition to columns for the catch at age and standard deviation
 #' @export
 saveDecomposedCatchMatrix <- function(projectName, 
@@ -2231,7 +2232,8 @@ saveDecomposedCatchMatrix <- function(projectName,
                                       var = "Abundance",
                                       unit = "millions",
                                       plusgr=NULL,
-                                      main = ""){
+                                      main = "",
+                                      stock=NULL){
   
   
   if (length(customMainAreaGrouping) > 0 & length(customLocationGrouping) > 0){
@@ -2316,6 +2318,10 @@ saveDecomposedCatchMatrix <- function(projectName,
   runRECA <- rundata$runRECA
   GlobalParameters <- runRECA$GlobalParameters
   
+  if (GlobalParameters$CC & is.null(stock)){
+    stop("Stock splitting was run (CC). Provide stock to extract result for.")
+  }
+  
   agglistproject <- list()
   for (n in decomposition){
     agglistproject[[n]]<-projectlandings[[n]]
@@ -2329,6 +2335,26 @@ saveDecomposedCatchMatrix <- function(projectName,
     ## extract catchmatrix for decomposition
     decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
     pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+    
+    #
+    # handle stock splitting
+    #
+    if (!is.null(stock)){
+      if (!GlobalParameters$CC){
+        stop("Stock is provided, but stock splitting (CC) was not run.")
+      }
+      spred <- splitPredCC(pred)
+      if (!(stock %in% names(spred))){
+        stop(paste("The requested stock", stock, "was not predicted. Valid options are:", paste(names(spred), collapse=",")))
+      }
+      pred <- spred[[stock]]
+    }
+    else{
+      if (GlobalParameters$CC){
+        stop("Stock splitting was run (CC). Provide stock to extract result for.")
+      }
+    }
+    
     catchmatrix <- getCatchMatrix(pred, var = var, unit = unit, plusgr=plusgr)
     
     decompmatrix <- merge(catchmatrix$means, catchmatrix$cv)
@@ -2399,6 +2425,7 @@ saveDecomposedCatchMatrix <- function(projectName,
 #' @param var Variable to extract for calculation. Allows for Abundance, Count or Weight
 #' @param unit Unit for extracted variable. See \code{\link{getPlottingUnit}}
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @param stock stock to extract results for if stock-splitting analysis was run. E.g. "coastal" or "atlantic"
 #' @return data frame with rows for each combination of decomposition variables and length groups, and columns with values or levels for length groups and decomposition variables, in addition to columns for the catch at length and standard deviation
 #' @export
 saveDecomposedCatchAtLength <- function(projectName, 
@@ -2409,7 +2436,8 @@ saveDecomposedCatchAtLength <- function(projectName,
                                         customLocationGrouping=NULL,
                                         var = "Abundance",
                                         unit = "millions",
-                                        main = ""){
+                                        main = "",
+                                        stock = NULL){
   
   
   if (length(customMainAreaGrouping) > 0 & length(customLocationGrouping) > 0){
@@ -2494,6 +2522,11 @@ saveDecomposedCatchAtLength <- function(projectName,
   runRECA <- rundata$runRECA
   GlobalParameters <- runRECA$GlobalParameters
   
+  if (GlobalParameters$CC & is.null(stock)){
+    stop("Stock splitting was run (CC). Provide stock to extract result for.")
+  }
+  
+  
   agglistproject <- list()
   for (n in decomposition){
     agglistproject[[n]]<-projectlandings[[n]]
@@ -2507,6 +2540,27 @@ saveDecomposedCatchAtLength <- function(projectName,
     ## extract catch at length for decomposition
     decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
     pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+    
+    #
+    # handle stock splitting
+    #
+    if (!is.null(stock)){
+      if (!GlobalParameters$CC){
+        stop("Stock is provided, but stock splitting (CC) was not run.")
+      }
+      spred <- splitPredCC(pred)
+      if (!(stock %in% names(spred))){
+        stop(paste("The requested stock", stock, "was not predicted. Valid options are:", paste(names(spred), collapse=",")))
+      }
+      pred <- spred[[stock]]
+    }
+    else{
+      if (GlobalParameters$CC){
+        stop("Stock splitting was run (CC). Provide stock to extract result for.")
+      }
+    }
+    
+    
     catchAtLength <- getCatchAtLength(pred, var = var, unit = unit)
     
     decompmatrix <- catchAtLength
@@ -2576,6 +2630,7 @@ saveDecomposedCatchAtLength <- function(projectName,
 #' @param customLocationGrouping optional, list mapping custom spatial groups to vectors of location strings (5 character string <mainarea>-<location>, e.g.: "12-01" or "09-01")
 #' @param plusgr Lower age in plusgr for tabulation. If NULL plusgr is not used.
 #' @param main Title for the analysis, to be included as comment in saved file (e.g. species and year)
+#' @param stock stock to extract results for if stock-splitting analysis was run. E.g. "coastal" or "atlantic"
 #' @return data frame with rows for each combination of decomposition variables and age groups, and columns with values or levels for age groups and decomposition variables, in addition to columns for the mean length and weight and corresponding standard deviations
 #' @export
 saveDecomposedAgeGroupParameters <- function(projectName, 
@@ -2585,7 +2640,8 @@ saveDecomposedAgeGroupParameters <- function(projectName,
                                              customMainAreaGrouping=NULL,
                                              customLocationGrouping=NULL,
                                              plusgr=NULL,
-                                             main = "Report og mean weight and length"){
+                                             main = "Report og mean weight and length",
+                                             stock = NULL){
   
   
   if (length(customMainAreaGrouping) > 0 & length(customLocationGrouping) > 0){
@@ -2670,6 +2726,10 @@ saveDecomposedAgeGroupParameters <- function(projectName,
   runRECA <- rundata$runRECA
   GlobalParameters <- runRECA$GlobalParameters
   
+  if (GlobalParameters$CC & is.null(stock)){
+    stop("Stock splitting was run (CC). Provide stock to extract result for.")
+  }
+  
   agglistproject <- list()
   for (n in decomposition){
     agglistproject[[n]]<-projectlandings[[n]]
@@ -2683,6 +2743,26 @@ saveDecomposedAgeGroupParameters <- function(projectName,
     ## extract parameters for decomposition
     decompLandings <- getLandings(d, AgeLength, WeightLength, projecttempres)
     pred <- Reca::eca.predict(AgeLength, WeightLength, decompLandings, GlobalParameters)
+    
+    #
+    # handle stock splitting
+    #
+    if (!is.null(stock)){
+      if (!GlobalParameters$CC){
+        stop("Stock is provided, but stock splitting (CC) was not run.")
+      }
+      spred <- splitPredCC(pred)
+      if (!(stock %in% names(spred))){
+        stop(paste("The requested stock", stock, "was not predicted. Valid options are:", paste(names(spred), collapse=",")))
+      }
+      pred <- spred[[stock]]
+    }
+    else{
+      if (GlobalParameters$CC){
+        stop("Stock splitting was run (CC). Provide stock to extract result for.")
+      }
+    }
+    
     paramTable <- getAgeGroupParamaters(pred, plusgr=plusgr)
     
     decompmatrix <- paramTable
