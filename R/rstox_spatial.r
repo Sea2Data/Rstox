@@ -1782,9 +1782,9 @@ plotStratum <- function(x, plot=c("map", "stratum", "transect"), centroid=NULL, 
 		
 			p <- p + 
 				geom_segment(data=x$Transect, aes_string(x="lon_start", y="lat_start", xend="lon_stop", yend="lat_stop", group="stratum", colour="stratum", alpha="alpha", linetype="retour"), show.legend=TRUE) + 
-				scale_alpha(range = c(transport_alpha, 1), guide=FALSE) + 
-				scale_colour_discrete(guide=FALSE) + 
-				if(hasRetour) scale_linetype(name="retour") else scale_linetype(guide=FALSE)
+				scale_alpha(range = c(transport_alpha, 1), guide="none") + 
+				scale_colour_discrete(guide="none") + 
+				if(hasRetour) scale_linetype(name="retour") else scale_linetype(guide="none")
 		}
 	}
 	
