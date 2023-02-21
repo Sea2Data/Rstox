@@ -1,6 +1,6 @@
 Package: Rstox
 Version: 1.11.1
-Date: 2021-04-14
+Date: 2023-02-21
 Title: Running StoX Functionality Independently in R
 Authors@R: c(
   person(given = "Arne Johannes", 
@@ -30,24 +30,23 @@ LazyData: true
 Encoding: UTF-8
 Imports: 
     data.table (>= 1.10.4-3),
-    MASS,
-    methods,
-    RColorBrewer,
     ggplot2,
     gridExtra,
-    plotrix,
+    MASS,
+    methods,
     pbapply,
+    plotrix,
+    RColorBrewer,
+    readr,
     rgdal,
     rgeos,
     rJava,
-    readr,
+    scatterpie,
     sp,
-    XML,
-    scatterpie
+    XML
 Suggests: 
     ncdf4,
-    pgirmess,
-    Reca,
     plotrix,
+    Reca,
     testthat
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3

@@ -2426,15 +2426,32 @@ writeTransectsGPX <- function(x, projectName=NULL, dir=NULL, digits=5, prefix=""
 		# Select the current stratum:
 		Transect <- x$Transect[[stratumInd]]
 		
-		out <- data.frame(wp=seq_len(nrow(Transect)), Long=round(Transect$lon_start, digits=digits), Lat=round(Transect$lat_start, digits=digits), stringsAsFactors=FALSE)
-		# Use the suggested pgirmess package:
-		if(requireNamespace("pgirmess", quietly = TRUE)){
-			pgirmess::writeGPX(out, file=filename)
-		}
-		else{
-			warning("Package pgirmess not installed")
-		}
+		#out <- data.frame(wp=seq_len(nrow(Transect)), Long=round(Transect$lon_start, digits=digits), Lat=round(Transect$lat_start, digits=digits), stringsAsFactors=FALSE)
+		## Use the suggested pgirmess package:
+		#if(requireNamespace("pgirmess", quietly = TRUE)){
+		#	pgirmess::writeGPX(out, file=filename)
+		#}
+		#else{
+		#	warning("Package pgirmess not installed")
+		#}
 		
+		# Use a very simple writer:
+		headerLines <- c(
+			"<gpx version = \"1.1\" creator = \"R\">",
+			"<trk>",
+			"<trkseg>"
+		)
+		footerLines <- c(
+			"</trkseg>",
+			"</trk>",
+			"</gpx>"
+		)
+		lines <- paste(
+			"<trkpt", 
+			paste0("lat", " = ", round(Transect$lon_start, digits = digits)), 
+			paste0("lon", " = ", round(Transect$lat_start, digits = digits), "><time>NAZ</time></trkpt>")
+		)
+		writeLines(c(headerLines, lines, footerLines), filename)
 	}
 
 	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName)

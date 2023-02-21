@@ -516,7 +516,7 @@ getPlottingUnit <- function(unit=NULL, var="count", baseunit=NULL, labl=NULL,  d
 #' @importFrom grDevices dev.off
 #' @export
 #' 
-plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
+	plotNASCDistribution <- function(projectName, format="png", filetag=NULL, ...){
 	# Get the parameters to send to the plotting function given by name in 'format':
 	lll <- list(...)
 	

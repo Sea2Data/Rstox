@@ -42,6 +42,7 @@ getNMDdata(
   run = TRUE,
   timeout = NULL,
   snapshot = Sys.time(),
+  use_original_project.xml = FALSE,
   ...
 )
 
@@ -114,7 +115,7 @@ downloadXML(
 
 \item{timeout}{If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).}
 
-\item{snapshot}{A time stamp specifying which snapshot to download. The latest snapshot before this time stamp is identified and downloaded. The specific snapshot ID can also be given, as a string in the format returned from getRstoxDef("dateTimeNMDAPIFormat").}
+\item{snapshot}{A time stamp specifying which snapshot to download. The latest snapshot before this time stamp is identified and downloaded. The specific snapshot ID can also be given, as a string in the format returned from getRstoxDef("dateTimeNMDAPIFormat"). Default is the latest snapshot (Sys.time()).}
 
 \item{...}{Same as parlist, but can be specified separately (not in a list but as separate inputs).}
 

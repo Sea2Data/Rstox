@@ -43,7 +43,7 @@
 #' @param file					The path to a the file to which the data are saved.
 #' @param method				The download method. See \code{\link{download.file}}.
 #' @param timeout				If given, the timeout of the reponse to download.file() is set. Only used on Windows and if used, method is forced to "internal". Note that setting \code{timeout} in options() will not have the desired effect, since it requires method = "internal" to be set in \code{\link{download.file}} (which is used by \code{getNMDdata}).
-#' @param snapshot				A time stamp specifying which snapshot to download. The latest snapshot before this time stamp is identified and downloaded. The specific snapshot ID can also be given, as a string in the format returned from getRstoxDef("dateTimeNMDAPIFormat").
+#' @param snapshot				A time stamp specifying which snapshot to download. The latest snapshot before this time stamp is identified and downloaded. The specific snapshot ID can also be given, as a string in the format returned from getRstoxDef("dateTimeNMDAPIFormat"). Default is the latest snapshot (Sys.time()).
 #'
 #' @details
 #' If non-standard characters are not shown as expected, it might be an issue of locale encoding. 
@@ -164,7 +164,7 @@ getNMDinfo <- function(type=NULL, ver=getRstoxDef("ver"), server="http://tomcat7
 #' @export
 #' @rdname getNMDinfo
 #' 
-getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL, tsn=NULL, datasource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", suffix=NA, ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, info.out=FALSE, run=TRUE, timeout=NULL, snapshot=Sys.time(), ...){
+getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL, tsn=NULL, datasource=NULL, dir=NULL, subdir=FALSE, group="default", abbrev=FALSE, subset=NULL, prefix="NMD", suffix=NA, ver=getRstoxDef("ver"), server="http://tomcat7.imr.no:8080/apis/nmdapi", cleanup=TRUE, model="StationLengthDistTemplate", msg=TRUE, ow=NULL, return.URL=FALSE, info.out=FALSE, run=TRUE, timeout=NULL, snapshot=Sys.time(), use_original_project.xml = FALSE, ...){
 	
 	
 	# Support for giving 'prefix' as 'filebase' for backwards compatibility:
@@ -233,7 +233,6 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL,
 	}
 	########################################
 	
-	
 	####################################################
 	########## (2) Cruises and cruise series: ##########
 	####################################################
@@ -285,7 +284,7 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL,
 		cruiseInfo <- getProjectID(cruiseInfo)
 		
 		# Download the cruises:
-		out <- getCruises(cruiseInfo, downloadType=downloadType, cruise=cruise, StoX_data_sources=StoX_data_sources, model=model, dir=dir, subdir=subdir, subset=subset, prefix=prefix, suffix=suffix, datasource=datasource, ow=ow, abbrev=abbrev, timeout=timeout, return.URL=return.URL, ...)
+		out <- getCruises(cruiseInfo, downloadType=downloadType, cruise=cruise, StoX_data_sources=StoX_data_sources, model=model, dir=dir, subdir=subdir, subset=subset, prefix=prefix, suffix=suffix, datasource=datasource, ow=ow, abbrev=abbrev, timeout=timeout, return.URL=return.URL, use_original_project.xml = use_original_project.xml, ...)
 		
 		# Return the project paths:
 		if(info.out){
@@ -958,7 +957,11 @@ getTaxaOneV2 <- function(x){
 	
 	# Add the data which is not in a list and not attributes:
 	headerData <- !sapply(x, is.list) & names(x) != ".attrs"
-	codes <- as.data.frame(c(x[headerData], codes), stringsAsFactors=FALSE)
+	codes <- c(x[headerData], unlist(codes))
+	codes <- codes[lengths(codes) == 1]
+	
+	
+	codes <- as.data.frame(codes, stringsAsFactors=FALSE)
 	
 	return(codes)
 }
@@ -1483,7 +1486,7 @@ downloadProjectXmlToTemp <- function(stsInfo, dir=NULL){
 		
 		# Download the file:
 		suppressWarnings(dir.create(dirname(projectXmlFile)))
-		download.file(URLencode(projectXmlURL), projectXmlFile, quiet=TRUE)
+		download.file(URLencode(projectXmlURL), projectXmlFile, quiet = TRUE, method = "libcurl")
 		
 		# Return the local file name:
 		projectXmlFile
@@ -1598,7 +1601,6 @@ extractDataFileNames <- function(projectXML){
 }
 # Function to add cruise, ship name and project.xml file URL to the info from getNMDinfo("sts"):
 getCruiseInfoFromStsInfo <- function(stsInfo){
-	
 	# Function for getting the cruise and ship name from the output from getNMDinfo("sts") of one year:
 	getCruiseInfoFromStsInfoOneYear <- function(year, stsInfo){
 		
@@ -1651,10 +1653,17 @@ getCruiseURLs <- function(cruiseInfo, ver=getRstoxDef("ver"), server="http://tom
 	
 	# If the snapshot is given (non NA) in the cruiseInfo, use this as the shapshot parameter in searchNMDCruise() (change added on 2019-10-31 as getNMDdata() for a survey time series always used the latest snapshot even when it was specified differently in the downloaded project.xml):
 	# First make sure the 'snapshot' has length equal to the number of rows in 'cruiseInfo':
-	# Use a list to be able to mix DateTime objects with strings contained in the cruiseInfo$snapshot:
-	snapshot <- as.list(rep(snapshot, length.out = nrow(cruiseInfo)))
-	snapshotGivenInCruiseInfo <- !is.na(cruiseInfo$snapshot)
-	snapshot[snapshotGivenInCruiseInfo] <- as.list(cruiseInfo$snapshot[snapshotGivenInCruiseInfo])
+	if(identical(snapshot, "latest")) {
+		# Use a list to be able to mix DateTime objects with strings contained in the cruiseInfo$snapshot:
+		snapshot <- as.list(rep(Sys.time(), length.out = nrow(cruiseInfo)))
+	}
+	else {
+		# Use a list to be able to mix DateTime objects with strings contained in the cruiseInfo$snapshot:
+		snapshot <- as.list(rep(snapshot, length.out = nrow(cruiseInfo)))
+		snapshotGivenInCruiseInfo <- !is.na(cruiseInfo$snapshot)
+		snapshot[snapshotGivenInCruiseInfo] <- as.list(cruiseInfo$snapshot[snapshotGivenInCruiseInfo])
+	}
+	
 	
 	# search for the cruises:
 	URL <- searchNMDCruise(cruisenr=cruiseInfo$Cruise, shipname=cruiseInfo$ShipName, datasource=cruiseInfo$NMD_data_source, ver=ver, server=server, return.URL=return.URL, snapshot=snapshot)
@@ -1683,7 +1692,7 @@ downloadOneCruise <- function(x, timeout){
 	sapply(seq_along(x$fileURL), downloadOneFile, fileURL=x$fileURL, file=x$FilePath, timeout=timeout)
 }
 # Function for downloading cruises:
-getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL, model="StationLengthDistTemplate", dir=NA, subdir=NA, subset=NULL, prefix=NA, suffix=NA, year=NA, datasource=NA, ow=NULL, abbrev=FALSE, timeout=NULL, run=TRUE, return.URL=FALSE, ...){
+getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL, model="StationLengthDistTemplate", dir=NA, subdir=NA, subset=NULL, prefix=NA, suffix=NA, year=NA, datasource=NA, ow=NULL, abbrev=FALSE, timeout=NULL, run=TRUE, return.URL=FALSE, use_original_project.xml = FALSE, ...){
 	
 	# First split the cruiseInfo by project ID:
 	cruiseInfo <- split(cruiseInfo, cruiseInfo$ProjectID)
@@ -1750,6 +1759,14 @@ getCruises <- function(cruiseInfo, downloadType, cruise, StoX_data_sources=NULL,
 	
 	# Close the projects:
 	lapply(projectPaths, closeProject)
+	
+	
+	# Replace the project.xml by the original if requested:
+	if(use_original_project.xml) {
+		projectXML <- sapply(projectPaths, function(pr) getProjectPaths(pr)$projectXML)
+		originalProjectXML <- sapply(cruiseInfo, function(info) info$projectXmlFile[1])
+		mapply(file.copy, originalProjectXML, projectXML, overwrite = TRUE, copy.date = TRUE)
+	}
 	
 	return(projectPaths)
 }
@@ -1892,18 +1909,19 @@ getElements <- function(data, levels=list("element", c("text", ".attrs")), data.
 			# Extract the rows:
 			data <- lapply(data[names(data)==levels[[1]]], getOneRow)
 			# Any one of the rows has length differing from the rest, delete this row (hereby we require that all variables are filled):
-			s <- sapply(data, length)
-			equalLengths <- s==max(s)
-			if(!all(equalLengths)){
-				if(length(equalLen)){
-					warning(paste0("Unequal lengths of the rows: ", equalLen))
-					data <- data[equalLengths]
-				}
-				else{
-					return(data)
-				}
-			}
-			data <- as.data.frame(do.call(rbind, data), stringsAsFactors=FALSE)
+			#s <- sapply(data, length)
+			#equalLengths <- s==max(s)
+			#if(!all(equalLengths)){
+			#	if(length(equalLen)){
+			#		warning(paste0("Unequal lengths of the rows: ", equalLen))
+			#		data <- data[equalLengths]
+			#	}
+			#	else{
+			#		return(data)
+			#	}
+			#}
+			#data <- as.data.frame(do.call(rbind, data), stringsAsFactors=FALSE)
+			data <- as.data.frame(data.table::rbindlist(lapply(data, as.list), fill = TRUE))
 		}
 		else{
 			# The variables can be given using '$', so we split those variable names here, "[[" recombines with '$' to get the requested elements:
@@ -1940,6 +1958,7 @@ getElements <- function(data, levels=list("element", c("text", ".attrs")), data.
 	}
 	data
 }
+
 # Function to extract the element named by 'value' and with name given by 'name', in the elements given in rows (row > element > value, with name row > element > name)
 getRowElementValueWithName <- function(data, row="row", element="element", value="text", name=".attrs"){
 	# Example from search in version 2, read by
@@ -2130,6 +2149,7 @@ getAllSnapshotStrings <- function(URLSansGetType){
 }
 buildNMDURL <- function(cruise=NULL, shipname=NULL, year=NULL, serialnumber=NULL, tsn=NULL, datasource="biotic", server="http://tomcat7.imr.no:8080/apis/nmdapi", ver=getRstoxDef("ver"), snapshot=Sys.time(), return.URL=FALSE){
 	
+	
 	# Two different types of download exists: (1) Downloading files from cruises, and (2) downloading serial numbers. For type (1) 'cruise' and 'shipname' is required. For type (2) 'year' is required, and 'tsn' and 'serialnumber' optional.
 	########## Cruise files: ##########
 	searchURL <- NA
@@ -2185,6 +2205,7 @@ buildNMDURL <- function(cruise=NULL, shipname=NULL, year=NULL, serialnumber=NULL
 			# Build the URL:
 			relativePath <- temp$path
 			URLSansGetType <- paste(server, datasource, APIverString, relativePath, sep="/")
+			print(URLSansGetType)
 		
 			# Add snapshot ID:
 			if(ver$API[[datasource]] > 2){

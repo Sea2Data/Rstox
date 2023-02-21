@@ -53,15 +53,4 @@ Authors:
   \item Espen Johnsen
 }
 
-
-\strong{Maintainer}: Arne Johannes Holmin \email{arnejh@hi.no}
-
-Authors:
-\itemize{
-  \item Edvin Fuglebakk
-  \item Gjert Endre Dingsoer
-  \item Aasmund Skaalevik
-  \item Espen Johnsen
-}
-
 }

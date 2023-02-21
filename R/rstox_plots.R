@@ -40,7 +40,8 @@
 plotFishStation <- function(projectName, commonname="torsk", proc="FilterBiotic", size=1, col=TRUE, shape=16, alpha=1, jitter=FALSE, zoom=1, offset=c(0.5, 0.5), type="p", add0=FALSE, subset=NULL, legendPos=c(0.05, 0.05), unit="tonnes"){
 	
 	# Read the data:
-	g <- getBaseline(projectName, input=FALSE, proc="ReadBioticXML", endProcess="ReadBioticXML", drop=TRUE)
+	#g <- getBaseline(projectName, input=FALSE, proc="ReadBioticXML", endProcess="ReadBioticXML", drop=TRUE)
+    g <- getBaseline(projectName, input=FALSE, proc=proc, endProcess=proc, drop=TRUE)
 	
 	# If empty or numeric get all species, and possibly subset by the integer:
 	if(length(commonname) == 0 || is.numeric(commonname)){

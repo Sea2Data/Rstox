@@ -98,6 +98,7 @@ createProject <- function(projectName=NULL, files=list(), dir=NULL, model="Stati
 		availableTemplates <- getTemplates(names.only=TRUE)
 		availableTemplates[ which(tolower(substr(availableTemplates, 1, nchar(template))) == tolower(template)) ]
 	}
+	
 	# Function used for detecting URLs:
 	#isURL <- function(x, URLkeys=c("ftp:", "www.", "http:")){
 	#	seq_along(x) %in% unique(unlist(lapply(URLkeys, grep, x=x, fixed=TRUE)))
@@ -1034,9 +1035,9 @@ pointToStoXFiles <- function(projectName, files=NULL, relative.path=TRUE, close=
 		thesefiles <- files[[data_type]]
 		# Get the StoX-function name for reading these files:
 		fun <- paste0("Read", toupper(substr(data_type, 1, 1)), substring(data_type, 2), "XML")
+		proc <- baseline$findProcessByFunction(fun)
 		for(i in seq_along(thesefiles)){
-			proc <- baseline$findProcessByFunction(fun)
-			if(length(names(proc))){
+		    if(length(names(proc))){
 				proc$setParameterValue(paste0("FileName",i), thesefiles[i])
 			}
 		}
