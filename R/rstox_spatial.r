@@ -2216,7 +2216,7 @@ writeTransects <- function(x, projectName=NULL, dir=NULL, digits=5, byStratum=TR
 		}
 	}
 	
-	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName)
+	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName, dir = dir)
 	
 	# Define units of all present columns_
 	allcols <- c(
@@ -2300,7 +2300,7 @@ writeTransectsMaxSea <- function(x, projectName=NULL, dir=NULL, item.type=257, i
 	    write.table(out, file=filename, row.names=FALSE, col.names=FALSE, sep=",", quote=FALSE, ...)
 	}
 	
-	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName)
+	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName, dir = dir)
 	
 	# Split into strata, and set the files names as names of the list:
 	if(length(filenames)==0){
@@ -2363,7 +2363,7 @@ writeTransectsINFO <- function(x, projectName=NULL, dir=NULL, digits=2, prefix="
 	    capture.output( cat("\n", " "), lonlat, file=filename, append=TRUE) 
 	}
 	
-	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName)
+	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName, dir = dir)
 	
 	# Split into strata, and set the files names as names of the list:
 	if(length(filenames)==0){
@@ -2397,7 +2397,7 @@ writeTransectsTRACK <- function(x, projectName=NULL, dir=NULL, digits=5, prefix=
 		write.csv(out, file=filename, row.names=FALSE, ...)
 	}
 	
-	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName)
+	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName, dir = dir)
 	
 	# Split into strata, and set the files names as names of the list:
 	if(length(filenames)==0){
@@ -2454,7 +2454,7 @@ writeTransectsGPX <- function(x, projectName=NULL, dir=NULL, digits=5, prefix=""
 		writeLines(c(headerLines, lines, footerLines), filename)
 	}
 
-	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName)
+	projectName <- getProjectNameFromSurveyPlannerOutput(x=x, projectName=projectName, dir = dir)
 	
 	# Split into strata, and set the files names as names of the list:
 	if(length(filenames)==0){
@@ -2502,12 +2502,12 @@ getTransectFileName <- function(x, projectName, prefix="", suffix="", ext="txt",
 	file.path(dir, paste0(prefix, Transects, if(byStratum) stratum, suffix, ".", ext))
 }
 
-getProjectNameFromSurveyPlannerOutput <- function(x, projectName=NULL){
+getProjectNameFromSurveyPlannerOutput <- function(x, projectName=NULL, dir = NULL){
 	if(length(projectName) == 0){
 		if(length(x$Input$projectName)){
 			projectName <- x$Input$projectName
 		}
-		else{
+		else if(!length(dir)){
 			stop("If projectName is not given or not present in x$Imput, dspecity output directory with 'dir'")
 		}
 	}
