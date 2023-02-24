@@ -2448,8 +2448,8 @@ writeTransectsGPX <- function(x, projectName=NULL, dir=NULL, digits=5, prefix=""
 		)
 		lines <- paste(
 			"<trkpt", 
-			paste0("lat", " = ", round(Transect$lon_start, digits = digits)), 
-			paste0("lon", " = ", round(Transect$lat_start, digits = digits), "><time>NAZ</time></trkpt>")
+			paste0("lat", "=", "\"", round(Transect$lat_start, digits = digits), "\""), 
+			paste0("lon", "=", "\"", round(Transect$lon_start, digits = digits), "\"", "><time>NAZ</time></trkpt>")
 		)
 		writeLines(c(headerLines, lines, footerLines), filename)
 	}
