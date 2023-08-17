@@ -615,6 +615,13 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' dev.new()
 #' p <- plotStratum(Zigzag)
 #' 
+#' # Add extra space between zig-zag transects (may be useful to reduce autocorrelation between transects or to facilitate turning points for autonomous platforms). This works only for type "RectEnclZZ" or "EqSpZZ":
+#' system.time(Zigzag <- surveyPlanner(projectName=projectName, type="EqSpZZ", bearing="N",
+#'     nmi=2000, knots=10, seed=0, equalEffort=TRUE, zigzagTransectSpacing = 10))
+#' dev.new()
+#' # Observe that there are gaps between the transects:
+#' p <- plotStratum(Zigzag)
+#' 
 #' # The parallel survey use 23.39 percent of sailing distance for transport between transects, 
 #' # whereas the zigzag survey use 10.76 percent.
 #' Parallel$Survey

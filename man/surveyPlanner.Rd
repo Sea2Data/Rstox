@@ -111,6 +111,8 @@ readStrataPolygons(projectName, strata = "all", ...)
 
 \item{centroid}{Logical: If TRUE, plot the centroid of the strata.}
 
+\item{zigzagTransectSpacing}{Additional spacing between zig zag transects in the survey direction of a stratum.}
+
 \item{...}{Used for flexibility, and including shapenames: A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.}
 
 \item{x}{The output from \code{\link{surveyPlanner}}.}
@@ -190,6 +192,13 @@ filename
 system.time(Zigzag <- surveyPlanner(projectName=projectName, type="RectEnclZZ", bearing="N",
     nmi=2000, knots=10, seed=0, equalEffort=TRUE))
 dev.new()
+p <- plotStratum(Zigzag)
+
+# Add extra space between zig-zag transects (may be useful to reduce autocorrelation between transects or to facilitate turning points for autonomous platforms). This works only for type "RectEnclZZ" or "EqSpZZ":
+system.time(Zigzag <- surveyPlanner(projectName=projectName, type="EqSpZZ", bearing="N",
+    nmi=2000, knots=10, seed=0, equalEffort=TRUE, zigzagTransectSpacing = 10))
+dev.new()
+# Observe that there are gaps between the transects:
 p <- plotStratum(Zigzag)
 
 # The parallel survey use 23.39 percent of sailing distance for transport between transects, 
