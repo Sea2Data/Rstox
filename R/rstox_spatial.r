@@ -555,6 +555,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @param xlab,ylab			The x and y label for the plot.
 #' @param xlim,ylim			The x and y limit of the plot.
 #' @param keep0effort		Logical: If FALSE, keep only the strata with positive effort.
+#' @param zigzagTransectSpacing Additional spacing between zig zag transects in the survey direction of a stratum. 
 #' @param ...				Used for flexibility, and including shapenames: A list of length 3 giving the names of the longitude, latitude and stratum column in the shape files.
 #' 
 #' @details 
@@ -660,7 +661,7 @@ rapplyKeepDataFrames <- function(x, FUN, ...){
 #' @importFrom utils head tail
 #' @rdname surveyPlanner
 #' 
-surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, nmi=NULL, transectSpacing=NULL, t0=NULL, knots=10, seed=0, angsep=1/6, distsep=NULL, margin=NULL, equalEffort=FALSE, byStratum=TRUE, strata="all", cruise="surveyPlanner", keepTransport=TRUE, centroid=NULL, ...){
+surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing="N", rev=FALSE, retour=FALSE, toursFirst=FALSE, hours=240, nmi=NULL, transectSpacing=NULL, t0=NULL, knots=10, seed=0, angsep=1/6, distsep=NULL, margin=NULL, equalEffort=FALSE, byStratum=TRUE, strata="all", cruise="surveyPlanner", keepTransport=TRUE, centroid=NULL, zigzagTransectSpacing = 0, ...){
 	
 	############################################################
 	######################## Functions: ########################
@@ -820,13 +821,17 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	}
 	
 	# Function for adding stratum ends:
-	addEndTransects <- function(intersects, poly){		
+	addEndTransects <- function(intersects, poly, zigzagTransectSpacing = 0){		
 		# Function for getting a transect at the end with the inverse angle of the first/last transect:
-		getEndTransectOne <- function(poly, intersects, last=FALSE){
+		getEndTransectOne <- function(poly, intersects, last=FALSE, zigzagTransectSpacing = 0){
 			# If we are actually appending to the last and not the first transect, reverse the transects here for convenience:
 			if(last){
 				intersects@coords <- revMatrix(intersects@coords)
 			}
+			
+			# Add the zigzagTransectSpacing:
+			intersects@coords[1, 1] <- intersects@coords[1, 1] + sign(diff(intersects@coords[2:1, 1])) * zigzagTransectSpacing / 2
+			
 			# Get the first point and the line segments:
 			first <- intersects@coords[1,]
 			firstLine <- rbind(intersects@coords[1,], intersects@coords[1,] + diff(intersects@coords[1:2,]) * c(-1,1) * 2)
@@ -852,8 +857,8 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		}
 		
 		# Get the end transects at the start and end:
-		first <- getEndTransectOne(poly, intersects)
-		last <- getEndTransectOne(poly, intersects, last=TRUE)
+		first <- getEndTransectOne(poly, intersects, zigzagTransectSpacing = zigzagTransectSpacing)
+		last <- getEndTransectOne(poly, intersects, zigzagTransectSpacing = zigzagTransectSpacing, last=TRUE)
 		intersects@coords <- rbind(first@coords, intersects@coords, last@coords)
 		intersects
 	}
@@ -1131,6 +1136,29 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	############################################################
 	
 	
+	addSpacingOneTransect <- function(transect, zigzagTransectSpacing) {
+		transect$x[1] <- transect$x[1] + zigzagTransectSpacing / 2
+		transect$x[2] <- transect$x[2] - zigzagTransectSpacing / 2
+		return(transect)
+	}
+	
+	exendTransect <- function(transect, factor = 1.5) {
+		midx <- mean(transect$x)
+		diffx <- diff(transect$x)
+		transect$x <- midx + c(-1, 1) * diffx / 2 * factor
+		midy <- mean(transect$y)
+		diffy <- diff(transect$y)
+		transect$y <- midy + c(-1, 1) * diffy / 2 * factor
+		
+		return(transect)
+	}
+	
+	getSpatialLines <- function(x) {
+		out <- lapply(seq_along(x), function(Ind) sp::Lines(list(sp::Line(data.matrix(x[[Ind]][,1:2]))), ID=Ind))
+		out <- sp::SpatialLines(out)
+		return(out)
+	}
+	
 	############################################################
 	########## Function for generating the transects ###########
 	############ in one direction (tour or retour): ############
@@ -1156,20 +1184,30 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			Ind = rep(seq_along(xGrid), each=2), stringsAsFactors=FALSE)
 		grid <- split(grid, grid$Ind)
 		###grid <- lapply(grid, data.matrix)
-	
+		
 		# For zigzag transects with equal coverage, convert the grid to zigzag lines, by selecting every other point:
 		if(tolower(type) == tolower("RectEnclZZ")){
 			# Order alternately, and if on a retour order oppositely from the default:
 			#grid <- orderTransectsByXY(grid, down=downRandom)
 			#grid <- orderAlternateByY(grid, decreasing=downRandom)
-			# Applyt the ordering of the grid prior to linking consecutive high-high and low-low points:
+			# Apply the ordering of the grid prior to linking consecutive high-high and low-low points:
 			grid <- orderTransectsByXY(grid, down=downRandom)
 			grid <- linkClosest(grid)
 			# Select the first end point of each grid line, and generate zigzag grid by merging consecutive points:
 			grid <- parallel2zigzag(grid)
+			
+			# If the user wants extra spacing between transects:
+			if(zigzagTransectSpacing > 0) {
+				grid <- lapply(grid, addSpacingOneTransect, zigzagTransectSpacing = zigzagTransectSpacing)
+				# Extend the grid lines so that they intersect with the stratum:
+				grid  <- lapply(grid, exendTransect, factor = 10)
+			}
+			
 		}
-		spatialLinesGrid <- lapply(seq_along(grid), function(Ind) sp::Lines(list(sp::Line(data.matrix(grid[[Ind]][,1:2]))), ID=Ind))
-		spatialLinesGrid <- sp::SpatialLines(spatialLinesGrid)
+		
+		
+		spatialLinesGrid <- getSpatialLines(grid)
+		
 		
 		# Here we put the EqualAngleZigzag sampler and the AdjustedAngleZigzag sampler, and in the future the CurvedEnclosureZigzag sampler and the FlexibleHeadCurveZigzag sampler? These are all iterative, in the sence that we need to intersect one transect with the stratum polygon in order to move to the next transect:
 		##### Intersect the grid with the stratum polygon: #####
@@ -1184,11 +1222,24 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		# For zigzag transects, set the end point of each transect to the start point of the next, and remove the last transect:
 		if(tolower(type) == tolower("EqSpZZ")){
 			intersectsCoordsList <- parallel2zigzag(intersectsCoordsList)
+			
+			# If the user wants extra spacing between transects:
+			if(zigzagTransectSpacing > 0) {
+				intersectsCoordsList <- lapply(intersectsCoordsList, addSpacingOneTransect, zigzagTransectSpacing = zigzagTransectSpacing)
+				# Extend the grid lines so that they intersect with the stratum:
+				intersectsCoordsList  <- lapply(intersectsCoordsList, exendTransect, factor = 10)
+				# Re-intersect:
+				intersects <- rgeos::gIntersection(spatialLinesPolygon, getSpatialLines(intersectsCoordsList), byid=TRUE)
+				intersectsCoordsList <- getIntersectsCoordsList(intersects)
+				intersectsCoordsList <- orderTransectsByXY(intersectsCoordsList, down=FALSE)
+				intersectsCoordsList <- linkClosest(intersectsCoordsList)
+			}
+			
 			# Add end points to the zigzag transects. For this we need a spatial object:
 			temp <- intersects
 			# Use the idcol="transect" to split the transects afterwards:
 			temp@coords <- data.matrix(data.table::rbindlist(intersectsCoordsList, idcol=FALSE))
-			temp <- addEndTransects(temp, spatialLinesPolygon)
+			temp <- addEndTransects(temp, spatialLinesPolygon, zigzagTransectSpacing = zigzagTransectSpacing)
 			# Split the transects into a list again:
 			intersectsCoordsList <- coords2coordsList(temp@coords)
 			# remove the last value since the last element of intersectsCoordsList was removed in the 
@@ -1196,6 +1247,8 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			####### xGrid_EqSpZZ <- sapply(sapply(intersectsCoordsList, "[", 1, 1), function(x) which.min(abs(x-xGrid)))
 			#xGrid_EqSpZZ <- findInterval(sapply(intersectsCoordsList, "[", 1, 1), xGrid)
 		}
+		
+		
 		
 		# The transects may intersect with the stratum polygon borders more than once, so we need to intersect again and split transects into subtransects when intersecting more than twice (two intersectiins at the borders):
 		#intersectsCoordsList <- lapply(intersectsCoordsList, function(x) )
@@ -1225,6 +1278,9 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		intersectsCoordsList <- orderTransectsByXY(intersectsCoordsList, down = FALSE)
 		intersectsCoordsList <- linkClosest(intersectsCoordsList)
 		
+		# Remove elements with only one row:
+		intersectsCoordsList <- intersectsCoordsList[sapply(intersectsCoordsList, NROW) > 1]
+		
 		# Split transects into sub transects, but keep the transect ID:
 		nsegmentsPerTransect <- sapply(intersectsCoordsList, nrow) / 2
 		#if(any(nsegmentsPerTransect != 1)){
@@ -1232,6 +1288,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 			temp <- vector("list", nsubtransects)
 		
 			ind <- 0
+			
 			for(i in seq_along(intersectsCoordsList)){
 				intersectsCoordsList[[i]] <- cbind(intersectsCoordsList[[i]], transect=i)
 				#temp[ind + seq_len(nsegmentsPerTransect[i])] <- split(intersectsCoordsList[[i]], rep(seq_len(nsegmentsPerTransect[i]), each=2))
@@ -1335,7 +1392,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	############################################################
 	#### Function for generating transects for one stratum: ####
 	############################################################
-	transectsOneStratum <- function(stratumInd, xy, area, transectSpacing, parameters, margin=NULL){
+	transectsOneStratum <- function(stratumInd, xy, area, transectSpacing, parameters, margin=NULL, zigzagTransectSpacing = 0){
 		# Get the parameters of the current stratumInd:
 		parameters <- lapply(parameters, "[", stratumInd)
 		
@@ -1343,8 +1400,17 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 		xyRotated <- rotate2d(xy[[stratumInd]], parameters$bearing, data.frame.out=TRUE)
 		
 		# Get corners of the bounding box of the polygon (a slight value added to the y to ensure intersection with the polygon):
+		dx <- diff(range(xyRotated$x))
+		mx <- mean(range(xyRotated$x))
 		dy <- diff(range(xyRotated$y))
-		corners <- list(xmin=min(xyRotated$x), xmax=max(xyRotated$x), ymin=min(xyRotated$y) - dy*1e-9, ymax=max(xyRotated$y) + dy*1e-9)
+		my <- mean(range(xyRotated$y))
+		corners <- list(
+			xmin = mx - dx / 2, 
+			xmax = mx + dx / 2, 
+			ymin = my - dy / 2 - dy * 1e-9, 
+			ymax = my + dy / 2 + dy * 1e-9
+		)
+		
 		# Get the length of the stratum along the bearing:
 		lengthOfStratum <- corners$xmax - corners$xmin
 		
@@ -1627,7 +1693,7 @@ surveyPlanner <- function(projectName, parameters=NULL, type="Parallel", bearing
 	#########################################
 	##### Get transects for all strata: #####
 	#########################################
-	out <- lapply(seq_along(xy), transectsOneStratum, xy=xy, area=area, transectSpacing=transectSpacing, parameters=parameters, margin=margin)
+	out <- lapply(seq_along(xy), transectsOneStratum, xy=xy, area=area, transectSpacing=transectSpacing, parameters=parameters, margin=margin, zigzagTransectSpacing = zigzagTransectSpacing)
 
 	Transect <- as.data.frame(data.table::rbindlist(out, idcol="stratum"), stringsAsFactors=FALSE)
 	# Convert the idcol 'stratum' from index to name:

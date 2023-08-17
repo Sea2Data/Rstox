@@ -31,6 +31,7 @@ surveyPlanner(
   cruise = "surveyPlanner",
   keepTransport = TRUE,
   centroid = NULL,
+  zigzagTransectSpacing = 0,
   ...
 )
 
