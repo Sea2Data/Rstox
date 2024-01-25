@@ -221,7 +221,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL,
 	}
 	#######################################
 	
-		
+	
+	
 	########################################
 	########## (1) Serial number: ##########
 	########################################
@@ -232,6 +233,8 @@ getNMDdata <- function(cruise=NULL, year=NULL, shipname=NULL, serialnumber=NULL,
 		return(out)
 	}
 	########################################
+	
+	
 	
 	####################################################
 	########## (2) Cruises and cruise series: ##########
@@ -510,11 +513,17 @@ getSeriesInfo <- function(ver, server, type, msg=FALSE, recursive=TRUE){
 			# Get a data frame of each CS:
 			out <- lapply(x$samples, nestedList2data.frame)
 			# Merge the CSs:
-			out <- do.call(rbind, out)
+			#out <- do.call(rbind, out)
+			out <- as.data.frame(data.table::rbindlist(out, fill = TRUE))
 			row.names(out) <- NULL
 			# Rename to comply with naming used in getNMDinfo():
 			old <- c("sampleTime", "cruisenr", "shipName")
 			new <- c("Year", "Cruise", "ShipName")
+			
+			if(!length(names(out))) {
+				return(out)
+			}
+			
 			names(out) <- replace(names(out), match(old, names(out)), new)
 			
 			# Order by year and then code (order inside year):
@@ -559,6 +568,7 @@ getSeriesInfo <- function(ver, server, type, msg=FALSE, recursive=TRUE){
 		if(recursive){
 			# Download the seies dataset:
 			URLbase <- getURLbase(ver=ver, server=server, datasource="reference", dataset=type[1])
+			
 			data <- downloadXML(URLbase, msg=msg)
 			# Extract the names of the series:
 			seriesNames <- sapply(data, "[[", "name")
@@ -1604,6 +1614,7 @@ getCruiseInfoFromStsInfo <- function(stsInfo){
 	# Function for getting the cruise and ship name from the output from getNMDinfo("sts") of one year:
 	getCruiseInfoFromStsInfoOneYear <- function(year, stsInfo){
 		
+		
 		# Extract the local path and URL of the project.xml:
 		atYear <- stsInfo$sampleTime == year
 		#projectXmlURL <- stsInfo$projectXmlURL[atYear]
@@ -1684,6 +1695,8 @@ getCruiseURLs <- function(cruiseInfo, ver=getRstoxDef("ver"), server="http://tom
 downloadOneCruise <- function(x, timeout){
 	downloadOneFile <- function(j, fileURL, file, timeout){
 		if(!is.na(fileURL[j])){
+			print("file[j]")
+			print(file[j])
 			suppressWarnings(downloadXML(fileURL[j], msg=FALSE, list.out=FALSE, file=file[j], timeout=timeout))
 		}
 	}
@@ -2040,7 +2053,7 @@ column2ilst <- function(x, col, colnames){
 as.numericDataFrame <- function(data){
 	data <- as.data.frame(data, stringsAsFactors=FALSE)
 	convertableToNumeric <- function(x, not=c("POSIXct", "POSIXt")){
-		!class(x) %in% not && !any(is.na(as.numeric(x[!is.na(x)])))
+		!any(class(x) %in% not) && !any(is.na(as.numeric(x[!is.na(x)])))
 	}
 	# Convert all numeric columns to numeric, identified by no NAs when converting:
 	#suppressWarnings(data <- lapply(data, function(x) if(!any(is.na(as.numeric(x[!is.na(x)])))) as.numeric(x) else x))
